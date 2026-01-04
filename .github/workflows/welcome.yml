@@ -1,0 +1,31 @@
+name: Welcome New Contributors
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add welcome comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const isIssue = context.eventName === 'issues';
+
+            const message = isIssue
+              ? `👋 Hello @${context.payload.issue.user.login}!\n\nThank you for opening an issue 🚀\nThe maintainers will review it soon.`
+              : `🎉 Welcome @${context.payload.pull_request.user.login}!\n\nThank you for your pull request 💖\nWe appreciate your contribution!`;
+
+            github.rest.issues.createComment({
+              issue_number: isIssue
+                ? context.payload.issue.number
+                : context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
