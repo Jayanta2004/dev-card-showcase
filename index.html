@@ -8,10 +8,16 @@
     <title>Community Card Showcase</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="Hall of Fame (1).png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-       <div class="circle-container">
+    <!-- Page Loader -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <div class="circle-container">
         <div class="circle"></div>
         <div class="circle"></div>
         <div class="circle"></div>
@@ -103,25 +109,32 @@
     </nav>
 
 <!-- NAVBAR END -->
- <!-- 🔢 CONTRIBUTOR STATS -->
-<section class="stats-container">
-    <div class="stat-card">
-        <span id="totalCount">0</span>
-        <p>Total Members</p>
+
+<!-- 🔍 SEARCH & FILTER SECTION -->
+<section class="search-filter-container">
+    <input 
+        type="text" 
+        id="searchInput" 
+        placeholder="🔍 Search by name..." 
+        onkeyup="filterCards()"
+        autocomplete="off"
+    >
+    
+    <div class="filter-buttons">
+        <button class="filter-btn active" onclick="filterByRole('all')">All</button>
+        <button class="filter-btn" onclick="filterByRole('developer')">Developers</button>
+        <button class="filter-btn" onclick="filterByRole('contributor')">Contributors</button>
+        <button class="filter-btn" onclick="filterByRole('maintainer')">Maintainers</button>
     </div>
-    <div class="stat-card">
-        <span id="devCount">0</span>
-        <p>Developers</p>
-    </div>
-    <div class="stat-card">
-        <span id="contributorCount">0</span>
-        <p>Contributors</p>
-    </div>
-    <div class="stat-card">
-        <span id="maintainerCount">0</span>
-        <p>Maintainers</p>
-    </div>
+    
+    <select id="sortSelect" class="sort-select" onchange="sortCards()">
+        <option value="default">Sort: Default</option>
+        <option value="az">A-Z</option>
+        <option value="za">Z-A</option>
+        <option value="newest">Newest First</option>
+    </select>
 </section>
+    
 
 <!-- 🎲 RANDOM CARD BUTTON -->
 <div class="random-button-container">
@@ -135,21 +148,29 @@
 
         <!-- ADMIN CARD - Don't modify this card -->
         <div class="card">
-            <img src="images/admin.jpg" alt="Admin Photo" class="card-img">
-            <h2>Project Admin</h2>
-            <span class="role">Maintainer</span>
-            <p>"Welcome to the project! Fork this repo and add your card below."</p>
-            <a href="https://github.com/Jayanta2004" class="card-btn" target="_blank">GitHub</a>
+            <div class="card-inner">
+                <img src="images/admin.jpg" alt="Admin Photo" class="card-img">
+                <h2>Project Admin</h2>
+                <span class="role">Maintainer</span>
+                <p>"Welcome to the project! Fork this repo and add your card below."</p>
+                <a href="https://github.com/Jayanta2004" class="card-btn" target="_blank">
+                    <i class="fab fa-github"></i> GitHub
+                </a>
+            </div>
         </div>
 
         <!-- 👇 CONTRIBUTORS: START COPYING FROM HERE 👇 -->
         <!-- This is the TEMPLATE card - copy this entire block and paste it below -->
         <div class="card">
-            <img src="images/user.png" alt="User Photo" class="card-img">
-            <h2>Contributor Name</h2>
-            <span class="role">Developer</span>
-            <p>"I learned how to make a Pull Request today!"</p>
-            <a href="#" class="card-btn" target="_blank">View Profile</a>
+            <div class="card-inner">
+                <img src="images/user.png" alt="User Photo" class="card-img">
+                <h2>Contributor Name</h2>
+                <span class="role">Developer</span>
+                <p>"I learned how to make a Pull Request today!"</p>
+                <a href="#" class="card-btn" target="_blank">
+                    <i class="fas fa-external-link-alt"></i> View Profile
+                </a>
+            </div>
         </div>
         <!-- 👆 CONTRIBUTORS: END COPYING HERE 👆 -->
 
@@ -404,8 +425,30 @@
             <a href="https://github.com/Vrishti-vibes" class="card-btn" target="_blank">GitHub</a>
         </div>
 
-      
-      
+        <div class="card">
+            <img src="images/Deepjyoti-coder.jpg" alt="Deepjyoti's Photo" class="card-img">
+            <h2>Deepjyoti Saha</h2>
+            <span class="role">Frontend + AI Explorer</span>
+            <p>"Hy there! Let's connect and build..."</p>
+            <a href="https://github.com/deepjyoti-coder" class="card-btn" target="_blank">GitHub</a>
+        </div>
+
+        <div class="card">
+            <img src="images/Yugendra-N.jpg" alt="Yugendra N" class="card-img">
+            <h2>Yugendra N</h2>
+            <span class="role">AIDS- Undergrad , Software Developer</span>
+            <p>"Developer passionate about learning and open source"</p>
+            <a href="https://github.com/Yugenjr" class="card-btn" target="_blank">GitHub</a>
+        </div>
+  
+        <div class="card">
+            <img src="images/JiyaBatra.jpg" alt="JiyaBatra's Photo" class="card-img">
+            <h2>JiyaBatra</h2>
+            <span class="role">Contributor</span>
+            <p>"Excited to contribute to open source!"</p>
+            <a href="https://github.com/JiyaBatra" class="card-btn" target="_blank">GitHub</a>
+        </div>
+        
       <!-- ADD YOUR NEW CARD ABOVE THIS COMMENT -->
 
     </div> <!-- End of card-container -->
@@ -419,6 +462,90 @@
         </p>
     </footer>
     <!-- FOOTER END -->
+<script>
+const container = document.querySelector(".card-container");
+const cards = Array.from(container.children);
+
+const searchInput = document.getElementById("searchInput");
+const roleFilter = document.getElementById("roleFilter");
+const sortSelect = document.getElementById("sortSelect");
+const resetBtn = document.getElementById("resetFilters");
+
+// Apply search + role filter
+function applyFilters() {
+    const searchText = searchInput.value.toLowerCase();
+    const roleValue = roleFilter.value;
+
+    cards.forEach(card => {
+        const name = card.querySelector("h2").innerText.toLowerCase();
+        const role = card.querySelector(".role")?.innerText.toLowerCase() || "";
+
+        const matchesSearch = name.includes(searchText);
+        const matchesRole =
+            roleValue === "all" || role.includes(roleValue);
+
+        card.style.display =
+            matchesSearch && matchesRole ? "block" : "none";
+    });
+}
+
+// Sorting
+function applySorting() {
+    let visibleCards = cards.filter(card => card.style.display !== "none");
+
+    if (sortSelect.value === "az") {
+        visibleCards.sort((a, b) =>
+            a.querySelector("h2").innerText.localeCompare(
+                b.querySelector("h2").innerText
+            )
+        );
+    }
+
+    if (sortSelect.value === "za") {
+        visibleCards.sort((a, b) =>
+            b.querySelector("h2").innerText.localeCompare(
+                a.querySelector("h2").innerText
+            )
+        );
+    }
+
+    if (sortSelect.value === "newest") {
+        visibleCards.reverse();
+    }
+
+    visibleCards.forEach(card => container.appendChild(card));
+}
+
+// Reset
+resetBtn.addEventListener("click", () => {
+    searchInput.value = "";
+    roleFilter.value = "all";
+    sortSelect.value = "default";
+
+    cards.forEach(card => {
+        card.style.display = "block";
+        container.appendChild(card);
+    });
+});
+
+// Events
+searchInput.addEventListener("input", () => {
+    applyFilters();
+    applySorting();
+});
+
+roleFilter.addEventListener("change", () => {
+    applyFilters();
+    applySorting();
+});
+
+sortSelect.addEventListener("change", applySorting);
+</script>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
     <script>
         const hamburger = document.getElementById("hamburger");
@@ -429,19 +556,76 @@
         });
     </script>
 
-    <!-- 🔍 SEARCH FILTER SCRIPT (ADDED) -->
+    <!-- 🔍 ENHANCED SEARCH & FILTER SCRIPT -->
     <script>
+        let currentFilter = 'all';
+        let currentSearch = '';
+
         function filterCards() {
-            const input = document.getElementById("searchInput").value.toLowerCase();
+            currentSearch = document.getElementById("searchInput").value.toLowerCase();
+            applyFilters();
+        }
+
+        function filterByRole(role) {
+            currentFilter = role;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            applyFilters();
+        }
+
+        function applyFilters() {
             const cards = document.querySelectorAll(".card");
+            const noResults = document.getElementById("noResults");
+            let visibleCount = 0;
 
             cards.forEach(card => {
                 const name = card.querySelector("h2").innerText.toLowerCase();
-                card.style.display = name.includes(input) ? "block" : "none";
+                const role = card.querySelector(".role").innerText.toLowerCase();
+                
+                const matchesSearch = name.includes(currentSearch);
+                const matchesFilter = currentFilter === 'all' || 
+                    (currentFilter === 'developer' && role.includes('developer')) ||
+                    (currentFilter === 'contributor' && role.includes('contributor')) ||
+                    (currentFilter === 'maintainer' && role.includes('maintainer'));
+                
+                if (matchesSearch && matchesFilter) {
+                    card.style.display = "block";
+                    card.classList.add('loading');
+                    visibleCount++;
+                } else {
+                    card.style.display = "none";
+                }
+            });
+
+            // Show/hide no results message
+            if (visibleCount === 0) {
+                noResults.classList.add('show');
+            } else {
+                noResults.classList.remove('show');
+            }
+        }
+
+        // Scroll to Top Functionality
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
             });
         }
 
-
+        window.addEventListener('scroll', () => {
+            const scrollBtn = document.getElementById('scrollToTop');
+            if (window.pageYOffset > 300) {
+                scrollBtn.classList.add('show');
+            } else {
+                scrollBtn.classList.remove('show');
+            }
+        });
     </script>
 
     <script>
@@ -506,19 +690,27 @@
     </script>
 
 <script>
-/* ---------- SORT CARDS SCRIPT ---------- */
+/* ---------- ENHANCED SORT CARDS SCRIPT ---------- */
 const container = document.querySelector(".card-container");
-const originalCards = Array.from(container.children);
+let originalCards = Array.from(container.children);
 
 function sortCards() {
     const value = document.getElementById("sortSelect")?.value;
     if (!value) return;
 
-    let cards = Array.from(container.children);
+    // Get only visible cards
+    let cards = Array.from(container.children).filter(card => 
+        card.style.display !== 'none'
+    );
 
     if (value === "default") {
+        // Restore original order for visible cards
         container.innerHTML = "";
-        originalCards.forEach(card => container.appendChild(card));
+        originalCards.forEach(card => {
+            if (card.style.display !== 'none') {
+                container.appendChild(card);
+            }
+        });
         return;
     }
 
@@ -540,9 +732,20 @@ function sortCards() {
         cards.reverse();
     }
 
-    container.innerHTML = "";
-    cards.forEach(card => container.appendChild(card));
+    // Reorder visible cards
+    cards.forEach(card => {
+        container.appendChild(card);
+    });
 }
+
+// Add stagger animation on load
+document.addEventListener('DOMContentLoaded', () => {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.05}s`;
+        card.classList.add('loading');
+    });
+});
 </script>
 
 <script>
@@ -606,7 +809,17 @@ function updateContributorStats() {
     animateValue(document.getElementById("maintainerCount"), 0, maintainer, 800);
 }
 
-document.addEventListener("DOMContentLoaded", updateContributorStats);
+document.addEventListener("DOMContentLoaded", () => {
+    updateContributorStats();
+    
+    // Hide page loader after content loads
+    setTimeout(() => {
+        const loader = document.getElementById('pageLoader');
+        if (loader) {
+            loader.classList.add('hidden');
+        }
+    }, 500);
+});
 </script>
 
 <!-- 🎲 RANDOM CARD SCRIPT -->
