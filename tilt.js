@@ -74,3 +74,113 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   });
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImage = document.getElementById('imagePreview');
+    const dropZoneContent = document.getElementById('dropZoneContent');
+    const removeBtn = document.getElementById('removeBtn');
+    const replaceBtn = document.getElementById('replaceBtn');
+    const errorMsg = document.getElementById('errorMsg');
+
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+    // Trigger file input
+    dropZone.addEventListener('click', (e) => {
+        if (e.target !== removeBtn && !removeBtn.contains(e.target)) {
+            fileInput.click();
+        }
+    });
+
+    // Handle File Selection
+    fileInput.addEventListener('change', function() {
+        handleFiles(this.files[0]);
+    });
+
+    // Drag and Drop Logic
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        handleFiles(dt.files[0]);
+    });
+
+    function handleFiles(file) {
+        if (!file) return;
+
+        errorMsg.textContent = ""; // Clear errors
+
+        // Validation
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            showError("Invalid file type. Please upload JPG, PNG, or WEBP.");
+            return;
+        }
+
+        if (file.size > MAX_SIZE) {
+            showError("File is too large. Max size is 2MB.");
+            return;
+        }
+
+        // Preview Logic
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            previewImage.src = reader.result;
+            showPreview(true);
+        };
+    }
+
+    function showPreview(hasImage) {
+        if (hasImage) {
+            dropZoneContent.style.opacity = "0";
+            setTimeout(() => {
+                dropZoneContent.style.display = "none";
+                previewContainer.style.display = "block";
+                setTimeout(() => previewContainer.classList.add('show'), 10);
+            }, 300);
+            removeBtn.disabled = false;
+        } else {
+            previewContainer.classList.remove('show');
+            setTimeout(() => {
+                previewContainer.style.display = "none";
+                dropZoneContent.style.display = "block";
+                setTimeout(() => dropZoneContent.style.opacity = "1", 10);
+                previewImage.src = "";
+            }, 300);
+            removeBtn.disabled = true;
+            fileInput.value = "";
+        }
+    }
+
+    function showError(msg) {
+        errorMsg.textContent = msg;
+        // Animation for error
+        errorMsg.style.animation = "shake 0.5s ease";
+        setTimeout(() => errorMsg.style.animation = "", 500);
+    }
+
+    removeBtn.addEventListener('click', () => showPreview(false));
+    replaceBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+    });
+});
