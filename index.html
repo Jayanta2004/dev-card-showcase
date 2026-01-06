@@ -782,7 +782,61 @@
             }, 500);
         });
     </script>
-    <!-- 🔼 Scroll To Top Floating Action Button -->
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="copyToast">
+        <i class="fas fa-check-circle"></i>
+        <span>Profile URL Copied!</span>
+    </div>
+
+    <script>
+        /* =========================================
+           COPY TO CLIPBOARD LOGIC
+           ========================================= */
+        document.addEventListener("DOMContentLoaded", () => {
+            const toast = document.getElementById("copyToast");
+            let toastTimeout;
+
+            function showToast() {
+                toast.classList.add("show");
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove("show");
+                }, 3000);
+            }
+
+            // Inject Copy Buttons into Cards
+            const cards = document.querySelectorAll(".card");
+            cards.forEach(card => {
+                // Avoid adding if already exists (for robustness)
+                if (card.querySelector(".copy-btn")) return;
+
+                // Find the profile link
+                const profileLink = card.querySelector("a.card-btn")?.href;
+                if (!profileLink) return;
+
+                const copyBtn = document.createElement("button");
+                copyBtn.className = "copy-btn";
+                copyBtn.innerHTML = '<i class="far fa-copy"></i>';
+                copyBtn.title = "Copy Profile URL";
+                copyBtn.onclick = (e) => {
+                    e.stopPropagation(); // Prevent card click event if any
+                    e.preventDefault();
+
+                    navigator.clipboard.writeText(profileLink).then(() => {
+                        showToast();
+                        copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '<i class="far fa-copy"></i>';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error("Failed to copy: ", err);
+                    });
+                };
+
+                card.appendChild(copyBtn);
+            });
+        });
+    </script>
     <button id="scrollToTopBtn" aria-label="Scroll to top">
         ⬆
     </button>
