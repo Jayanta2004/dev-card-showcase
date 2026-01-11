@@ -8,11 +8,15 @@ Whether you’re fixing a typo, improving UI, optimizing backend logic, or addin
 
 ## 📚 Table of Contents
 
-- [How You Can Contribute](#How-You-Can-Contribute)
-- [Issue Assignment](#issue-assignment)
-- [Tech Stack Overview](#tech-stack-overview)
-- [Getting Started](#getting-started)
-- [UI & UX Contributions](#ui--ux-contributions)
+- [🚀 How You Can Contribute](#-how-you-can-contribute)
+- [📌 Issue Assignment](#-issue-assignment)
+- [🛠 Tech Stack Overview](#-tech-stack-overview)
+  - [🗺 Contribution Map (File Responsibility Guide)](#-contribution-map-file-responsibility-guide)
+    - [🔹 Common Contribution Types \& Where to Edit](#-common-contribution-types--where-to-edit)
+    - [⚠️ Important Notes](#️-important-notes)
+- [📦 Getting Started](#-getting-started)
+    - [🎨 UI \& UX Contributions](#-ui--ux-contributions)
+- [Questions?](#questions)
 
 
 # 🚀 How You Can Contribute
@@ -41,7 +45,50 @@ Before contributing, it helps to know what we’re working with:
   - CSS3 – Styling, layout, responsiveness, and custom card designs
   - JavaScript (ES6) – Basic interactivity (if any enhancements are added)
   - Git & GitHub – Version control and open-source collaboration
+
 ---
+
+## 🗺 Contribution Map (File Responsibility Guide)
+
+This section helps contributors understand **which files and folders are responsible for what**, so you can make changes in the correct place without confusion.
+
+### 🔹 Common Contribution Types & Where to Edit
+
+- **Profile Cards**
+  - Modify: `index.html`
+  - Add images to: `images/`
+  - ⚠️ Follow the exact template and image rules
+
+- **Projects / Showcases**
+  - Modify: `projects/`
+  - Update metadata in: `projects.json`
+
+- **UI / Styling Fixes**
+  - Modify: `style.css` or files inside `css/`
+  - Do **not** change HTML unless absolutely necessary
+
+- **JavaScript / Interactivity**
+  - Modify relevant `.js` files (e.g., `tilt.js`)
+  - Keep changes minimal and well-documented
+
+- **Documentation**
+  - Modify: `README.md`, `CONTRIBUTING.md`
+  - Ideal for first-time contributors
+
+- **Bug Fixes**
+  - Modify only the files related to the bug
+  - Mention the affected files clearly in your PR description
+
+### ⚠️ Important Notes
+- Please **do not edit unrelated files**
+- Avoid modifying `index.html` unless your contribution specifically requires it
+- If you’re unsure where to make changes, **open an issue or ask maintainers first**
+
+This guide exists to reduce invalid PRs and make contributions smoother for everyone.
+
+---
+
+
 # 📦 Getting Started
 
 **1️⃣ Fork the Repository**
