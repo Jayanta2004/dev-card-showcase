@@ -8,11 +8,13 @@ Whether you’re fixing a typo, improving UI, optimizing backend logic, or addin
 
 ## 📚 Table of Contents
 
-- [How You Can Contribute](#How-You-Can-Contribute)
-- [Issue Assignment](#issue-assignment)
-- [Tech Stack Overview](#tech-stack-overview)
-- [Getting Started](#getting-started)
-- [UI & UX Contributions](#ui--ux-contributions)
+- [🚀 How You Can Contribute](#-how-you-can-contribute)
+  - [🧭 Where Should I Edit? (Quick Reference)](#-where-should-i-edit-quick-reference)
+- [📌 Issue Assignment](#-issue-assignment)
+- [🛠 Tech Stack Overview](#-tech-stack-overview)
+- [📦 Getting Started](#-getting-started)
+    - [🎨 UI \& UX Contributions](#-ui--ux-contributions)
+- [Questions?](#questions)
 
 
 # 🚀 How You Can Contribute
@@ -29,7 +31,28 @@ You can contribute in many ways:
 If you’re unsure where to start, check the Issues tab for:
 - good first issue
 - help wanted
+
 ---
+
+## 🧭 Where Should I Edit? (Quick Reference)
+
+Not sure which file to modify? Use the table below to quickly find the right place for your contribution:
+
+| Contribution Type | What You Want To Do | Files / Folders To Edit |
+|-------------------|-------------------|--------------------------|
+| Add Profile Card | Add your profile card | `index.html`, `images/` |
+| Add Project | Showcase a new project | `projects/`, `projects.json` |
+| UI / Styling Fix | Improve layout or visuals | `style.css`, `about.css`, `css/` |
+| JavaScript Logic | Add or fix interactivity | `tilt.js`, other `.js` files |
+| Documentation | Improve guides or instructions | `README.md`, `CONTRIBUTING.md` |
+| Bug Fix | Fix broken behavior | Relevant `.html`, `.css`, `.js` files |
+| New Feature | Add new functionality | Open an issue first |
+
+> ⚠️ **Important:** Please do not edit files unrelated to your contribution.  
+> If you’re unsure, ask in the issue or start a discussion before proceeding.
+
+---
+
 # 📌 Issue Assignment
 - Please comment on an issue before starting work.
 - Wait for a maintainer to assign the issue to you.
