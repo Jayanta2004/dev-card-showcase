@@ -26,8 +26,16 @@ Describe the tests you ran to verify your changes.
 
 ---
 
-## 📸 Screenshots (if applicable)
-Add screenshots or screen recordings to show UI changes.
+## 📸 Screenshots Checklist (Mandatory)
+
+Please confirm that you have added the required screenshots:
+
+- [ ] Desktop view
+- [ ] Mobile view
+- [ ] Before changes (for bug fixes)
+- [ ] After changes
+
+> PRs without required screenshots may be delayed or closed.
 
 ---
 
