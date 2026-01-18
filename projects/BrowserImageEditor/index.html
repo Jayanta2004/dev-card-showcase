@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageCanvas: Browser Image Editor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-camera-retro"></i>
+                    <h1>ImageCanvas</h1>
+                </div>
+                <div class="theme-toggle">
+                    <span>Theme:</span>
+                    <button id="themeToggle" class="theme-btn">
+                        <i class="fas fa-moon"></i> Dark
+                    </button>
+                </div>
+            </div>
+            <p class="tagline">Edit images securely in your browser. No uploads, no privacy risks.</p>
+        </header>
+
+        <main>
+            <div class="app-container">
+                <!-- Left Panel: Upload & Controls -->
+                <div class="left-panel">
+                    <div class="upload-section card">
+                        <h2><i class="fas fa-cloud-upload-alt"></i> Upload Image</h2>
+                        <div class="upload-area" id="uploadArea">
+                            <i class="fas fa-image"></i>
+                            <p>Drag & drop an image or click to browse</p>
+                            <input type="file" id="imageInput" accept="image/*">
+                        </div>
+                        <div class="image-info" id="imageInfo">
+                            <p><span>Name:</span> <span id="fileName">-</span></p>
+                            <p><span>Size:</span> <span id="fileSize">-</span></p>
+                            <p><span>Dimensions:</span> <span id="fileDimensions">-</span></p>
+                        </div>
+                    </div>
+
+                    <div class="controls-section">
+                        <!-- Geometric Transformations -->
+                        <div class="card control-group">
+                            <h3><i class="fas fa-expand-alt"></i> Geometric Transformations</h3>
+                            <div class="button-group">
+                                <button id="rotateLeft" class="btn"><i class="fas fa-undo"></i> Rotate Left</button>
+                                <button id="rotateRight" class="btn"><i class="fas fa-redo"></i> Rotate Right</button>
+                            </div>
+                            <div class="button-group">
+                                <button id="flipHorizontal" class="btn"><i class="fas fa-arrows-alt-h"></i> Flip Horizontal</button>
+                                <button id="flipVertical" class="btn"><i class="fas fa-arrows-alt-v"></i> Flip Vertical</button>
+                            </div>
+                            <div class="crop-controls">
+                                <h4>Crop</h4>
+                                <div class="crop-inputs">
+                                    <div class="input-group">
+                                        <label for="cropX">X:</label>
+                                        <input type="number" id="cropX" min="0" value="0">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cropY">Y:</label>
+                                        <input type="number" id="cropY" min="0" value="0">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cropWidth">Width:</label>
+                                        <input type="number" id="cropWidth" min="1" value="300">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cropHeight">Height:</label>
+                                        <input type="number" id="cropHeight" min="1" value="300">
+                                    </div>
+                                </div>
+                                <button id="applyCrop" class="btn btn-primary"><i class="fas fa-crop"></i> Apply Crop</button>
+                            </div>
+                        </div>
+
+                        <!-- Adjustment Filters -->
+                        <div class="card control-group">
+                            <h3><i class="fas fa-sliders-h"></i> Adjustment Filters</h3>
+                            <div class="slider-group">
+                                <label for="brightness">Brightness: <span id="brightnessValue">100%</span></label>
+                                <input type="range" id="brightness" min="0" max="200" value="100">
+                            </div>
+                            <div class="slider-group">
+                                <label for="contrast">Contrast: <span id="contrastValue">100%</span></label>
+                                <input type="range" id="contrast" min="0" max="200" value="100">
+                            </div>
+                            <div class="slider-group">
+                                <label for="saturation">Saturation: <span id="saturationValue">100%</span></label>
+                                <input type="range" id="saturation" min="0" max="200" value="100">
+                            </div>
+                            <div class="slider-group">
+                                <label for="grayscale">Grayscale: <span id="grayscaleValue">0%</span></label>
+                                <input type="range" id="grayscale" min="0" max="100" value="0">
+                            </div>
+                            <button id="resetFilters" class="btn btn-secondary"><i class="fas fa-undo-alt"></i> Reset Filters</button>
+                        </div>
+
+                        <!-- Resize & Compress -->
+                        <div class="card control-group">
+                            <h3><i class="fas fa-compress-alt"></i> Resize & Compress</h3>
+                            <div class="resize-controls">
+                                <div class="input-group">
+                                    <label for="resizeWidth">Width (px):</label>
+                                    <input type="number" id="resizeWidth" min="1" value="800">
+                                </div>
+                                <div class="input-group">
+                                    <label for="resizeHeight">Height (px):</label>
+                                    <input type="number" id="resizeHeight" min="1" value="600">
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="maintainAspect">
+                                    <label for="maintainAspect">Maintain Aspect Ratio</label>
+                                </div>
+                            </div>
+                            <div class="slider-group">
+                                <label for="quality">Quality: <span id="qualityValue">90%</span></label>
+                                <input type="range" id="quality" min="10" max="100" value="90">
+                            </div>
+                            <button id="applyResize" class="btn btn-primary"><i class="fas fa-expand-arrows-alt"></i> Apply Resize</button>
+                        </div>
+
+                        <!-- Watermarking -->
+                        <div class="card control-group">
+                            <h3><i class="fas fa-water"></i> Watermarking</h3>
+                            <div class="input-group">
+                                <label for="watermarkText">Watermark Text:</label>
+                                <input type="text" id="watermarkText" placeholder="Enter copyright text" value="© ImageCanvas">
+                            </div>
+                            <div class="slider-group">
+                                <label for="watermarkOpacity">Opacity: <span id="watermarkOpacityValue">70%</span></label>
+                                <input type="range" id="watermarkOpacity" min="10" max="100" value="70">
+                            </div>
+                            <div class="slider-group">
+                                <label for="watermarkSize">Size: <span id="watermarkSizeValue">24</span>px</label>
+                                <input type="range" id="watermarkSize" min="10" max="72" value="24">
+                            </div>
+                            <div class="button-group">
+                                <button id="addWatermark" class="btn btn-primary"><i class="fas fa-plus"></i> Add Watermark</button>
+                                <button id="removeWatermark" class="btn btn-secondary"><i class="fas fa-minus"></i> Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Panel: Canvas Preview -->
+                <div class="center-panel">
+                    <div class="canvas-container card">
+                        <h2><i class="fas fa-eye"></i> Preview</h2>
+                        <div class="canvas-wrapper">
+                            <canvas id="imageCanvas"></canvas>
+                            <div class="canvas-placeholder" id="canvasPlaceholder">
+                                <i class="fas fa-image"></i>
+                                <p>Your edited image will appear here</p>
+                            </div>
+                        </div>
+                        <div class="canvas-controls">
+                            <button id="zoomIn" class="btn btn-icon"><i class="fas fa-search-plus"></i></button>
+                            <button id="zoomOut" class="btn btn-icon"><i class="fas fa-search-minus"></i></button>
+                            <button id="resetZoom" class="btn btn-icon"><i class="fas fa-sync-alt"></i></button>
+                            <span class="zoom-level">Zoom: <span id="zoomValue">100%</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Download Handler -->
+                    <div class="download-section card">
+                        <h3><i class="fas fa-download"></i> Export Image</h3>
+                        <div class="download-controls">
+                            <div class="format-selector">
+                                <label for="formatSelect">Format:</label>
+                                <select id="formatSelect">
+                                    <option value="png">PNG (High Quality)</option>
+                                    <option value="jpeg">JPEG (Compressed)</option>
+                                </select>
+                            </div>
+                            <div class="download-buttons">
+                                <button id="downloadBtn" class="btn btn-success"><i class="fas fa-file-download"></i> Download Image</button>
+                                <button id="copyBtn" class="btn btn-secondary"><i class="far fa-copy"></i> Copy to Clipboard</button>
+                            </div>
+                        </div>
+                        <div class="file-info" id="downloadInfo">
+                            <p>Estimated size: <span id="estimatedSize">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>ImageCanvas &copy; 2023 | All processing happens in your browser. No data is sent to any server.</p>
+            <p class="footer-links">
+                <a href="#" id="resetAllBtn"><i class="fas fa-redo"></i> Reset All</a>
+                <a href="#" id="helpBtn"><i class="fas fa-question-circle"></i> Help</a>
+                <a href="#" id="aboutBtn"><i class="fas fa-info-circle"></i> About</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-question-circle"></i> Help & Tips</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>How to use ImageCanvas:</h3>
+                <ul>
+                    <li><strong>Upload:</strong> Drag & drop an image or click the upload area to browse</li>
+                    <li><strong>Transform:</strong> Rotate, flip, or crop your image using the controls</li>
+                    <li><strong>Adjust:</strong> Use sliders to adjust brightness, contrast, saturation, and grayscale</li>
+                    <li><strong>Resize:</strong> Change image dimensions and quality for web optimization</li>
+                    <li><strong>Watermark:</strong> Add copyright text with customizable size and opacity</li>
+                    <li><strong>Export:</strong> Download in PNG or JPEG format or copy to clipboard</li>
+                </ul>
+                <p><strong>Privacy Note:</strong> All processing happens locally in your browser. No images are uploaded to any server.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div class="modal" id="aboutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-info-circle"></i> About ImageCanvas</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>ImageCanvas is a lightweight but powerful image manipulation tool that processes images entirely within the browser's memory using the Canvas API.</p>
+                <p>It offers essential editing capabilities without the privacy risk or latency of uploading photos to a cloud server.</p>
+                <h3>Key Features:</h3>
+                <ul>
+                    <li><strong>Geometric Transformations:</strong> Rotate, Flip (Mirror), and Crop functionality</li>
+                    <li><strong>Adjustment Filters:</strong> Sliders for Brightness, Contrast, Saturation, and Grayscale</li>
+                    <li><strong>Resize & Compress:</strong> Reduce image dimensions or quality to lower file size</li>
+                    <li><strong>Watermarking:</strong> Add custom text overlay for copyright protection</li>
+                    <li><strong>Download Handler:</strong> Export the modified blob as PNG or JPG</li>
+                </ul>
+                <p><strong>Tech Stack:</strong> HTML5 Canvas API, CSS, JavaScript</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

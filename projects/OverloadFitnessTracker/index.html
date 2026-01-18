@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progressive Overload Tracker | Gym Progress & Workout Log</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Slab:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💪</text></svg>">
+</head>
+
+<body>
+    <!-- Confetti Overlay for PR Celebration -->
+    <div id="confetti-container"></div>
+
+    <!-- Rest Timer Modal -->
+    <div id="rest-timer-modal" class="modal">
+        <div class="modal-content timer-modal">
+            <div class="timer-header">
+                <h2><i class="fas fa-clock"></i> Rest Timer</h2>
+                <button id="close-timer" class="close-btn">&times;</button>
+            </div>
+            <div class="timer-display">
+                <div class="timer-circle">
+                    <div class="timer-progress"></div>
+                    <div class="timer-text">
+                        <span id="timer-minutes">01</span>:<span id="timer-seconds">30</span>
+                    </div>
+                </div>
+                <div class="timer-controls">
+                    <button id="timer-start" class="timer-btn start-btn">
+                        <i class="fas fa-play"></i> Start
+                    </button>
+                    <button id="timer-pause" class="timer-btn pause-btn" disabled>
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button id="timer-reset" class="timer-btn reset-btn">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
+            </div>
+            <div class="preset-times">
+                <h3>Quick Set Rest Times</h3>
+                <div class="preset-buttons">
+                    <button class="preset-btn" data-seconds="60">1:00</button>
+                    <button class="preset-btn" data-seconds="90">1:30</button>
+                    <button class="preset-btn" data-seconds="120">2:00</button>
+                    <button class="preset-btn" data-seconds="180">3:00</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Exercise Modal -->
+    <div id="add-exercise-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-dumbbell"></i> Add New Exercise</h2>
+                <button id="close-exercise-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="exercise-name">Exercise Name</label>
+                    <input type="text" id="exercise-name" placeholder="e.g., Barbell Bench Press">
+                </div>
+                <div class="form-group">
+                    <label for="exercise-category">Category</label>
+                    <select id="exercise-category">
+                        <option value="Chest">Chest</option>
+                        <option value="Back">Back</option>
+                        <option value="Legs">Legs</option>
+                        <option value="Shoulders">Shoulders</option>
+                        <option value="Arms">Arms</option>
+                        <option value="Core">Core</option>
+                        <option value="Full Body">Full Body</option>
+                        <option value="Cardio">Cardio</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="exercise-notes">Notes (Optional)</label>
+                    <textarea id="exercise-notes" placeholder="Add any specific cues or form reminders..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-exercise" class="btn btn-secondary">Cancel</button>
+                    <button id="save-exercise" class="btn btn-primary">Add Exercise</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Routine Modal -->
+    <div id="create-routine-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-clipboard-list"></i> Create New Routine</h2>
+                <button id="close-routine-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="routine-name">Routine Name</label>
+                    <input type="text" id="routine-name" placeholder="e.g., Upper Body Power">
+                </div>
+                <div class="form-group">
+                    <label>Select Exercises</label>
+                    <div id="routine-exercises-list" class="exercises-selection-list">
+                        <!-- Exercises will be populated here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-routine" class="btn btn-secondary">Cancel</button>
+                    <button id="save-routine" class="btn btn-primary">Save Routine</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-top">
+                <div class="logo">
+                    <i class="fas fa-dumbbell"></i>
+                    <h1>Progressive Overload Tracker</h1>
+                </div>
+                <div class="header-actions">
+                    <div class="today-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="current-date">Loading...</span>
+                    </div>
+                    <button id="toggle-theme" class="theme-toggle">
+                        <i class="fas fa-moon"></i>
+                        <span>Dark Mode</span>
+                    </button>
+                </div>
+            </div>
+            <p class="subtitle">Track your lifts, beat your records, and ensure consistent strength gains</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="app-nav">
+            <ul class="nav-tabs">
+                <li class="nav-item active" data-tab="live-session">
+                    <i class="fas fa-fire"></i>
+                    <span>Live Session</span>
+                </li>
+                <li class="nav-item" data-tab="routines">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Routines</span>
+                </li>
+                <li class="nav-item" data-tab="progress">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Progress</span>
+                </li>
+                <li class="nav-item" data-tab="history">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Live Session Tab -->
+            <section id="live-session" class="tab-content active">
+                <div class="session-header">
+                    <h2><i class="fas fa-dumbbell"></i> Current Workout</h2>
+                    <div class="session-controls">
+                        <button id="start-new-session" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> New Session
+                        </button>
+                        <button id="open-rest-timer" class="btn btn-secondary">
+                            <i class="fas fa-clock"></i> Rest Timer
+                        </button>
+                        <button id="end-session" class="btn btn-danger">
+                            <i class="fas fa-stop"></i> End Session
+                        </button>
+                    </div>
+                </div>
+
+                <div class="session-info">
+                    <div class="session-meta">
+                        <div class="session-item">
+                            <span class="session-label">Routine:</span>
+                            <select id="session-routine" class="session-select">
+                                <option value="">Select Routine</option>
+                                <option value="push">Push Day</option>
+                                <option value="pull">Pull Day</option>
+                                <option value="legs">Leg Day</option>
+                                <option value="upper">Upper Body</option>
+                                <option value="lower">Lower Body</option>
+                            </select>
+                        </div>
+                        <div class="session-item">
+                            <span class="session-label">Duration:</span>
+                            <span id="session-timer">00:00:00</span>
+                        </div>
+                        <div class="session-item">
+                            <span class="session-label">Exercises:</span>
+                            <span id="session-exercise-count">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercises in Current Session -->
+                <div class="session-exercises-container">
+                    <div class="section-header">
+                        <h3>Today's Exercises</h3>
+                        <button id="add-exercise-btn" class="btn btn-outline">
+                            <i class="fas fa-plus-circle"></i> Add Exercise
+                        </button>
+                    </div>
+
+                    <div id="session-exercises" class="session-exercises">
+                        <!-- Exercises will be dynamically added here -->
+                        <div class="empty-state">
+                            <i class="fas fa-dumbbell"></i>
+                            <h4>No exercises added yet</h4>
+                            <p>Start by adding your first exercise or select a routine</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Routines Tab -->
+            <section id="routines" class="tab-content">
+                <div class="routines-header">
+                    <h2><i class="fas fa-clipboard-list"></i> Workout Routines</h2>
+                    <button id="create-routine-btn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create New Routine
+                    </button>
+                </div>
+
+                <div class="routines-container">
+                    <!-- Routines will be dynamically added here -->
+                    <div class="empty-state" style="display: none;">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h4>No routines found</h4>
+                        <p>Create your first workout routine to get started</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Progress Tab -->
+            <section id="progress" class="tab-content">
+                <div class="progress-header">
+                    <h2><i class="fas fa-chart-line"></i> Strength Progress</h2>
+                    <div class="progress-filters">
+                        <select id="time-range" class="filter-select">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                            <option value="180">Last 6 Months</option>
+                            <option value="365">Last Year</option>
+                        </select>
+                        <select id="exercise-filter" class="filter-select">
+                            <option value="all">All Exercises</option>
+                            <option value="bench">Bench Press</option>
+                            <option value="squat">Squat</option>
+                            <option value="deadlift">Deadlift</option>
+                            <option value="ohp">Overhead Press</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="progress-grid">
+                    <div class="progress-card large">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-bar"></i> Training Volume Over Time</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="volume-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="progress-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-trophy"></i> Personal Records</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="pr-list">
+                                <div class="pr-item">
+                                    <div class="pr-exercise">Bench Press</div>
+                                    <div class="pr-details">
+                                        <span class="pr-weight">225 lbs</span>
+                                        <span class="pr-date">Mar 15, 2024</span>
+                                    </div>
+                                </div>
+                                <div class="pr-item">
+                                    <div class="pr-exercise">Squat</div>
+                                    <div class="pr-details">
+                                        <span class="pr-weight">315 lbs</span>
+                                        <span class="pr-date">Mar 10, 2024</span>
+                                    </div>
+                                </div>
+                                <div class="pr-item">
+                                    <div class="pr-exercise">Deadlift</div>
+                                    <div class="pr-details">
+                                        <span class="pr-weight">405 lbs</span>
+                                        <span class="pr-date">Mar 5, 2024</span>
+                                    </div>
+                                </div>
+                                <div class="pr-item">
+                                    <div class="pr-exercise">Overhead Press</div>
+                                    <div class="pr-details">
+                                        <span class="pr-weight">135 lbs</span>
+                                        <span class="pr-date">Feb 28, 2024</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="progress-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bullseye"></i> Progressive Overload Goals</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="goals-list">
+                                <div class="goal-item">
+                                    <div class="goal-info">
+                                        <span class="goal-name">Increase Bench Press</span>
+                                        <span class="goal-progress">85% complete</span>
+                                    </div>
+                                    <div class="goal-progress-bar">
+                                        <div class="goal-progress-fill" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <div class="goal-item">
+                                    <div class="goal-info">
+                                        <span class="goal-name">Add 10 lbs to Squat</span>
+                                        <span class="goal-progress">60% complete</span>
+                                    </div>
+                                    <div class="goal-progress-bar">
+                                        <div class="goal-progress-fill" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <div class="goal-item">
+                                    <div class="goal-info">
+                                        <span class="goal-name">Improve Deadlift Form</span>
+                                        <span class="goal-progress">40% complete</span>
+                                    </div>
+                                    <div class="goal-progress-bar">
+                                        <div class="goal-progress-fill" style="width: 40%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="progress-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-dumbbell"></i> Most Improved Exercises</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="improvement-list">
+                                <div class="improvement-item">
+                                    <div class="improvement-exercise">Incline Dumbbell Press</div>
+                                    <div class="improvement-stats">
+                                        <span class="improvement-value">+15%</span>
+                                        <span class="improvement-period">Last 30 days</span>
+                                    </div>
+                                </div>
+                                <div class="improvement-item">
+                                    <div class="improvement-exercise">Barbell Rows</div>
+                                    <div class="improvement-stats">
+                                        <span class="improvement-value">+12%</span>
+                                        <span class="improvement-period">Last 30 days</span>
+                                    </div>
+                                </div>
+                                <div class="improvement-item">
+                                    <div class="improvement-exercise">Romanian Deadlifts</div>
+                                    <div class="improvement-stats">
+                                        <span class="improvement-value">+10%</span>
+                                        <span class="improvement-period">Last 30 days</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Tab -->
+            <section id="history" class="tab-content">
+                <div class="history-header">
+                    <h2><i class="fas fa-history"></i> Workout History</h2>
+                    <div class="history-filters">
+                        <input type="date" id="history-date" class="filter-input">
+                        <select id="history-routine" class="filter-select">
+                            <option value="all">All Routines</option>
+                            <option value="push">Push Day</option>
+                            <option value="pull">Pull Day</option>
+                            <option value="legs">Leg Day</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="history-container">
+                    <!-- History will be dynamically added here -->
+                    <div id="history-list"></div>
+                    <div class="empty-state" id="history-empty-state" style="display: none;">
+                        <i class="fas fa-history"></i>
+                        <h4>No workout history</h4>
+                        <p>Complete a workout to see it here</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-stats">
+                    <div class="footer-stat">
+                        <span class="footer-stat-value" id="total-workouts">0</span>
+                        <span class="footer-stat-label">Total Workouts</span>
+                    </div>
+                    <div class="footer-stat">
+                        <span class="footer-stat-value" id="total-volume">0</span>
+                        <span class="footer-stat-label">Total Volume</span>
+                    </div>
+                    <div class="footer-stat">
+                        <span class="footer-stat-value" id="current-streak">0</span>
+                        <span class="footer-stat-label">Day Streak</span>
+                    </div>
+                    <div class="footer-stat">
+                        <span class="footer-stat-value" id="personal-records">0</span>
+                        <span class="footer-stat-label">Personal Records</span>
+                    </div>
+                </div>
+                <div class="footer-info">
+                    <p>Progressive Overload Tracker • What gets measured gets managed • Stay strong 💪</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
