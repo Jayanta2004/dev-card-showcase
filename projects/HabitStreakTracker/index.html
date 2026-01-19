@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitChain | Build Consistent Daily Habits</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⛓️</text></svg>">
+</head>
+<body>
+    <!-- New Habit Modal -->
+    <div id="new-habit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-plus-circle"></i> Create New Habit</h2>
+                <button id="close-new-habit-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="habit-name">
+                        <i class="fas fa-pencil-alt"></i> Habit Name
+                    </label>
+                    <input type="text" id="habit-name" placeholder="e.g., Morning Run, Meditation, Reading">
+                </div>
+                
+                <div class="form-group">
+                    <label for="habit-category">
+                        <i class="fas fa-tag"></i> Category
+                    </label>
+                    <select id="habit-category">
+                        <option value="health">Health & Fitness</option>
+                        <option value="learning">Learning & Skills</option>
+                        <option value="productivity">Productivity</option>
+                        <option value="mindfulness">Mindfulness</option>
+                        <option value="creative">Creative</option>
+                        <option value="social">Social</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="habit-difficulty">
+                        <i class="fas fa-chart-line"></i> Difficulty Level
+                    </label>
+                    <div class="difficulty-options">
+                        <div class="difficulty-option" data-level="1">
+                            <span class="difficulty-label">Easy</span>
+                            <div class="difficulty-dots">
+                                <div class="dot"></div>
+                                <div class="dot inactive"></div>
+                                <div class="dot inactive"></div>
+                                <div class="dot inactive"></div>
+                                <div class="dot inactive"></div>
+                            </div>
+                        </div>
+                        <div class="difficulty-option" data-level="3">
+                            <span class="difficulty-label">Medium</span>
+                            <div class="difficulty-dots">
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot inactive"></div>
+                                <div class="dot inactive"></div>
+                            </div>
+                        </div>
+                        <div class="difficulty-option" data-level="5">
+                            <span class="difficulty-label">Hard</span>
+                            <div class="difficulty-dots">
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="habit-difficulty" value="3">
+                </div>
+                
+                <div class="form-group">
+                    <label for="habit-target">
+                        <i class="fas fa-bullseye"></i> Daily Target (Optional)
+                    </label>
+                    <input type="text" id="habit-target" placeholder="e.g., 30 minutes, 10 pages, 1 hour">
+                </div>
+                
+                <div class="form-group">
+                    <label for="habit-reminder">
+                        <i class="fas fa-bell"></i> Daily Reminder
+                    </label>
+                    <div class="reminder-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="habit-reminder">
+                            <span>Enable daily reminder at</span>
+                        </label>
+                        <input type="time" id="reminder-time" value="20:00" disabled>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="habit-color">
+                        <i class="fas fa-palette"></i> Habit Color
+                    </label>
+                    <div class="color-options">
+                        <div class="color-option" style="background-color: #10b981;" data-color="#10b981"></div>
+                        <div class="color-option" style="background-color: #3b82f6;" data-color="#3b82f6"></div>
+                        <div class="color-option" style="background-color: #8b5cf6;" data-color="#8b5cf6"></div>
+                        <div class="color-option" style="background-color: #ef4444;" data-color="#ef4444"></div>
+                        <div class="color-option" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
+                        <div class="color-option" style="background-color: #ec4899;" data-color="#ec4899"></div>
+                    </div>
+                    <input type="hidden" id="habit-color" value="#10b981">
+                </div>
+                
+                <div class="modal-footer">
+                    <button id="cancel-new-habit" class="btn btn-secondary">Cancel</button>
+                    <button id="create-habit" class="btn btn-primary">Create Habit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="stats-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-bar"></i> Detailed Statistics</h2>
+                <button id="close-stats-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Consistency Score</h3>
+                            <div class="stat-value" id="detailed-consistency">0%</div>
+                            <div class="stat-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="consistency-progress"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Days Tracked</h3>
+                            <div class="stat-value" id="total-days-tracked">0</div>
+                            <div class="stat-subtext">Out of 365 days</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Best Month</h3>
+                            <div class="stat-value" id="best-month">-</div>
+                            <div class="stat-subtext" id="best-month-percentage">0% completion</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Monthly Trend</h3>
+                            <div class="trend-indicator" id="monthly-trend">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>Stable</span>
+                            </div>
+                            <div class="stat-subtext">Compared to last month</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-section">
+                    <h3><i class="fas fa-calendar-day"></i> Weekly Pattern</h3>
+                    <div class="weekday-stats">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="stats-section">
+                    <h3><i class="fas fa-history"></i> Milestones</h3>
+                    <div class="milestones-list">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-link"></i>
+                        <div class="chain-links">
+                            <div class="chain-link"></div>
+                            <div class="chain-link"></div>
+                            <div class="chain-link"></div>
+                        </div>
+                    </div>
+                    <div class="logo-text">
+                        <h1>HabitChain</h1>
+                        <p class="tagline">Don't Break the Chain • Build Consistent Habits</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="today-date">
+                        <i class="fas fa-calendar-day"></i>
+                        <span id="current-date">Loading...</span>
+                    </div>
+                    <button id="toggle-theme" class="theme-toggle">
+                        <i class="fas fa-moon"></i>
+                        <span>Dark Mode</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Habit Selection -->
+            <section class="habits-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-list-check"></i> Your Habits</h2>
+                    <button id="add-habit-btn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New Habit
+                    </button>
+                </div>
+                
+                <div class="habits-container" id="habits-container">
+                    <!-- Habits will be loaded here -->
+                </div>
+            </section>
+
+            <div class="content-wrapper">
+                <!-- Main Dashboard -->
+                <section class="dashboard-section">
+                    <div class="dashboard-header">
+                        <h2 id="current-habit-name">Select a Habit to Track</h2>
+                        <div class="dashboard-controls">
+                            <button id="view-stats" class="btn btn-outline" disabled>
+                                <i class="fas fa-chart-bar"></i> View Stats
+                            </button>
+                            <button id="freeze-day" class="btn btn-outline" disabled>
+                                <i class="fas fa-snowflake"></i> Freeze Streak
+                            </button>
+                            <div class="date-navigation">
+                                <button id="prev-year" class="nav-btn">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span id="current-year" class="year-display">2024</span>
+                                <button id="next-year" class="nav-btn">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Streak Stats -->
+                    <div class="streak-stats">
+                        <div class="streak-card current-streak">
+                            <div class="streak-header">
+                                <i class="fas fa-fire"></i>
+                                <h3>Current Streak</h3>
+                            </div>
+                            <div class="streak-value" id="current-streak-value">0 days</div>
+                            <div class="streak-details">
+                                <span id="streak-start-date">Start tracking to begin!</span>
+                            </div>
+                        </div>
+                        
+                        <div class="streak-card longest-streak">
+                            <div class="streak-header">
+                                <i class="fas fa-trophy"></i>
+                                <h3>Longest Streak</h3>
+                            </div>
+                            <div class="streak-value" id="longest-streak-value">0 days</div>
+                            <div class="streak-details">
+                                <span id="longest-streak-date">Your record will appear here</span>
+                            </div>
+                        </div>
+                        
+                        <div class="streak-card consistency">
+                            <div class="streak-header">
+                                <i class="fas fa-chart-line"></i>
+                                <h3>Consistency</h3>
+                            </div>
+                            <div class="streak-value" id="consistency-value">0%</div>
+                            <div class="streak-details">
+                                <span id="completion-rate">Last 30 days: 0%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="streak-card total-days">
+                            <div class="streak-header">
+                                <i class="fas fa-calendar-alt"></i>
+                                <h3>Total Days</h3>
+                            </div>
+                            <div class="streak-value" id="total-days-value">0</div>
+                            <div class="streak-details">
+                                <span id="days-tracked">Days completed this year</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Heatmap Grid -->
+                    <div class="heatmap-section">
+                        <div class="heatmap-header">
+                            <h3><i class="fas fa-calendar"></i> Annual Habit Heatmap</h3>
+                            <div class="heatmap-legend">
+                                <span class="legend-item">
+                                    <div class="legend-color empty"></div>
+                                    <span>Missed</span>
+                                </span>
+                                <span class="legend-item">
+                                    <div class="legend-color level-1"></div>
+                                    <span>Light</span>
+                                </span>
+                                <span class="legend-item">
+                                    <div class="legend-color level-2"></div>
+                                    <span>Moderate</span>
+                                </span>
+                                <span class="legend-item">
+                                    <div class="legend-color level-3"></div>
+                                    <span>Good</span>
+                                </span>
+                                <span class="legend-item">
+                                    <div class="legend-color level-4"></div>
+                                    <span>Great</span>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="heatmap-container">
+                            <div class="month-labels">
+                                <!-- Month labels will be generated by JavaScript -->
+                            </div>
+                            <div class="heatmap-grid" id="heatmap-grid">
+                                <!-- Heatmap will be generated by JavaScript -->
+                            </div>
+                            <div class="weekday-labels">
+                                <div class="weekday-label">Mon</div>
+                                <div class="weekday-label"></div>
+                                <div class="weekday-label">Wed</div>
+                                <div class="weekday-label"></div>
+                                <div class="weekday-label">Fri</div>
+                                <div class="weekday-label"></div>
+                                <div class="weekday-label">Sun</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Daily Check-in -->
+                    <div class="daily-checkin" id="daily-checkin">
+                        <div class="checkin-header">
+                            <h3><i class="fas fa-check-circle"></i> Today's Check-in</h3>
+                            <div class="today-info">
+                                <span id="today-date-display">Today, Month DD</span>
+                                <span class="streak-reminder" id="streak-reminder">Keep your streak alive!</span>
+                            </div>
+                        </div>
+                        
+                        <div class="checkin-content">
+                            <div class="checkin-placeholder" id="checkin-placeholder">
+                                <i class="fas fa-hand-pointer"></i>
+                                <p>Select a habit from above to start tracking</p>
+                            </div>
+                            
+                            <div class="checkin-active" id="checkin-active" style="display: none;">
+                                <div class="checkin-question">
+                                    <h4 id="today-habit-name">Habit Name</h4>
+                                    <p id="today-habit-target">Did you complete your habit today?</p>
+                                </div>
+                                
+                                <div class="checkin-options">
+                                    <div class="completion-options">
+                                        <button class="completion-btn not-completed" data-value="0">
+                                            <i class="fas fa-times"></i>
+                                            <span>Missed</span>
+                                        </button>
+                                        <button class="completion-btn partial" data-value="0.5">
+                                            <i class="fas fa-minus"></i>
+                                            <span>Partial</span>
+                                        </button>
+                                        <button class="completion-btn completed" data-value="1">
+                                            <i class="fas fa-check"></i>
+                                            <span>Completed</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="intensity-options" id="intensity-options" style="display: none;">
+                                        <div class="intensity-label">
+                                            <i class="fas fa-bolt"></i>
+                                            <span>Intensity Level</span>
+                                        </div>
+                                        <div class="intensity-slider-container">
+                                            <input type="range" id="intensity-slider" min="1" max="4" value="2" class="intensity-slider">
+                                            <div class="intensity-labels">
+                                                <span>Light</span>
+                                                <span>Moderate</span>
+                                                <span>Good</span>
+                                                <span>Great</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="notes-section">
+                                        <label for="daily-notes">
+                                            <i class="fas fa-sticky-note"></i> Daily Notes (Optional)
+                                        </label>
+                                        <textarea id="daily-notes" placeholder="How did it go? Any challenges or victories?"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="checkin-actions">
+                                    <button id="save-checkin" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Today's Entry
+                                    </button>
+                                    <button id="skip-today" class="btn btn-outline">
+                                        <i class="fas fa-forward"></i> Skip for Today
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="checkin-motivation">
+                            <div class="motivation-message" id="motivation-message">
+                                <i class="fas fa-quote-left"></i>
+                                <span>"Don't break the chain!" - Jerry Seinfeld</span>
+                                <i class="fas fa-quote-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recent History -->
+                <section class="history-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-history"></i> Recent History</h2>
+                        <div class="history-filters">
+                            <select id="history-range" class="filter-select">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                                <option value="all">All Time</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="history-container">
+                        <div class="history-placeholder" id="history-placeholder">
+                            <i class="fas fa-clock"></i>
+                            <p>Your habit history will appear here</p>
+                        </div>
+                        
+                        <div class="history-list" id="history-list" style="display: none;">
+                            <!-- History entries will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <div class="footer-logo">
+                        <i class="fas fa-link"></i>
+                        <span>HabitChain</span>
+                    </div>
+                    <p class="footer-tagline">Build habits that last • One day at a time</p>
+                </div>
+                <div class="footer-about">
+                    <h4>About the Seinfeld Strategy</h4>
+                    <p>Comedian Jerry Seinfeld's secret to success: mark an X on a calendar for each day you complete your habit. The goal is simple: <strong>don't break the chain</strong>.</p>
+                </div>
+                <div class="footer-links">
+                    <button id="export-data" class="footer-link">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                    <button id="import-data" class="footer-link">
+                        <i class="fas fa-upload"></i> Import Data
+                    </button>
+                    <button id="reset-data" class="footer-link danger">
+                        <i class="fas fa-trash"></i> Reset All Data
+                    </button>
+                </div>
+            </div>
+            <div class="footer-disclaimer">
+                <p><i class="fas fa-heart"></i> Built with <span class="heart">❤️</span> for building better habits. Your data is stored locally in your browser.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <i class="fas fa-check-circle"></i>
+            <span id="toast-message">Success!</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>
