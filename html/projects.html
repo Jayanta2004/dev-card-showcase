@@ -69,6 +69,8 @@
             <li><a href="bug-report.html">Bug Report</a></li>
             <li><a href="analytics.html">Analytics</a></li>
             <li><a href="roadmap.html">Roadmap</a></li>
+               <!-- Supoort Html page is been added -->
+        <li><a href="support.html">Support</a></li>
       </ul>
 
       <button id="themeToggle" class="theme-toggle">🌙</button>
@@ -121,16 +123,23 @@
     <!-- PROJECTS GRID -->
     <section class="projects-container" id="projectsContainer">
       <!-- Projects will be loaded dynamically via JavaScript -->
-      <div class="loading" style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">
+      <div
+        class="loading"
+        style="
+          grid-column: 1/-1;
+          text-align: center;
+          padding: 40px;
+          color: var(--text-secondary);
+        "
+      >
         <i class="fas fa-spinner fa-spin fa-2x"></i>
-        <p style="margin-top: 10px;">Loading projects...</p>
+        <p style="margin-top: 10px">Loading projects...</p>
       </div>
     </section>
 
     <!-- FOOTER -->
     <footer class="footer">
       <div class="footer-container">
-    
         <!-- Brand Section -->
         <div class="footer-brand">
           <h3>
@@ -138,15 +147,23 @@
             Dev-Card-Showcase
           </h3>
           <p>Contribute with Projects & Add Your Contribution Card</p>
-    
+
           <div class="footer-social-icons">
-            <a href="https://github.com/Jayanta2004"><i class="fa-brands fa-github"></i></a>
-            <a href="https://x.com/JayantaG2004"><i class="fa-brands fa-twitter"></i></a>
-            <a href="https://www.instagram.com/jayantaghosh2004"><i class="fa-brands fa-instagram"></i></a>
-            <a href="https://www.linkedin.com/in/jayantaghosh2004"><i class="fa-brands fa-linkedin-in"></i></a>
+            <a href="https://github.com/Jayanta2004"
+              ><i class="fa-brands fa-github"></i
+            ></a>
+            <a href="https://x.com/JayantaG2004"
+              ><i class="fa-brands fa-twitter"></i
+            ></a>
+            <a href="https://www.instagram.com/jayantaghosh2004"
+              ><i class="fa-brands fa-instagram"></i
+            ></a>
+            <a href="https://www.linkedin.com/in/jayantaghosh2004"
+              ><i class="fa-brands fa-linkedin-in"></i
+            ></a>
           </div>
         </div>
-    
+
         <!-- Quick Links -->
         <div class="footer-links">
           <h4>Quick Links</h4>
@@ -157,7 +174,7 @@
             <li><a href="feedback.html">Feedback</a></li>
           </ul>
         </div>
-    
+
         <!-- Resources -->
         <div class="footer-links">
           <h4>Resources</h4>
@@ -165,11 +182,10 @@
             <li><a href="analytics.html">Analytics</a></li>
             <li><a href="guidelines.html">Guidelines</a></li>
             <li><a href="bug-report.html">Bug Report</a></li>
-            <li><a href="feature-request.html">Feature Request</a></li>
             <li><a href="faq.html">FAQ</a></li>
           </ul>
         </div>
-    
+
         <!-- Legal -->
         <div class="footer-links">
           <h4>Legal</h4>
@@ -179,9 +195,8 @@
             <li><a href="#">Cookie Policy</a></li>
           </ul>
         </div>
-    
       </div>
-    
+
       <div class="footer-bottom">
         <p>© 2026 Dev-Card-Showcase. All rights reserved.</p>
       </div>
@@ -189,5 +204,281 @@
 
     <!-- Main JavaScript -->
     <script src="../js/projects.js"></script>
+    <script>
+      // Global variables
+      let projectsData = [];
+      let projectCards = [];
+      let activeFilter = "all";
+
+      // Load projects from JSON
+      function createProjectCard(project, index) {
+        const card = document.createElement("div");
+        card.className = "project-card";
+
+        const tagsHTML = project.tags
+          .map((tag) => `<span class="tag">${tag}</span>`)
+          .join("");
+
+        card.innerHTML = `
+        <h2>${project.title}</h2>
+        <p class="project-desc">${project.description}</p>
+
+        <div class="project-tags">
+          ${tagsHTML}
+        </div>
+
+        <div class="project-footer">
+          <span>By ${project.author.name}</span>
+          <div class="project-links">
+            ${project.links.github ? `<a href="${project.links.github}" target="_blank"><i class="fab fa-github"></i></a>` : ""}
+            ${project.links.live ? `<a href="${project.links.live}" target="_blank"><i class="fas fa-external-link-alt"></i></a>` : ""}
+          </div>
+        </div>
+      `;
+
+        projectCards.push(card);
+        return card;
+      }
+
+      async function loadProjects() {
+        try {
+          const response = await fetch("projects.json");
+          if (!response.ok) throw new Error("Failed to load projects");
+          projectsData = await response.json();
+          renderProjects(projectsData);
+
+          // If there is search/filter state, re-apply it?
+          if (
+            activeFilter !== "all" ||
+            document.getElementById("searchInput").value
+          ) {
+            runFilter(
+              document.getElementById("searchInput").value.toLowerCase(),
+              activeFilter,
+            );
+          }
+        } catch (error) {
+          console.error("Error loading projects:", error);
+          const container = document.getElementById("projectsContainer");
+          if (container) {
+            container.innerHTML =
+              '<div class="loading">Error loading projects. Please refresh the page.</div>';
+          }
+        }
+      }
+
+      function renderProjects(projects) {
+        const container = document.getElementById("projectsContainer");
+        container.innerHTML = "";
+        projectCards = [];
+
+        // Projects will be loaded from projects.json
+        projects.forEach((project, index) => {
+          const card = createProjectCard(project, index);
+          container.appendChild(card);
+        });
+
+        // Append Empty State Element
+        const emptyState = document.createElement("div");
+        emptyState.id = "noProjectsState";
+        emptyState.className = "empty-state";
+        emptyState.innerHTML =
+          '<i class="fas fa-search"></i><h3>No projects found</h3><p>Try adjusting your search or filters.</p>';
+        container.appendChild(emptyState);
+
+        // After rendering, update view mode if needed
+        if (typeof isCompact !== "undefined" && isCompact) {
+          const projectsContainer = document.querySelector(
+            ".projects-container",
+          );
+          if (projectsContainer)
+            projectsContainer.classList.add("compact-view");
+        }
+      }
+
+      // 1. Navbar Hamburger Menu Logic
+      const hamburger = document.getElementById("hamburger");
+      const navLinks = document.getElementById("navLinks");
+
+      if (hamburger) {
+        hamburger.addEventListener("click", () => {
+          navLinks.classList.toggle("active");
+        });
+      }
+
+      // 2. View Toggle (Grid vs List) Logic
+      const viewToggleBtn = document.getElementById("viewToggleBtn");
+      const projectsContainer = document.querySelector(".projects-container");
+      let isCompact = false;
+
+      if (viewToggleBtn) {
+        viewToggleBtn.addEventListener("click", () => {
+          isCompact = !isCompact;
+          projectsContainer.classList.toggle("compact-view");
+          viewToggleBtn.innerHTML = isCompact
+            ? '<i class="fas fa-th-list"></i>'
+            : '<i class="fas fa-th-large"></i>';
+        });
+      }
+
+      // 3. Search, Filter, and Sort Logic
+      const searchInput = document.getElementById("searchInput");
+      const filterButtons = document.querySelectorAll(".filter-btn");
+      const sortSelect = document.getElementById("sortSelect");
+
+      // --- Search Event ---
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.toLowerCase();
+        runFilter(query, activeFilter);
+      });
+
+      // --- Filter Button Events ---
+      filterButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          // Update UI: remove active class from all, add to clicked
+          filterButtons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+
+          // Update filter state and run logic
+          activeFilter = btn.dataset.tech;
+          runFilter(searchInput.value.toLowerCase(), activeFilter);
+        });
+      });
+
+      // --- Sort Event ---
+      sortSelect.addEventListener("change", () => {
+        const visibleCards = projectCards.filter(
+          (card) => card.style.display !== "none",
+        );
+
+        const sorted = visibleCards.sort((a, b) => {
+          const nameA = a.querySelector("h2").innerText.toLowerCase();
+          const nameB = b.querySelector("h2").innerText.toLowerCase();
+
+          if (sortSelect.value === "az") {
+            return nameA.localeCompare(nameB);
+          } else {
+            return nameB.localeCompare(nameA);
+          }
+        });
+
+        // Re-inject cards into the DOM in the new sorted order
+        const container = document.querySelector(".projects-container");
+        sorted.forEach((card) => container.appendChild(card));
+
+        // Ensure empty state remains at the bottom or handled?
+        // Sorting reinjects CARDS. The empty state div (if it exists) might be pushed to top or bottom?
+        // appendChild moves it to end.
+        // If we only append cards, empty state (which is not in sorted) stays where it is?
+        // Wait, container.appendChild(card) MOVES the card.
+        // If empty state is in container, it will end up at the top if cards are moved after it?
+        // No, if we append cards one by one, they go to the bottom.
+        // So empty state will be at the top? That's bad.
+        // We should append empty state again at the end.
+        const emptyState = document.getElementById("noProjectsState");
+        if (emptyState) container.appendChild(emptyState);
+      });
+
+      // --- Core Filtering Function ---
+      function runFilter(query, tech) {
+        let visibleCount = 0;
+        projectCards.forEach((card) => {
+          const title = card.querySelector("h2").innerText.toLowerCase();
+          const tags = card
+            .querySelector(".project-tags")
+            .innerText.toLowerCase();
+          const author = card
+            .querySelector(".project-footer")
+            .innerText.toLowerCase();
+
+          // Check if it matches search text
+          const matchesSearch =
+            title.includes(query) ||
+            tags.includes(query) ||
+            author.includes(query);
+
+          // Check if it matches selected technology
+          const matchesTech =
+            tech === "all" || tags.includes(tech.toLowerCase());
+
+          // Update visibility: matches both conditions?
+          if (matchesSearch && matchesTech) {
+            card.style.display = "";
+            visibleCount++;
+          } else {
+            card.style.display = "none";
+          }
+        });
+
+        // Show/Hide empty state
+        const emptyState = document.getElementById("noProjectsState");
+        if (emptyState) {
+          if (visibleCount === 0) {
+            emptyState.classList.add("visible");
+          } else {
+            emptyState.classList.remove("visible");
+          }
+        }
+      }
+
+      // Theme Toggle Script
+      document.addEventListener("DOMContentLoaded", function () {
+        const themeToggle = document.getElementById("themeToggle");
+        const body = document.body;
+
+        function setTheme(theme) {
+          body.setAttribute("data-theme", theme);
+          localStorage.setItem("theme", theme);
+          themeToggle.textContent = theme === "dark" ? "🌙" : "☀️";
+        }
+
+        function toggleTheme() {
+          const currentTheme = body.getAttribute("data-theme") || "dark";
+          const newTheme = currentTheme === "dark" ? "light" : "dark";
+          setTheme(newTheme);
+        }
+
+        const savedTheme = localStorage.getItem("theme") || "dark";
+        setTheme(savedTheme);
+
+        themeToggle.addEventListener("click", toggleTheme);
+
+        // Load projects when page loads
+        loadProjects();
+
+        // Mouse trail animation
+        const coords = { x: 0, y: 0 };
+        const circles = document.querySelectorAll(".circle");
+
+        circles.forEach(function (circle) {
+          circle.x = 0;
+          circle.y = 0;
+        });
+
+        window.addEventListener("mousemove", function (e) {
+          coords.x = e.pageX;
+          coords.y = e.pageY - window.scrollY;
+        });
+
+        function animateCircles() {
+          let x = coords.x;
+          let y = coords.y;
+          circles.forEach(function (circle, index) {
+            circle.style.left = `${x - 12}px`;
+            circle.style.top = `${y - 12}px`;
+            circle.style.transform = `scale(${(circles.length - index) / circles.length})`;
+            const nextCircle = circles[index + 1] || circles[0];
+            circle.x = x;
+            circle.y = y;
+            x += (nextCircle.x - x) * 0.3;
+            y += (nextCircle.y - y) * 0.3;
+          });
+
+          requestAnimationFrame(animateCircles);
+        }
+
+        animateCircles();
+      });
+    </script>
   </body>
 </html>
