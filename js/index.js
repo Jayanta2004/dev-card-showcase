@@ -138,10 +138,15 @@ document.addEventListener("DOMContentLoaded", () => {
         function filterByRole(role) {
     currentFilter = role;
 
-    // Update active button - more reliable method
+    // Update active button state
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.textContent.toLowerCase() === role || 
-            (role === 'all' && btn.textContent.toLowerCase().includes('all')));
+        btn.classList.remove('active');
+        
+        // Match the button's onclick attribute to determine if it should be active
+        const btnRole = btn.getAttribute('onclick')?.match(/filterByRole\('(.+?)'\)/)?.[1];
+        if (btnRole === role) {
+            btn.classList.add('active');
+        }
     });
 
     applyFilters();
@@ -153,15 +158,22 @@ document.addEventListener("DOMContentLoaded", () => {
             let visibleCount = 0;
 
             cards.forEach(card => {
-                const name = card.querySelector("h2").innerText.toLowerCase();
-                const role = card.querySelector(".role").innerText.toLowerCase();
+                const nameElement = card.querySelector("h2");
+                const roleElement = card.querySelector(".role");
+                
+                // Skip if elements don't exist
+                if (!nameElement || !roleElement) {
+                    card.style.display = "none";
+                    return;
+                }
+                
+                const name = nameElement.innerText.toLowerCase();
+                const role = roleElement.innerText.toLowerCase();
                 const cardSkills = card.dataset.skills ? card.dataset.skills.split(',') : [];
 
                 const matchesSearch = name.includes(currentSearch);
                 const matchesFilter = currentFilter === 'all' ||
-                    (currentFilter === 'developer' && role.includes('developer')) ||
-                    (currentFilter === 'contributor' && role.includes('contributor')) ||
-                    (currentFilter === 'maintainer' && role.includes('maintainer'));
+                    role.includes(currentFilter);
                 
                 const matchesSkills = selectedSkills.size === 0 || 
                     [...selectedSkills].some(skill => cardSkills.includes(skill.toLowerCase()));
@@ -176,10 +188,14 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             // Show/hide no results message
-            if (visibleCount === 0) {
-                noResults.classList.add('show');
-            } else {
-                noResults.classList.remove('show');
+            if (noResults) {
+                if (visibleCount === 0) {
+                    noResults.style.display = 'block';
+                    noResults.classList.add('show');
+                } else {
+                    noResults.style.display = 'none';
+                    noResults.classList.remove('show');
+                }
             }
         }
 
@@ -313,48 +329,55 @@ document.addEventListener("DOMContentLoaded", () => {
     
         /* ---------- ENHANCED SORT CARDS SCRIPT ---------- */
         const container = document.querySelector(".card-container");
-        let originalCards = Array.from(container.children);
+        let originalCards = [];
+        
+        // Store original order on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            originalCards = Array.from(container.children);
+        });
 
         function sortCards() {
-            const value = document.getElementById("sortSelect")?.value;
-            if (!value) return;
+            const selectElement = document.getElementById("sortSelect");
+            if (!selectElement) return;
+            
+            const value = selectElement.value;
 
-            // Get only visible cards
-            let cards = Array.from(container.children).filter(card =>
-                card.style.display !== 'none'
-            );
+            // Get all cards (both visible and hidden)
+            let allCards = Array.from(container.children);
 
             if (value === "default") {
-                // Restore original order for visible cards
+                // Restore original order
                 container.innerHTML = "";
                 originalCards.forEach(card => {
-                    if (card.style.display !== 'none') {
-                        container.appendChild(card);
-                    }
+                    container.appendChild(card);
                 });
                 return;
             }
 
             if (value === "az") {
-                cards.sort((a, b) =>
-                    a.querySelector("h2").innerText
-                        .localeCompare(b.querySelector("h2").innerText)
-                );
+                allCards.sort((a, b) => {
+                    const nameA = a.querySelector("h2")?.innerText || '';
+                    const nameB = b.querySelector("h2")?.innerText || '';
+                    return nameA.localeCompare(nameB);
+                });
             }
 
             if (value === "za") {
-                cards.sort((a, b) =>
-                    b.querySelector("h2").innerText
-                        .localeCompare(a.querySelector("h2").innerText)
-                );
+                allCards.sort((a, b) => {
+                    const nameA = a.querySelector("h2")?.innerText || '';
+                    const nameB = b.querySelector("h2")?.innerText || '';
+                    return nameB.localeCompare(nameA);
+                });
             }
 
             if (value === "newest") {
-                cards.reverse();
+                // Reverse the original order to show newest first
+                allCards = [...originalCards].reverse();
             }
 
-            // Reorder visible cards
-            cards.forEach(card => {
+            // Clear container and append sorted cards
+            container.innerHTML = "";
+            allCards.forEach(card => {
                 container.appendChild(card);
             });
         }
@@ -824,26 +847,3 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log('Should refresh?', shouldRefreshSpotlight());
         };
     });
-
-/* Scroll to Top Button */
-#scrollToTopBtn {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  z-index: 1000;
-  background-color: #3b82f6;
-  color: #ffffff;
-  border: none;
-  padding: 12px 14px;
-  border-radius: 50%;
-  font-size: 18px;
-  cursor: pointer;
-  display: none;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-#scrollToTopBtn:hover {
-  background-color: #2563eb;
-  transform: translateY(-3px);
-}
