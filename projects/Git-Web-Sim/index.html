@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git-Web-Sim | Advanced Version Control Engine</title>
+    <meta name="description" content="A browser-based implementation of Git internals, featuring a DAG visualizer, Myers diff engine, and object database simulation.">
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app-root">
+        
+        <aside class="sidebar left-sidebar">
+            <div class="brand-header">
+                <div class="logo-icon">
+                    <i class="ri-git-merge-line"></i>
+                </div>
+                <div class="brand-info">
+                    <h1>Git-Web</h1>
+                    <span class="version-badge">v1.0.0-alpha</span>
+                </div>
+                <button id="btn-settings" class="icon-btn-ghost" title="Settings">
+                    <i class="ri-settings-3-line"></i>
+                </button>
+            </div>
+
+            <div class="repo-status-card">
+                <div class="status-row">
+                    <div class="status-icon"><i class="ri-git-branch-line"></i></div>
+                    <div class="status-detail">
+                        <span class="label">Current Branch</span>
+                        <span class="value accent-text" id="status-branch">--</span>
+                    </div>
+                </div>
+                <div class="status-row">
+                    <div class="status-icon"><i class="ri-focus-3-line"></i></div>
+                    <div class="status-detail">
+                        <span class="label">HEAD Pointer</span>
+                        <span class="value mono-text" id="status-head">--</span>
+                    </div>
+                </div>
+                <div class="repo-meta">
+                    <span id="obj-count">0 Objects</span> • <span id="repo-size">0 KB</span>
+                </div>
+            </div>
+
+            <div class="explorer-section">
+                <div class="section-header">
+                    <span class="title">WORKING DIRECTORY</span>
+                    <div class="header-actions">
+                        <button id="btn-refresh-files" class="action-btn" title="Refresh">
+                            <i class="ri-refresh-line"></i>
+                        </button>
+                        <button id="btn-new-file" class="action-btn" title="New File">
+                            <i class="ri-file-add-line"></i>
+                        </button>
+                        <button id="btn-new-folder" class="action-btn" title="New Folder">
+                            <i class="ri-folder-add-line"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="file-tree" class="tree-view">
+                    <div class="empty-state">
+                        <i class="ri-hard-drive-2-line"></i>
+                        <span>No repository loaded</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="explorer-section flex-grow">
+                <div class="section-header">
+                    <span class="title">STAGING AREA (Index)</span>
+                    <span class="badge-count" id="stage-count">0</span>
+                </div>
+                <div id="staging-tree" class="tree-view">
+                    <div class="empty-state-text">No changes staged</div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button id="btn-nuke-repo" class="btn-danger-block">
+                    <i class="ri-delete-bin-7-line"></i> Delete .git
+                </button>
+            </div>
+        </aside>
+
+        <main class="workspace-area">
+            
+            <nav class="workspace-tabs">
+                <div class="tab-group">
+                    <button class="tab-item active" data-target="graph-view">
+                        <i class="ri-git-commit-line"></i> Commit Graph (DAG)
+                    </button>
+                    <button class="tab-item" data-target="editor-view">
+                        <i class="ri-code-s-slash-line"></i> Code Editor
+                    </button>
+                    <button class="tab-item" data-target="diff-view">
+                        <i class="ri-file-diff-line"></i> Diff Viewer
+                    </button>
+                    <button class="tab-item" data-target="objects-view">
+                        <i class="ri-database-2-line"></i> Object Inspector
+                    </button>
+                </div>
+                <div class="tab-actions">
+                    <button id="btn-export-graph" class="btn-text" title="Export Graph Image">
+                        <i class="ri-download-line"></i>
+                    </button>
+                </div>
+            </nav>
+
+            <div class="viewport-content">
+                
+                <section id="graph-view" class="view-panel active">
+                    <div class="graph-toolbar">
+                        <div class="zoom-controls">
+                            <button id="zoom-in"><i class="ri-zoom-in-line"></i></button>
+                            <button id="zoom-out"><i class="ri-zoom-out-line"></i></button>
+                            <button id="zoom-reset"><i class="ri-fullscreen-line"></i></button>
+                        </div>
+                        <div class="graph-legend">
+                            <span class="legend-item"><span class="dot commit"></span> Commit</span>
+                            <span class="legend-item"><span class="dot head"></span> HEAD</span>
+                            <span class="legend-item"><span class="dot branch"></span> Branch</span>
+                            <span class="legend-item"><span class="dot tag"></span> Tag</span>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="dag-canvas"></canvas>
+                        <div id="node-tooltip" class="tooltip hidden"></div>
+                    </div>
+                </section>
+
+                <section id="editor-view" class="view-panel">
+                    <div class="editor-header">
+                        <div class="file-info">
+                            <i class="ri-file-text-line"></i>
+                            <span id="current-filename">No file selected</span>
+                            <span id="file-status-badge" class="badge-status hidden">Modified</span>
+                        </div>
+                        <div class="editor-actions">
+                            <button id="btn-discard" class="btn-text warning">Discard</button>
+                            <button id="btn-save" class="btn-primary-sm">Save Changes</button>
+                        </div>
+                    </div>
+                    <div class="editor-body">
+                        <div class="line-numbers" id="line-numbers"></div>
+                        <textarea id="code-input" spellcheck="false" placeholder="// Select a file from the explorer to start editing..."></textarea>
+                    </div>
+                </section>
+
+                <section id="diff-view" class="view-panel">
+                    <div class="diff-header">
+                        <span class="diff-title">Unstaged Changes</span>
+                        <div class="diff-options">
+                            <label><input type="checkbox" id="chk-ignore-white"> Ignore Whitespace</label>
+                        </div>
+                    </div>
+                    <div class="diff-container" id="diff-output">
+                        <div class="placeholder-msg">
+                            <i class="ri-file-search-line"></i>
+                            <p>No differences to display. Modify a file to see the Myers Diff algorithm in action.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="objects-view" class="view-panel">
+                    <div class="inspector-layout">
+                        <div class="obj-list-pane">
+                            <input type="text" id="obj-search" placeholder="Search SHA-1...">
+                            <ul id="object-list" class="simple-list">
+                                </ul>
+                        </div>
+                        <div class="obj-detail-pane">
+                            <div id="obj-detail-content" class="code-block">Select an object to inspect</div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="horizontal-resizer" id="h-resizer"></div>
+
+            <section class="terminal-panel" id="terminal-panel">
+                <div class="terminal-header">
+                    <div class="term-tabs">
+                        <div class="term-tab active">
+                            <i class="ri-terminal-box-fill"></i> Terminal
+                        </div>
+                        <div class="term-tab">
+                            <i class="ri-history-line"></i> Output Log
+                        </div>
+                    </div>
+                    <div class="term-controls">
+                        <button id="btn-clear-term" title="Clear Console"><i class="ri-eraser-line"></i></button>
+                        <button id="btn-max-term" title="Maximize"><i class="ri-arrow-up-s-line"></i></button>
+                        <button id="btn-close-term" title="Minimize"><i class="ri-close-line"></i></button>
+                    </div>
+                </div>
+                
+                <div class="terminal-body" id="terminal-output">
+                    <div class="term-welcome">
+                        <span class="term-line system">Git-Web-Sim [Version 1.0.0]</span>
+                        <span class="term-line system">(c) 2026 Open Source Project. All rights reserved.</span>
+                        <span class="term-line system">Type 'help' to see available commands.</span>
+                        <br>
+                    </div>
+                </div>
+                
+                <div class="terminal-input-area">
+                    <span class="prompt-user">user</span><span class="prompt-at">@</span><span class="prompt-host">web-sim</span><span class="prompt-path">:~/project$</span>
+                    <input type="text" id="term-input" autocomplete="off" spellcheck="false" autofocus>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="modal-new-file" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Create New File</h3>
+                <button class="btn-close-modal"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Filename</label>
+                    <input type="text" id="input-new-filename" placeholder="e.g., script.js">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary btn-close-modal">Cancel</button>
+                <button id="btn-confirm-new-file" class="btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils/sha1.js"></script>
+    <script src="js/core/objects.js"></script>
+    <script src="js/core/index.js"></script>
+    <script src="js/core/diff.js"></script>
+    <script src="js/core/git.js"></script>
+    <script src="js/ui/graph.js"></script>
+    <script src="js/ui/terminal.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Runner - Dungeon Escape (Front Camera) v7</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  html,body{height:100%;margin:0;background:#0b0e11;color:#e6eef3;font-family:system-ui,Segoe UI,Roboto,Arial}
+  canvas{display:block;width:100vw;height:100vh}
+  #hud{position:fixed;left:10px;top:10px;display:flex;gap:10px;align-items:center;z-index:2}
+  #stam{width:240px;height:14px;border:1px solid #2a3440;border-radius:8px;background:#0e141a;position:relative}
+  #stam>span{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#6aa8ff,#a9c8ff);border-radius:7px}
+  #stam small{position:absolute;right:6px;top:-18px;font-size:11px;color:#9ab}
+  #lbl{background:#0f151b;border:1px solid #1e2a33;border-radius:10px;padding:6px 10px;font-size:13px}
+  #banner{position:fixed;left:50%;top:12%;transform:translateX(-50%);padding:10px 14px;border-radius:10px;
+          background:#0f151bcc;border:1px solid #274252;font-weight:600;z-index:3;display:none}
+  #start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+         background:linear-gradient(180deg,#0c1217,#0a0f14 70%);z-index:4}
+  #start h1{margin:0 0 16px;font-size:36px;letter-spacing:.06em;color:#e8f3ff}
+  #start p{margin:0 0 22px;color:#a9b9c6}
+  #start button{font-size:18px;padding:12px 24px;border-radius:12px;border:1px solid #294657;background:#11202a;
+                color:#dff2ff;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  #start .keys{margin-top:14px;font-size:13px;color:#9ab}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <div id="stam"><span style="width:100%"></span><small>Stamina</small></div>
+  <div id="lbl"><strong>W/S</strong> forward/back • <strong>←/→</strong> sidestep • <strong>Space</strong> jump • <strong>R</strong> restart</div>
+</div>
+<div id="banner"></div>
+<div id="start">
+  <h1>Infinite Corridor</h1>
+  <p>Skeletons, skulls, boulders, and potions. Avoid red, grab green.</p>
+  <button id="playBtn">PLAY</button>
+  <div class="keys">Tip: Click PLAY to enable audio. Use W to run, SPACEBAR to jump, right/left arrows to move sideways.</div>
+</div>
+<script>
+(() => { 'use strict';
+/* Canvas / Projection */
+const C = document.getElementById('c'), X = C.getContext('2d');
+const DPR = Math.max(1, Math.min(2, self.devicePixelRatio||1));
+function resize(){ C.width=Math.floor(innerWidth*DPR); C.height=Math.floor(innerHeight*DPR); }
+addEventListener('resize', resize, {passive:true}); resize();
+const FOV=70*Math.PI/180, NEAR=.05, FAR=260;
+const CX=()=>C.width*.5, CY=()=>C.height*.65, F=()=> (C.height/2)/Math.tan(FOV/2);
+function rotY(vx,vz,a){const c=Math.cos(a),s=Math.sin(a);return{x:vx*c-vz*s,z:vx*s+vz*c}}
+function proj(wx,wy,wz,cam){
+  const dx=wx-cam.x,dy=wy-cam.y,dz=wz-cam.z;
+  const r=rotY(dx,dz,-cam.yaw); const x=r.x, z=r.z, y=dy;
+  if(z<=NEAR || z>=FAR) return null;
+  const f=F(); return {x:CX()+(x/z)*f, y:CY()-(y/z)*f, z};
+}
+function srad(r,z){ return r/z*F(); }
+function poly(pts,f,s){ if(!pts||pts.some(p=>!p))return; X.beginPath(); X.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)X.lineTo(pts[i].x,pts[i].y); X.closePath(); if(f){X.fillStyle=f;X.fill()} if(s){X.strokeStyle=s;X.lineWidth=1*DPR;X.stroke()} }
+
+/* Input */
+const keys=Object.create(null); const map={ArrowLeft:'e',ArrowRight:'q'};
+addEventListener('keydown',e=>{const k=(map[e.key]||e.key).toLowerCase(); keys[k]=true; if(k===' '){e.preventDefault()}},{passive:false});
+addEventListener('keyup',e=>{const k=(map[e.key]||e.key).toLowerCase(); keys[k]=false;},{passive:true});
+
+/* World setup */
+const COR_W=3.2, WALL_H=8.4, CAM_Y=2.2, CAM_DIST=7.8; // camera slightly farther to see obstacles sooner
+const GRAV=-18, JUMP_V=6.6, REST=.35;
+const RUN_W=.8, RUN_H=1.6, RUN_SPEED=6.2, STRAFE=4.2;
+let runner={x:0,y:RUN_H*.5,z:0,vx:0,vy:0,vz:0,yaw:0};
+const cam={x:0,y:CAM_Y,z:CAM_DIST,yaw:Math.PI};
+
+// Monster (back behind runner, chases)
+const monster={x:0,y:1.5,z:-6,r:1.6,speed:4.8};
+
+// Streams
+const skels=[], boulders=[], skulls=[], potions=[];
+let nextSpawnZ=2;
+
+/* Banner */
+function show(m){const el=document.getElementById('banner');el.textContent=m;el.style.display='block'} function hide(){document.getElementById('banner').style.display='none'}
+
+/* WebAudio minimal SFX (gated by PLAY click) */
+let AC=null, audioReady=false;
+function ensureAC(){ if(!AC){ AC = new (window.AudioContext||window.webkitAudioContext)(); } return AC; }
+function tone(freq, dur=0.12, type='sine', gain=0.12){
+  if(!audioReady) return;
+  const ac=ensureAC(); const t=ac.currentTime;
+  const o=ac.createOscillator(); const g=ac.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(gain,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t+dur);
+}
+function sfxJump(){ tone(420,0.08,'sine',0.15); tone(640,0.08,'sine',0.08); }
+function sfxHit(){ tone(110,0.12,'sawtooth',0.18); }
+function sfxPotion(){ tone(660,0.06,'square',0.12); setTimeout(()=>tone(880,0.08,'square',0.09),40); }
+function sfxExhaust(){ tone(200,0.22,'triangle',0.2); }
+let stepAccum=0; function sfxStep(){ tone(260,0.03,'square',0.05); }
+
+/* Stamina */
+let stamina=100;
+function useStam(v){ stamina=Math.max(0, stamina - v); updateStam(); if(stamina<=0){ exhaust(); } }
+function gainStam(v){ stamina=Math.min(100, stamina + v); updateStam(); }
+function updateStam(){ document.querySelector('#stam>span').style.width=stamina.toFixed(0)+'%'; }
+
+/* Flash overlay (runner feedback) */
+let flashT=0, flashColor='red';
+function setFlash(c){ flashColor=c; flashT=0.22; }
+function drawFlash(){ if(flashT>0){ X.save(); X.globalAlpha = Math.max(0, flashT) * 0.6; X.fillStyle = (flashColor==='green'?'#00ff5e':'#ff2b2b'); X.fillRect(0,0,C.width,C.height); X.restore(); }}
+
+/* Helpers */
+function rand(a,b){ return a+Math.random()*(b-a); }
+function aabbHit(cx,cz,r,b){return cx+r>b.x-b.w/2 && cx-r<b.x+b.w/2 && cz+r>b.z-b.d/2 && cz-r<b.z+b.d/2}
+function circleHit(cx,cz,r,o){const dx=cx-o.x,dz=cz-o.z,dd=dx*dx+dz*dz;const R=r+o.r;return dd<R*R}
+
+/* Spawn between runner and camera so it's visible */
+function spawnVisible(){
+  const zFront = cam.z - 0.8;
+  while(nextSpawnZ < zFront){
+    const lane = rand(-COR_W*0.42, COR_W*0.42);
+    const t = Math.random();
+    if(t<0.16) skels.push({x:lane,z:nextSpawnZ,w:.8,d:.8,h:1.5});
+    else if(t<0.56) boulders.push({x:lane,z:nextSpawnZ,r:.5,h:1.0});
+    else if(t<0.88) skulls.push({x:lane,z:nextSpawnZ,r:.5,h:.5});
+    else potions.push({x:lane,z:nextSpawnZ,h:1.2,t:false});
+    nextSpawnZ += rand(3.8,6.8);
+  }
+  const minZ = runner.z - 24;
+  while(skels.length && skels[0].z < minZ) skels.shift();
+  while(boulders.length && boulders[0].z < minZ) boulders.shift();
+  while(skulls.length && skulls[0].z < minZ) skulls.shift();
+  while(potions.length && potions[0].z < minZ) potions.shift();
+}
+
+/* Reset */
+function reset(){
+  runner={x:0,y:RUN_H*.5,z:0,vx:0,vy:0,vz:0,yaw:0};
+  cam.x=0; cam.y=CAM_Y; cam.z=runner.z+CAM_DIST; cam.yaw=Math.atan2(runner.x-cam.x,runner.z-cam.z);
+  monster.x=0; monster.z=runner.z-6;
+  skels.length=0; boulders.length=0; skulls.length=0; potions.length=0; nextSpawnZ=runner.z+2;
+  stamina=100; updateStam(); state='run'; fading=0; flashT=0; hide(); stepAccum=0;
+}
+function exhaust(){ state='exhaust'; fading=0; show('Out of stamina!'); sfxExhaust(); }
+
+/* Update */
+let state='title', fading=0, playing=false;
+function update(dt){
+  if(state==='title'){ return; }
+
+  if(keys['r']){ keys['r']=false; reset(); }
+  flashT = Math.max(0, flashT - dt);
+
+  if(state==='run'){
+    spawnVisible();
+
+    // Camera in front
+    cam.x=runner.x; cam.z=runner.z+CAM_DIST; cam.yaw=Math.atan2(runner.x-cam.x, runner.z-cam.z);
+
+    // Runner input
+    let f=0; if(keys['w']) f+=1; if(keys['s']) f-=1;
+    let side=0; if(keys['q']) side-=1; if(keys['e']) side+=1;
+    runner.vz=f*RUN_SPEED; runner.vx=side*STRAFE;
+
+    // footsteps when on ground & moving
+    const movingHoriz = Math.abs(runner.vz) + Math.abs(runner.vx) > 0.01;
+    const onGround = Math.abs(runner.y - RUN_H*0.5) < 0.001;
+    if(onGround && movingHoriz){ stepAccum += Math.abs(runner.vz)*dt; if(stepAccum>1.1){ stepAccum=0; sfxStep(); } }
+
+    // slower stamina drain/regain
+    if(movingHoriz) useStam(2*dt); else gainStam(8*dt);
+
+    if(keys[' '] && onGround){ runner.vy=JUMP_V; keys[' ']=false; useStam(3); sfxJump(); }
+    runner.vy += GRAV*dt;
+    runner.x += runner.vx*dt; runner.z += runner.vz*dt; runner.y += runner.vy*dt;
+    if(runner.y < RUN_H*0.5){ runner.y=RUN_H*0.5; runner.vy=0; }
+    const half = COR_W*0.5 - RUN_W*0.5;
+    if(runner.x < -half){ runner.x=-half; runner.vx*=-REST; }
+    if(runner.x >  half){ runner.x= half; runner.vx*=-REST; }
+
+    // Face the camera smoothly
+    const targetYaw = Math.atan2(cam.x-runner.x, cam.z-runner.z);
+    let diff=((targetYaw - runner.yaw + Math.PI)%(2*Math.PI)) - Math.PI; runner.yaw += diff * Math.min(1, dt*6);
+
+    // Monster chase
+    const dx=runner.x-monster.x, dz=runner.z-monster.z, dlen=Math.hypot(dx,dz)||1;
+    monster.x += (dx/dlen)*monster.speed*dt;
+    monster.z += (dz/dlen)*monster.speed*dt;
+    monster.x = Math.max(-half, Math.min(half, monster.x));
+
+    // Interactions (jump clears low)
+    const jumping = (runner.y - RUN_H*0.5) > 0.52;
+    let wasHit=false;
+    for(const s of skels){ if(!jumping && aabbHit(runner.x,runner.z,RUN_W*.5,s)) wasHit=true; }
+    for(const b of boulders){ if(!jumping && circleHit(runner.x,runner.z,RUN_W*.5,b)) wasHit=true; }
+    for(const sk of skulls){ if(!jumping && circleHit(runner.x,runner.z,RUN_W*.5,sk)) wasHit=true; }
+    if(wasHit){ setFlash('red'); sfxHit(); useStam(3); }
+
+    // Monster contact drains more stamina
+    if(circleHit(runner.x,runner.z,RUN_W*.5,{x:monster.x,z:monster.z,r:monster.r*0.6})) { setFlash('red'); sfxHit(); useStam(6); }
+
+    for(const p of potions){ if(!p.t && aabbHit(runner.x,runner.z,RUN_W*.5,{x:p.x,z:p.z,w:.6,d:.6})){ 
+        p.t=true; setFlash('green'); stamina=Math.min(100, stamina + 60); updateStam(); show('Stamina replenished!'); sfxPotion();
+      } }
+  }else{
+    // simple fade and then reset
+    fading += dt;
+    if(fading>1.0){ reset(); }
+  }
+}
+
+/* Corridor Architecture: ground, tall walls, columns + arches */
+function groundAndWalls(){
+  const zBack = runner.z - 60, zFront = cam.z - 0.2;
+  // floor grid
+  X.globalAlpha=.15; X.strokeStyle='#2a3a43'; X.lineWidth=1*DPR;
+  for(let gx=-COR_W; gx<=COR_W; gx+=1){ const a=proj(gx,0,zBack,cam), b=proj(gx,0,zFront,cam); if(a&&b){X.beginPath();X.moveTo(a.x,a.y);X.lineTo(b.x,b.y);X.stroke();} }
+  for(let gz=Math.floor(zBack); gz<=zFront; gz+=1){ const a=proj(-COR_W,0,gz,cam), b=proj(COR_W,0,gz,cam); if(a&&b){X.beginPath();X.moveTo(a.x,a.y);X.lineTo(b.x,b.y);X.stroke();} }
+  X.globalAlpha=1;
+  // side walls
+  const y0=0,y1=WALL_H;
+  const left=[proj(-COR_W,y0,zBack,cam),proj(-COR_W,y0,zFront,cam),proj(-COR_W,y1,zFront,cam),proj(-COR_W,y1,zBack,cam)];
+  const right=[proj(COR_W,y0,zBack,cam),proj(COR_W,y0,zFront,cam),proj(COR_W,y1,zFront,cam),proj(COR_W,y1,zBack,cam)];
+  poly(left,'#16232b','#36515e'); poly(right,'#16232b','#36515e');
+
+  // columns + arches
+  const step=5;
+  for(let z=Math.floor(zBack/step)*step; z<=zFront; z+=step){
+    const colH=WALL_H, colR=0.28;
+    drawColumn(-COR_W+0.2, colH, z, colR);
+    drawColumn( COR_W-0.2, colH, z, colR);
+    drawArch(z, colH);
+  }
+}
+function drawColumn(x, h, z, r){
+  const p1=proj(x,0,z,cam), p2=proj(x,h,z,cam); if(!p1||!p2) return;
+  const rr=srad(r, (p1.z+p2.z)*0.5);
+  X.fillStyle='#243843'; X.strokeStyle='#6a8fa1'; X.lineWidth=1.25*DPR;
+  X.beginPath(); X.moveTo(p1.x-rr,p1.y); X.lineTo(p1.x-rr,p2.y); X.lineTo(p1.x+rr,p2.y); X.lineTo(p1.x+rr,p1.y); X.closePath(); X.fill(); X.stroke();
+  const cap=proj(x, h+0.18, z, cam); const base=proj(x,-0.12,z,cam);
+  if(cap){const r2=srad(r*1.2,cap.z); X.fillStyle='#2a4150'; X.fillRect(cap.x-r2,cap.y-r2*0.4,r2*2,r2*0.8);}
+  if(base){const r3=srad(r*1.3,base.z); X.fillStyle='#233642'; X.fillRect(base.x-r3,base.y-r3*0.3,r3*2,r3*0.6);}
+}
+function drawArch(z, h){
+  const L=proj(-COR_W+0.2,h-0.25,z,cam);
+  const R=proj( COR_W-0.2,h-0.25,z,cam);
+  if(!(L&&R)) return;
+  X.strokeStyle='#8fb7c7'; X.lineWidth=2.25*DPR;
+  X.beginPath();
+  X.moveTo(L.x, L.y);
+  const raise = Math.abs(R.x-L.x)*0.35;
+  X.bezierCurveTo(L.x, L.y-raise, R.x, R.y-raise, R.x, R.y);
+  X.stroke();
+}
+
+/* Actor rendering */
+function drawRunner(){
+  // whole body jumps (uses runner.y for body)
+  const s=RUN_W*.5;
+  const y0=runner.y - RUN_H*0.5;
+  const y1=runner.y + RUN_H*0.5;
+  function rc(dx,dz){const r=rotY(dx,dz,runner.yaw);return{x:runner.x+r.x,z:runner.z+r.z}}
+  const c={nwl:rc(-s,-s),ner:rc(s,-s),swl:rc(-s,s),ser:rc(s,s)};
+  const pts={tl:[c.nwl.x,y1,c.nwl.z],tr:[c.ner.x,y1,c.ner.z],bl:[c.nwl.x,y0,c.nwl.z],br:[c.ner.x,y0,c.ner.z],
+             tl2:[c.swl.x,y1,c.swl.z],tr2:[c.ser.x,y1,c.ser.z],bl2:[c.swl.x,y0,c.swl.z],br2:[c.ser.x,y0,c.ser.z]};
+  const faces=[[pts.bl2,pts.br2,pts.tr2,pts.tl2,'#d673ff','#593174'],
+               [pts.bl,pts.br,pts.tr,pts.tl,'#bd5cec','#3c2254'],
+               [pts.bl,pts.bl2,pts.tl2,pts.tl,'#c66bf1','#492a63'],
+               [pts.br2,pts.br,pts.tr,pts.tr2,'#c66bf1','#492a63'],
+               [pts.tl,pts.tr,pts.tr2,pts.tl2,'#e28dff','#492a63']];
+  const list=faces.map(f=>{
+    const pp=f.slice(0,4).map(([x,y,z])=>proj(x,y,z,cam));
+    if(!pp.every(Boolean))return null;
+    const z=(pp[0].z+pp[1].z+pp[2].z+pp[3].z)/4;
+    return{pp,z,fill:f[4],stroke:f[5]};
+  }).filter(Boolean).sort((a,b)=>b.z-a.z);
+  for(const f of list) poly(f.pp,f.fill,f.stroke);
+  // eyes stick to head
+  const ex=Math.sin(runner.yaw)*.18, ez=Math.cos(runner.yaw)*.18, sep=.12;
+  const e1=proj(runner.x-ex-sep, runner.y+0.35, runner.z-ez, cam);
+  const e2=proj(runner.x-ex+sep, runner.y+0.35, runner.z-ez, cam);
+  if(e1&&e2){X.fillStyle='#111';X.beginPath();X.arc(e1.x,e1.y,3*DPR,0,Math.PI*2);X.fill();X.beginPath();X.arc(e2.x,e2.y,3*DPR,0,Math.PI*2);X.fill()}
+}
+function drawObjects(){
+  // skeletons
+  for(const s of skels){
+    const x1=s.x-s.w/2,x2=s.x+s.w/2,z1=s.z-s.d/2,z2=s.z+s.d/2,y0=0,y1=s.h;
+    const quads=[ [proj(x1,y0,z1,cam),proj(x2,y0,z1,cam),proj(x2,y1,z1,cam),proj(x1,y1,z1,cam)],
+                  [proj(x2,y0,z1,cam),proj(x2,y0,z2,cam),proj(x2,y1,z2,cam),proj(x2,y1,z1,cam)],
+                  [proj(x1,y0,z2,cam),proj(x2,y0,z2,cam),proj(x2,y1,z2,cam),proj(x1,y1,z2,cam)],
+                  [proj(x1,y0,z1,cam),proj(x1,y0,z2,cam),proj(x1,y1,z2,cam),proj(x1,y1,z1,cam)] ];
+    for(const q of quads) poly(q,'#f5f7fb','#222');
+  }
+  // boulders (small jumpable)
+  for(const b of boulders){
+    const p=proj(b.x,b.h*.5,b.z,cam); if(!p) continue;
+    const r=srad(b.r,p.z);
+    X.fillStyle='#8c6427'; X.beginPath(); X.arc(p.x,p.y,r,0,Math.PI*2); X.fill();
+    X.strokeStyle='#4f3b18'; X.lineWidth=1*DPR; X.stroke();
+  }
+  // skulls
+  for(const sk of skulls){
+    const p=proj(sk.x,sk.h*.5,sk.z,cam); if(!p) continue;
+    const r=srad(sk.r,p.z);
+    X.fillStyle='#f0f3f9'; X.beginPath(); X.arc(p.x,p.y,r,0,Math.PI*2); X.fill(); X.strokeStyle='#233'; X.stroke();
+    X.fillStyle='#111'; X.beginPath(); X.arc(p.x-r*0.35,p.y-r*0.2,r*0.18,0,Math.PI*2); X.fill();
+    X.beginPath(); X.arc(p.x+r*0.35,p.y-r*0.2,r*0.18,0,Math.PI*2); X.fill();
+    X.fillRect(p.x-r*0.2, p.y+r*0.25, r*0.4, r*0.18);
+  }
+  // potions
+  for(const m of potions){
+    if(m.t) continue;
+    const q=[proj(m.x-.3,0,m.z-.3,cam),proj(m.x+.3,0,m.z-.3,cam),proj(m.x+.3,m.h,m.z-.3,cam),proj(m.x-.3,m.h,m.z-.3,cam)];
+    if(q.every(Boolean)) poly(q,'#3cff5f','#185020');
+  }
+}
+function drawMonster(){
+  const p=proj(monster.x, monster.y, monster.z, cam); if(!p) return;
+  const r=srad(monster.r, p.z);
+  X.save();
+  X.shadowColor='#4aa4ff'; X.shadowBlur=10*DPR;
+  X.fillStyle='#3d7cff'; X.beginPath(); X.arc(p.x, p.y, r, 0, Math.PI*2); X.fill();
+  X.fillStyle='#d6ff4a';
+  X.beginPath(); X.arc(p.x - r*0.35, p.y - r*0.05, r*0.16, 0, Math.PI*2); X.fill();
+  X.beginPath(); X.arc(p.x + r*0.35, p.y - r*0.05, r*0.16, 0, Math.PI*2); X.fill();
+  X.fillStyle='#bfe0ff';
+  X.beginPath(); X.moveTo(p.x - r*0.9, p.y - r*0.2); X.lineTo(p.x - r*0.6, p.y - r*1.1); X.lineTo(p.x - r*0.4, p.y - r*0.2); X.closePath(); X.fill();
+  X.beginPath(); X.moveTo(p.x + r*0.9, p.y - r*0.2); X.lineTo(p.x + r*0.6, p.y - r*1.1); X.lineTo(p.x + r*0.4, p.y - r*0.2); X.closePath(); X.fill();
+  X.restore();
+}
+function render(){
+  const g=X.createLinearGradient(0,0,0,C.height); g.addColorStop(0,'#0a141a'); g.addColorStop(1,'#091217'); X.fillStyle=g; X.fillRect(0,0,C.width,C.height);
+  groundAndWalls(); drawObjects(); drawMonster(); drawRunner();
+  // HUD debug
+  X.fillStyle='#9ab'; X.font=(12*DPR).toFixed(0)+'px system-ui';
+  X.fillText('Z '+runner.z.toFixed(1)+'  ST '+stamina.toFixed(0), 10*DPR, 36*DPR);
+  drawFlash();
+  if(state!=='run' && state!=='title'){ // fade for transitions
+    X.save(); X.globalAlpha=Math.min(1, fading*1.1); X.fillStyle='#000'; X.fillRect(0,0,C.width,C.height); X.restore();
+  }
+}
+
+/* Loop */
+let t0=performance.now();
+function frame(t){ const dt=Math.min(.033,(t-t0)/1000); t0=t; update(dt); render(); requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+
+/* Start screen handling */
+const start = document.getElementById('start');
+document.getElementById('playBtn').addEventListener('click', async () => {
+  // try to unlock audio
+  try{
+    const ac = ensureAC();
+    if(ac.state==='suspended'){ await ac.resume(); }
+    audioReady = true;
+  }catch(e){ console.warn('Audio init error', e); }
+  start.style.display='none';
+  state='run';
+  reset();
+});
+
+})();</script>
+<script src="app.js"></script>
+</body>
+</html>
