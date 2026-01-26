@@ -1,36 +1,74 @@
-//   <!-- NAVBAR SCRIPT -->
+// FAQ INTERACTIVITY SCRIPT
+document.addEventListener('DOMContentLoaded', function () {
+    // 1. NAVBAR HAMBURGER TOGGLE
+    const hamburger = document.getElementById("hamburger");
+    const navLinks = document.querySelector(".nav-links");
+    
+    if (hamburger && navLinks) {
+        hamburger.addEventListener("click", () => {
+            navLinks.classList.toggle("active");
+            hamburger.classList.toggle("active");
+        });
+    }
 
-const hamburger = document.getElementById("hamburger");
-const navLinks = document.getElementById("navLinks");
+    // 2. UNIFIED THEME TOGGLE (SINGLE VERSION)
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
+    const html = document.documentElement;
 
-hamburger.addEventListener("click", () => {
-    navLinks.classList.toggle("active");
-});
+    // Check for saved theme or prefer color scheme
+    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    let savedTheme = localStorage.getItem('theme');
 
-{
-    /* //   <!-- THEME TOGGLE --> */
-}
-const toggleBtn = document.getElementById("themeToggle");
-const body = document.body;
+    // If no saved theme, use system preference
+    if (!savedTheme) {
+        savedTheme = prefersDarkScheme.matches ? 'dark' : 'light';
+        localStorage.setItem('theme', savedTheme);
+    }
 
-// Load saved theme
-const savedTheme = localStorage.getItem("theme") || "dark";
-body.setAttribute("data-theme", savedTheme);
-toggleBtn.textContent = savedTheme === "light" ? "☀️" : "🌙";
+    // Function to apply theme
+    function applyTheme(theme) {
+        // Apply to both html and body for compatibility
+        html.setAttribute('data-theme', theme);
+        body.setAttribute('data-theme', theme);
+        
+        // Update theme classes
+        if (theme === 'light') {
+            body.classList.add('light-mode');
+            body.classList.remove('dark-mode');
+        } else {
+            body.classList.add('dark-mode');
+            body.classList.remove('light-mode');
+        }
+        
+        // Update button text
+        themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
+        themeToggle.setAttribute('aria-label', 
+            theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+        
+        // Save to localStorage
+        localStorage.setItem('theme', theme);
+    }
 
-toggleBtn.addEventListener("click", () => {
-    const currentTheme = body.getAttribute("data-theme") || "dark";
-    const newTheme = currentTheme === "dark" ? "light" : "dark";
-    body.setAttribute("data-theme", newTheme);
-    toggleBtn.textContent = newTheme === "light" ? "☀️" : "🌙";
-    localStorage.setItem("theme", newTheme);
-});
+    // Apply initial theme
+    applyTheme(savedTheme);
 
-{
-    /* <!-- FAQ INTERACTIVITY --> */
-}
+    // Toggle theme on button click
+    themeToggle.addEventListener('click', function() {
+        const currentTheme = html.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(newTheme);
+    });
 
-document.addEventListener("DOMContentLoaded", function () {
+    // Listen for system theme changes (only if user hasn't set preference)
+    prefersDarkScheme.addEventListener('change', function(e) {
+        if (!localStorage.getItem('theme')) {
+            const newTheme = e.matches ? 'dark' : 'light';
+            applyTheme(newTheme);
+        }
+    });
+
+    // 3. FAQ FUNCTIONALITY
     const categoryButtons = document.querySelectorAll(".faq-category-btn");
     const faqCards = document.querySelectorAll(".faq-card");
     const searchInput = document.querySelector(".faq-search");
@@ -137,36 +175,42 @@ document.addEventListener("DOMContentLoaded", function () {
                 "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
         });
     });
+
+    // 4. INITIALIZE LUCIDE ICONS
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    // Navbar scroll effect
+window.addEventListener('scroll', function() {
+    const navbar = document.querySelector('.navbar');
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
 });
 
-
+// Mobile dropdown functionality
 document.addEventListener('DOMContentLoaded', function() {
-            const themeToggle = document.getElementById('themeToggle');
-            const body = document.body;
-
-            // Function to set theme
-            function setTheme(theme) {
-                body.setAttribute('data-theme', theme);
-                if (theme === 'light') {
-                    body.classList.add('light-mode');
-                } else {
-                    body.classList.remove('light-mode');
-                }
-                localStorage.setItem('theme', theme);
-                themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+    const dropdown = document.querySelector('.dropdown');
+    const dropBtn = document.querySelector('.drop-btn');
+    
+    if (dropdown && dropBtn) {
+        dropBtn.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768) {
+                e.preventDefault();
+                dropdown.classList.toggle('active');
             }
-
-            // Function to toggle theme
-            function toggleTheme() {
-                const currentTheme = body.getAttribute('data-theme') || 'dark';
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                setTheme(newTheme);
+        });
+        
+        // Close dropdown when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768 && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
             }
+        });
+    }
+});
 
-            // Load saved theme or default to dark
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            setTheme(savedTheme);
-
-            // Add event listener to theme toggle button
-            themeToggle.addEventListener('click', toggleTheme);
 });
