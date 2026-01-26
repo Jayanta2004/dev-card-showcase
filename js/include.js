@@ -3,6 +3,9 @@ function loadHTML(id,file){
     .then(response=>response.text())
     .then(data=>{
         document.getElementById(id).innerHTML=data;
+        if (window.lucide) {
+                lucide.createIcons();
+        }
     })
     .catch(error=>console.log("Error loading file: ",file));
 }
