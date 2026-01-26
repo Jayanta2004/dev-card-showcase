@@ -1,0 +1,321 @@
+:root {
+    --bg-color: #050505;
+    --text-color: rgba(255, 255, 255, 0.9);
+    --accent-glow: cyan;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body,
+html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+}
+
+/* Background Mesh Gradient Animation */
+body::before {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    top: -50%;
+    left: -50%;
+    background: radial-gradient(circle at 50% 50%, rgba(20, 30, 40, 1) 0%, rgba(5, 5, 5, 1) 100%);
+    background-size: 100% 100%;
+    z-index: -1;
+    animation: pulseBg 20s infinite alternate ease-in-out;
+}
+
+@keyframes pulseBg {
+    0% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(1.1);
+    }
+}
+
+/* Theme Backgrounds */
+/* Fire: Glow from bottom */
+body.theme-fire::before {
+    background: radial-gradient(circle at 50% 100%, rgba(100, 20, 0, 0.4) 0%, rgba(20, 5, 0, 0.8) 50%, #050505 100%);
+    animation: firePulse 3s infinite alternate ease-in-out;
+}
+
+@keyframes firePulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+/* Ice: Frozen top/center */
+body.theme-ice::before {
+    background: radial-gradient(circle at 50% 0%, rgba(0, 100, 120, 0.3) 0%, rgba(0, 20, 30, 0.8) 60%, #050505 100%);
+}
+
+/* Matrix: Digital Green Scan */
+body.theme-matrix::before {
+    background: linear-gradient(0deg, rgba(0, 20, 0, 0.9), rgba(0, 50, 0, 0.2)),
+        repeating-linear-gradient(0deg, transparent 0, rgba(0, 255, 0, 0.05) 1px, transparent 2px);
+    background-size: 100% 100%, 100% 4px;
+}
+
+/* Void: Deep Purple Vignette - Pitch Black Center */
+body.theme-void::before {
+    background: radial-gradient(circle at 50% 50%, #000000 20%, #150025 100%);
+    opacity: 1 !important;
+}
+
+/* Gold: Luxury Shine */
+body.theme-gold::before {
+    background: radial-gradient(circle at 50% 50%, rgba(60, 50, 0, 0.2), #050505 80%);
+}
+
+/* Love: Pink Glow */
+body.theme-love::before {
+    background: radial-gradient(circle at 50% 50%, rgba(60, 0, 30, 0.3), #050505 80%);
+}
+
+/* Water: Submerged Depths */
+body.theme-water::before {
+    background: radial-gradient(circle at 50% 100%, #001f3f 0%, #001020 50%, #000000 100%);
+    box-shadow: inset 0 0 100px rgba(0, 100, 255, 0.2);
+}
+
+/* Sand: Dusty Dune */
+body.theme-sand::before {
+    background: linear-gradient(to bottom, #1a1005, #2c1e0a 80%, #3d2b10);
+}
+
+/* Default transition */
+body::before {
+    transition: background 1s ease, opacity 1s ease;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#bg-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    /* Behind regular canvas (1) which is particles */
+    /* Actually particles are z-1 in body? No, particles canvas is appending to body */
+    /* Let's fix z-index hierarchy:
+       -3: Body Gradient (CSS)
+       -2: BG Canvas (Atmosphere)
+       -1: Particle Canvas (Main)
+       10: UI Layer
+    */
+    z-index: -2;
+}
+
+#ui-layer {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+#typing-wrapper {
+    text-align: center;
+    width: auto;
+    max-width: 90%;
+    padding: 2rem 4rem;
+    border-radius: 24px;
+
+    /* Glassmorphism */
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+
+    transition: all 0.3s ease;
+}
+
+#text-display {
+    font-size: 4rem;
+    font-weight: 200;
+    letter-spacing: -0.01em;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+    white-space: pre-wrap;
+    /* allow wrapping */
+    word-break: break-word;
+    display: inline-block;
+}
+
+/* Blinking Caret */
+#text-display::after {
+    content: '|';
+    margin-left: 2px;
+    font-weight: 100;
+    animation: blink 1s step-end infinite;
+    opacity: 0.7;
+    color: var(--accent-glow);
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+/* Hide caret when not typing if desired, or keep it to invite typing */
+.idle #text-display::after {
+    animation: blink 2s step-end infinite;
+    /* Slower blink when idle */
+}
+
+/* Command Guide */
+#command-guide {
+    position: absolute;
+    bottom: 40px;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    transition: opacity 0.5s ease;
+}
+
+.guide-title {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.3);
+    margin-right: 0.5rem;
+}
+
+.guide-cmd {
+    font-family: monospace;
+    color: var(--accent-glow);
+    background: rgba(0, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.guide-action {
+    margin-left: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+#active-theme-display {
+    position: absolute;
+    top: 40px;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: var(--accent-glow);
+    opacity: 0.6;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: all 0.5s ease;
+}
+
+/* Hide on fast typing to reduce distraction? Optional. */
+/* We can add a class 'typing-active' to body if we want */
+
+/* Screen Shake Animation */
+@keyframes shake {
+    0% {
+        transform: translate(1px, 1px) rotate(0deg);
+    }
+
+    10% {
+        transform: translate(-1px, -2px) rotate(-1deg);
+    }
+
+    20% {
+        transform: translate(-3px, 0px) rotate(1deg);
+    }
+
+    30% {
+        transform: translate(3px, 2px) rotate(0deg);
+    }
+
+    40% {
+        transform: translate(1px, -1px) rotate(1deg);
+    }
+
+    50% {
+        transform: translate(-1px, 2px) rotate(-1deg);
+    }
+
+    60% {
+        transform: translate(-3px, 1px) rotate(0deg);
+    }
+
+    70% {
+        transform: translate(3px, 1px) rotate(-1deg);
+    }
+
+    80% {
+        transform: translate(-1px, -1px) rotate(1deg);
+    }
+
+    90% {
+        transform: translate(1px, 2px) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(1px, -2px) rotate(-1deg);
+    }
+}
+
+.shake {
+    animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+/* Gravity Mode Hint */
+.gravity-mode #text-display {
+    color: var(--accent-glow);
+    text-shadow: 0 0 50px var(--accent-glow);
+    transition: all 0.2s;
+}

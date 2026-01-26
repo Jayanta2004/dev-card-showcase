@@ -1,3 +1,192 @@
+let refreshLocked = false;
+
+function getCache(key, maxAge = 5 * 60 * 1000) {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+
+    const { data, time } = JSON.parse(cached);
+    if (Date.now() - time > maxAge) return null;
+
+    return data;
+}
+
+function setCache(key, data) {
+    localStorage.setItem(
+        key,
+        JSON.stringify({ data, time: Date.now() })
+    );
+}
+
+function disableRefreshUntilReset(minutes = 10) {
+     refreshLocked = true;
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = `Retry in ${minutes} min`;
+
+    setTimeout(() => {
+         refreshLocked = false;
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Analytics';
+    }, minutes * 60 * 1000);
+
+}
+
+let chartsInitialized = false;
+
+function initCharts(commits, languages) {
+    createContributorsChart(commits);
+    createLanguagesChart(languages);
+    chartsInitialized = true;
+}
+
+function refreshCharts(contributors, languages) {
+    updateContributorsChart(contributors);
+    updateLanguagesChart(languages);
+}
+function buildContributorGrowth(commits) {
+    const map = {};
+
+
+    commits.forEach(c => {
+        // Try to get the date string in YYYY-MM-DD format from various possible fields
+        let dateStr = c.date || (c.commit && c.commit.author && c.commit.author.date) || (c.commit && c.commit.committer && c.commit.committer.date);
+        if (dateStr) {
+            const day = new Date(dateStr).toISOString().split("T")[0];
+            map[day] = (map[day] || 0) + 1;
+        }
+    });
+
+    const sortedDates = Object.keys(map).sort();
+    const labels = sortedDates; // show all days
+    const data = labels.map(d => map[d]);
+
+    return { labels, data };
+}
+
+
+
+function createContributorsChart(commits) {
+    const ctx = document.getElementById("contributorsChart").getContext("2d");
+    console.log("[DEBUG] Commits data for chart:", commits);
+    const growth = buildContributorGrowth(commits);
+
+    // If no data, show a message on the chart
+    if (!growth.labels.length || !growth.data.length) {
+        // Clear the canvas and show a message
+        const canvas = document.getElementById("contributorsChart");
+        const ctx2d = canvas.getContext("2d");
+        ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+        ctx2d.font = "20px Arial";
+        ctx2d.fillStyle = "#888";
+        ctx2d.textAlign = "center";
+        ctx2d.fillText("No data available", canvas.width / 2, canvas.height / 2);
+        return;
+    }
+
+    charts.contributorsChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: growth.labels,
+            datasets: [{
+                label: "Commits per day",
+                data: growth.data,
+                borderColor: "#4facfe", // vibrant blue
+                backgroundColor: "rgba(76, 172, 254, 0.15)", // semi-transparent fill
+                pointBackgroundColor: "#00cdac", // accent color for points
+                pointBorderColor: "#fff",
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: baseChartOptions()
+    });
+}
+function updateContributorsChart(commits) {
+    const growth = buildContributorGrowth(commits);
+    const chart = charts.contributorsChart;
+
+    chart.data.labels = growth.labels;
+    chart.data.datasets[0].data = growth.data;
+    chart.update("none");
+}
+function createLanguagesChart(languages) {
+    const ctx = document.getElementById("languagesChart").getContext("2d");
+
+    charts.languagesChart = new Chart(ctx, {
+        type: "doughnut",
+        data: buildLanguageData(languages),
+        options: {
+            ...baseChartOptions(),
+            cutout: "65%"
+        }
+    });
+}
+function updateLanguagesChart(languages) {
+    const chart = charts.languagesChart;
+    const data = buildLanguageData(languages);
+
+    chart.data.labels = data.labels;
+    chart.data.datasets[0].data = data.datasets[0].data;
+    chart.update("none");
+}
+function buildLanguageData(languages) {
+    const labels = Object.keys(languages);
+    const values = Object.values(languages);
+    const total = values.reduce((a, b) => a + b, 0);
+
+    return {
+        labels,
+        datasets: [{
+            data: values.map(v => Math.round((v / total) * 100)),
+            backgroundColor: [
+                "#667eea","#764ba2","#4facfe","#00cdac","#f093fb"
+            ]
+        }]
+    };
+}
+function baseChartOptions() {
+    const isLight = document.body.getAttribute("data-theme") === "light";
+
+    return {
+        responsive: true,
+        animation: false,
+        plugins: {
+            legend: {
+                labels: {
+                    color: isLight ? "#333" : "#e2e8f0"
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { color: isLight ? "#333" : "#e2e8f0" }
+            },
+            y: {
+                beginAtZero: true,   // ✅ THIS FIXES INVISIBLE LINE
+                ticks: { color: isLight ? "#333" : "#e2e8f0" }
+            }
+        }
+    };
+}
+
+
+// api rate limiting 
+function isRateLimited(response) {
+    return (
+        response.status === 403 &&
+        response.headers.get("x-ratelimit-remaining") === "0"
+    );
+}
+
+function getRateLimitReset(response) {
+    const reset = response.headers.get("x-ratelimit-reset");
+    return reset ? new Date(reset * 1000) : null;
+}
+
+
+
 document.addEventListener("DOMContentLoaded", function () {
     const coords = { x: 0, y: 0 };
     const circles = document.querySelectorAll(".circle");
@@ -56,6 +245,7 @@ const themeToggle = document.getElementById("themeToggle");
 const hamburger = document.getElementById("hamburger");
 const navLinks = document.getElementById("navLinks");
 const scrollToTopBtn = document.getElementById("scrollToTop");
+const contributorSearch = document.getElementById("contributorSearch");
 
 // Export Modal Elements
 const exportBtn = document.getElementById("exportBtn");
@@ -77,7 +267,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Set up auto-refresh
     setInterval(() => {
-        if (!document.hidden) {
+        if (!document.hidden && !refreshLocked) {
             loadAllData();
         }
     }, 300000); // 5 minutes
@@ -165,7 +355,16 @@ async function fetchRepoData() {
             { headers: getHeaders() },
         );
 
-        if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
+            if (!response.ok) {
+            if (isRateLimited(response)) {
+                const resetTime = getRateLimitReset(response);
+                throw new Error(
+                    `GitHub API rate limit reached. Try again after ${resetTime?.toLocaleTimeString()}`
+                );
+            }
+            throw new Error(`GitHub API Error: ${response.status}`);
+        }
+
         return await response.json();
     } catch (error) {
         console.error("Error fetching repo data:", error);
@@ -181,28 +380,70 @@ async function fetchContributors() {
             { headers: getHeaders() },
         );
 
-        if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
+        if (!response.ok) {
+            if (isRateLimited(response)) {
+                const resetTime = getRateLimitReset(response);
+                throw new Error(
+                    `rate limit reached until ${resetTime?.toLocaleTimeString()}`
+                );
+            }
+            throw new Error(`GitHub API Error: ${response.status}`);
+        }
+
         return await response.json();
     } catch (error) {
         console.error("Error fetching contributors:", error);
         throw error;
     }
 }
+contributorSearch.addEventListener('input',function(){
+    const query=this.value.toLowerCase();
+    const filteredData=contributorsData.filter((contributor)=>{
+        return contributor.login.toLowerCase().includes(query);
+    });
+    updateAllContributors(filteredData);
 
-// Fetch Commits
+})
+
+// Fetch all pages of commits
 async function fetchCommits() {
-    try {
+    const allCommits = [];
+    let page = 1;
+    const perPage = 100;
+    let totalPages = 0;
+    while (true) {
         const response = await fetch(
-            `${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/commits?per_page=20`,
+            `${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/commits?per_page=${perPage}&page=${page}`,
             { headers: getHeaders() },
         );
-
-        if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
-        return await response.json();
-    } catch (error) {
-        console.error("Error fetching commits:", error);
-        throw error;
+        if (!response.ok) {
+            if (isRateLimited(response)) {
+                const resetTime = getRateLimitReset(response);
+                throw new Error(
+                    `rate limit reached until ${resetTime?.toLocaleTimeString()}`
+                );
+            }
+            throw new Error(`GitHub API Error: ${response.status}`);
+        }
+        const commits = await response.json();
+        allCommits.push(...commits);
+        totalPages++;
+        if (commits.length < perPage) {
+            break; // last page
+        }
+        page++;
     }
+    // Debug: print number of pages and unique commit dates
+    const uniqueDates = new Set();
+    allCommits.forEach(c => {
+        let dateStr = c.date || (c.commit && c.commit.author && c.commit.author.date) || (c.commit && c.commit.committer && c.commit.committer.date);
+        if (dateStr) {
+            uniqueDates.add(new Date(dateStr).toISOString().split("T")[0]);
+        }
+    });
+    console.log(`[DEBUG] fetchCommits: pages fetched = ${totalPages}, total commits = ${allCommits.length}, unique days = ${uniqueDates.size}`);
+    console.log('[DEBUG] Unique commit days:', Array.from(uniqueDates));
+    return allCommits;
 }
 
 // Fetch Languages
@@ -213,7 +454,16 @@ async function fetchLanguages() {
             { headers: getHeaders() },
         );
 
-        if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
+        if (!response.ok) {
+            if (isRateLimited(response)) {
+                const resetTime = getRateLimitReset(response);
+                throw new Error(
+                    `rate limit reached until ${resetTime?.toLocaleTimeString()}`
+                );
+            }
+            throw new Error(`GitHub API Error: ${response.status}`);
+        }
+
         return await response.json();
     } catch (error) {
         console.error("Error fetching languages:", error);
@@ -407,7 +657,6 @@ function updateAllContributors(contributors) {
                     <a href="${profileUrl}" target="_blank" class="contributor-card" style="text-decoration: none; color: inherit;">
                         <img src="${avatar}" alt="${username}" class="contributor-avatar">
                         <div class="contributor-name">${username}</div>
-                        <div class="contributor-role">Open Source Contributor</div>
                         <div class="contributor-stats">
                             <div class="contributor-stat">
                                 <div class="contributor-stat-value">${contributions}</div>
@@ -655,10 +904,24 @@ function updateCharts(contributors, languages) {
 
 // Update charts theme
 function updateChartsTheme() {
-    if (charts.contributorsChart || charts.languagesChart) {
-        updateCharts(contributorsData, {});
-    }
+    if (!chartsInitialized) return;
+
+    Object.values(charts).forEach(chart => {
+        if (!chart) return;
+
+        const isLight = document.body.getAttribute("data-theme") === "light";
+        const color = isLight ? "#333" : "#e2e8f0";
+
+        if (chart.options.scales) {
+            chart.options.scales.x.ticks.color = color;
+            chart.options.scales.y.ticks.color = color;
+        }
+
+        chart.options.plugins.legend.labels.color = color;
+        chart.update("none");
+    });
 }
+
 
 // Time Ago Utility
 function getTimeAgo(date) {
@@ -852,6 +1115,36 @@ function downloadBlob(blob, filename) {
 
 // Load All Data
 async function loadAllData() {
+    contributorSearch.value = "";
+
+    // 🔹 CHECK CACHE FIRST
+const cachedRepo = getCache("repo");
+const cachedContributors = getCache("contributors");
+const cachedCommits = getCache("commits");
+const cachedLanguages = getCache("languages");
+
+if (cachedRepo && cachedContributors && cachedCommits && cachedLanguages) {
+    repoData = cachedRepo;
+    contributorsData = cachedContributors;
+    commitsData = cachedCommits;
+
+    updateStats(repoData, contributorsData, commitsData);
+    updateActivity(commitsData);
+    updateTopContributors(contributorsData);
+    updateAllContributors(contributorsData);
+    updateRepoInfo(repoData);
+
+    if (!chartsInitialized) {
+        initCharts(commitsData, cachedLanguages);
+    } else {
+        refreshCharts(commitsData, cachedLanguages);
+    }
+
+    lastUpdated.textContent = "Last updated: Cached";
+    return; // ⬅️ IMPORTANT: stop here, no API call
+}
+
+
     try {
         refreshBtn.disabled = true;
         refreshBtn.classList.add("loading");
@@ -864,11 +1157,17 @@ async function loadAllData() {
             fetchCommits(),
             fetchLanguages(),
         ]);
+                // 🔹 SAVE TO CACHE
+        setCache("repo", repo);
+        setCache("contributors", contributors);
+        setCache("commits", commits);
+        setCache("languages", languages);
 
         // Store data
         repoData = repo;
         contributorsData = contributors;
         commitsData = commits;
+        
 
         // Update UI
         updateStats(repo, contributors, commits);
@@ -876,23 +1175,31 @@ async function loadAllData() {
         updateTopContributors(contributors);
         updateAllContributors(contributors);
         updateRepoInfo(repo);
-        updateCharts(contributors, languages);
+        if (!chartsInitialized) {
+            initCharts(commits, languages);
+        } 
+         else {
+            refreshCharts(commits, languages);
+            }
 
         // Update timestamp
         lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
     } catch (error) {
         console.error("Error loading data:", error);
-        statsContainer.innerHTML = `
-                    <div class="error-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>Error Loading Data</h3>
-                        <p>${error.message || "Unable to fetch data from GitHub API"}</p>
-                        <p><small>Please check if the repository exists and is public. GitHub API has rate limits.</small></p>
-                        <button onclick="loadAllData()" class="refresh-btn">
-                            <i class="fas fa-redo"></i> Try Again
-                        </button>
-                    </div>
-                `;
+            statsContainer.innerHTML = `
+            <div class="error-state">
+                <i class="fas fa-clock"></i>
+                <h3>API Rate Limit Reached</h3>
+                <p>You’ve hit GitHub’s request limit.</p>
+                <p><small>Refresh will work again after some time.</small></p>
+                <button onclick="loadAllData()" class="refresh-btn">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+        `;
+         if (error.message.includes("rate limit")) {
+        disableRefreshUntilReset(10);
+    }
     } finally {
         refreshBtn.disabled = false;
         refreshBtn.classList.remove("loading");
