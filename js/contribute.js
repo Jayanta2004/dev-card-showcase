@@ -53,26 +53,11 @@ window.addEventListener('scroll', () => {
 const hamburger = document.getElementById("hamburger");
 const navLinks = document.getElementById("navLinks");
 
-hamburger.addEventListener("click", () => {
-    navLinks.classList.toggle("active");
-});
+// hamburger.addEventListener("click", () => {
+//     navLinks.classList.toggle("active");
+// });
 
-// Theme Toggle
-const toggleBtn = document.getElementById("themeToggle");
-const body = document.body;
 
-// Load saved theme
-const savedTheme = localStorage.getItem("theme") || "dark";
-body.setAttribute("data-theme", savedTheme);
-toggleBtn.textContent = savedTheme === "light" ? "☀️" : "🌙";
-
-toggleBtn.addEventListener("click", () => {
-    const currentTheme = body.getAttribute("data-theme") || "dark";
-    const newTheme = currentTheme === "dark" ? "light" : "dark";
-    body.setAttribute("data-theme", newTheme);
-    toggleBtn.textContent = newTheme === "light" ? "☀️" : "🌙";
-    localStorage.setItem("theme", newTheme);
-});
 
 // Copy Code Function
 function copyCode(button) {

@@ -655,3 +655,40 @@ function exportCharts() {
 const script = document.createElement('script');
 script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
 document.head.appendChild(script);
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const themeToggle = document.getElementById('themeToggle');
+    
+    // Check for saved theme or prefer color scheme
+    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    const currentTheme = localStorage.getItem('theme');
+    
+    // Set initial theme
+    if (currentTheme === 'dark' || (!currentTheme && prefersDarkScheme.matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+    }
+    
+    // Toggle theme on button click
+    themeToggle.addEventListener('click', function() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Update ARIA label
+        themeToggle.setAttribute('aria-label', 
+            newTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+    });
+    
+    // Listen for system theme changes
+    prefersDarkScheme.addEventListener('change', function(e) {
+        if (!localStorage.getItem('theme')) {
+            document.documentElement.setAttribute('data-theme', 
+                e.matches ? 'dark' : 'light');
+        }
+    });
+});
