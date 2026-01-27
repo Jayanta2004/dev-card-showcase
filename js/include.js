@@ -1,4 +1,4 @@
-function loadHTML(id,file){
+function loadHTML(id, file, callback) {
     fetch(file)
     .then(response=>response.text())
     .then(data=>{
@@ -6,8 +6,13 @@ function loadHTML(id,file){
         if (window.lucide) {
                 lucide.createIcons();
         }
+        if (callback) callback();
     })
     .catch(error=>console.log("Error loading file: ",file));
 }
-loadHTML("navbar","navbar.html");
-loadHTML("footer","footer.html");
+
+loadHTML("navbar", "navbar.html", () => {
+    document.dispatchEvent(new Event("navbarLoaded"));
+});
+
+loadHTML("footer", "footer.html");
