@@ -254,3 +254,62 @@ document.addEventListener('DOMContentLoaded', function() {
 window.addEventListener('load', function() {
     document.body.classList.add('loaded');
 });
+
+      // Theme Toggle Functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        const themeToggle = document.getElementById("themeToggle");
+        const htmlElement = document.documentElement;
+
+        // Check for saved theme preference or use light as default
+        const savedTheme = localStorage.getItem("theme") || "light";
+
+        // Set initial theme
+        htmlElement.setAttribute("data-theme", savedTheme);
+        updateThemeIcon(savedTheme);
+
+        // Toggle theme on button click
+        themeToggle.addEventListener("click", function () {
+          const currentTheme = htmlElement.getAttribute("data-theme");
+          const newTheme = currentTheme === "light" ? "dark" : "light";
+
+          htmlElement.setAttribute("data-theme", newTheme);
+          localStorage.setItem("theme", newTheme);
+          updateThemeIcon(newTheme);
+        });
+
+        // Update theme icon
+        function updateThemeIcon(theme) {
+          themeToggle.textContent = theme === "light" ? "🌙" : "☀️";
+        }
+      });
+
+      // Hamburger menu toggle
+      document.addEventListener("DOMContentLoaded", function () {
+        const hamburger = document.getElementById("hamburger");
+        const navLinks = document.getElementById("navLinks");
+
+        if (hamburger && navLinks) {
+          hamburger.addEventListener("click", function () {
+            navLinks.classList.toggle("active");
+            hamburger.classList.toggle("active");
+          });
+        }
+      });
+
+      // Scroll to top functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        const scrollToTopBtn = document.querySelector(".scroll-to-top");
+
+        window.addEventListener("scroll", function () {
+          if (window.scrollY > 300) {
+            scrollToTopBtn.style.display = "flex";
+          } else {
+            scrollToTopBtn.style.display = "none";
+          }
+        });
+
+        scrollToTopBtn.addEventListener("click", function () {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+ 
