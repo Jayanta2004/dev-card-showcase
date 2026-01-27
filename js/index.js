@@ -463,45 +463,45 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
 
-    // <!-- Theme Toggle Script -->
+    // // <!-- Theme Toggle Script -->
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const themeToggle = document.getElementById('themeToggle');
-            const body = document.body;
+    //     document.addEventListener('DOMContentLoaded', function() {
+    //         const themeToggle = document.getElementById('themeToggle');
+    //         const body = document.body;
 
-            // Function to set theme
-            function setTheme(theme) {
-                body.setAttribute('data-theme', theme);
-                if (theme === 'light') {
-                    body.classList.add('light-mode');
-                } else {
-                    body.classList.remove('light-mode');
-                }
-                localStorage.setItem('theme', theme);
-                themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
-            }
+    //         // Function to set theme
+    //         function setTheme(theme) {
+    //             body.setAttribute('data-theme', theme);
+    //             if (theme === 'light') {
+    //                 body.classList.add('light-mode');
+    //             } else {
+    //                 body.classList.remove('light-mode');
+    //             }
+    //             localStorage.setItem('theme', theme);
+    //             themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+    //         }
 
-            // Function to toggle theme
-            function toggleTheme() {
-                const currentTheme = body.getAttribute('data-theme') || 'dark';
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                setTheme(newTheme);
-            }
+    //         // Function to toggle theme
+    //         function toggleTheme() {
+    //             const currentTheme = body.getAttribute('data-theme') || 'dark';
+    //             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    //             setTheme(newTheme);
+    //         }
 
-            // Load saved theme or default to dark
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            setTheme(savedTheme);
+    //         // Load saved theme or default to dark
+    //         const savedTheme = localStorage.getItem('theme') || 'dark';
+    //         setTheme(savedTheme);
 
-            // Add event listener to theme toggle button
-            themeToggle.addEventListener('click', toggleTheme);
+    //         // Add event listener to theme toggle button
+    //         themeToggle.addEventListener('click', toggleTheme);
 
-            // Update copyright year dynamically
-            const copyrightElement = document.getElementById('copyright');
-            if (copyrightElement) {
-                const currentYear = new Date().getFullYear();
-                copyrightElement.textContent = `© ${currentYear} Community Hall of Fame`;
-            }
-        });
+    //         // Update copyright year dynamically
+    //         const copyrightElement = document.getElementById('copyright');
+    //         if (copyrightElement) {
+    //             const currentYear = new Date().getFullYear();
+    //             copyrightElement.textContent = `© ${currentYear} Community Hall of Fame`;
+    //         }
+    //     });
 
 
     // <!-- Card Animation Script -->
