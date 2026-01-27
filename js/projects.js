@@ -1782,10 +1782,11 @@ function runFilter(query, tech) {
     }
 }
 
-// Theme Toggle Script
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("navbarLoaded", () => {
     const themeToggle = document.getElementById("themeToggle");
     const body = document.body;
+
+    if (!themeToggle) return;
 
     function setTheme(theme) {
         body.setAttribute("data-theme", theme);
@@ -1795,48 +1796,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function toggleTheme() {
         const currentTheme = body.getAttribute("data-theme") || "dark";
-        const newTheme = currentTheme === "dark" ? "light" : "dark";
-        setTheme(newTheme);
+        setTheme(currentTheme === "dark" ? "light" : "dark");
     }
 
-    const savedTheme = localStorage.getItem("theme") || "dark";
-    setTheme(savedTheme);
-
+    setTheme(localStorage.getItem("theme") || "dark");
     themeToggle.addEventListener("click", toggleTheme);
-
-    // Load projects when page loads
-    loadProjects();
-
-    // Mouse trail animation
-    const coords = { x: 0, y: 0 };
-    const circles = document.querySelectorAll(".circle");
-
-    circles.forEach(function (circle) {
-        circle.x = 0;
-        circle.y = 0;
-    });
-
-    window.addEventListener("mousemove", function (e) {
-        coords.x = e.pageX;
-        coords.y = e.pageY - window.scrollY;
-    });
-
-    function animateCircles() {
-        let x = coords.x;
-        let y = coords.y;
-        circles.forEach(function (circle, index) {
-            circle.style.left = `${x - 12}px`;
-            circle.style.top = `${y - 12}px`;
-            circle.style.transform = `scale(${(circles.length - index) / circles.length})`;
-            const nextCircle = circles[index + 1] || circles[0];
-            circle.x = x;
-            circle.y = y;
-            x += (nextCircle.x - x) * 0.3;
-            y += (nextCircle.y - y) * 0.3;
-        });
-
-        requestAnimationFrame(animateCircles);
-    }
-
-    animateCircles();
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadProjects();
+});
+
