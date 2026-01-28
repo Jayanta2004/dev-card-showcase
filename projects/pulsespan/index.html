@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulsePlan | Energy-First Scheduling</title>
+
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/animations.css">
+</head>
+
+<body>
+    <div class="app-background">
+        <div class="ambient-glow glow-1"></div>
+        <div class="ambient-glow glow-2"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar / Header -->
+        <header class="main-header">
+            <div class="logo-container">
+                <div class="pulse-icon">
+                    <div class="pulse-ring"></div>
+                    <div class="pulse-core"></div>
+                </div>
+                <h1>PulsePlan</h1>
+            </div>
+
+            <div class="user-status-card">
+                <div class="card-header-mini" style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                    <div class="rpg-stats">
+                        <span class="level-badge">Lvl <span id="rpg-level">1</span></span>
+                        <span class="xp-text"><span id="rpg-xp">0</span> XP</span>
+                    </div>
+                    <!-- Feature 6: Sonic Focus Button -->
+                    <button id="btn-sonic-focus" class="btn-icon-small" title="Toggle Sonic Focus">🎧</button>
+                </div>
+
+                <div class="status-label">Current State</div>
+                <div class="energy-display">
+                    <span id="energy-value-display">50%</span>
+                    <span id="energy-state-text" class="status-text">Balanced</span>
+                </div>
+                <!-- Feature 9: Velocity Pulse Sparkline -->
+                <div class="velocity-container" style="height: 30px; width: 100%; margin: 5px 0;">
+                    <canvas id="velocity-canvas"></canvas>
+                </div>
+
+                <div class="energy-control-wrapper">
+                    <label for="energy-slider" class="sr-only">Adjust Energy Level</label>
+                    <input type="range" id="energy-slider" min="0" max="100" value="50" class="energy-slider">
+                    <div class="slider-track-fill"></div>
+                </div>
+                <!-- Feature 2: Burnout/Debt Meter -->
+                <div class="burnout-wrapper">
+                    <div class="burnout-label">
+                        <span>Energy Debt</span>
+                        <span id="burnout-value">0%</span>
+                    </div>
+                    <div class="burnout-bar">
+                        <div class="burnout-fill" id="burnout-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 4: Vibe Selector -->
+            <div class="vibe-selector-card">
+                <h3>Current Vibe</h3>
+                <select id="vibe-select" class="vibe-select-input">
+                    <option value="any">Any Vibe</option>
+                    <option value="creative">🎨 Creative</option>
+                    <option value="logical">🧠 Logical</option>
+                    <option value="social">💬 Social</option>
+                </select>
+            </div>
+
+            <nav class="main-nav">
+                <button class="nav-item active" data-view="dashboard">
+                    <span class="icon">📊</span> Dashboard
+                </button>
+                <div class="streak-counter" id="streak-counter">
+                    <span class="icon">🔥</span> <span id="streak-value">0</span> Flow Streak
+                </div>
+            </nav>
+            <button class="nav-item" data-view="planner">
+                <span class="icon">📅</span> Planner
+            </button>
+            <button class="nav-item" data-view="analytics">
+                <span class="icon">📈</span> Analytics
+            </button>
+            </nav>
+
+            <div class="header-footer">
+                <div class="time-display" id="clock">00:00</div>
+                <div class="date-display" id="date">Jan 01</div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="view-section active">
+                <div class="content-header">
+                    <h2>Live Energy Field</h2>
+                    <div class="action-group">
+                        <button id="btn-optimize" class="btn btn-secondary">
+                            <span class="icon">⚡</span> Optimize
+                        </button>
+                        <button id="btn-add-task" class="btn btn-primary">
+                            <span class="icon">+</span> New Task
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Energy Curve Visualization -->
+                    <div class="card viz-card">
+                        <div class="card-header">
+                            <h3>Daily Rhythm</h3>
+                            <div class="legend">
+                                <span class="legend-item"><span class="dot high"></span>High</span>
+                                <span class="legend-item"><span class="dot medium"></span>Med</span>
+                                <span class="legend-item"><span class="dot low"></span>Low</span>
+                            </div>
+                        </div>
+                        <div class="chart-container" id="energy-chart-container">
+                            <!-- Canvas will be injected here -->
+                            <canvas id="energy-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recomended Task -->
+                    <div class="card recommendation-card" id="recommendation-card">
+                        <div class="card-header">
+                            <h3>Recommended Now</h3>
+                            <span class="badge" id="rec-badge">Best Match</span>
+                            <!-- Feature 7: Perceived Time Display -->
+                            <span id="perceived-time"
+                                style="font-size: 0.7rem; color: var(--text-muted); margin-left: auto; margin-right: 10px;"></span>
+                        </div>
+                        <div class="rec-content" id="rec-task-content">
+                            <div class="placeholder-text">Log tasks to get suggestions</div>
+                        </div>
+                    </div>
+
+                    <!-- Feature 8: Brain Dump -->
+                    <div class="card braindump-card" style="grid-column: 1 / 3;">
+                        <div class="card-header">
+                            <h3>Brain Dump</h3>
+                            <span style="font-size:0.8rem; color:var(--text-secondary);">Capture thoughts
+                                instantly</span>
+                        </div>
+                        <textarea id="brain-dump-input" placeholder="Type anything... we'll save it automatically."
+                            style="width:100%; height: 60px; background: transparent; border: 1px dashed var(--border-subtle); resize: none;"></textarea>
+                    </div>
+
+                    <!-- Active Task List -->
+                    <div class="card task-list-card">
+                        <div class="card-header">
+                            <h3>Your Flow</h3>
+                            <div class="filter-tabs">
+                                <button class="filter-tab active" data-filter="all">All</button>
+                                <button class="filter-tab" data-filter="high">High Energy</button>
+                                <button class="filter-tab" data-filter="low">Low Energy</button>
+                            </div>
+                        </div>
+                        <div class="task-list-container" id="task-list">
+                            <!-- Tasks will be injected here -->
+                            <div class="empty-state">
+                                <div class="empty-icon">🍃</div>
+                                <p>No tasks planned. Enjoy the calm.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Planner View (Hidden by default) -->
+            <section id="view-planner" class="view-section">
+                <!-- Planner content to be added -->
+                <h2>Planner View</h2>
+            </section>
+
+        </main>
+
+        <!-- Modals -->
+        <div class="modal-overlay" id="add-task-modal">
+            <div class="modal-glass">
+                <div class="modal-header">
+                    <h3>Create New Task</h3>
+                    <button class="btn-close" id="close-modal">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-task-form">
+                        <div class="form-group">
+                            <label for="task-title">Task Name</label>
+                            <input type="text" id="task-title" placeholder="e.g., Deep Work Session" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Required Energy</label>
+                            <div class="energy-selector">
+                                <label class="energy-option low">
+                                    <input type="radio" name="task-energy" value="low">
+                                    <span class="energy-chip">Low ☕</span>
+                                </label>
+                                <label class="energy-option medium">
+                                    <input type="radio" name="task-energy" value="medium" checked>
+                                    <span class="energy-chip">Medium ⚡</span>
+                                </label>
+                                <label class="energy-option high">
+                                    <input type="radio" name="task-energy" value="high">
+                                    <span class="energy-chip">High 🔥</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Task Vibe</label>
+                            <div class="vibe-selector-row">
+                                <label class="vibe-option"><input type="radio" name="task-vibe" value="any" checked>
+                                    <span>Any</span></label>
+                                <label class="vibe-option"><input type="radio" name="task-vibe" value="creative">
+                                    <span>Creative</span></label>
+                                <label class="vibe-option"><input type="radio" name="task-vibe" value="logical">
+                                    <span>Logical</span></label>
+                                <label class="vibe-option"><input type="radio" name="task-vibe" value="social">
+                                    <span>Social</span></label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-duration">Duration (minutes)</label>
+                            <input type="number" id="task-duration" value="30" min="5" step="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="task-desc">Notes (Optional)</label>
+                            <textarea id="task-desc" rows="3"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-text" id="cancel-add-task">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add to Flow</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 1: Focus Mode Overlay -->
+        <div class="focus-overlay" id="focus-overlay">
+            <div class="focus-content">
+                <div class="focus-timer-ring">
+                    <svg class="progress-ring" width="300" height="300">
+                        <circle class="progress-ring__circle" stroke="white" stroke-width="10" fill="transparent"
+                            r="140" cx="150" cy="150" />
+                    </svg>
+                    <div class="timer-display" id="focus-timer-display">25:00</div>
+                </div>
+                <h2 id="focus-task-title">Deep Work</h2>
+                <div class="focus-controls">
+                    <button class="btn btn-secondary" id="exit-focus">Exit Zen Mode</button>
+                    <button class="btn btn-primary" id="complete-focus">Complete Task</button>
+                </div>
+                <div class="focus-message">Stay in your flow.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="scripts/utils.js"></script>
+    <script src="scripts/visuals.js"></script>
+    <script src="scripts/audio.js"></script>
+    <script src="scripts/state.js"></script>
+    <script src="scripts/scheduler.js"></script>
+    <script src="scripts/ui.js"></script>
+    <script src="scripts/app.js"></script>
+</body>
+
+</html>
