@@ -43,15 +43,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const body = document.body;
 
     function setTheme(theme) {
-        body.setAttribute('data-theme', theme);
+        if (theme === 'light') {
+            body.classList.add('light-mode');
+        } else {
+            body.classList.remove('light-mode');
+        }
         localStorage.setItem('theme', theme);
         themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
     }
 
     function toggleTheme() {
-        const currentTheme = body.getAttribute('data-theme') || 'dark';
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
+        const isLight = body.classList.contains('light-mode');
+        setTheme(isLight ? 'dark' : 'light');
     }
 
     const savedTheme = localStorage.getItem('theme') || 'dark';
