@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Code Playground - Dev Card Showcase</title>
+    <link rel="stylesheet" href="css/interactive-playground.css">
+    <!-- Monaco Editor CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    <!-- Prettier for code formatting -->
+    <script src="https://unpkg.com/prettier@3.0.0/standalone.js"></script>
+    <script src="https://unpkg.com/prettier@3.0.0/parser-babel.js"></script>
+    <script src="https://unpkg.com/prettier@3.0.0/parser-html.js"></script>
+    <script src="https://unpkg.com/prettier@3.0.0/parser-css.js"></script>
+    <!-- Highlight.js for code highlighting in console -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+</head>
+<body>
+    <div class="playground-container">
+        <!-- Header -->
+        <header class="playground-header">
+            <div class="header-left">
+                <h1>Code Playground</h1>
+                <p>Write, Test & Share Code in Real-time</p>
+            </div>
+            <div class="header-controls">
+                <div class="theme-selector">
+                    <label for="theme-select">Theme:</label>
+                    <select id="theme-select">
+                        <option value="vs">Light</option>
+                        <option value="vs-dark" selected>Dark</option>
+                        <option value="hc-black">High Contrast</option>
+                        <option value="monokai">Monokai</option>
+                    </select>
+                </div>
+                <div class="language-selector">
+                    <label for="language-select">Language:</label>
+                    <select id="language-select">
+                        <option value="javascript" selected>JavaScript</option>
+                        <option value="python">Python (Output)</option>
+                        <option value="html">HTML/CSS/JS</option>
+                        <option value="java">Java</option>
+                        <option value="cpp">C++</option>
+                        <option value="typescript">TypeScript</option>
+                        <option value="css">CSS</option>
+                        <option value="sql">SQL</option>
+                    </select>
+                </div>
+                <button id="share-btn" class="btn btn-primary" title="Generate shareable link">
+                    <span>Share</span>
+                </button>
+                <button id="download-btn" class="btn btn-primary" title="Download code as file">
+                    <span>Download</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Sidebar with templates and history -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Templates</h3>
+                    <div class="templates-list">
+                        <button class="template-btn" data-template="hello-world">Hello World</button>
+                        <button class="template-btn" data-template="console-log">Console Output</button>
+                        <button class="template-btn" data-template="todo-app">Todo App</button>
+                        <button class="template-btn" data-template="calculator">Calculator</button>
+                        <button class="template-btn" data-template="timer">Timer</button>
+                        <button class="template-btn" data-template="weather-ui">Weather UI</button>
+                        <button class="template-btn" data-template="form-validation">Form Validation</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>History</h3>
+                    <button id="clear-history-btn" class="btn btn-small">Clear History</button>
+                    <div class="history-list" id="history-list">
+                        <p class="empty-state">No history yet</p>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Keyboard Shortcuts</h3>
+                    <div class="shortcuts-list">
+                        <div class="shortcut">
+                            <span class="key">Ctrl+S</span>
+                            <span class="action">Save</span>
+                        </div>
+                        <div class="shortcut">
+                            <span class="key">Ctrl+Enter</span>
+                            <span class="action">Run Code</span>
+                        </div>
+                        <div class="shortcut">
+                            <span class="key">Ctrl+Shift+F</span>
+                            <span class="action">Format Code</span>
+                        </div>
+                        <div class="shortcut">
+                            <span class="key">Ctrl+/</span>
+                            <span class="action">Toggle Comment</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Editor and Preview area -->
+            <div class="editor-preview-container">
+                <!-- Tabs -->
+                <div class="tabs-bar">
+                    <div class="tabs-list" id="tabs-list">
+                        <div class="tab tab-active" data-tab="editor-1">
+                            <span>Untitled 1</span>
+                            <button class="tab-close" data-tab-close="editor-1">×</button>
+                        </div>
+                    </div>
+                    <button id="add-tab-btn" class="btn btn-small" title="Add new tab">+</button>
+                </div>
+
+                <!-- Splitter container -->
+                <div class="splitter-container">
+                    <!-- Editor section -->
+                    <div class="editor-section">
+                        <div class="editor-toolbar">
+                            <button id="run-btn" class="btn btn-success" title="Run code (Ctrl+Enter)">
+                                ▶ Run Code
+                            </button>
+                            <button id="format-btn" class="btn btn-secondary" title="Format code">
+                                ⚡ Format
+                            </button>
+                            <button id="copy-btn" class="btn btn-secondary" title="Copy code">
+                                📋 Copy
+                            </button>
+                            <div class="editor-info">
+                                <span id="line-info">Line: 1, Col: 1</span>
+                                <span id="char-count">Chars: 0</span>
+                            </div>
+                        </div>
+                        <div id="editor-container" class="editor-container"></div>
+                    </div>
+
+                    <!-- Splitter handle -->
+                    <div class="splitter" id="splitter"></div>
+
+                    <!-- Output section -->
+                    <div class="output-section">
+                        <div class="output-tabs">
+                            <button class="output-tab-btn active" data-output="console">Console</button>
+                            <button class="output-tab-btn" data-output="preview">Preview</button>
+                        </div>
+
+                        <!-- Console Output -->
+                        <div id="console-output" class="output-content active">
+                            <div class="console-toolbar">
+                                <button id="clear-console-btn" class="btn btn-small">Clear Console</button>
+                            </div>
+                            <div id="console-logs" class="console-logs">
+                                <div class="console-welcome">Ready to run code...</div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Output -->
+                        <div id="preview-output" class="output-content">
+                            <iframe id="preview-iframe" class="preview-iframe" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for sharing -->
+    <div id="share-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Share Your Code</h2>
+                <button class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Copy the link below to share your code:</p>
+                <div class="share-link-container">
+                    <input type="text" id="share-link" class="share-link-input" readonly>
+                    <button id="copy-link-btn" class="btn btn-primary">Copy Link</button>
+                </div>
+                <p class="share-info">This link contains your code and can be shared with others.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for saving -->
+    <div id="save-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Save Snippet</h2>
+                <button class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="save-name" class="input-field" placeholder="Snippet name...">
+                <textarea id="save-description" class="textarea-field" placeholder="Description (optional)..."></textarea>
+                <div class="modal-actions">
+                    <button id="save-confirm-btn" class="btn btn-primary">Save</button>
+                    <button class="btn btn-secondary modal-close">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Initialize Monaco Editor loader
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+    </script>
+    <script src="js/interactive-playground.js"></script>
+</body>
+</html>
