@@ -1,0 +1,3 @@
+// Habit Tracker Dashboard Script
+// Handles habits, calendar, streaks, reminders, analytics, badges, and data import/export
+// ...implementation will follow the requested features...
