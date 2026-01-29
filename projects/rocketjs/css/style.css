@@ -1,0 +1,398 @@
+:root {
+    --color-bg: #050505;
+    --color-ui-bg: rgba(10, 15, 25, 0.85);
+    --color-primary: #00f2ff;
+    --color-primary-dim: #00f2ff44;
+    --color-danger: #ff2a2a;
+    --color-text: #e0e6ed;
+    --color-text-dim: #8b9bb4;
+
+    --font-heading: 'Rajdhani', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    font-family: var(--font-heading);
+}
+
+/* --- CANVAS LAYER --- */
+#sim-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    display: block;
+}
+
+/* --- FX OVERLAYS --- */
+.scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom,
+            rgba(255, 255, 255, 0),
+            rgba(255, 255, 255, 0) 50%,
+            rgba(0, 0, 0, 0.1) 50%,
+            rgba(0, 0, 0, 0.1));
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.6;
+    animation: scanlineScroll 0.2s linear infinite;
+}
+
+@keyframes scanlineScroll {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 0 4px;
+    }
+}
+
+.vignette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle,
+            transparent 60%,
+            rgba(0, 0, 0, 0.8) 100%);
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* --- UI LAYER --- */
+#ui-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    grid-template-rows: auto 1fr auto;
+    padding: 2rem;
+    gap: 1rem;
+}
+
+/* Header */
+.mission-header {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--color-primary-dim);
+    padding-bottom: 0.5rem;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0), rgba(0, 242, 255, 0.05), rgba(0, 0, 0, 0));
+}
+
+.mission-timer-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mission-timer-block .label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2rem;
+    color: var(--color-text-dim);
+}
+
+.mission-timer-block .value {
+    font-size: 1.5rem;
+    font-family: var(--font-mono);
+    color: var(--color-text);
+}
+
+.mission-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-light {
+    width: 8px;
+    height: 8px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--color-primary);
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+/* Center HUD (Timeline) */
+.hud-center {
+    grid-column: 2;
+    display: flex;
+    justify-content: center;
+    padding-top: 1rem;
+}
+
+.timeline-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.8;
+}
+
+.timeline-bar .marker {
+    font-size: 0.7rem;
+    color: var(--color-text-dim);
+    border: 1px solid var(--color-text-dim);
+    padding: 2px 5px;
+    font-family: var(--font-mono);
+}
+
+.timeline-bar .line {
+    width: 40px;
+    height: 1px;
+    background: var(--color-text-dim);
+}
+
+/* Left Panel: Systems */
+.systems-panel {
+    grid-column: 1;
+    align-self: center;
+    background: rgba(10, 15, 20, 0.4);
+    backdrop-filter: blur(5px);
+    padding: 1rem;
+    border-left: 2px solid var(--color-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-family: var(--font-mono);
+}
+
+.sys-header {
+    font-size: 0.8rem;
+    color: var(--color-primary);
+    margin-bottom: 0.2rem;
+    border-bottom: 1px solid var(--color-primary-dim);
+    letter-spacing: 0.1rem;
+}
+
+.sys-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+}
+
+.sys-row .sys-name {
+    color: var(--color-text-dim);
+}
+
+.sys-val.success {
+    color: #00ff88;
+    text-shadow: 0 0 5px #00ff8844;
+}
+
+.sys-val.warning {
+    color: #ffaa00;
+}
+
+/* CSS for Status Bars */
+.status-bar-container {
+    width: 120px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+}
+
+.status-bar-fill {
+    height: 100%;
+    box-shadow: 0 0 10px currentColor;
+    transition: width 0.2s linear;
+}
+
+/* Right Panel: Telemetry */
+.telemetry-panel {
+    grid-column: 3;
+    align-self: center;
+    position: relative;
+    /* For corner brackets */
+    background: rgba(10, 20, 30, 0.4);
+    backdrop-filter: blur(8px);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    border: 1px solid rgba(0, 242, 255, 0.1);
+    top: auto;
+    right: auto;
+    transform: none;
+    /* Reset old styles */
+}
+
+/* Corner Brackets */
+.corner-bracket {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: var(--color-primary);
+    border-style: solid;
+    opacity: 0.8;
+}
+
+.top-left {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+}
+
+.bottom-right {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+}
+
+/* Control Deck */
+.control-deck {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    pointer-events: auto;
+    padding-bottom: 2rem;
+}
+
+.control-btn {
+    position: relative;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    padding: 1rem 3rem;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 0.2rem;
+    color: var(--color-text);
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.control-btn.hidden {
+    display: none;
+}
+
+.control-btn.primary {
+    border: 1px solid var(--color-primary);
+    box-shadow: 0 0 10px var(--color-primary-dim);
+}
+
+.control-btn.primary:hover {
+    background: var(--color-primary);
+    color: #050510;
+    box-shadow: 0 0 25px var(--color-primary);
+}
+
+.control-btn.primary:active {
+    transform: scale(0.98);
+}
+
+.control-btn.danger {
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger);
+}
+
+.control-btn.danger:hover {
+    background: var(--color-danger);
+    color: #000;
+    box-shadow: 0 0 20px rgba(255, 42, 42, 0.5);
+}
+
+.control-btn.secondary {
+    border: 1px solid var(--color-text-dim);
+}
+
+.control-btn.secondary:hover {
+    background: var(--color-text-dim);
+    color: #000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    #ui-layer {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto 1fr auto;
+    }
+
+    .hud-center {
+        display: none;
+    }
+
+    .systems-panel {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .telemetry-panel {
+        grid-column: 2;
+        grid-row: 2;
+    }
+}
+
+/* Game Over Overlay */
+#game-over-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 2rem 4rem;
+    border: 2px solid var(--color-danger);
+    box-shadow: 0 0 50px rgba(255, 42, 42, 0.3);
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+#game-over-overlay.hidden {
+    display: none;
+}
+
+.game-over-title {
+    font-size: 3rem;
+    color: var(--color-danger);
+    text-shadow: 0 0 20px var(--color-danger);
+    margin-bottom: 1rem;
+    letter-spacing: 0.5rem;
+}
+
+#game-over-reason {
+    font-family: var(--font-mono);
+    color: var(--color-text);
+    font-size: 1.2rem;
+}

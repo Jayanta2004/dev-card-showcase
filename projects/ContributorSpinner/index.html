@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Contributor Spinner | dev-card-showcase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            color: #c9d1d9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        header {
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #58a6ff, #8b949e);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: #8b949e;
+            max-width: 600px;
+            margin: 0 auto 30px;
+            line-height: 1.5;
+        }
+        
+        .github-stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(22, 27, 34, 0.7);
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 15px 25px;
+            min-width: 150px;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #8b949e;
+            margin-top: 5px;
+        }
+        
+        .spinner-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            align-items: center;
+            justify-content: center;
+            margin: 40px 0;
+        }
+        
+        .spinner-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+        }
+        
+        .spinner-wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            background: linear-gradient(145deg, #21262d, #0d1117);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.5),
+                inset 0 0 0 1px #30363d;
+            overflow: hidden;
+            transition: transform 0.1s ease-out;
+        }
+        
+        .spinner-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            left: 0;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+            overflow: hidden;
+            border: 1px solid rgba(48, 54, 61, 0.3);
+            cursor: pointer;
+        }
+        
+        .spinner-segment:hover {
+            opacity: 0.9;
+        }
+        
+        .spinner-center {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            background: #0d1117;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+            border: 2px solid #30363d;
+        }
+        
+        .spinner-pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            z-index: 20;
+            color: #f78166;
+            filter: drop-shadow(0 0 5px rgba(247, 129, 102, 0.5));
+        }
+        
+        .contributor-list {
+            flex: 1;
+            min-width: 300px;
+            max-width: 400px;
+            max-height: 350px;
+            overflow-y: auto;
+            background: rgba(22, 27, 34, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #30363d;
+            text-align: left;
+        }
+        
+        .contributor-list h3 {
+            color: #58a6ff;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        .contributor-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            transition: background 0.3s;
+        }
+        
+        .contributor-item:hover {
+            background: rgba(88, 166, 255, 0.1);
+        }
+        
+        .contributor-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #30363d;
+        }
+        
+        .contributor-item span {
+            font-weight: 500;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        button {
+            background: linear-gradient(145deg, #238636, #2ea043);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(35, 134, 54, 0.3);
+        }
+        
+        button:hover {
+            background: linear-gradient(145deg, #2ea043, #3fb950);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(35, 134, 54, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            background: #30363d;
+            color: #8b949e;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        #spinBtn {
+            background: linear-gradient(145deg, #1f6feb, #388bfd);
+            box-shadow: 0 5px 15px rgba(31, 111, 235, 0.3);
+        }
+        
+        #spinBtn:hover {
+            background: linear-gradient(145deg, #388bfd, #58a6ff);
+            box-shadow: 0 8px 20px rgba(31, 111, 235, 0.4);
+        }
+        
+        #apiBtn {
+            background: linear-gradient(145deg, #6e40c9, #8a63d2);
+            box-shadow: 0 5px 15px rgba(110, 64, 201, 0.3);
+        }
+        
+        #apiBtn:hover {
+            background: linear-gradient(145deg, #8a63d2, #a281e0);
+            box-shadow: 0 8px 20px rgba(110, 64, 201, 0.4);
+        }
+        
+        .result-container {
+            background: linear-gradient(145deg, #161b22, #0d1117);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px auto;
+            max-width: 700px;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid #30363d;
+            display: none;
+        }
+        
+        .result-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        .result-header i {
+            color: #f78166;
+            font-size: 1.8rem;
+        }
+        
+        .result-title {
+            font-size: 1.5rem;
+            color: #58a6ff;
+        }
+        
+        .contributor-card {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            align-items: center;
+        }
+        
+        .contributor-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #30363d;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .contributor-info {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .contributor-name {
+            font-size: 2rem;
+            color: #c9d1d9;
+            margin-bottom: 5px;
+        }
+        
+        .contributor-login {
+            color: #8b949e;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .contributor-stats {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        
+        .stat-badge {
+            background: rgba(88, 166, 255, 0.1);
+            color: #58a6ff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid rgba(88, 166, 255, 0.3);
+        }
+        
+        .contributor-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #21262d;
+            color: #c9d1d9;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid #30363d;
+            margin-top: 10px;
+        }
+        
+        .contributor-link:hover {
+            background: #30363d;
+            color: #ffffff;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8b949e;
+            font-size: 1.2rem;
+        }
+        
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #58a6ff;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 20px;
+            background: rgba(247, 129, 102, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(247, 129, 102, 0.3);
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        
+        .error i {
+            color: #f78166;
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+        
+        footer {
+            margin-top: 40px;
+            color: #8b949e;
+            font-size: 0.9rem;
+            text-align: center;
+            width: 100%;
+            padding-top: 20px;
+            border-top: 1px solid #30363d;
+        }
+        
+        .repo-link {
+            color: #58a6ff;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .repo-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* Scrollbar styling */
+        .contributor-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .contributor-list::-webkit-scrollbar-track {
+            background: #0d1117;
+            border-radius: 4px;
+        }
+        
+        .contributor-list::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+        
+        .contributor-list::-webkit-scrollbar-thumb:hover {
+            background: #58a6ff;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .spinner-container {
+                width: 300px;
+                height: 300px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .spinner-section {
+                flex-direction: column;
+            }
+            
+            .contributor-list {
+                width: 100%;
+                max-width: 350px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+            
+            .contributor-card {
+                justify-content: center;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .spinner-container {
+                width: 270px;
+                height: 270px;
+            }
+            
+            .spinner-center {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .result-container {
+                padding: 20px;
+            }
+            
+            .contributor-info {
+                min-width: 100%;
+            }
+            
+            .contributor-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        /* Spinning animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-users"></i> Live Contributor Spinner</h1>
+            <p class="subtitle">Spin to randomly select an actual contributor from the dev-card-showcase GitHub repository</p>
+        </header>
+        
+        <div class="github-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="contributorCount">0</div>
+                <div class="stat-label">Contributors</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="repoStars">33</div>
+                <div class="stat-label">Stars</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="repoForks">97</div>
+                <div class="stat-label">Forks</div>
+            </div>
+        </div>
+        
+        <div class="spinner-section">
+            <div class="spinner-container">
+                <div class="spinner-wheel" id="spinnerWheel">
+                    <!-- Spinner segments will be generated by JavaScript -->
+                </div>
+                <div class="spinner-center">
+                    <i class="fas fa-github" style="font-size: 2.5rem; color: #58a6ff;"></i>
+                </div>
+                <div class="spinner-pointer">
+                    <i class="fas fa-caret-down" style="font-size: 3rem;"></i>
+                </div>
+            </div>
+            
+            <div class="contributor-list" id="contributorList">
+                <h3><i class="fas fa-list"></i> Contributors List</h3>
+                <!-- Contributor list will be populated here -->
+                <div class="loading" id="listLoading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading contributors...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="apiBtn">
+                <i class="fas fa-download"></i> Fetch Live Contributors
+            </button>
+            <button id="spinBtn" disabled>
+                <i class="fas fa-redo-alt"></i> Spin the Wheel
+            </button>
+            <button id="resetBtn" disabled>
+                <i class="fas fa-undo"></i> Reset
+            </button>
+        </div>
+        
+        <div class="loading" id="mainLoading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Click "Fetch Live Contributors" to load actual contributors from GitHub...</p>
+        </div>
+        
+        <div class="error" id="errorMessage" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>API Rate Limit Exceeded</h3>
+            <p>GitHub API has rate limits for unauthenticated requests. Try these options:</p>
+            <p style="margin-top: 10px;">
+                1. Wait a few minutes and try again<br>
+                2. Add a GitHub Personal Token (see console for instructions)<br>
+                3. Use the fallback data option
+            </p>
+            <button id="useFallbackBtn" style="margin-top: 15px;">
+                <i class="fas fa-database"></i> Use Fallback Data
+            </button>
+        </div>
+        
+        <div class="result-container" id="resultContainer">
+            <div class="result-header">
+                <i class="fas fa-trophy"></i>
+                <h2 class="result-title">Selected Contributor</h2>
+            </div>
+            <div class="contributor-card" id="contributorCard">
+                <!-- Selected contributor will be displayed here -->
+            </div>
+        </div>
+        
+        <footer>
+            <p>Made with <i class="fas fa-heart" style="color: #f78166;"></i> for the dev-card-showcase community</p>
+            <a href="https://github.com/Jayanta2004/dev-card-showcase" class="repo-link" target="_blank">
+                <i class="fab fa-github"></i> View GitHub Repository
+            </a>
+        </footer>
+    </div>
+
+    <script>
+        // DOM elements
+        const spinnerWheel = document.getElementById('spinnerWheel');
+        const contributorList = document.getElementById('contributorList');
+        const listLoading = document.getElementById('listLoading');
+        const apiBtn = document.getElementById('apiBtn');
+        const spinBtn = document.getElementById('spinBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const mainLoading = document.getElementById('mainLoading');
+        const errorMessage = document.getElementById('errorMessage');
+        const resultContainer = document.getElementById('resultContainer');
+        const contributorCard = document.getElementById('contributorCard');
+        const useFallbackBtn = document.getElementById('useFallbackBtn');
+        
+        // Stats elements
+        const contributorCountEl = document.getElementById('contributorCount');
+        const repoStarsEl = document.getElementById('repoStars');
+        const repoForksEl = document.getElementById('repoForks');
+        
+        // State variables
+        let contributors = [];
+        let isSpinning = false;
+        let currentRotation = 0;
+        let usingFallbackData = false;
+        const colors = [
+            '#0d4429', '#006d32', '#26a641', '#39d353', 
+            '#1e6feb', '#0d419d', '#8957e5', '#ab5de4',
+            '#d866b3', '#f778ba', '#f0cc58', '#f0a43a',
+            '#db6d28', '#bd561d', '#9e2f1c', '#f78166'
+        ];
+        
+        // GitHub API configuration
+        const REPO_OWNER = 'Jayanta2004';
+        const REPO_NAME = 'dev-card-showcase';
+        const GITHUB_API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
+        
+        // Fallback data in case API fails
+        const fallbackContributors = [
+            { login: "Jayanta2004", avatar_url: "https://avatars.githubusercontent.com/u/75578412?v=4", contributions: 100, html_url: "https://github.com/Jayanta2004", name: "Jayanta" },
+            { login: "neeru24", avatar_url: "https://avatars.githubusercontent.com/u/158000180?v=4", contributions: 10, html_url: "https://github.com/neeru24", name: "Neeru" },
+            { login: "Sukhmanpreetkaur18", avatar_url: "https://avatars.githubusercontent.com/u/121644008?v=4", contributions: 8, html_url: "https://github.com/Sukhmanpreetkaur18", name: "Sukhmanpreet Kaur" },
+            { login: "omkarhole", avatar_url: "https://avatars.githubusercontent.com/u/142250001?v=4", contributions: 7, html_url: "https://github.com/omkarhole", name: "Omkar Hole" },
+            { login: "Aditya8369", avatar_url: "https://avatars.githubusercontent.com/u/127452160?v=4", contributions: 6, html_url: "https://github.com/Aditya8369", name: "Aditya" },
+            { login: "Kuberchauhan", avatar_url: "https://avatars.githubusercontent.com/u/164319105?v=4", contributions: 5, html_url: "https://github.com/Kuberchauhan", name: "Kuber Chauhan" },
+            { login: "anantSrivastava12", avatar_url: "https://avatars.githubusercontent.com/u/97364457?v=4", contributions: 4, html_url: "https://github.com/anantSrivastava12", name: "Anant Srivastava" },
+            { login: "priteshkumar22", avatar_url: "https://avatars.githubusercontent.com/u/105572145?v=4", contributions: 4, html_url: "https://github.com/priteshkumar22", name: "Pritesh Kumar" },
+            { login: "AmaanMajeed", avatar_url: "https://avatars.githubusercontent.com/u/99508751?v=4", contributions: 3, html_url: "https://github.com/AmaanMajeed", name: "Amaan Majeed" },
+            { login: "Rupali409", avatar_url: "https://avatars.githubusercontent.com/u/166992887?v=4", contributions: 3, html_url: "https://github.com/Rupali409", name: "Rupali" }
+        ];
+        
+        // Fetch actual contributors from GitHub API
+        async function fetchLiveContributors() {
+            try {
+                mainLoading.style.display = 'block';
+                errorMessage.style.display = 'none';
+                resultContainer.classList.remove('active');
+                apiBtn.disabled = true;
+                apiBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching...';
+                
+                // First, get repository info
+                const repoResponse = await fetch(GITHUB_API_URL);
+                
+                if (!repoResponse.ok) {
+                    throw new Error(`GitHub API error: ${repoResponse.status}`);
+                }
+                
+                const repoData = await repoResponse.json();
+                
+                // Update repo stats
+                repoStarsEl.textContent = repoData.stargazers_count;
+                repoForksEl.textContent = repoData.forks_count;
+                
+                // Now fetch contributors (GitHub API returns max 100 per page)
+                const contributorsResponse = await fetch(`${GITHUB_API_URL}/contributors?per_page=100`);
+                
+                if (!contributorsResponse.ok) {
+                    // If we hit rate limit, show error
+                    if (contributorsResponse.status === 403) {
+                        throw new Error('API_RATE_LIMIT');
+                    }
+                    throw new Error(`Contributors API error: ${contributorsResponse.status}`);
+                }
+                
+                // Parse Link header for pagination (in case there are more than 100 contributors)
+                const linkHeader = contributorsResponse.headers.get('Link');
+                let allContributors = await contributorsResponse.json();
+                
+                // If there are more pages, we'd need to fetch them (but for simplicity we'll use first 100)
+                console.log(`Fetched ${allContributors.length} contributors from GitHub API`);
+                
+                // Process contributors
+                contributors = allContributors.map(contributor => ({
+                    login: contributor.login,
+                    avatar_url: contributor.avatar_url,
+                    contributions: contributor.contributions,
+                    html_url: contributor.html_url,
+                    name: contributor.login // GitHub doesn't always provide real name
+                }));
+                
+                // Update UI with actual contributors
+                updateUIWithContributors();
+                
+            } catch (error) {
+                console.error('Error fetching live contributors:', error);
+                
+                if (error.message === 'API_RATE_LIMIT') {
+                    // Show rate limit error with instructions
+                    errorMessage.style.display = 'block';
+                    mainLoading.style.display = 'none';
+                    
+                    // Instructions for using a token
+                    console.log(`
+                        GitHub API Rate Limit Exceeded!
+                        
+                        For higher rate limits, you can:
+                        1. Create a GitHub Personal Access Token at: https://github.com/settings/tokens
+                        2. Add it to the fetch request headers:
+                        
+                        const response = await fetch(API_URL, {
+                            headers: {
+                                'Authorization': 'token YOUR_PERSONAL_ACCESS_TOKEN'
+                            }
+                        });
+                    `);
+                } else {
+                    // Other error - use fallback
+                    useFallbackData();
+                }
+                
+                apiBtn.disabled = false;
+                apiBtn.innerHTML = '<i class="fas fa-redo"></i> Retry Fetch';
+            }
+        }
+        
+        // Use fallback data when API fails
+        function useFallbackData() {
+            usingFallbackData = true;
+            contributors = fallbackContributors;
+            updateUIWithContributors();
+            
+            // Update stats with fallback values
+            repoStarsEl.textContent = "33";
+            repoForksEl.textContent = "97";
+        }
+        
+        // Update UI with contributor data
+        function updateUIWithContributors() {
+            // Update contributor count
+            contributorCountEl.textContent = contributors.length;
+            
+            // Create spinner segments
+            createSpinnerSegments();
+            
+            // Populate contributor list
+            populateContributorList();
+            
+            // Update UI state
+            mainLoading.style.display = 'none';
+            apiBtn.disabled = false;
+            apiBtn.innerHTML = usingFallbackData ? 
+                '<i class="fas fa-database"></i> Using Fallback Data' : 
+                '<i class="fas fa-check"></i> Contributors Loaded';
+            
+            spinBtn.disabled = false;
+            resetBtn.disabled = false;
+        }
+        
+        // Create segments for the spinner wheel
+        function createSpinnerSegments() {
+            spinnerWheel.innerHTML = '';
+            const segmentAngle = 360 / contributors.length;
+            
+            for (let i = 0; i < contributors.length; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'spinner-segment';
+                segment.style.transform = `rotate(${i * segmentAngle}deg)`;
+                segment.style.backgroundColor = colors[i % colors.length];
+                segment.style.opacity = '0.85';
+                
+                // Store contributor index as data attribute
+                segment.dataset.index = i;
+                
+                // Add contributor initial
+                const initial = document.createElement('div');
+                const contributorName = contributors[i].name || contributors[i].login;
+                initial.textContent = contributorName.charAt(0).toUpperCase();
+                initial.style.transform = `rotate(${segmentAngle/2}deg)`;
+                initial.style.fontSize = '1.2rem';
+                initial.style.fontWeight = 'bold';
+                initial.style.color = 'white';
+                initial.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
+                
+                // Click to select contributor directly
+                segment.addEventListener('click', function() {
+                    if (!isSpinning) {
+                        const index = parseInt(this.dataset.index);
+                        selectContributorDirectly(index);
+                    }
+                });
+                
+                segment.appendChild(initial);
+                spinnerWheel.appendChild(segment);
+            }
+        }
+        
+        // Populate the contributor list sidebar
+        function populateContributorList() {
+            listLoading.style.display = 'none';
+            
+            // Clear existing list
+            const existingList = contributorList.querySelectorAll('.contributor-item');
+            existingList.forEach(item => item.remove());
+            
+            // Add contributors to list
+            contributors.forEach((contributor, index) => {
+                const contributorName = contributor.name || contributor.login;
+                
+                const item = document.createElement('div');
+                item.className = 'contributor-item';
+                item.dataset.index = index;
+                
+                item.innerHTML = `
+                    <img src="${contributor.avatar_url}" alt="${contributor.login}" 
+                         onerror="this.src='https://avatars.githubusercontent.com/u/583231?v=4'">
+                    <div>
+                        <span>${contributorName}</span>
+                        <div style="font-size: 0.8rem; color: #8b949e;">
+                            ${contributor.contributions} contribution${contributor.contributions !== 1 ? 's' : ''}
+                        </div>
+                    </div>
+                `;
+                
+                // Click to select contributor
+                item.addEventListener('click', function() {
+                    if (!isSpinning) {
+                        const index = parseInt(this.dataset.index);
+                        selectContributorDirectly(index);
+                    }
+                });
+                
+                contributorList.appendChild(item);
+            });
+        }
+        
+        // Select a contributor directly (without spinning)
+        function selectContributorDirectly(index) {
+            showSelectedContributor(index);
+            
+            // Highlight the selected segment
+            const segments = document.querySelectorAll('.spinner-segment');
+            segments.forEach(segment => {
+                segment.style.opacity = '0.85';
+                segment.style.transform = segment.style.transform.replace('scale(1.05)', '');
+            });
+            
+            if (segments[index]) {
+                segments[index].style.opacity = '1';
+                segments[index].style.transform = segments[index].style.transform + ' scale(1.05)';
+            }
+        }
+        
+        // Spin the wheel to select a random contributor
+        function spinWheel() {
+            if (isSpinning || contributors.length === 0) return;
+            
+            isSpinning = true;
+            spinBtn.disabled = true;
+            
+            // Calculate random rotation (multiple full rotations plus random segment)
+            const segmentAngle = 360 / contributors.length;
+            const extraRotations = 5; // Number of full rotations before stopping
+            const randomSegment = Math.floor(Math.random() * contributors.length);
+            const targetRotation = (extraRotations * 360) + (randomSegment * segmentAngle);
+            
+            // Apply spinning animation
+            spinnerWheel.style.transition = 'transform 3s cubic-bezier(0.2, 0.8, 0.3, 1)';
+            spinnerWheel.style.transform = `rotate(${currentRotation + targetRotation}deg)`;
+            
+            // Update current rotation
+            currentRotation += targetRotation;
+            
+            // After spinning, show the selected contributor
+            setTimeout(() => {
+                const selectedIndex = contributors.length - (randomSegment % contributors.length) - 1;
+                showSelectedContributor(selectedIndex);
+                isSpinning = false;
+                spinBtn.disabled = false;
+                
+                // Highlight the selected segment
+                selectContributorDirectly(selectedIndex);
+            }, 3000);
+        }
+        
+        // Display the selected contributor
+        function showSelectedContributor(index) {
+            const contributor = contributors[index];
+            const contributorName = contributor.name || contributor.login;
+            
+            contributorCard.innerHTML = `
+                <img src="${contributor.avatar_url}" alt="${contributor.login}" class="contributor-avatar"
+                     onerror="this.src='https://avatars.githubusercontent.com/u/583231?v=4'">
+                <div class="contributor-info">
+                    <h3 class="contributor-name">${contributorName}</h3>
+                    <span class="contributor-login">@${contributor.login}</span>
+                    
+                    <div class="contributor-stats">
+                        <div class="stat-badge">
+                            <i class="fas fa-code-branch"></i>
+                            ${contributor.contributions} contribution${contributor.contributions !== 1 ? 's' : ''}
+                        </div>
+                        <div class="stat-badge">
+                            <i class="fas fa-user"></i>
+                            ${usingFallbackData ? 'Fallback Data' : 'Live GitHub Data'}
+                        </div>
+                    </div>
+                    
+                    <a href="${contributor.html_url}" class="contributor-link" target="_blank">
+                        <i class="fab fa-github"></i> View GitHub Profile
+                    </a>
+                </div>
+            `;
+            
+            resultContainer.classList.add('active');
+            
+            // Scroll to result
+            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // Reset the spinner
+        function resetSpinner() {
+            spinnerWheel.style.transition = 'transform 1s ease-out';
+            spinnerWheel.style.transform = `rotate(0deg)`;
+            currentRotation = 0;
+            resultContainer.classList.remove('active');
+            
+            // Reset segment highlights
+            const segments = document.querySelectorAll('.spinner-segment');
+            segments.forEach(segment => {
+                segment.style.opacity = '0.85';
+                segment.style.transform = segment.style.transform.replace('scale(1.05)', '');
+            });
+        }
+        
+        // Event listeners
+        apiBtn.addEventListener('click', fetchLiveContributors);
+        spinBtn.addEventListener('click', spinWheel);
+        resetBtn.addEventListener('click', resetSpinner);
+        useFallbackBtn.addEventListener('click', useFallbackData);
+        
+        // Initialize
+        mainLoading.innerHTML = `
+            <i class="fas fa-users"></i>
+            <p>This spinner fetches <strong>actual contributors</strong> from the GitHub repository</p>
+            <p style="margin-top: 15px; font-size: 1rem;">Click "Fetch Live Contributors" to load data from GitHub API</p>
+        `;
+        
+        // Show initial repo stats
+        contributorCountEl.textContent = "91+"; // From repository page
+        repoStarsEl.textContent = "33";
+        repoForksEl.textContent = "97";
+    </script>
+</body>
+</html>
