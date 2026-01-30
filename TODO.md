@@ -38,6 +38,18 @@
 - [x] Created comprehensive README.md with usage instructions
 - [x] Encourages playful exploration of keyboard input as requested
 
+### 6. 🥁 DrumsJS - Auto-Play Drum Machine (Issue #1191)
+- [x] Created single-file drum machine in projects/drums-js/index.html
+- [x] Implemented Web Audio API for procedural drum sound generation
+- [x] Added 8 drum pads (Kick, Snare, Hi-Hat, Tom, Clap, Cymbal, Percussion, Bass)
+- [x] Keyboard controls (Q,W,E,R,A,S,D,F) and mouse click support
+- [x] Auto-play functionality with 5 beat patterns (Rock, Funk, Hip-Hop, Reggae, Disco)
+- [x] Adjustable tempo control (60-180 BPM) with real-time updates
+- [x] Modern glassmorphism design with smooth animations and visual feedback
+- [x] Responsive design for desktop and mobile devices
+- [x] Added project to projects.json for showcase integration
+- [x] No external libraries - pure vanilla JavaScript implementation
+
 ## 🔄 Next Steps (Optional Enhancements)
 
 ### Data Population
