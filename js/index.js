@@ -44,14 +44,15 @@ let isListView = localStorage.getItem("viewMode") === "list";
 
 // Update button icon based on current view
 function updateViewButton() {
-    const icon = viewToggleBtn.querySelector("i");
+    const listIcon = viewToggleBtn.querySelector("#listView");
+    const gridIcon = viewToggleBtn.querySelector("#gridView");
     if (isListView) {
-        icon.classList.remove("fa-list");
-        icon.classList.add("fa-th-large");
+        listIcon.style.display='none';
+        gridIcon.style.display='block';
         viewToggleBtn.setAttribute("aria-label", "Switch to Grid View");
     } else {
-        icon.classList.remove("fa-th-large");
-        icon.classList.add("fa-list");
+        listIcon.style.display='block';
+        gridIcon.style.display='none';
         viewToggleBtn.setAttribute("aria-label", "Switch to List View");
     }
 }
