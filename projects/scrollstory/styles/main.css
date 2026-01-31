@@ -1,0 +1,377 @@
+/* ================================
+   SCROLLSTORY - MAIN STYLES
+   Main layout, typography, and base styles
+   ================================ */
+
+/* CSS Custom Properties for Dynamic Control */
+:root {
+    /* Scroll Progress (0 to 1) */
+    --scroll-progress: 0;
+    --scroll-percent: 0;
+    
+    /* Current Chapter (0-8) */
+    --current-chapter: 0;
+    --chapter-transition: 0;
+    
+    /* Scrollbar Visual Properties */
+    --scrollbar-width: 12px;
+    --scrollbar-track-color: #0a0a0a;
+    --scrollbar-thumb-color: #ffffff;
+    --scrollbar-thumb-border-radius: 0px;
+    --scrollbar-glow-intensity: 0;
+    --scrollbar-glow-color: rgba(255, 255, 255, 0);
+    
+    /* Color Palette - Changes per chapter */
+    --primary-color: #ffffff;
+    --secondary-color: #cccccc;
+    --accent-color: #888888;
+    --background-color: #000000;
+    --text-color: #ffffff;
+    
+    /* Animation timing */
+    --transition-speed: 0.3s;
+    --ease-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    overflow-x: hidden;
+    overflow-y: scroll;
+    transition: background-color 0.8s var(--ease-function);
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Story Indicator - Initial Screen */
+.story-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 1;
+    transition: opacity 0.6s ease-out;
+}
+
+.story-indicator.fade-out {
+    opacity: 0;
+}
+
+.indicator-content {
+    text-align: center;
+    padding: 2rem;
+}
+
+.story-title {
+    font-size: 4rem;
+    font-weight: 200;
+    letter-spacing: 0.3em;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    background: linear-gradient(45deg, #ffffff, #888888);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: titlePulse 3s ease-in-out infinite;
+}
+
+.story-subtitle {
+    font-size: 1.2rem;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    opacity: 0.7;
+    margin-bottom: 3rem;
+}
+
+.scroll-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    opacity: 0.6;
+}
+
+.hint-text {
+    font-size: 0.9rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+.hint-arrow {
+    width: 2px;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--text-color));
+    animation: arrowBounce 2s ease-in-out infinite;
+}
+
+@keyframes titlePulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.02);
+    }
+}
+
+@keyframes arrowBounce {
+    0%, 100% {
+        transform: translateY(0);
+        opacity: 0.6;
+    }
+    50% {
+        transform: translateY(10px);
+        opacity: 1;
+    }
+}
+
+/* Scroll Canvas - Creates the scrollable area */
+.scroll-canvas {
+    position: relative;
+    width: 100%;
+    min-height: 800vh; /* 8 chapters × 100vh each */
+    background: transparent;
+}
+
+/* Chapter Sections */
+.chapter-section {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.15;
+    transition: opacity 0.4s ease;
+}
+
+.chapter-section:hover {
+    opacity: 0.35;
+}
+
+.chapter-marker {
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+}
+
+.chapter-name {
+    display: block;
+    font-size: 2rem;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    opacity: 0.3;
+}
+
+.chapter-description {
+    display: block;
+    font-size: 1rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    opacity: 0.2;
+    font-style: italic;
+}
+
+/* Progress Container */
+.progress-container {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    min-width: 200px;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.progress-container:hover {
+    opacity: 1;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(var(--scroll-percent) * 1%);
+    height: 100%;
+    background: var(--primary-color);
+    transition: width 0.1s linear, background-color 0.3s ease;
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+}
+
+.current-chapter {
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.progress-percent {
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Debug Overlay */
+.debug-overlay {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    min-width: 250px;
+}
+
+.debug-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.debug-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.debug-label {
+    opacity: 0.6;
+    margin-right: 1rem;
+}
+
+.debug-value {
+    font-weight: bold;
+    color: #00ff88;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+.fade-in {
+    animation: fadeIn 0.6s ease-in;
+}
+
+.fade-out {
+    animation: fadeOut 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .story-title {
+        font-size: 2.5rem;
+    }
+    
+    .story-subtitle {
+        font-size: 1rem;
+    }
+    
+    .chapter-name {
+        font-size: 1.5rem;
+    }
+    
+    .progress-container {
+        top: 10px;
+        left: 10px;
+        padding: 0.75rem;
+        min-width: 150px;
+    }
+    
+    .debug-overlay {
+        bottom: 10px;
+        right: 10px;
+        font-size: 0.7rem;
+        min-width: 200px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .chapter-section {
+        opacity: 0.1;
+    }
+    
+    .chapter-section:hover {
+        opacity: 0.3;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
