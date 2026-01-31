@@ -119,12 +119,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
-        const hamburger = document.getElementById("hamburger");
-        const navLinks = document.getElementById("navLinks");
+        // const hamburger = document.getElementById("hamburger");
+        // const navLinks = document.getElementById("navLinks");
 
-        hamburger.addEventListener("click", () => {
-            navLinks.classList.toggle("active");
-        });
+        // hamburger.addEventListener("click", () => {
+        //     navLinks.classList.toggle("active");
+        // });
         /* ---------- ENHANCED SEARCH & FILTER SCRIPT ---------- */
         let currentFilter = 'all';
         let currentSearch = '';
@@ -465,44 +465,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // <!-- Theme Toggle Script -->
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const themeToggle = document.getElementById('themeToggle');
-            const body = document.body;
-
-            // Function to set theme
-            function setTheme(theme) {
-                body.setAttribute('data-theme', theme);
-                if (theme === 'light') {
-                    body.classList.add('light-mode');
-                } else {
-                    body.classList.remove('light-mode');
-                }
-                localStorage.setItem('theme', theme);
-                themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
-            }
-
-            // Function to toggle theme
-            function toggleTheme() {
-                const currentTheme = body.getAttribute('data-theme') || 'dark';
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                setTheme(newTheme);
-            }
-
-            // Load saved theme or default to dark
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            setTheme(savedTheme);
-
-            // Add event listener to theme toggle button
-            themeToggle.addEventListener('click', toggleTheme);
-
-            // Update copyright year dynamically
-            const copyrightElement = document.getElementById('copyright');
-            if (copyrightElement) {
-                const currentYear = new Date().getFullYear();
-                copyrightElement.textContent = `© ${currentYear} Community Hall of Fame`;
-            }
-        });
-
+     
 
     // <!-- Card Animation Script -->
    

@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Existence Counter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e6e6e6;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            padding: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #a8d8ea, #aa96da, #fcbad3);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 300;
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a8d8ea;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        .counter-display {
+            background: rgba(22, 33, 62, 0.7);
+            border-radius: 25px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(168, 216, 234, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .counter-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #a8d8ea, #aa96da, #fcbad3);
+        }
+
+        .counter-text {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #a8d8ea;
+            line-height: 1.6;
+        }
+
+        .counter-number {
+            font-size: 5.5rem;
+            font-weight: 300;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(168, 216, 234, 0.7);
+            margin-bottom: 10px;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+        }
+
+        .counter-unit {
+            font-size: 2rem;
+            color: #aa96da;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        .time-breakdown {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .time-unit {
+            background: rgba(15, 52, 96, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            min-width: 120px;
+            border: 1px solid rgba(168, 216, 234, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .time-unit:hover {
+            transform: translateY(-5px);
+            background: rgba(15, 52, 96, 0.7);
+        }
+
+        .time-value {
+            font-size: 2.5rem;
+            color: #fcbad3;
+            font-weight: 300;
+            margin-bottom: 5px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .time-label {
+            font-size: 0.9rem;
+            color: #a8d8ea;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stats-section {
+            background: rgba(22, 33, 62, 0.7);
+            border-radius: 25px;
+            padding: 30px;
+            margin-top: 30px;
+            border: 1px solid rgba(168, 216, 234, 0.1);
+        }
+
+        .stats-title {
+            font-size: 1.5rem;
+            color: #aa96da;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            background: rgba(15, 52, 96, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(168, 216, 234, 0.05);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            color: #a8d8ea;
+            margin-bottom: 5px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #aa96da;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 15px 30px;
+            background: rgba(15, 52, 96, 0.7);
+            border: 1px solid rgba(168, 216, 234, 0.2);
+            color: #a8d8ea;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-btn:hover {
+            background: rgba(168, 216, 234, 0.1);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .reset-btn {
+            background: rgba(252, 186, 211, 0.1);
+            border-color: rgba(252, 186, 211, 0.3);
+            color: #fcbad3;
+        }
+
+        .pause-btn {
+            background: rgba(170, 150, 218, 0.1);
+            border-color: rgba(170, 150, 218, 0.3);
+            color: #aa96da;
+        }
+
+        .floating-element {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(168, 216, 234, 0.1) 0%, rgba(168, 216, 234, 0) 70%);
+            z-index: 1;
+        }
+
+        .quote {
+            margin-top: 30px;
+            font-size: 1.1rem;
+            color: #a8d8ea;
+            font-style: italic;
+            opacity: 0.7;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .footer {
+            margin-top: 40px;
+            color: #5d7aa0;
+            font-size: 0.9rem;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .counter-number { font-size: 4rem; }
+            .counter-unit { font-size: 1.5rem; }
+            .time-breakdown { gap: 10px; }
+            .time-unit { min-width: 100px; padding: 15px; }
+            .time-value { font-size: 2rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .controls { flex-direction: column; align-items: center; }
+            .control-btn { width: 100%; max-width: 300px; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating background elements -->
+    <div id="floatingElements"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Existence Counter</h1>
+            <div class="subtitle">Moments captured in the digital ether</div>
+        </div>
+        
+        <div class="counter-display">
+            <div class="counter-text">
+                You have spent
+            </div>
+            <div class="counter-number" id="counter">0</div>
+            <div class="counter-unit">seconds here</div>
+            
+            <div class="time-breakdown">
+                <div class="time-unit">
+                    <div class="time-value" id="days">0</div>
+                    <div class="time-label">Days</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-value" id="hours">0</div>
+                    <div class="time-label">Hours</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-value" id="minutes">0</div>
+                    <div class="time-label">Minutes</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-value" id="seconds">0</div>
+                    <div class="time-label">Seconds</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-section">
+            <div class="stats-title">
+                <i class="fas fa-chart-line"></i> Session Statistics
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="sessionStart">--:--</div>
+                    <div class="stat-label">Session Started</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="currentTime">--:--</div>
+                    <div class="stat-label">Current Time</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="avgSession">0</div>
+                    <div class="stat-label">Avg. Session (min)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="control-btn pause-btn" id="pauseBtn">
+                <i class="fas fa-pause"></i> Pause Counter
+            </button>
+            <button class="control-btn reset-btn" id="resetBtn">
+                <i class="fas fa-redo"></i> Reset Counter
+            </button>
+            <button class="control-btn" id="shareBtn">
+                <i class="fas fa-share-alt"></i> Share Time
+            </button>
+        </div>
+        
+        <div class="quote" id="quote">
+            "The present moment is the only moment where life exists."
+        </div>
+        
+        <div class="footer">
+            <p>Time persists whether we count it or not • This counter uses localStorage to remember your time</p>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const counterElement = document.getElementById('counter');
+        const daysElement = document.getElementById('days');
+        const hoursElement = document.getElementById('hours');
+        const minutesElement = document.getElementById('minutes');
+        const secondsElement = document.getElementById('seconds');
+        const sessionStartElement = document.getElementById('sessionStart');
+        const currentTimeElement = document.getElementById('currentTime');
+        const avgSessionElement = document.getElementById('avgSession');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        const quoteElement = document.getElementById('quote');
+        const floatingElements = document.getElementById('floatingElements');
+
+        // Time quotes
+        const timeQuotes = [
+            "The present moment is the only moment where life exists.",
+            "Time is what we want most, but what we use worst.",
+            "Lost time is never found again.",
+            "The key is in not spending time, but in investing it.",
+            "Time flies over us, but leaves its shadow behind.",
+            "The only time you should look back is to see how far you've come.",
+            "Time is the most valuable thing a man can spend.",
+            "Yesterday is gone. Tomorrow has not yet come. We have only today.",
+            "Time you enjoy wasting is not wasted time.",
+            "The future is something which everyone reaches at the rate of 60 minutes an hour."
+        ];
+
+        // State variables
+        let totalSeconds = 0;
+        let sessionSeconds = 0;
+        let isPaused = false;
+        let startTime = null;
+        let sessionStartTime = null;
+        let sessionHistory = [];
+        
+        // Initialize floating elements
+        function createFloatingElements() {
+            const colors = [
+                'rgba(168, 216, 234, 0.05)',
+                'rgba(170, 150, 218, 0.05)',
+                'rgba(252, 186, 211, 0.05)'
+            ];
+            
+            for (let i = 0; i < 15; i++) {
+                const element = document.createElement('div');
+                element.className = 'floating-element';
+                
+                const size = Math.random() * 150 + 50;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const duration = Math.random() * 30 + 20;
+                const delay = Math.random() * 5;
+                
+                element.style.width = `${size}px`;
+                element.style.height = `${size}px`;
+                element.style.background = color;
+                element.style.left = `${left}%`;
+                element.style.top = `${top}%`;
+                element.style.opacity = Math.random() * 0.3 + 0.1;
+                
+                // Animation
+                element.style.animation = `pulse ${duration}s ease-in-out ${delay}s infinite alternate`;
+                
+                floatingElements.appendChild(element);
+            }
+        }
+
+        // Load saved time from localStorage
+        function loadSavedTime() {
+            const savedTime = localStorage.getItem('existenceCounterTotal');
+            const savedHistory = localStorage.getItem('existenceCounterHistory');
+            const savedSessions = localStorage.getItem('existenceCounterSessions');
+            
+            if (savedTime) {
+                totalSeconds = parseInt(savedTime);
+            }
+            
+            if (savedHistory) {
+                sessionHistory = JSON.parse(savedHistory);
+            }
+            
+            if (savedSessions) {
+                const sessions = JSON.parse(savedSessions);
+                // Calculate average session length
+                if (sessions.length > 0) {
+                    const totalSessionTime = sessions.reduce((sum, session) => sum + session, 0);
+                    const avgSessionMinutes = Math.round((totalSessionTime / sessions.length) / 60);
+                    avgSessionElement.textContent = avgSessionMinutes;
+                }
+            }
+            
+            // Calculate days from total seconds
+            updateTimeDisplay();
+        }
+
+        // Save time to localStorage
+        function saveTime() {
+            localStorage.setItem('existenceCounterTotal', totalSeconds.toString());
+            localStorage.setItem('existenceCounterHistory', JSON.stringify(sessionHistory));
+            
+            // Only keep last 10 sessions for average calculation
+            if (sessionHistory.length > 10) {
+                sessionHistory = sessionHistory.slice(-10);
+            }
+            
+            // Save session lengths for average calculation
+            const savedSessions = localStorage.getItem('existenceCounterSessions');
+            let sessions = savedSessions ? JSON.parse(savedSessions) : [];
+            
+            // Add current session if it's complete
+            if (sessionSeconds > 60) { // Only save sessions longer than 1 minute
+                sessions.push(sessionSeconds);
+                if (sessions.length > 20) sessions = sessions.slice(-20); // Keep last 20 sessions
+                localStorage.setItem('existenceCounterSessions', JSON.stringify(sessions));
+                
+                // Update average
+                if (sessions.length > 0) {
+                    const totalSessionTime = sessions.reduce((sum, session) => sum + session, 0);
+                    const avgSessionMinutes = Math.round((totalSessionTime / sessions.length) / 60);
+                    avgSessionElement.textContent = avgSessionMinutes;
+                }
+            }
+        }
+
+        // Format time display
+        function updateTimeDisplay() {
+            // Update main counter
+            counterElement.textContent = totalSeconds.toLocaleString();
+            
+            // Calculate time breakdown
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            // Update breakdown elements
+            daysElement.textContent = days;
+            hoursElement.textContent = hours.toString().padStart(2, '0');
+            minutesElement.textContent = minutes.toString().padStart(2, '0');
+            secondsElement.textContent = seconds.toString().padStart(2, '0');
+            
+            // Update current time
+            const now = new Date();
+            currentTimeElement.textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        // Start the counter
+        function startCounter() {
+            if (isPaused) return;
+            
+            // Increment counters
+            totalSeconds++;
+            sessionSeconds++;
+            
+            // Update displays
+            updateTimeDisplay();
+            
+            // Update session start time display on first run
+            if (totalSeconds === 1) {
+                const start = new Date();
+                sessionStartElement.textContent = start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                sessionStartTime = start;
+            }
+            
+            // Save every 30 seconds
+            if (totalSeconds % 30 === 0) {
+                saveTime();
+            }
+            
+            // Change quote every 2 minutes
+            if (totalSeconds % 120 === 0) {
+                const randomQuote = timeQuotes[Math.floor(Math.random() * timeQuotes.length)];
+                quoteElement.style.opacity = 0;
+                
+                setTimeout(() => {
+                    quoteElement.textContent = `"${randomQuote}"`;
+                    quoteElement.style.opacity = 1;
+                }, 500);
+            }
+            
+            // Visual pulse effect every 10 seconds
+            if (totalSeconds % 10 === 0) {
+                counterElement.classList.add('pulse');
+                setTimeout(() => {
+                    counterElement.classList.remove('pulse');
+                }, 1000);
+            }
+        }
+
+        // Pause/resume counter
+        function togglePause() {
+            isPaused = !isPaused;
+            
+            if (isPaused) {
+                pauseBtn.innerHTML = '<i class="fas fa-play"></i> Resume Counter';
+                pauseBtn.style.background = 'rgba(168, 216, 234, 0.2)';
+                pauseBtn.style.borderColor = 'rgba(168, 216, 234, 0.4)';
+                
+                // Save current session
+                sessionHistory.push({
+                    start: sessionStartTime,
+                    end: new Date(),
+                    duration: sessionSeconds
+                });
+                
+                saveTime();
+            } else {
+                pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause Counter';
+                pauseBtn.style.background = 'rgba(170, 150, 218, 0.1)';
+                pauseBtn.style.borderColor = 'rgba(170, 150, 218, 0.3)';
+                
+                // Start new session
+                sessionStartTime = new Date();
+                sessionSeconds = 0;
+                sessionStartElement.textContent = sessionStartTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+        }
+
+        // Reset counter
+        function resetCounter() {
+            if (confirm("Reset your existence counter? This cannot be undone.")) {
+                totalSeconds = 0;
+                sessionSeconds = 0;
+                sessionHistory = [];
+                
+                // Clear localStorage
+                localStorage.removeItem('existenceCounterTotal');
+                localStorage.removeItem('existenceCounterHistory');
+                localStorage.removeItem('existenceCounterSessions');
+                
+                // Reset displays
+                updateTimeDisplay();
+                sessionStartElement.textContent = '--:--';
+                avgSessionElement.textContent = '0';
+                
+                // Start new session
+                sessionStartTime = new Date();
+                sessionStartElement.textContent = sessionStartTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                // Reset pause state
+                isPaused = false;
+                pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause Counter';
+                pauseBtn.style.background = 'rgba(170, 150, 218, 0.1)';
+            }
+        }
+
+        // Share current time
+        function shareTime() {
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            
+            let timeString = '';
+            if (days > 0) timeString += `${days} day${days !== 1 ? 's' : ''}, `;
+            if (hours > 0) timeString += `${hours} hour${hours !== 1 ? 's' : ''}, `;
+            timeString += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+            
+            const shareText = `I've spent ${timeString} (${totalSeconds.toLocaleString()} seconds) on the Existence Counter. How about you?`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'My Existence Counter',
+                    text: shareText,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(shareText).then(() => {
+                    const originalText = shareBtn.innerHTML;
+                    shareBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    setTimeout(() => {
+                        shareBtn.innerHTML = originalText;
+                    }, 2000);
+                });
+            }
+        }
+
+        // Initialize
+        function init() {
+            createFloatingElements();
+            loadSavedTime();
+            
+            // Start counter interval
+            setInterval(startCounter, 1000);
+            
+            // Set session start time
+            sessionStartTime = new Date();
+            sessionStartElement.textContent = sessionStartTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Event listeners
+            pauseBtn.addEventListener('click', togglePause);
+            resetBtn.addEventListener('click', resetCounter);
+            shareBtn.addEventListener('click', shareTime);
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    togglePause();
+                } else if (e.code === 'KeyR' && e.ctrlKey) {
+                    e.preventDefault();
+                    resetCounter();
+                }
+            });
+            
+            // Save time when page is about to be closed
+            window.addEventListener('beforeunload', () => {
+                if (!isPaused && sessionSeconds > 0) {
+                    sessionHistory.push({
+                        start: sessionStartTime,
+                        end: new Date(),
+                        duration: sessionSeconds
+                    });
+                    saveTime();
+                }
+            });
+        }
+
+        // Start everything
+        init();
+    </script>
+</body>
+</html>

@@ -1640,7 +1640,248 @@ function renderProjects(projects) {
                 name: "Pavankarthik",
                 github: "https://github.com/pavanakarthik12"
             }
+        },
+        {
+            title: "Voice Controlled Maze Game 🎤🧩",
+            description: "An interactive maze game where players navigate using voice commands like 'up', 'down', 'left', and 'right'. Built to make gaming hands-free, accessible, and engaging using modern browser speech recognition.",
+            tags: ["HTML", "CSS", "JavaScript", "Web Speech API", "Voice Control", "Game", "Accessibility"],
+            links: {
+                live: "./projects/Voice-Controlled Maze Game/index.html"
+            },
+            author: {
+                name: "Bavanetha M.R",
+                github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Virtual Sticky Notes Board 🗒️",
+            description: "A visual note-taking web app where users can create, drag, resize, edit, and delete colorful sticky notes on a virtual board. All changes are saved using localStorage for persistence.",
+            tags: ["HTML", "CSS", "JavaScript", "localStorage", "Drag & Drop", "UI/UX"],
+            links: {
+            live: "./projects/Virtual Sticky Notes Board/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Pictionary-Style Drawing Game 🎨",
+            description: "A pass-the-device multiplayer drawing and guessing game where players earn points based on speed and accuracy. Roles rotate each round with local score tracking.",
+            tags: ["HTML", "CSS", "JavaScript", "Canvas", "Game", "Multiplayer"],
+            links: {
+            live: "./projects/DrawGuessGame/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Music Visualizer 🎵",
+            description: "A web app that plays audio and displays real-time animated visuals synced to music using frequency data from the Web Audio API.",
+            tags: ["HTML", "CSS", "JavaScript", "Web Audio API", "Animation"],
+            links: {
+            live: "./projects/Music Visualizer/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Pizza Customizer 🍕",
+            description: "An interactive pizza builder where users choose size, crust, and toppings while viewing a live preview and real-time price updates.",
+            tags: ["HTML", "CSS", "JavaScript", "UI/UX", "E-Commerce"],
+            links: {
+            live: "./projects/Pizza game/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Snake Game 🐍",
+            description: "A classic Snake game where players control movement, eat food to grow longer, and avoid collisions for continuous gameplay.",
+            tags: ["HTML", "CSS", "JavaScript", "Game", "Logic"],
+            links: {
+            live: "./projects/snake game/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "2048 Puzzle Game 🔢",
+            description: "A sliding tile puzzle game where players combine numbers strategically to reach the 2048 tile while tracking scores.",
+            tags: ["HTML", "CSS", "JavaScript", "Puzzle", "Game"],
+            links: {
+            live: "./projects/2048/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Flappy Cloud ☁️",
+            description: "A Flappy Bird-inspired game where players control a cloud, avoid obstacles, and survive using physics-based movement.",
+            tags: ["HTML", "CSS", "JavaScript", "Game", "Animation"],
+            links: {
+            live: "./projects/Flappy cloud/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Emoji Explorer 😄",
+            description: "A searchable emoji library that allows users to quickly find, copy, and use emojis with ease.",
+            tags: ["HTML", "CSS", "JavaScript", "Utility", "Search"],
+            links: {
+            live: "./projects/Emoji Picker/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Memory Palace Game 🧠",
+            description: "A memory training game inspired by the memory palace technique, challenging users to recall object placements accurately.",
+            tags: ["HTML", "CSS", "JavaScript", "Game", "Cognitive Skills"],
+            links: {
+            live: "./projects/Memory Palace Game/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Gravity Flip Platformer 🔄",
+            description: "A platformer game where gravity periodically flips, forcing players to adapt quickly and navigate levels creatively.",
+            tags: ["HTML", "CSS", "JavaScript", "Game", "Physics"],
+            links: {
+            live: "./projects/Gravity Flip/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Virtual Pet Simulator 🐾",
+            description: "A digital pet game where users care for, interact with, and watch their pet grow and evolve over time.",
+            tags: ["HTML", "CSS", "JavaScript", "Simulation", "Game"],
+            links: {
+            live: "./projects/Virtual Pet Evolution/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Digital Garden 🌱",
+            description: "A calming digital garden experience where users plant seeds, water plants, and watch them grow with animations over time.",
+            tags: ["HTML", "CSS", "JavaScript", "Simulation", "Relaxation"],
+            links: {
+            live: "./projects/Virtual Garden/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Interactive Solar System Explorer 🌌",
+            description: "A digital solar system where users can explore planets, moons, and orbits interactively with animations, zoom controls, and informative popups.",
+            tags: ["HTML", "CSS", "JavaScript", "Astronomy", "Visualization", "Education"],
+            links: {
+            live: "./projects/Virtual Planetarium/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Planetary Defense Game ☄️",
+            description: "An interactive strategy game where players defend Earth by detecting, tracking, and deflecting incoming asteroids using realistic physics.",
+            tags: ["HTML", "CSS", "JavaScript", "Game", "Physics", "Education"],
+            links: {
+            live: "./projects/Asteroid Defense/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Human Evolution Timeline 🧬",
+            description: "An interactive timeline that visually demonstrates the evolution of humans from early ancestors to modern Homo sapiens using animations and scroll-based exploration.",
+            tags: ["HTML", "CSS", "JavaScript", "Education", "Timeline", "Visualization"],
+            links: {
+            live: "./projects/Human Evolution Timeline/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Evolution Survival Game 🔥",
+            description: "A choice-driven survival game where players evolve from early humans by gathering resources, avoiding predators, and adapting to changing environments.",
+            tags: ["HTML", "CSS", "JavaScript", "Game", "Simulation", "Education"],
+            links: {
+            live: "./projects/Evolution Survival/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Empire Collapse Simulator 🏛️",
+            description: "A strategy simulation game where players manage an empire and experience its gradual collapse based on political, economic, and social decisions.",
+            tags: ["HTML", "CSS", "JavaScript", "Simulation", "Strategy", "History"],
+            links: {
+            live: "./projects/Empire Collapse/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Space Colony Simulator 🚀",
+            description: "A space simulation game where players build, expand, and manage a colony on another planet while balancing oxygen, food, water, and energy resources.",
+            tags: ["HTML", "CSS", "JavaScript", "Simulation", "Strategy", "Space"],
+            links: {
+            live: "./projects/Space Colony Simulator/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
+        },
+        {
+            title: "Startup Growth Simulator 📈",
+            description: "A business simulation where players grow a startup into a global corporation by managing finances, employees, products, and market expansion.",
+            tags: ["HTML", "CSS", "JavaScript", "Simulation", "Business", "Strategy"],
+            links: {
+            live: "./projects/Corporate Tycoon/index.html"
+            },
+            author: {
+            name: "Bavanetha M.R",
+            github: "https://github.com/Bavanetha27"
+            }
         }
+
     ];
 
 
@@ -1782,10 +2023,11 @@ function runFilter(query, tech) {
     }
 }
 
-// Theme Toggle Script
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("navbarLoaded", () => {
     const themeToggle = document.getElementById("themeToggle");
     const body = document.body;
+
+    if (!themeToggle) return;
 
     function setTheme(theme) {
         body.setAttribute("data-theme", theme);
@@ -1795,48 +2037,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function toggleTheme() {
         const currentTheme = body.getAttribute("data-theme") || "dark";
-        const newTheme = currentTheme === "dark" ? "light" : "dark";
-        setTheme(newTheme);
+        setTheme(currentTheme === "dark" ? "light" : "dark");
     }
 
-    const savedTheme = localStorage.getItem("theme") || "dark";
-    setTheme(savedTheme);
-
+    setTheme(localStorage.getItem("theme") || "dark");
     themeToggle.addEventListener("click", toggleTheme);
-
-    // Load projects when page loads
-    loadProjects();
-
-    // Mouse trail animation
-    const coords = { x: 0, y: 0 };
-    const circles = document.querySelectorAll(".circle");
-
-    circles.forEach(function (circle) {
-        circle.x = 0;
-        circle.y = 0;
-    });
-
-    window.addEventListener("mousemove", function (e) {
-        coords.x = e.pageX;
-        coords.y = e.pageY - window.scrollY;
-    });
-
-    function animateCircles() {
-        let x = coords.x;
-        let y = coords.y;
-        circles.forEach(function (circle, index) {
-            circle.style.left = `${x - 12}px`;
-            circle.style.top = `${y - 12}px`;
-            circle.style.transform = `scale(${(circles.length - index) / circles.length})`;
-            const nextCircle = circles[index + 1] || circles[0];
-            circle.x = x;
-            circle.y = y;
-            x += (nextCircle.x - x) * 0.3;
-            y += (nextCircle.y - y) * 0.3;
-        });
-
-        requestAnimationFrame(animateCircles);
-    }
-
-    animateCircles();
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadProjects();
+});
+

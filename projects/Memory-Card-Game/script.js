@@ -1,0 +1,3 @@
+// Memory Card Game Script
+// All logic for grid, themes, scoring, timer, sound, and UI
+// ...implementation will follow the requested features...
