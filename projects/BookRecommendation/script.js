@@ -17,9 +17,18 @@ function renderList(list, element, removeHandler) {
     list.forEach((book, idx) => {
         const li = document.createElement('li');
         li.textContent = `${book.title} by ${book.authors}`;
+        li.setAttribute('tabindex', '0');
+        li.setAttribute('role', 'listitem');
         const removeBtn = document.createElement('button');
         removeBtn.textContent = 'Remove';
+        removeBtn.setAttribute('aria-label', `Remove ${book.title} by ${book.authors}`);
         removeBtn.onclick = () => removeHandler(idx);
+        removeBtn.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                removeHandler(idx);
+            }
+        };
         li.appendChild(removeBtn);
         element.appendChild(li);
     });
@@ -44,6 +53,9 @@ function renderReading() {
 function createBookCard(book) {
     const card = document.createElement('div');
     card.className = 'book-card';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'region');
+    card.setAttribute('aria-label', `${book.title} by ${book.authors}`);
     const title = document.createElement('div');
     title.className = 'book-title';
     title.textContent = book.title;
@@ -54,6 +66,7 @@ function createBookCard(book) {
     actions.className = 'book-actions';
     const favBtn = document.createElement('button');
     favBtn.textContent = 'Add to Favorites';
+    favBtn.setAttribute('aria-label', `Add ${book.title} by ${book.authors} to favorites`);
     favBtn.onclick = () => {
         if (!favorites.some(b => b.id === book.id)) {
             favorites.push(book);
@@ -61,14 +74,35 @@ function createBookCard(book) {
             renderFavorites();
         }
     };
+    favBtn.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!favorites.some(b => b.id === book.id)) {
+                favorites.push(book);
+                saveLists();
+                renderFavorites();
+            }
+        }
+    };
     const readBtn = document.createElement('button');
     readBtn.textContent = 'Add to Reading List';
     readBtn.className = 'reading';
+    readBtn.setAttribute('aria-label', `Add ${book.title} by ${book.authors} to reading list`);
     readBtn.onclick = () => {
         if (!reading.some(b => b.id === book.id)) {
             reading.push(book);
             saveLists();
             renderReading();
+        }
+    };
+    readBtn.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!reading.some(b => b.id === book.id)) {
+                reading.push(book);
+                saveLists();
+                renderReading();
+            }
         }
     };
     actions.appendChild(favBtn);
