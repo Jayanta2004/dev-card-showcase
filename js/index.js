@@ -810,3 +810,30 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log('Should refresh?', shouldRefreshSpotlight());
         };
     });
+    /* ===============================
+   DAY / NIGHT THEME TOGGLE
+   =============================== */
+
+document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "themeToggle") {
+        const body = document.body;
+        const currentTheme = body.getAttribute("data-theme") || "dark";
+
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        body.setAttribute("data-theme", newTheme);
+
+        // Change icon
+        e.target.textContent = newTheme === "dark" ? "🌙" : "☀️";
+
+        // Save preference
+        localStorage.setItem("theme", newTheme);
+    }
+});
+
+/* Load saved theme on page load */
+document.addEventListener("DOMContentLoaded", function () {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+        document.body.setAttribute("data-theme", savedTheme);
+    }
+});
