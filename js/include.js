@@ -8,23 +8,27 @@ function loadHTML(id, file, callback) {
         })
         .catch(error => console.log("Error loading file:", file));
         function initThemeToggle() {
-        const btn = document.getElementById("themeToggle");
-        if (!btn) return;
-
-        const savedTheme = localStorage.getItem("theme") || "dark";
-        document.body.setAttribute("data-theme", savedTheme);
-
-        btn.textContent = savedTheme === "light" ? "🌞" : "🌙";
-
-        btn.addEventListener("click", () => {
-            const current = document.body.getAttribute("data-theme");
-            const next = current === "dark" ? "light" : "dark";
-
-            document.body.setAttribute("data-theme", next);
-            localStorage.setItem("theme", next);
-            btn.textContent = next === "light" ? "🌞" : "🌙";
-        });
+            const btn = document.getElementById("themeToggle");
+            if (!btn) return;
+                
+            const savedTheme = localStorage.getItem("theme") || "dark";
+            document.body.setAttribute("data-theme", savedTheme);
+                
+            // Set icon based on CURRENT theme (show opposite action)
+            btn.textContent = savedTheme === "dark" ? "☀️" : "🌙";
+                
+            btn.addEventListener("click", () => {
+                const current = document.body.getAttribute("data-theme");
+                const next = current === "dark" ? "light" : "dark";
+            
+                document.body.setAttribute("data-theme", next);
+                localStorage.setItem("theme", next);
+            
+                // Update icon to show what will happen next
+                btn.textContent = next === "dark" ? "☀️" : "🌙";
+            });
         }
+
 
 }
 
