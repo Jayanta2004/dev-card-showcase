@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Builder & Player - Create & Play Interactive Quizzes</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>📝 Quiz Builder & Player</h1>
+                <p class="subtitle">Create, play, and share interactive quizzes</p>
+            </div>
+            <nav class="nav-buttons">
+                <button class="nav-btn active" onclick="showScreen('home')">🏠 Home</button>
+                <button class="nav-btn" onclick="showScreen('create')">➕ Create</button>
+                <button class="nav-btn" onclick="showScreen('leaderboard')">🏆 Leaderboard</button>
+                <button class="nav-btn" onclick="showScreen('statistics')">📊 Statistics</button>
+            </nav>
+        </header>
+
+        <!-- Home Screen -->
+        <div id="homeScreen" class="screen active">
+            <div class="welcome-banner">
+                <h2>Welcome to Quiz Builder!</h2>
+                <p>Create custom quizzes or play existing ones</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="card filters-card">
+                <div class="filters">
+                    <select id="categoryFilter" onchange="filterQuizzes()">
+                        <option value="">All Categories</option>
+                        <option value="general">General Knowledge</option>
+                        <option value="science">Science</option>
+                        <option value="history">History</option>
+                        <option value="geography">Geography</option>
+                        <option value="sports">Sports</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="technology">Technology</option>
+                        <option value="math">Math</option>
+                    </select>
+                    <select id="difficultyFilter" onchange="filterQuizzes()">
+                        <option value="">All Difficulties</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    <input type="text" id="searchQuiz" placeholder="Search quizzes..." oninput="filterQuizzes()">
+                </div>
+            </div>
+
+            <!-- Quiz Library -->
+            <div class="card">
+                <h3>Available Quizzes</h3>
+                <div id="quizLibrary" class="quiz-grid"></div>
+            </div>
+        </div>
+
+        <!-- Create Quiz Screen -->
+        <div id="createScreen" class="screen">
+            <div class="card">
+                <h2>Create New Quiz</h2>
+                <form id="quizInfoForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quizTitle">Quiz Title *</label>
+                            <input type="text" id="quizTitle" required placeholder="Enter quiz title">
+                        </div>
+                        <div class="form-group">
+                            <label for="quizCategory">Category *</label>
+                            <select id="quizCategory" required>
+                                <option value="">Select Category</option>
+                                <option value="general">General Knowledge</option>
+                                <option value="science">Science</option>
+                                <option value="history">History</option>
+                                <option value="geography">Geography</option>
+                                <option value="sports">Sports</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="technology">Technology</option>
+                                <option value="math">Math</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quizDifficulty">Difficulty *</label>
+                            <select id="quizDifficulty" required>
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="quizTimeLimit">Time Limit (seconds, 0 = unlimited)</label>
+                            <input type="number" id="quizTimeLimit" min="0" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="quizDescription">Description</label>
+                        <textarea id="quizDescription" placeholder="Brief description of the quiz"></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Questions Section -->
+            <div class="card">
+                <div class="section-header">
+                    <h3>Questions</h3>
+                    <button class="btn-primary" onclick="addQuestion()">+ Add Question</button>
+                </div>
+                <div id="questionsList"></div>
+            </div>
+
+            <!-- Save Quiz -->
+            <div class="card">
+                <div class="form-actions">
+                    <button class="btn-primary btn-large" onclick="saveQuiz()">💾 Save Quiz</button>
+                    <button class="btn-secondary btn-large" onclick="exportQuiz()">📤 Export JSON</button>
+                    <button class="btn-secondary btn-large" onclick="importQuiz()">📥 Import JSON</button>
+                    <button class="btn-secondary btn-large" onclick="clearQuiz()">🗑️ Clear All</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Play Quiz Screen -->
+        <div id="playScreen" class="screen">
+            <!-- Quiz Info Header -->
+            <div class="card quiz-header">
+                <div class="quiz-info">
+                    <h2 id="playQuizTitle"></h2>
+                    <div class="quiz-meta">
+                        <span id="playQuizCategory"></span>
+                        <span id="playQuizDifficulty"></span>
+                    </div>
+                </div>
+                <div class="quiz-progress">
+                    <div class="progress-text">
+                        <span>Question <span id="currentQuestionNum">1</span> of <span id="totalQuestions">10</span></span>
+                        <span id="quizTimer" class="timer">Time: 0s</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="card question-card">
+                <div class="question-header">
+                    <span id="questionType" class="question-type-badge"></span>
+                    <span id="questionPoints" class="points-badge"></span>
+                </div>
+                <h3 id="questionText" class="question-text"></h3>
+                <div id="answersContainer" class="answers-container"></div>
+                <div class="question-actions">
+                    <button id="prevBtn" class="btn-secondary" onclick="previousQuestion()" disabled>← Previous</button>
+                    <button id="submitAnswerBtn" class="btn-primary" onclick="submitAnswer()">Submit Answer</button>
+                    <button id="nextBtn" class="btn-secondary" onclick="nextQuestion()">Next →</button>
+                </div>
+                <div id="feedbackMessage" class="feedback-message"></div>
+            </div>
+
+            <!-- Current Score -->
+            <div class="card score-card">
+                <div class="score-display">
+                    <div class="score-item">
+                        <span class="score-label">Score:</span>
+                        <span id="currentScore" class="score-value">0</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Correct:</span>
+                        <span id="correctCount" class="score-value">0</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Wrong:</span>
+                        <span id="wrongCount" class="score-value">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="screen">
+            <div class="card results-card">
+                <div class="results-header">
+                    <div class="results-icon">🎉</div>
+                    <h2>Quiz Completed!</h2>
+                </div>
+                <div class="results-summary">
+                    <div class="result-item">
+                        <span class="result-label">Final Score:</span>
+                        <span id="finalScore" class="result-value large">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Accuracy:</span>
+                        <span id="accuracy" class="result-value">0%</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Time Taken:</span>
+                        <span id="timeTaken" class="result-value">0s</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Correct Answers:</span>
+                        <span id="correctAnswers" class="result-value">0/0</span>
+                    </div>
+                </div>
+                <div class="results-breakdown">
+                    <h3>Performance Breakdown</h3>
+                    <div id="resultsBreakdown"></div>
+                </div>
+                <form id="nameForm" class="name-form">
+                    <label>Enter your name for the leaderboard:</label>
+                    <input type="text" id="playerName" placeholder="Your name" required>
+                    <button type="submit" class="btn-primary">Submit to Leaderboard</button>
+                </form>
+                <div class="results-actions">
+                    <button class="btn-primary" onclick="showScreen('home')">🏠 Home</button>
+                    <button class="btn-secondary" onclick="retakeQuiz()">🔄 Retake Quiz</button>
+                    <button class="btn-secondary" onclick="showScreen('leaderboard')">🏆 View Leaderboard</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div id="leaderboardScreen" class="screen">
+            <div class="card">
+                <h2>🏆 Leaderboard</h2>
+                <div class="leaderboard-filters">
+                    <select id="leaderboardQuizFilter" onchange="displayLeaderboard()">
+                        <option value="">All Quizzes</option>
+                    </select>
+                    <button class="btn-secondary" onclick="clearLeaderboard()">Clear All</button>
+                </div>
+                <div id="leaderboardTable"></div>
+            </div>
+        </div>
+
+        <!-- Statistics Screen -->
+        <div id="statisticsScreen" class="screen">
+            <div class="stats-grid">
+                <div class="card">
+                    <h3>Overall Statistics</h3>
+                    <div class="stat-items">
+                        <div class="stat-item">
+                            <span class="stat-icon">📝</span>
+                            <div>
+                                <div class="stat-value" id="totalQuizzesPlayed">0</div>
+                                <div class="stat-label">Quizzes Played</div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">✅</span>
+                            <div>
+                                <div class="stat-value" id="totalCorrect">0</div>
+                                <div class="stat-label">Correct Answers</div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">❌</span>
+                            <div>
+                                <div class="stat-value" id="totalWrong">0</div>
+                                <div class="stat-label">Wrong Answers</div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">🎯</span>
+                            <div>
+                                <div class="stat-value" id="averageAccuracy">0%</div>
+                                <div class="stat-label">Average Accuracy</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Category Performance</h3>
+                    <div id="categoryStats"></div>
+                </div>
+
+                <div class="card">
+                    <h3>Difficulty Performance</h3>
+                    <canvas id="difficultyChart" width="400" height="300"></canvas>
+                </div>
+
+                <div class="card">
+                    <h3>Recent Activity</h3>
+                    <div id="recentActivity"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Modal -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="questionModalTitle">Add Question</h2>
+                <button class="close-btn" onclick="closeQuestionModal()">&times;</button>
+            </div>
+            <form id="questionForm">
+                <div class="form-group">
+                    <label for="questionTextInput">Question Text *</label>
+                    <textarea id="questionTextInput" required placeholder="Enter your question"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="questionTypeInput">Question Type *</label>
+                        <select id="questionTypeInput" required onchange="updateQuestionType()">
+                            <option value="multiple">Multiple Choice</option>
+                            <option value="truefalse">True/False</option>
+                            <option value="open">Open-ended</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="questionPoints">Points *</label>
+                        <input type="number" id="questionPoints" required min="1" value="10">
+                    </div>
+                </div>
+                <div id="answersSection">
+                    <label>Answers *</label>
+                    <div id="answersInputList"></div>
+                    <button type="button" class="btn-secondary" onclick="addAnswerInput()">+ Add Answer</button>
+                </div>
+                <div id="correctAnswerSection" class="form-group">
+                    <label for="correctAnswerInput">Correct Answer(s) *</label>
+                    <input type="text" id="correctAnswerInput" placeholder="For open-ended questions">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Question</button>
+                    <button type="button" class="btn-secondary" onclick="closeQuestionModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
