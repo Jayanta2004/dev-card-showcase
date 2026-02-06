@@ -463,39 +463,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
 
-    // <!-- Theme Switcher Script -->
+    // <!-- Theme Toggle Script -->
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const body = document.body;
-            const themeButtons = document.querySelectorAll('.theme-option');
-            const themeKey = 'theme';
-
-            function setTheme(theme) {
-                body.setAttribute('data-theme', theme);
-                body.classList.toggle('light-mode', theme === 'minimal');
-                localStorage.setItem(themeKey, theme);
-
-                themeButtons.forEach(btn => {
-                    const isActive = btn.dataset.theme === theme;
-                    btn.setAttribute('aria-pressed', String(isActive));
-                });
-            }
-
-            const savedTheme = localStorage.getItem(themeKey) || body.getAttribute('data-theme') || 'ocean';
-            setTheme(savedTheme);
-
-            themeButtons.forEach(btn => {
-                btn.addEventListener('click', () => setTheme(btn.dataset.theme));
-            });
-
-            // Update copyright year dynamically
-            const copyrightElement = document.getElementById('copyright');
-            if (copyrightElement) {
-                const currentYear = new Date().getFullYear();
-                copyrightElement.textContent = `© ${currentYear} Community Hall of Fame`;
-            }
-        });
-
+     
 
     // <!-- Card Animation Script -->
    
