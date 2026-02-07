@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Impact Dashboard - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../assets/css/air-quality-impact-dashboard.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="wind"></i> Air Quality Impact Dashboard</h1>
+            <p>Monitor air pollution exposure and its effects on your health with personalized insights and recommendations.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Current Air Quality Section -->
+            <section class="tracker-section current-aqi">
+                <h2><i data-lucide="cloud-sun"></i> Current Air Quality</h2>
+                <div class="aqi-display">
+                    <div class="aqi-main">
+                        <div class="aqi-value" id="currentAQI">--</div>
+                        <div class="aqi-status" id="aqiStatus">Loading...</div>
+                    </div>
+                    <div class="aqi-details">
+                        <div class="pollutant">
+                            <span class="label">PM2.5:</span>
+                            <span id="pm25">-- µg/m³</span>
+                        </div>
+                        <div class="pollutant">
+                            <span class="label">PM10:</span>
+                            <span id="pm10">-- µg/m³</span>
+                        </div>
+                        <div class="pollutant">
+                            <span class="label">O₃:</span>
+                            <span id="ozone">-- ppb</span>
+                        </div>
+                        <div class="pollutant">
+                            <span class="label">NO₂:</span>
+                            <span id="no2">-- ppb</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="refreshAQIData()" class="btn-secondary">
+                    <i data-lucide="refresh-cw"></i> Refresh Data
+                </button>
+            </section>
+
+            <!-- Exposure Logging Section -->
+            <section class="tracker-section exposure-log">
+                <h2><i data-lucide="clock"></i> Log Exposure</h2>
+                <form id="exposureForm" class="exposure-form">
+                    <div class="form-group">
+                        <label for="exposureDateTime">Date & Time</label>
+                        <input type="datetime-local" id="exposureDateTime" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exposureDuration">Duration (minutes)</label>
+                        <input type="number" id="exposureDuration" min="1" max="480" placeholder="30">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="activityType">Activity Type</label>
+                        <select id="activityType" required>
+                            <option value="">Select activity</option>
+                            <option value="walking">Walking/Running</option>
+                            <option value="cycling">Cycling</option>
+                            <option value="outdoor-work">Outdoor Work</option>
+                            <option value="commuting">Commuting</option>
+                            <option value="recreation">Recreation/Sports</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">Location Type</label>
+                        <select id="location" required>
+                            <option value="">Select location</option>
+                            <option value="urban">Urban/City Center</option>
+                            <option value="suburban">Suburban</option>
+                            <option value="industrial">Industrial Area</option>
+                            <option value="residential">Residential</option>
+                            <option value="park">Park/Nature</option>
+                            <option value="highway">Highway/Road</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="symptoms">Health Symptoms (optional)</label>
+                        <div class="symptom-checkboxes">
+                            <label><input type="checkbox" value="coughing"> Coughing</label>
+                            <label><input type="checkbox" value="wheezing"> Wheezing</label>
+                            <label><input type="checkbox" value="shortness-breath"> Shortness of Breath</label>
+                            <label><input type="checkbox" value="chest-tightness"> Chest Tightness</label>
+                            <label><input type="checkbox" value="eye-irritation"> Eye Irritation</label>
+                            <label><input type="checkbox" value="headache"> Headache</label>
+                            <label><input type="checkbox" value="fatigue"> Fatigue</label>
+                            <label><input type="checkbox" value="none"> No Symptoms</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exposureNotes">Notes</label>
+                        <textarea id="exposureNotes" rows="2" placeholder="Weather conditions, mask usage, etc."></textarea>
+                    </div>
+
+                    <button type="button" onclick="logExposure()" class="btn-primary">
+                        <i data-lucide="plus"></i> Log Exposure
+                    </button>
+                </form>
+            </section>
+
+            <!-- Health Impact Analysis -->
+            <section class="tracker-section health-impact">
+                <h2><i data-lucide="activity"></i> Health Impact Analysis</h2>
+                <div class="impact-metrics">
+                    <div class="impact-card">
+                        <div class="impact-value" id="totalExposure">0</div>
+                        <div class="impact-label">Total Exposure (hrs)</div>
+                    </div>
+                    <div class="impact-card">
+                        <div class="impact-value" id="avgAQI">0</div>
+                        <div class="impact-label">Average AQI</div>
+                    </div>
+                    <div class="impact-card">
+                        <div class="impact-value" id="symptomRate">0%</div>
+                        <div class="impact-label">Symptom Rate</div>
+                    </div>
+                    <div class="impact-card">
+                        <div class="impact-value" id="riskLevel">Low</div>
+                        <div class="impact-label">Health Risk</div>
+                    </div>
+                </div>
+                <div class="impact-insights">
+                    <h3>Key Insights</h3>
+                    <ul id="insightsList">
+                        <li>Log more exposures to see personalized insights</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Alerts & Recommendations -->
+            <section class="tracker-section alerts-recommendations">
+                <h2><i data-lucide="alert-triangle"></i> Alerts & Recommendations</h2>
+                <div id="alertsContainer" class="alerts-container">
+                    <div class="alert-item alert-info">
+                        <span class="icon">ℹ️</span>
+                        <span>Monitor air quality regularly for better health management.</span>
+                    </div>
+                </div>
+                <div class="recommendations">
+                    <h3>Current Recommendations</h3>
+                    <ul id="recommendationsList">
+                        <li>Wear a mask when AQI exceeds 100</li>
+                        <li>Limit outdoor activities during high pollution periods</li>
+                        <li>Use air purifiers indoors</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Exposure History -->
+            <section class="tracker-section exposure-history">
+                <h2><i data-lucide="history"></i> Recent Exposures</h2>
+                <ul id="exposureHistory" class="exposure-list">
+                    <li class="no-data">No exposures logged yet</li>
+                </ul>
+            </section>
+
+            <!-- AQI Trend Chart -->
+            <section class="tracker-section aqi-chart">
+                <h2><i data-lucide="trending-up"></i> AQI Trend (Last 7 Days)</h2>
+                <canvas id="aqiChart" width="400" height="200"></canvas>
+            </section>
+
+            <!-- Health Tips -->
+            <section class="tracker-section health-tips">
+                <h2><i data-lucide="lightbulb"></i> Air Quality Health Tips</h2>
+                <div class="tip-container">
+                    <p id="healthTip">Stay informed about local air quality and take protective measures during high pollution days.</p>
+                    <button onclick="getNewTip()" class="btn-secondary">
+                        <i data-lucide="refresh-cw"></i> New Tip
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Include footer -->
+    <div id="footer-container"></div>
+
+    <script src="../assets/js/include.js"></script>
+    <script src="../assets/js/air-quality-impact-dashboard.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
