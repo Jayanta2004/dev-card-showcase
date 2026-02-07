@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Popularity Bias Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --pastel-blue: #c1e3ff;
+            --pastel-pink: #ffd6e7;
+            --pastel-green: #d4f4dd;
+            --pastel-purple: #e2d4f7;
+            --pastel-yellow: #fff9c4;
+            --pastel-orange: #ffdfba;
+            --pastel-teal: #b2ebf2;
+            --pastel-lavender: #e6e6fa;
+            --text-dark: #5a5a5a;
+            --text-light: #888;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --info: #2196F3;
+        }
+
+        body {
+            background-color: #f9f7ff;
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--pastel-purple), var(--pastel-pink));
+            padding: 2.5rem 0;
+            text-align: center;
+            box-shadow: 0 5px 20px var(--shadow);
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo {
+            font-size: 3.2rem;
+            color: var(--text-dark);
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 0.5rem;
+            color: #5d5b7a;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .tagline {
+            font-size: 1.3rem;
+            color: var(--text-light);
+            max-width: 800px;
+            margin: 0 auto 1.5rem;
+        }
+
+        /* Navigation */
+        .test-nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 1.5rem;
+        }
+
+        .test-nav button {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            transition: var(--transition);
+            box-shadow: 0 4px 10px var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test-nav button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px var(--shadow);
+        }
+
+        .test-nav button.active {
+            background-color: #8a7fcc;
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .test-section {
+            background-color: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 10px 25px var(--shadow);
+            transition: var(--transition);
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .test-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--pastel-blue), var(--pastel-teal));
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            color: #5d5b7a;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #5d5b7a;
+        }
+
+        .section-description {
+            color: var(--text-light);
+            margin-bottom: 25px;
+            line-height: 1.7;
+        }
+
+        /* Test Areas */
+        .test-area {
+            background-color: #f9f9f9;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+
+        .test-area h3 {
+            margin-bottom: 20px;
+            color: #5d5b7a;
+            text-align: center;
+        }
+
+        /* Control Panels */
+        .control-panel {
+            background-color: #f5f5f5;
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 15px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .slider {
+            flex-grow: 1;
+            height: 12px;
+            border-radius: 10px;
+            background: #ddd;
+            outline: none;
+            opacity: 0.9;
+            transition: var(--transition);
+        }
+
+        .slider:hover {
+            opacity: 1;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #8a7fcc;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+
+        .slider-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            color: #8a7fcc;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: #8a7fcc;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--pastel-blue);
+            color: var(--text-dark);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            background-color: white;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .checkbox-label:hover {
+            background-color: #f0f0f0;
+        }
+
+        .checkbox-label input {
+            cursor: pointer;
+        }
+
+        /* Popularity Display */
+        .popularity-display {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .product-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px var(--shadow);
+        }
+
+        .product-card.selected {
+            outline: 3px solid #8a7fcc;
+            outline-offset: -3px;
+        }
+
+        .product-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #8a7fcc;
+        }
+
+        .product-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #5d5b7a;
+        }
+
+        .popularity-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--pastel-pink);
+            color: var(--text-dark);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .rating {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 10px;
+            color: #FF9800;
+        }
+
+        .popularity-meter {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .popularity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--pastel-blue), #8a7fcc);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .social-proof-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .social-proof-item {
+            background-color: white;
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 3px 10px var(--shadow);
+            transition: var(--transition);
+        }
+
+        .social-proof-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--pastel-blue), var(--pastel-purple));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .social-proof-content {
+            flex-grow: 1;
+        }
+
+        .social-proof-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .social-proof-text {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Bandwagon Test */
+        .bandwagon-test {
+            width: 100%;
+            text-align: center;
+        }
+
+        .bandwagon-visualization {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .bandwagon-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--pastel-green), var(--pastel-teal));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            color: white;
+            box-shadow: 0 10px 25px var(--shadow);
+            position: relative;
+            z-index: 2;
+        }
+
+        .bandwagon-followers {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-orange));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 5px 15px var(--shadow);
+            transition: var(--transition);
+        }
+
+        .trending-list {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .trending-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 3px 10px var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .trending-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .trending-rank {
+            font-weight: bold;
+            color: #8a7fcc;
+            font-size: 1.2rem;
+            width: 30px;
+            text-align: center;
+        }
+
+        .trending-content {
+            flex-grow: 1;
+            margin-left: 15px;
+        }
+
+        .trending-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .trending-stats {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background-color: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 10px 25px var(--shadow);
+            margin-top: 30px;
+            margin-bottom: 3rem;
+        }
+
+        .results-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #5d5b7a;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background-color: #f9f9f9;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px var(--shadow);
+        }
+
+        .result-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--pastel-blue), var(--pastel-purple));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #8a7fcc;
+            margin: 10px 0;
+        }
+
+        .result-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, var(--pastel-green), var(--pastel-blue));
+            padding: 2.5rem 0;
+            text-align: center;
+            border-radius: 30px 30px 0 0;
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin-bottom: 1.2rem;
+            font-size: 1.1rem;
+        }
+
+        .bias-fact {
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 15px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 1.5rem;
+        }
+
+        .social-icons a {
+            color: var(--text-dark);
+            font-size: 1.5rem;
+            transition: var(--transition);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .social-icons a:hover {
+            color: #8a7fcc;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .copyright {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .test-nav button {
+                padding: 10px 15px;
+                font-size: 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .test-section {
+                padding: 20px;
+            }
+            
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fas fa-users"></i> Popularity Bias Test
+            </div>
+            <h1>How Popularity Influences Your Decisions</h1>
+            <p class="tagline">Discover how the bandwagon effect, social proof, and popularity bias shape your perceptions and choices in everyday life.</p>
+            
+            <nav class="test-nav">
+                <button class="active" data-section="bandwagon">
+                    <i class="fas fa-user-friends"></i> Bandwagon Effect
+                </button>
+                <button data-section="social-proof">
+                    <i class="fas fa-thumbs-up"></i> Social Proof
+                </button>
+                <button data-section="quality-perception">
+                    <i class="fas fa-award"></i> Quality Perception
+                </button>
+                <button data-section="trending">
+                    <i class="fas fa-chart-line"></i> Trending Bias
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="main-content">
+            <!-- Bandwagon Effect Test -->
+            <section class="test-section" id="bandwagon-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <div>
+                        <h2 class="section-title">Bandwagon Effect Test</h2>
+                        <p class="section-description">The bandwagon effect is the tendency to do (or believe) things because many other people do (or believe) the same. Test how this influences your choices.</p>
+                    </div>
+                </div>
+                
+                <div class="test-area">
+                    <h3>Which product would you choose?</h3>
+                    <div class="product-grid" id="bandwagonProducts">
+                        <!-- Products will be generated by JavaScript -->
+                    </div>
+                    
+                    <div class="popularity-meter" style="margin-top: 30px; max-width: 500px;">
+                        <div class="popularity-fill" id="bandwagonMeter" style="width: 0%;"></div>
+                    </div>
+                    <p id="bandwagonStats" style="margin-top: 10px; font-size: 0.9rem; color: var(--text-light);">0% of users selected Product A</p>
+                </div>
+                
+                <div class="control-panel">
+                    <div class="control-group">
+                        <label class="control-label">Popularity Visibility</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="popularityVisibility" value="hidden" checked> Hide Popularity
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="popularityVisibility" value="shown"> Show Popularity
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Reset and test how visibility affects your choice</label>
+                        <div class="button-group">
+                            <button class="btn btn-primary" id="resetBandwagon">
+                                <i class="fas fa-redo"></i> Reset Test
+                            </button>
+                            <button class="btn btn-secondary" id="revealBandwagon">
+                                <i class="fas fa-eye"></i> Reveal Popularity
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Social Proof Test -->
+            <section class="test-section" id="social-proof-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-thumbs-up"></i>
+                    </div>
+                    <div>
+                        <h2 class="section-title">Social Proof Test</h2>
+                        <p class="section-description">Social proof is the psychological phenomenon where people assume the actions of others reflect correct behavior. See how testimonials and reviews influence your judgment.</p>
+                    </div>
+                </div>
+                
+                <div class="test-area">
+                    <h3>Which restaurant would you try?</h3>
+                    <div class="social-proof-container" id="restaurantOptions">
+                        <!-- Restaurant options will be generated by JavaScript -->
+                    </div>
+                    
+                    <div style="margin-top: 20px; text-align: center;">
+                        <p id="socialProofResult">Make a selection to see how social proof influenced your choice</p>
+                    </div>
+                </div>
+                
+                <div class="control-panel">
+                    <div class="control-group">
+                        <label class="control-label">Review Visibility</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="reviewVisibility" value="hidden" checked> Hide Reviews
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="reviewVisibility" value="shown"> Show Reviews
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Test how reviews change your perception</label>
+                        <div class="button-group">
+                            <button class="btn btn-primary" id="resetSocialProof">
+                                <i class="fas fa-redo"></i> Reset Test
+                            </button>
+                            <button class="btn btn-success" id="selectRestaurant">
+                                <i class="fas fa-utensils"></i> Make Selection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Quality Perception Test -->
+            <section class="test-section" id="quality-perception-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <div>
+                        <h2 class="section-title">Quality Perception Test</h2>
+                        <p class="section-description">Popularity can distort our perception of quality. Test whether you can identify the objectively better option when popularity information is presented.</p>
+                    </div>
+                </div>
+                
+                <div class="test-area">
+                    <h3>Which logo design is better?</h3>
+                    <div class="product-grid" id="logoOptions">
+                        <!-- Logo options will be generated by JavaScript -->
+                    </div>
+                    
+                    <div style="margin-top: 20px; text-align: center;">
+                        <p id="qualityResult">Select a logo to see if popularity influenced your quality judgment</p>
+                        <div class="popularity-meter" style="margin-top: 15px; max-width: 400px;">
+                            <div class="popularity-fill" id="qualityMeter" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-panel">
+                    <div class="control-group">
+                        <label class="control-label">Popularity Information</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="qualityInfo" value="no-info" checked> No Popularity Info
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="qualityInfo" value="with-info"> With Popularity Info
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="qualityInfo" value="misleading"> Misleading Popularity
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="button-group">
+                            <button class="btn btn-primary" id="resetQuality">
+                                <i class="fas fa-redo"></i> Reset Test
+                            </button>
+                            <button class="btn btn-secondary" id="revealBestLogo">
+                                <i class="fas fa-star"></i> Reveal Best Design
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Trending Bias Test -->
+            <section class="test-section" id="trending-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h2 class="section-title">Trending Bias Test</h2>
+                        <p class="section-description">Trending lists and popularity rankings create a bias toward already-popular items, creating a feedback loop. Test how trending indicators affect your choices.</p>
+                    </div>
+                </div>
+                
+                <div class="test-area">
+                    <h3>Which video would you watch?</h3>
+                    <div class="trending-list" id="videoOptions">
+                        <!-- Video options will be generated by JavaScript -->
+                    </div>
+                    
+                    <div style="margin-top: 20px; text-align: center;">
+                        <p id="trendingResult">Select a video to see how trending rankings influence your choice</p>
+                        <div class="popularity-meter" style="margin-top: 15px; max-width: 400px;">
+                            <div class="popularity-fill" id="trendingMeter" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-panel">
+                    <div class="control-group">
+                        <label class="control-label">Trending Indicators</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="trendingVisibility" value="hidden" checked> Hide Trending
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="trendingVisibility" value="shown"> Show Trending
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="button-group">
+                            <button class="btn btn-primary" id="resetTrending">
+                                <i class="fas fa-redo"></i> Reset Test
+                            </button>
+                            <button class="btn btn-success" id="analyzeTrending">
+                                <i class="fas fa-chart-bar"></i> Analyze Bias
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <h2 class="results-title">
+                <i class="fas fa-chart-pie"></i> Your Popularity Bias Results
+            </h2>
+            
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h3>Bandwagon Effect</h3>
+                    <div class="result-value" id="bandwagonScore">0%</div>
+                    <p class="result-label">Likelihood to follow popular choice</p>
+                    <div class="popularity-meter" style="width: 100%; margin-top: 15px;">
+                        <div class="popularity-fill" id="bandwagonScoreMeter" style="width: 0%;"></div>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-thumbs-up"></i>
+                    </div>
+                    <h3>Social Proof Influence</h3>
+                    <div class="result-value" id="socialProofScore">0%</div>
+                    <p class="result-label">Influenced by reviews & testimonials</p>
+                    <div class="popularity-meter" style="width: 100%; margin-top: 15px;">
+                        <div class="popularity-fill" id="socialProofScoreMeter" style="width: 0%;"></div>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <h3>Quality Perception Bias</h3>
+                    <div class="result-value" id="qualityBiasScore">0%</div>
+                    <p class="result-label">Popularity affecting quality judgment</p>
+                    <div class="popularity-meter" style="width: 100%; margin-top: 15px;">
+                        <div class="popularity-fill" id="qualityBiasScoreMeter" style="width: 0%;"></div>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Trending Bias</h3>
+                    <div class="result-value" id="trendingBiasScore">0%</div>
+                    <p class="result-label">Influenced by trending indicators</p>
+                    <div class="popularity-meter" style="width: 100%; margin-top: 15px;">
+                        <div class="popularity-fill" id="trendingBiasScoreMeter" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; padding: 20px; background-color: #f0f0f0; border-radius: 15px;">
+                <h3 style="margin-bottom: 15px; color: #5d5b7a;">Overall Popularity Bias Score</h3>
+                <div class="popularity-meter" style="height: 30px;">
+                    <div class="popularity-fill" id="overallBiasMeter" style="width: 0%; height: 30px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <span>Low Bias</span>
+                    <span id="overallBiasScore" style="font-weight: bold; font-size: 1.2rem;">0%</span>
+                    <span>High Bias</span>
+                </div>
+                <p id="biasInterpretation" style="margin-top: 15px; text-align: center; color: var(--text-light);">Complete tests to see your results</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <h3>Understanding Popularity Bias</h3>
+            <p>Popularity bias is a cognitive bias that causes people to think and act in ways that align with the majority. While following the crowd can be efficient, it can also lead to poor decisions when popularity doesn't correlate with quality.</p>
+            
+            <div class="bias-fact">
+                <i class="fas fa-lightbulb"></i> Research shows that products with more reviews (even if mixed) are often perceived as better than products with fewer reviews, regardless of actual quality.
+            </div>
+            
+            <p>Being aware of popularity bias can help you make more independent decisions, especially in areas like product choices, investments, and voting.</p>
+            
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-facebook"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+            </div>
+            
+            <p class="copyright">&copy; 2026 Popularity Bias Test. Created for educational purposes. Based on psychological research into social influence and cognitive biases.</p>
+        </div>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const navButtons = document.querySelectorAll('.test-nav button');
+        const testSections = document.querySelectorAll('.test-section');
+        
+        // Results elements
+        const bandwagonScoreElement = document.getElementById('bandwagonScore');
+        const socialProofScoreElement = document.getElementById('socialProofScore');
+        const qualityBiasScoreElement = document.getElementById('qualityBiasScore');
+        const trendingBiasScoreElement = document.getElementById('trendingBiasScore');
+        const overallBiasScoreElement = document.getElementById('overallBiasScore');
+        const biasInterpretationElement = document.getElementById('biasInterpretation');
+        
+        // Score meters
+        const bandwagonScoreMeter = document.getElementById('bandwagonScoreMeter');
+        const socialProofScoreMeter = document.getElementById('socialProofScoreMeter');
+        const qualityBiasScoreMeter = document.getElementById('qualityBiasScoreMeter');
+        const trendingBiasScoreMeter = document.getElementById('trendingBiasScoreMeter');
+        const overallBiasMeter = document.getElementById('overallBiasMeter');
+        
+        // Results tracking
+        let testResults = {
+            bandwagon: {
+                score: 0,
+                testsCompleted: 0,
+                influencedChoices: 0
+            },
+            socialProof: {
+                score: 0,
+                testsCompleted: 0,
+                influencedChoices: 0
+            },
+            qualityPerception: {
+                score: 0,
+                testsCompleted: 0,
+                correctWithoutInfo: 0,
+                correctWithInfo: 0
+            },
+            trending: {
+                score: 0,
+                testsCompleted: 0,
+                influencedChoices: 0
+            }
+        };
+        
+        // Navigation between sections
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const sectionId = button.getAttribute('data-section');
+                
+                // Update active button
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Show the selected section
+                testSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                document.getElementById(`${sectionId}-section`).style.display = 'flex';
+            });
+        });
+        
+        // Initialize by showing bandwagon section
+        document.getElementById('bandwagon-section').style.display = 'flex';
+        document.getElementById('social-proof-section').style.display = 'none';
+        document.getElementById('quality-perception-section').style.display = 'none';
+        document.getElementById('trending-section').style.display = 'none';
+
+        // --------------------------
+        // BANDWAGON EFFECT TEST
+        // --------------------------
+        const bandwagonProductsContainer = document.getElementById('bandwagonProducts');
+        const bandwagonMeter = document.getElementById('bandwagonMeter');
+        const bandwagonStats = document.getElementById('bandwagonStats');
+        const resetBandwagonBtn = document.getElementById('resetBandwagon');
+        const revealBandwagonBtn = document.getElementById('revealBandwagon');
+        const popularityVisibilityRadios = document.querySelectorAll('input[name="popularityVisibility"]');
+        
+        let bandwagonProducts = [];
+        let selectedBandwagonProduct = null;
+        let popularityVisible = false;
+        let bandwagonUserChoices = { A: 0, B: 0, C: 0 };
+        let totalBandwagonChoices = 0;
+        
+        // Initialize bandwagon test
+        function initBandwagonTest() {
+            bandwagonProducts = [
+                { id: 'A', name: 'EcoWater Bottle', icon: 'fas fa-wine-bottle', color: '#4CAF50', popularity: 65 },
+                { id: 'B', name: 'PureFlow Bottle', icon: 'fas fa-tint', color: '#2196F3', popularity: 20 },
+                { id: 'C', name: 'ClearSip Bottle', icon: 'fas fa-glass-whiskey', color: '#9C27B0', popularity: 15 }
+            ];
+            
+            selectedBandwagonProduct = null;
+            popularityVisible = false;
+            updateBandwagonDisplay();
+            
+            // Set initial stats (simulated)
+            bandwagonUserChoices = { A: 65, B: 20, C: 15 };
+            totalBandwagonChoices = 100;
+            updateBandwagonStats();
+        }
+        
+        // Update bandwagon display
+        function updateBandwagonDisplay() {
+            bandwagonProductsContainer.innerHTML = '';
+            
+            bandwagonProducts.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = `product-card ${selectedBandwagonProduct === product.id ? 'selected' : ''}`;
+                productCard.dataset.id = product.id;
+                
+                // Calculate popularity percentage
+                const popularityPercent = Math.round((bandwagonUserChoices[product.id] / totalBandwagonChoices) * 100) || product.popularity;
+                
+                productCard.innerHTML = `
+                    <div class="product-icon">
+                        <i class="${product.icon}"></i>
+                    </div>
+                    <div class="product-title">${product.name}</div>
+                    <div class="rating">
+                        ${'<i class="fas fa-star"></i>'.repeat(4)}<i class="far fa-star"></i>
+                    </div>
+                    <div class="price" style="font-weight: bold; color: ${product.color}; margin-bottom: 10px;">$24.99</div>
+                    ${popularityVisible ? `
+                        <div class="popularity-badge">
+                            <i class="fas fa-users"></i> ${popularityPercent}%
+                        </div>
+                        <div class="popularity-meter">
+                            <div class="popularity-fill" style="width: ${popularityPercent}%; background-color: ${product.color};"></div>
+                        </div>
+                    ` : ''}
+                `;
+                
+                productCard.addEventListener('click', () => {
+                    selectBandwagonProduct(product.id);
+                });
+                
+                bandwagonProductsContainer.appendChild(productCard);
+            });
+            
+            // Update meter based on most popular choice
+            const mostPopularId = Object.keys(bandwagonUserChoices).reduce((a, b) => 
+                bandwagonUserChoices[a] > bandwagonUserChoices[b] ? a : b
+            );
+            const mostPopularPercent = Math.round((bandwagonUserChoices[mostPopularId] / totalBandwagonChoices) * 100);
+            
+            bandwagonMeter.style.width = `${mostPopularPercent}%`;
+            
+            // Check if user followed the crowd
+            if (selectedBandwagonProduct) {
+                const userChoicePercent = Math.round((bandwagonUserChoices[selectedBandwagonProduct] / totalBandwagonChoices) * 100);
+                const isFollowingCrowd = selectedBandwagonProduct === mostPopularId;
+                
+                // Update results
+                if (popularityVisible) {
+                    testResults.bandwagon.testsCompleted++;
+                    if (isFollowingCrowd) {
+                        testResults.bandwagon.influencedChoices++;
+                    }
+                    updateBandwagonResults();
+                }
+            }
+        }
+        
+        // Select bandwagon product
+        function selectBandwagonProduct(productId) {
+            selectedBandwagonProduct = productId;
+            
+            // Update simulated user choices
+            bandwagonUserChoices[productId] = (bandwagonUserChoices[productId] || 0) + 1;
+            totalBandwagonChoices++;
+            
+            updateBandwagonDisplay();
+            updateBandwagonStats();
+        }
+        
+        // Update bandwagon statistics
+        function updateBandwagonStats() {
+            const productA = Math.round((bandwagonUserChoices.A / totalBandwagonChoices) * 100);
+            const productB = Math.round((bandwagonUserChoices.B / totalBandwagonChoices) * 100);
+            const productC = Math.round((bandwagonUserChoices.C / totalBandwagonChoices) * 100);
+            
+            bandwagonStats.textContent = `${productA}% chose EcoWater, ${productB}% chose PureFlow, ${productC}% chose ClearSip`;
+        }
+        
+        // Update bandwagon results
+        function updateBandwagonResults() {
+            if (testResults.bandwagon.testsCompleted > 0) {
+                const influenceRate = (testResults.bandwagon.influencedChoices / testResults.bandwagon.testsCompleted) * 100;
+                testResults.bandwagon.score = Math.round(influenceRate);
+                bandwagonScoreElement.textContent = `${testResults.bandwagon.score}%`;
+                bandwagonScoreMeter.style.width = `${testResults.bandwagon.score}%`;
+                
+                updateOverallResults();
+            }
+        }
+        
+        // Reset bandwagon test
+        resetBandwagonBtn.addEventListener('click', () => {
+            initBandwagonTest();
+        });
+        
+        // Reveal popularity
+        revealBandwagonBtn.addEventListener('click', () => {
+            popularityVisible = true;
+            updateBandwagonDisplay();
+            
+            // Update visibility radio
+            document.querySelector('input[name="popularityVisibility"][value="shown"]').checked = true;
+        });
+        
+        // Update visibility based on radio buttons
+        popularityVisibilityRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                popularityVisible = radio.value === 'shown';
+                updateBandwagonDisplay();
+            });
+        });
+        
+        // Initialize bandwagon test
+        initBandwagonTest();
+        
+        // --------------------------
+        // SOCIAL PROOF TEST
+        // --------------------------
+        const restaurantOptionsContainer = document.getElementById('restaurantOptions');
+        const socialProofResult = document.getElementById('socialProofResult');
+        const resetSocialProofBtn = document.getElementById('resetSocialProof');
+        const selectRestaurantBtn = document.getElementById('selectRestaurant');
+        const reviewVisibilityRadios = document.querySelectorAll('input[name="reviewVisibility"]');
+        
+        let restaurants = [];
+        let selectedRestaurant = null;
+        let reviewsVisible = false;
+        
+        // Initialize social proof test
+        function initSocialProofTest() {
+            restaurants = [
+                {
+                    id: 1,
+                    name: "Bella Vista",
+                    cuisine: "Italian",
+                    avgRating: 4.2,
+                    reviewCount: 127,
+                    reviews: [
+                        { name: "Maria S.", text: "Best pasta I've had in years!", rating: 5 },
+                        { name: "James L.", text: "Great atmosphere and service", rating: 4 },
+                        { name: "Sarah K.", text: "Authentic Italian flavors", rating: 4 }
+                    ],
+                    color: "#FF9800"
+                },
+                {
+                    id: 2,
+                    name: "Spice Garden",
+                    cuisine: "Indian",
+                    avgRating: 4.7,
+                    reviewCount: 89,
+                    reviews: [
+                        { name: "David P.", text: "Amazing curry, highly recommend!", rating: 5 },
+                        { name: "Lisa M.", text: "The naan bread is to die for", rating: 5 },
+                        { name: "Robert T.", text: "Authentic and flavorful", rating: 4 }
+                    ],
+                    color: "#F44336"
+                },
+                {
+                    id: 3,
+                    name: "Green Leaf Cafe",
+                    cuisine: "Vegetarian",
+                    avgRating: 4.0,
+                    reviewCount: 42,
+                    reviews: [
+                        { name: "Emma W.", text: "Fresh and healthy options", rating: 4 },
+                        { name: "Tom B.", text: "Good for a light lunch", rating: 3 },
+                        { name: "Olivia R.", text: "Love the vegan options", rating: 4 }
+                    ],
+                    color: "#4CAF50"
+                }
+            ];
+            
+            selectedRestaurant = null;
+            reviewsVisible = false;
+            updateRestaurantDisplay();
+        }
+        
+        // Update restaurant display
+        function updateRestaurantDisplay() {
+            restaurantOptionsContainer.innerHTML = '';
+            
+            restaurants.forEach(restaurant => {
+                const restaurantItem = document.createElement('div');
+                restaurantItem.className = `social-proof-item ${selectedRestaurant === restaurant.id ? 'selected' : ''}`;
+                restaurantItem.dataset.id = restaurant.id;
+                
+                const firstLetter = restaurant.name.charAt(0);
+                
+                restaurantItem.innerHTML = `
+                    <div class="avatar" style="background: ${restaurant.color};">${firstLetter}</div>
+                    <div class="social-proof-content">
+                        <div class="social-proof-name">${restaurant.name}</div>
+                        <div class="social-proof-text">${restaurant.cuisine} • ${restaurant.avgRating} ★ (${restaurant.reviewCount} reviews)</div>
+                        ${reviewsVisible ? `
+                            <div style="margin-top: 10px;">
+                                ${restaurant.reviews.map(review => `
+                                    <div style="font-size: 0.8rem; margin-bottom: 5px;">
+                                        <strong>${review.name}</strong>: ${review.text} (${review.rating} ★)
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                restaurantItem.addEventListener('click', () => {
+                    selectRestaurant(restaurant.id);
+                });
+                
+                restaurantOptionsContainer.appendChild(restaurantItem);
+            });
+            
+            // Update result text
+            if (selectedRestaurant) {
+                const selected = restaurants.find(r => r.id === selectedRestaurant);
+                socialProofResult.innerHTML = `You selected <strong>${selected.name}</strong>. ${reviewsVisible ? 'Reviews likely influenced your choice.' : 'You made this choice without seeing reviews.'}`;
+                
+                // Update results
+                testResults.socialProof.testsCompleted++;
+                if (reviewsVisible) {
+                    // Check if user selected the highest-rated restaurant
+                    const highestRated = restaurants.reduce((a, b) => a.avgRating > b.avgRating ? a : b);
+                    if (selectedRestaurant === highestRated.id) {
+                        testResults.socialProof.influencedChoices++;
+                    }
+                }
+                updateSocialProofResults();
+            } else {
+                socialProofResult.textContent = 'Make a selection to see how social proof influenced your choice';
+            }
+        }
+        
+        // Select restaurant
+        function selectRestaurant(restaurantId) {
+            selectedRestaurant = restaurantId;
+            updateRestaurantDisplay();
+        }
+        
+        // Update social proof results
+        function updateSocialProofResults() {
+            if (testResults.socialProof.testsCompleted > 0) {
+                const influenceRate = (testResults.socialProof.influencedChoices / testResults.socialProof.testsCompleted) * 100;
+                testResults.socialProof.score = Math.round(influenceRate);
+                socialProofScoreElement.textContent = `${testResults.socialProof.score}%`;
+                socialProofScoreMeter.style.width = `${testResults.socialProof.score}%`;
+                
+                updateOverallResults();
+            }
+        }
+        
+        // Reset social proof test
+        resetSocialProofBtn.addEventListener('click', () => {
+            initSocialProofTest();
+        });
+        
+        // Make selection button
+        selectRestaurantBtn.addEventListener('click', () => {
+            if (!selectedRestaurant) {
+                // Randomly select one if none selected
+                const randomIndex = Math.floor(Math.random() * restaurants.length);
+                selectRestaurant(restaurants[randomIndex].id);
+            }
+        });
+        
+        // Update visibility based on radio buttons
+        reviewVisibilityRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                reviewsVisible = radio.value === 'shown';
+                updateRestaurantDisplay();
+            });
+        });
+        
+        // Initialize social proof test
+        initSocialProofTest();
+        
+        // --------------------------
+        // QUALITY PERCEPTION TEST
+        // --------------------------
+        const logoOptionsContainer = document.getElementById('logoOptions');
+        const qualityResult = document.getElementById('qualityResult');
+        const qualityMeter = document.getElementById('qualityMeter');
+        const resetQualityBtn = document.getElementById('resetQuality');
+        const revealBestLogoBtn = document.getElementById('revealBestLogo');
+        const qualityInfoRadios = document.querySelectorAll('input[name="qualityInfo"]');
+        
+        let logos = [];
+        let selectedLogo = null;
+        let qualityInfoType = 'no-info';
+        let actualBestLogo = null;
+        
+        // Initialize quality perception test
+        function initQualityTest() {
+            logos = [
+                { id: 'A', name: 'Design A', icon: 'fas fa-feather-alt', color: '#2196F3', quality: 85, popularity: 30 },
+                { id: 'B', name: 'Design B', icon: 'fas fa-mountain', color: '#4CAF50', quality: 92, popularity: 20 },
+                { id: 'C', name: 'Design C', icon: 'fas fa-infinity', color: '#9C27B0', quality: 78, popularity: 50 }
+            ];
+            
+            selectedLogo = null;
+            actualBestLogo = 'B'; // Design B has the highest quality score (92)
+            qualityInfoType = 'no-info';
+            updateLogoDisplay();
+        }
+        
+        // Update logo display
+        function updateLogoDisplay() {
+            logoOptionsContainer.innerHTML = '';
+            
+            logos.forEach(logo => {
+                const logoCard = document.createElement('div');
+                logoCard.className = `product-card ${selectedLogo === logo.id ? 'selected' : ''}`;
+                logoCard.dataset.id = logo.id;
+                
+                // Determine what info to show based on qualityInfoType
+                let popularityInfo = '';
+                if (qualityInfoType === 'with-info') {
+                    popularityInfo = `<div class="popularity-badge">
+                        <i class="fas fa-users"></i> ${logo.popularity}%
+                    </div>`;
+                } else if (qualityInfoType === 'misleading') {
+                    // Show misleading popularity (inverse of actual quality)
+                    const misleadingPopularity = 100 - logo.quality + 20;
+                    popularityInfo = `<div class="popularity-badge">
+                        <i class="fas fa-users"></i> ${misleadingPopularity}%
+                    </div>`;
+                }
+                
+                logoCard.innerHTML = `
+                    <div class="product-icon">
+                        <i class="${logo.icon}"></i>
+                    </div>
+                    <div class="product-title">${logo.name}</div>
+                    <div style="color: ${logo.color}; font-size: 2.5rem; margin: 15px 0;">${logo.icon === 'fas fa-feather-alt' ? '✒' : logo.icon === 'fas fa-mountain' ? '⛰' : '∞'}</div>
+                    ${popularityInfo}
+                `;
+                
+                logoCard.addEventListener('click', () => {
+                    selectLogo(logo.id);
+                });
+                
+                logoOptionsContainer.appendChild(logoCard);
+            });
+            
+            // Update meter
+            if (selectedLogo) {
+                const selected = logos.find(l => l.id === selectedLogo);
+                const isBest = selectedLogo === actualBestLogo;
+                
+                qualityResult.innerHTML = `You selected <strong>${selected.name}</strong>. ${isBest ? 'Correct! This is the best design.' : 'This is not the best design.'}`;
+                
+                // Update quality meter
+                const qualityPercent = selected.quality;
+                qualityMeter.style.width = `${qualityPercent}%`;
+                
+                // Update results
+                testResults.qualityPerception.testsCompleted++;
+                if (isBest) {
+                    if (qualityInfoType === 'no-info') {
+                        testResults.qualityPerception.correctWithoutInfo++;
+                    } else {
+                        testResults.qualityPerception.correctWithInfo++;
+                    }
+                }
+                updateQualityPerceptionResults();
+            } else {
+                qualityResult.textContent = 'Select a logo to see if popularity influenced your quality judgment';
+                qualityMeter.style.width = '0%';
+            }
+        }
+        
+        // Select logo
+        function selectLogo(logoId) {
+            selectedLogo = logoId;
+            updateLogoDisplay();
+        }
+        
+        // Update quality perception results
+        function updateQualityPerceptionResults() {
+            if (testResults.qualityPerception.testsCompleted > 0) {
+                // Calculate bias score: difference between accuracy with and without popularity info
+                const totalWithInfoTests = testResults.qualityPerception.testsCompleted - 
+                    (testResults.qualityPerception.correctWithoutInfo + testResults.qualityPerception.correctWithInfo);
+                
+                const accuracyWithoutInfo = testResults.qualityPerception.correctWithoutInfo > 0 ? 
+                    (testResults.qualityPerception.correctWithoutInfo / 1) * 100 : 0;
+                
+                const accuracyWithInfo = testResults.qualityPerception.correctWithInfo > 0 ? 
+                    (testResults.qualityPerception.correctWithInfo / totalWithInfoTests) * 100 : 0;
+                
+                // Bias score is the difference (negative if popularity helps, positive if it hurts)
+                const biasScore = Math.max(0, accuracyWithoutInfo - accuracyWithInfo);
+                testResults.qualityPerception.score = Math.round(biasScore);
+                
+                qualityBiasScoreElement.textContent = `${testResults.qualityPerception.score}%`;
+                qualityBiasScoreMeter.style.width = `${testResults.qualityPerception.score}%`;
+                
+                updateOverallResults();
+            }
+        }
+        
+        // Reset quality test
+        resetQualityBtn.addEventListener('click', () => {
+            initQualityTest();
+        });
+        
+        // Reveal best logo
+        revealBestLogoBtn.addEventListener('click', () => {
+            const bestLogo = logos.find(l => l.id === actualBestLogo);
+            qualityResult.innerHTML = `<strong>${bestLogo.name}</strong> is actually the best design (quality score: ${bestLogo.quality}/100).`;
+            
+            // Highlight the best logo
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.classList.remove('selected');
+                if (card.dataset.id === actualBestLogo) {
+                    card.classList.add('selected');
+                }
+            });
+        });
+        
+        // Update info type based on radio buttons
+        qualityInfoRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                qualityInfoType = radio.value;
+                updateLogoDisplay();
+            });
+        });
+        
+        // Initialize quality test
+        initQualityTest();
+        
+        // --------------------------
+        // TRENDING BIAS TEST
+        // --------------------------
+        const videoOptionsContainer = document.getElementById('videoOptions');
+        const trendingResult = document.getElementById('trendingResult');
+        const trendingMeter = document.getElementById('trendingMeter');
+        const resetTrendingBtn = document.getElementById('resetTrending');
+        const analyzeTrendingBtn = document.getElementById('analyzeTrending');
+        const trendingVisibilityRadios = document.querySelectorAll('input[name="trendingVisibility"]');
+        
+        let videos = [];
+        let selectedVideo = null;
+        let trendingVisible = false;
+        
+        // Initialize trending test
+        function initTrendingTest() {
+            videos = [
+                { id: 1, title: "Learn Python in 10 Minutes", views: "2.1M", likes: "125K", trendingRank: 1, category: "Education" },
+                { id: 2, title: "Morning Yoga Routine", views: "850K", likes: "42K", trendingRank: 2, category: "Fitness" },
+                { id: 3, title: "10 Cooking Hacks You Need", views: "3.5M", likes: "210K", trendingRank: 3, category: "Food" },
+                { id: 4, title: "Minimalist Home Tour", views: "1.2M", likes: "68K", trendingRank: 4, category: "Lifestyle" },
+                { id: 5, title: "History of Ancient Rome", views: "950K", likes: "51K", trendingRank: 5, category: "Education" }
+            ];
+            
+            selectedVideo = null;
+            trendingVisible = false;
+            updateVideoDisplay();
+        }
+        
+        // Update video display
+        function updateVideoDisplay() {
+            videoOptionsContainer.innerHTML = '';
+            
+            videos.forEach(video => {
+                const videoItem = document.createElement('div');
+                videoItem.className = `trending-item ${selectedVideo === video.id ? 'selected' : ''}`;
+                videoItem.dataset.id = video.id;
+                
+                videoItem.innerHTML = `
+                    <div class="trending-rank">${trendingVisible ? `#${video.trendingRank}` : ''}</div>
+                    <div class="trending-content">
+                        <div class="trending-title">${video.title}</div>
+                        <div class="trending-stats">
+                            ${video.views} views • ${video.likes} likes • ${video.category}
+                        </div>
+                    </div>
+                    ${trendingVisible ? '<i class="fas fa-fire" style="color: #FF9800;"></i>' : ''}
+                `;
+                
+                videoItem.addEventListener('click', () => {
+                    selectVideo(video.id);
+                });
+                
+                videoOptionsContainer.appendChild(videoItem);
+            });
+            
+            // Update result text and meter
+            if (selectedVideo) {
+                const selected = videos.find(v => v.id === selectedVideo);
+                trendingResult.innerHTML = `You selected <strong>${selected.title}</strong>. ${trendingVisible ? 'Trending ranking may have influenced your choice.' : 'You selected without seeing trending data.'}`;
+                
+                // Update trending meter (higher rank = more influence)
+                const rankInfluence = 100 - ((selected.trendingRank - 1) * 20);
+                trendingMeter.style.width = `${trendingVisible ? rankInfluence : 0}%`;
+                
+                // Update results
+                testResults.trending.testsCompleted++;
+                if (trendingVisible && selected.trendingRank <= 2) {
+                    testResults.trending.influencedChoices++;
+                }
+                updateTrendingResults();
+            } else {
+                trendingResult.textContent = 'Select a video to see how trending rankings influence your choice';
+                trendingMeter.style.width = '0%';
+            }
+        }
+        
+        // Select video
+        function selectVideo(videoId) {
+            selectedVideo = videoId;
+            updateVideoDisplay();
+        }
+        
+        // Update trending results
+        function updateTrendingResults() {
+            if (testResults.trending.testsCompleted > 0) {
+                const influenceRate = (testResults.trending.influencedChoices / testResults.trending.testsCompleted) * 100;
+                testResults.trending.score = Math.round(influenceRate);
+                trendingBiasScoreElement.textContent = `${testResults.trending.score}%`;
+                trendingBiasScoreMeter.style.width = `${testResults.trending.score}%`;
+                
+                updateOverallResults();
+            }
+        }
+        
+        // Reset trending test
+        resetTrendingBtn.addEventListener('click', () => {
+            initTrendingTest();
+        });
+        
+        // Analyze trending bias
+        analyzeTrendingBtn.addEventListener('click', () => {
+            if (selectedVideo) {
+                const selected = videos.find(v => v.id === selectedVideo);
+                const biasMessage = trendingVisible ? 
+                    `You selected video #${selected.trendingRank} in trending. Research shows people are ${selected.trendingRank * 20}% more likely to choose top trending items.` :
+                    'You made your selection without trending data. This reduces bias toward already-popular content.';
+                
+                trendingResult.innerHTML = `<strong>Analysis:</strong> ${biasMessage}`;
+            }
+        });
+        
+        // Update visibility based on radio buttons
+        trendingVisibilityRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                trendingVisible = radio.value === 'shown';
+                updateVideoDisplay();
+            });
+        });
+        
+        // Initialize trending test
+        initTrendingTest();
+        
+        // --------------------------
+        // UPDATE OVERALL RESULTS
+        // --------------------------
+        function updateOverallResults() {
+            // Calculate overall bias score
+            const scores = [
+                testResults.bandwagon.score,
+                testResults.socialProof.score,
+                testResults.qualityPerception.score,
+                testResults.trending.score
+            ];
+            
+            // Only include scores from tests that have been completed
+            const validScores = scores.filter(score => score > 0);
+            const overallScore = validScores.length > 0 ? 
+                Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length) : 0;
+            
+            overallBiasScoreElement.textContent = `${overallScore}%`;
+            overallBiasMeter.style.width = `${overallScore}%`;
+            
+            // Update interpretation
+            let interpretation = '';
+            if (overallScore === 0) {
+                interpretation = 'Complete tests to see your results';
+            } else if (overallScore < 25) {
+                interpretation = 'You show low susceptibility to popularity bias. You make decisions independently.';
+            } else if (overallScore < 50) {
+                interpretation = 'You show moderate susceptibility to popularity bias. You sometimes follow the crowd.';
+            } else if (overallScore < 75) {
+                interpretation = 'You show high susceptibility to popularity bias. Popularity strongly influences your choices.';
+            } else {
+                interpretation = 'You show very high susceptibility to popularity bias. You frequently follow popular opinion.';
+            }
+            
+            biasInterpretationElement.textContent = interpretation;
+        }
+        
+        // Initialize with some results
+        setTimeout(() => {
+            // Simulate some initial test completions
+            testResults.bandwagon.testsCompleted = 1;
+            testResults.bandwagon.influencedChoices = 1;
+            testResults.bandwagon.score = 100;
+            
+            testResults.socialProof.testsCompleted = 1;
+            testResults.socialProof.influencedChoices = 1;
+            testResults.socialProof.score = 100;
+            
+            updateBandwagonResults();
+            updateSocialProofResults();
+            updateOverallResults();
+        }, 500);
+        
+        // Add some interactivity to social icons
+        const socialIcons = document.querySelectorAll('.social-icons a');
+        socialIcons.forEach(icon => {
+            icon.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px) scale(1.1)';
+            });
+            
+            icon.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
