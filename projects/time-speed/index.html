@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Speed Controller: World Perception Simulator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c0032 0%, #190061 30%, #240090 70%, #3500d3 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #ff0080, #00ffcc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            color: #b8b8d1;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1100px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* World Simulation Area */
+        .simulation-area {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            min-height: 700px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .world-canvas {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #87CEEB, #E0F7FF);
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Time Control Panel */
+        .control-panel {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-title {
+            font-size: 1.8rem;
+            color: #00ffcc;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0, 255, 204, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .time-speed-display {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .speed-value {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 20px currentColor;
+        }
+        
+        .speed-label {
+            font-size: 1.8rem;
+            color: #b8b8d1;
+        }
+        
+        .speed-control {
+            margin-bottom: 30px;
+        }
+        
+        .speed-slider {
+            width: 100%;
+            height: 30px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #ff0080, #00ffcc);
+            border-radius: 15px;
+            outline: none;
+            margin: 20px 0;
+        }
+        
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 3px solid #240090;
+        }
+        
+        .speed-slider::-moz-range-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 3px solid #240090;
+        }
+        
+        .speed-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #b8b8d1;
+        }
+        
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .preset-btn {
+            padding: 15px 10px;
+            border: none;
+            border-radius: 12px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid transparent;
+        }
+        
+        .preset-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .preset-btn.active {
+            border-color: #00ffcc;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+        }
+        
+        .preset-icon {
+            font-size: 1.8rem;
+        }
+        
+        .effects-display {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            flex-grow: 1;
+        }
+        
+        .effect-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .effect-item.active {
+            background-color: rgba(0, 255, 204, 0.1);
+            border-left: 4px solid #00ffcc;
+        }
+        
+        .effect-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+        
+        .effect-text h3 {
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+        
+        .effect-text p {
+            color: #b8b8d1;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        /* Info Panels */
+        .info-panels {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .info-panels {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .info-panel {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .info-panel h2 {
+            font-size: 1.5rem;
+            color: #ff0080;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 0, 128, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .time-perception {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .perception-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .perception-icon {
+            font-size: 1.8rem;
+            color: #00ffcc;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .comparison-table th {
+            text-align: left;
+            padding: 12px 15px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #00ffcc;
+            border-bottom: 2px solid rgba(0, 255, 204, 0.3);
+        }
+        
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .comparison-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* World Elements */
+        .sun {
+            position: absolute;
+            top: 80px;
+            left: 150px;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #FFD700, #FF8C00);
+            border-radius: 50%;
+            box-shadow: 0 0 60px #FFD700, 0 0 100px rgba(255, 215, 0, 0.5);
+            z-index: 5;
+        }
+        
+        .cloud {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50px;
+            z-index: 4;
+        }
+        
+        .cloud-1 {
+            width: 120px;
+            height: 60px;
+            top: 120px;
+            left: 300px;
+        }
+        
+        .cloud-2 {
+            width: 150px;
+            height: 70px;
+            top: 180px;
+            left: 500px;
+        }
+        
+        .cloud-3 {
+            width: 100px;
+            height: 50px;
+            top: 90px;
+            left: 700px;
+        }
+        
+        .person {
+            position: absolute;
+            bottom: 180px;
+            left: 200px;
+            width: 40px;
+            height: 80px;
+            z-index: 10;
+        }
+        
+        .person-body {
+            width: 40px;
+            height: 60px;
+            background-color: #4A90E2;
+            border-radius: 20px 20px 5px 5px;
+            position: relative;
+        }
+        
+        .person-head {
+            width: 30px;
+            height: 30px;
+            background-color: #FFE0BD;
+            border-radius: 50%;
+            position: absolute;
+            top: -25px;
+            left: 5px;
+        }
+        
+        .person-arm {
+            position: absolute;
+            background-color: #4A90E2;
+            border-radius: 10px;
+        }
+        
+        .arm-left {
+            width: 40px;
+            height: 10px;
+            top: 15px;
+            left: -35px;
+            transform-origin: right center;
+        }
+        
+        .arm-right {
+            width: 40px;
+            height: 10px;
+            top: 15px;
+            left: 35px;
+            transform-origin: left center;
+        }
+        
+        .person-leg {
+            position: absolute;
+            background-color: #2C3E50;
+            border-radius: 5px;
+            bottom: -20px;
+        }
+        
+        .leg-left {
+            width: 10px;
+            height: 30px;
+            left: 8px;
+        }
+        
+        .leg-right {
+            width: 10px;
+            height: 30px;
+            left: 22px;
+        }
+        
+        .car {
+            position: absolute;
+            bottom: 170px;
+            left: 400px;
+            width: 120px;
+            height: 60px;
+            background-color: #E74C3C;
+            border-radius: 20px 20px 5px 5px;
+            z-index: 9;
+        }
+        
+        .car-roof {
+            position: absolute;
+            top: -20px;
+            left: 20px;
+            width: 80px;
+            height: 30px;
+            background-color: #C0392B;
+            border-radius: 15px 15px 5px 5px;
+        }
+        
+        .car-wheel {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background-color: #2C3E50;
+            border-radius: 50%;
+            bottom: -12px;
+        }
+        
+        .wheel-front {
+            left: 20px;
+        }
+        
+        .wheel-back {
+            right: 20px;
+        }
+        
+        .tree {
+            position: absolute;
+            bottom: 180px;
+            z-index: 8;
+        }
+        
+        .tree-trunk {
+            width: 25px;
+            height: 80px;
+            background-color: #8B4513;
+            margin: 0 auto;
+        }
+        
+        .tree-top {
+            width: 100px;
+            height: 100px;
+            background-color: #27AE60;
+            border-radius: 50%;
+            margin-top: -70px;
+        }
+        
+        .tree-1 {
+            left: 800px;
+        }
+        
+        .tree-2 {
+            left: 1000px;
+        }
+        
+        .tree-3 {
+            left: 1200px;
+        }
+        
+        .building {
+            position: absolute;
+            bottom: 180px;
+            width: 100px;
+            height: 200px;
+            background-color: #7F8C8D;
+            z-index: 7;
+        }
+        
+        .building-window {
+            position: absolute;
+            width: 20px;
+            height: 30px;
+            background-color: #F1C40F;
+            border-radius: 5px;
+        }
+        
+        .building-1 {
+            left: 600px;
+            height: 180px;
+        }
+        
+        .building-2 {
+            left: 720px;
+            height: 220px;
+            background-color: #95A5A6;
+        }
+        
+        .ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(to top, #27AE60, #2ECC71);
+            z-index: 1;
+        }
+        
+        .road {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background-color: #34495E;
+            z-index: 2;
+        }
+        
+        .road-line {
+            position: absolute;
+            top: 45px;
+            width: 50px;
+            height: 10px;
+            background-color: #F1C40F;
+        }
+        
+        .birds {
+            position: absolute;
+            top: 200px;
+            left: 200px;
+            font-size: 2rem;
+            z-index: 6;
+        }
+        
+        .water-drop {
+            position: absolute;
+            width: 8px;
+            height: 15px;
+            background-color: #3498db;
+            border-radius: 0 0 4px 4px;
+            opacity: 0;
+        }
+        
+        .clock {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            z-index: 20;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .clock-time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            color: #00ffcc;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .clock-date {
+            font-size: 1.2rem;
+            color: #b8b8d1;
+            text-align: center;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #b8b8d1;
+            font-size: 0.9rem;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Speed-specific effects */
+        .time-frozen .world-canvas {
+            filter: grayscale(80%) blur(1px);
+        }
+        
+        .time-slow .world-canvas {
+            filter: sepia(30%);
+        }
+        
+        .time-fast .world-canvas {
+            filter: brightness(120%) saturate(150%);
+        }
+        
+        .time-extreme .world-canvas {
+            filter: brightness(150%) saturate(200%) hue-rotate(90deg);
+        }
+        
+        .time-reversed .world-canvas {
+            filter: hue-rotate(180deg);
+        }
+        
+        /* Animation classes */
+        @keyframes sunMove {
+            from { transform: translateX(0) translateY(0); }
+            to { transform: translateX(800px) translateY(300px); }
+        }
+        
+        @keyframes cloudMove {
+            from { transform: translateX(0); }
+            to { transform: translateX(100px); }
+        }
+        
+        @keyframes personWalk {
+            0%, 100% { transform: translateX(0) translateY(0); }
+            25% { transform: translateX(10px) translateY(-5px); }
+            50% { transform: translateX(20px) translateY(0); }
+            75% { transform: translateX(30px) translateY(-5px); }
+        }
+        
+        @keyframes armSwing {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(30deg); }
+        }
+        
+        @keyframes carMove {
+            from { transform: translateX(0); }
+            to { transform: translateX(1000px); }
+        }
+        
+        @keyframes wheelSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes birdFly {
+            0% { transform: translateX(0) translateY(0); }
+            25% { transform: translateX(50px) translateY(-20px); }
+            50% { transform: translateX(100px) translateY(0); }
+            75% { transform: translateX(150px) translateY(-20px); }
+            100% { transform: translateX(200px) translateY(0); }
+        }
+        
+        @keyframes rainFall {
+            0% { transform: translateY(-100px); opacity: 1; }
+            100% { transform: translateY(300px); opacity: 0; }
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-hourglass-half"></i> Time Speed Controller</h1>
+            <p class="subtitle">Experience how different time perception speeds would affect our world. Adjust the time speed and observe how everything from people to celestial bodies responds.</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="simulation-area">
+                <h2 class="panel-title"><i class="fas fa-globe-americas"></i> World Simulation</h2>
+                
+                <div class="world-canvas" id="worldCanvas">
+                    <!-- Sun -->
+                    <div class="sun" id="sun"></div>
+                    
+                    <!-- Clouds -->
+                    <div class="cloud cloud-1" id="cloud1"></div>
+                    <div class="cloud cloud-2" id="cloud2"></div>
+                    <div class="cloud cloud-3" id="cloud3"></div>
+                    
+                    <!-- Birds -->
+                    <div class="birds" id="birds">🐦 🦅 🕊️</div>
+                    
+                    <!-- Buildings -->
+                    <div class="building building-1">
+                        <div class="building-window" style="top: 30px; left: 20px;"></div>
+                        <div class="building-window" style="top: 30px; right: 20px;"></div>
+                        <div class="building-window" style="top: 80px; left: 20px;"></div>
+                        <div class="building-window" style="top: 80px; right: 20px;"></div>
+                    </div>
+                    
+                    <div class="building building-2">
+                        <div class="building-window" style="top: 40px; left: 20px;"></div>
+                        <div class="building-window" style="top: 40px; right: 20px;"></div>
+                        <div class="building-window" style="top: 90px; left: 20px;"></div>
+                        <div class="building-window" style="top: 90px; right: 20px;"></div>
+                        <div class="building-window" style="top: 140px; left: 20px;"></div>
+                        <div class="building-window" style="top: 140px; right: 20px;"></div>
+                    </div>
+                    
+                    <!-- Trees -->
+                    <div class="tree tree-1">
+                        <div class="tree-top"></div>
+                        <div class="tree-trunk"></div>
+                    </div>
+                    
+                    <div class="tree tree-2">
+                        <div class="tree-top"></div>
+                        <div class="tree-trunk"></div>
+                    </div>
+                    
+                    <div class="tree tree-3">
+                        <div class="tree-top"></div>
+                        <div class="tree-trunk"></div>
+                    </div>
+                    
+                    <!-- Person -->
+                    <div class="person" id="person">
+                        <div class="person-head"></div>
+                        <div class="person-body">
+                            <div class="person-arm arm-left" id="leftArm"></div>
+                            <div class="person-arm arm-right" id="rightArm"></div>
+                        </div>
+                        <div class="person-leg leg-left" id="leftLeg"></div>
+                        <div class="person-leg leg-right" id="rightLeg"></div>
+                    </div>
+                    
+                    <!-- Car -->
+                    <div class="car" id="car">
+                        <div class="car-roof"></div>
+                        <div class="car-wheel wheel-front" id="frontWheel"></div>
+                        <div class="car-wheel wheel-back" id="backWheel"></div>
+                    </div>
+                    
+                    <!-- Road -->
+                    <div class="road">
+                        <div class="road-line" style="left: 100px;"></div>
+                        <div class="road-line" style="left: 300px;"></div>
+                        <div class="road-line" style="left: 500px;"></div>
+                        <div class="road-line" style="left: 700px;"></div>
+                        <div class="road-line" style="left: 900px;"></div>
+                        <div class="road-line" style="left: 1100px;"></div>
+                    </div>
+                    
+                    <!-- Ground -->
+                    <div class="ground"></div>
+                    
+                    <!-- Digital Clock -->
+                    <div class="clock" id="digitalClock">
+                        <div class="clock-time" id="clockTime">12:00:00</div>
+                        <div class="clock-date" id="clockDate">Monday, January 1, 2023</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <h2 class="panel-title"><i class="fas fa-tachometer-alt"></i> Time Controls</h2>
+                
+                <div class="time-speed-display">
+                    <div class="speed-value" id="speedValue">1.0x</div>
+                    <div class="speed-label" id="speedLabel">NORMAL TIME</div>
+                </div>
+                
+                <div class="speed-control">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: #ff0080;"><i class="fas fa-backward"></i> SLOWER</span>
+                        <span style="color: #00ffcc;">FASTER <i class="fas fa-forward"></i></span>
+                    </div>
+                    
+                    <input type="range" min="0" max="100" value="50" class="speed-slider" id="speedSlider">
+                    
+                    <div class="speed-markers">
+                        <span>0.001x</span>
+                        <span>0.1x</span>
+                        <span>1x</span>
+                        <span>10x</span>
+                        <span>100x</span>
+                    </div>
+                </div>
+                
+                <div class="preset-buttons">
+                    <button class="preset-btn" data-speed="0">
+                        <i class="fas fa-pause preset-icon"></i>
+                        <span>Frozen</span>
+                    </button>
+                    <button class="preset-btn" data-speed="0.1">
+                        <i class="fas fa-snail preset-icon"></i>
+                        <span>Slow Mo</span>
+                    </button>
+                    <button class="preset-btn active" data-speed="1">
+                        <i class="fas fa-walking preset-icon"></i>
+                        <span>Normal</span>
+                    </button>
+                    <button class="preset-btn" data-speed="10">
+                        <i class="fas fa-running preset-icon"></i>
+                        <span>Fast</span>
+                    </button>
+                    <button class="preset-btn" data-speed="100">
+                        <i class="fas fa-bolt preset-icon"></i>
+                        <span>Extreme</span>
+                    </button>
+                    <button class="preset-btn" data-speed="-1">
+                        <i class="fas fa-history preset-icon"></i>
+                        <span>Reverse</span>
+                    </button>
+                </div>
+                
+                <div class="effects-display">
+                    <h3 style="color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-eye"></i> Time Perception Effects
+                    </h3>
+                    
+                    <div class="effect-item" id="effectTimeFlow">
+                        <div class="effect-icon">
+                            <i class="fas fa-hourglass-end"></i>
+                        </div>
+                        <div class="effect-text">
+                            <h3>Time Flow</h3>
+                            <p>Perceived speed of events and movements</p>
+                        </div>
+                    </div>
+                    
+                    <div class="effect-item" id="effectAudio">
+                        <div class="effect-icon">
+                            <i class="fas fa-volume-up"></i>
+                        </div>
+                        <div class="effect-text">
+                            <h3>Sound Perception</h3>
+                            <p>How audio frequencies are perceived</p>
+                        </div>
+                    </div>
+                    
+                    <div class="effect-item" id="effectThinking">
+                        <div class="effect-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <div class="effect-text">
+                            <h3>Thought Speed</h3>
+                            <p>Cognitive processing and reaction time</p>
+                        </div>
+                    </div>
+                    
+                    <div class="effect-item" id="effectAging">
+                        <div class="effect-icon">
+                            <i class="fas fa-birthday-cake"></i>
+                        </div>
+                        <div class="effect-text">
+                            <h3>Aging Process</h3>
+                            <p>Perceived rate of biological aging</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panels">
+            <div class="info-panel">
+                <h2><i class="fas fa-user-clock"></i> Human Perception</h2>
+                <div class="time-perception">
+                    <div class="perception-item">
+                        <i class="fas fa-heartbeat perception-icon"></i>
+                        <div>
+                            <div style="font-weight: 600;">Heart Rate</div>
+                            <div id="heartRate">72 BPM</div>
+                        </div>
+                    </div>
+                    
+                    <div class="perception-item">
+                        <i class="fas fa-comment perception-icon"></i>
+                        <div>
+                            <div style="font-weight: 600;">Speech</div>
+                            <div id="speechSpeed">Normal speed</div>
+                        </div>
+                    </div>
+                    
+                    <div class="perception-item">
+                        <i class="fas fa-lightbulb perception-icon"></i>
+                        <div>
+                            <div style="font-weight: 600;">Reaction Time</div>
+                            <div id="reactionTime">0.25 seconds</div>
+                        </div>
+                    </div>
+                    
+                    <div class="perception-item">
+                        <i class="fas fa-clock perception-icon"></i>
+                        <div>
+                            <div style="font-weight: 600;">Subjective Time</div>
+                            <div id="subjectiveTime">1 second feels like 1 second</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <h2><i class="fas fa-universal-access"></i> Time Speed Comparison</h2>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Speed</th>
+                            <th>1 Hour Is</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0.001x</td>
+                            <td>41.6 days</td>
+                            <td>Glacial movement</td>
+                        </tr>
+                        <tr>
+                            <td>0.1x</td>
+                            <td>10 hours</td>
+                            <td>Slow motion video</td>
+                        </tr>
+                        <tr>
+                            <td>1x</td>
+                            <td>1 hour</td>
+                            <td>Normal life</td>
+                        </tr>
+                        <tr>
+                            <td>10x</td>
+                            <td>6 minutes</td>
+                            <td>Fast-forward video</td>
+                        </tr>
+                        <tr>
+                            <td>100x</td>
+                            <td>36 seconds</td>
+                            <td>Sunrise timelapse</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="info-panel">
+                <h2><i class="fas fa-info-circle"></i> About Time Perception</h2>
+                <p style="margin-bottom: 15px; line-height: 1.6; color: #b8b8d1;">
+                    Time perception varies greatly across different contexts and consciousness states. While we normally experience time at 1x speed, various factors can alter our perception:
+                </p>
+                <ul style="padding-left: 20px; color: #b8b8d1; line-height: 1.6;">
+                    <li>During emergencies, time may seem to slow down</li>
+                    <li>In flow states, time may appear to pass quickly</li>
+                    <li>Different animals perceive time at different rates</li>
+                    <li>Relativity shows time passes differently at high speeds</li>
+                </ul>
+                <div style="margin-top: 20px; padding: 15px; background-color: rgba(0, 0, 0, 0.3); border-radius: 10px;">
+                    <div style="font-weight: 600; color: #00ffcc; margin-bottom: 5px;">Current Simulation</div>
+                    <div style="color: #b8b8d1; font-size: 0.9rem;" id="simulationInfo">Simulating normal Earth time flow</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Time Speed Controller | A simulation of perceptual time dilation and contraction | Made for educational and experiential purposes</p>
+            <p style="margin-top: 10px; font-size: 0.8rem; color: #8a8ac4;">Adjust the time speed slider to experience different temporal realities. Observe how all movements and processes change accordingly.</p>
+        </div>
+    </div>
+    
+    <script>
+        // Time Simulation State
+        const timeState = {
+            speed: 1.0,
+            lastUpdate: Date.now(),
+            accumulatedTime: 0,
+            clockTime: new Date('2023-01-01T12:00:00'),
+            isReversed: false,
+            
+            // Elements
+            elements: {},
+            
+            // Effects
+            effects: {
+                timeFlow: 'normal',
+                audio: 'normal',
+                thinking: 'normal',
+                aging: 'normal'
+            },
+            
+            // Human perception metrics
+            perception: {
+                heartRate: 72,
+                speechSpeed: 'Normal speed',
+                reactionTime: 0.25,
+                subjectiveTime: '1 second feels like 1 second'
+            }
+        };
+        
+        // DOM Elements
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const speedLabel = document.getElementById('speedLabel');
+        const presetButtons = document.querySelectorAll('.preset-btn');
+        const worldCanvas = document.getElementById('worldCanvas');
+        
+        // Simulation elements
+        const sun = document.getElementById('sun');
+        const clouds = [
+            document.getElementById('cloud1'),
+            document.getElementById('cloud2'),
+            document.getElementById('cloud3')
+        ];
+        const person = document.getElementById('person');
+        const leftArm = document.getElementById('leftArm');
+        const rightArm = document.getElementById('rightArm');
+        const leftLeg = document.getElementById('leftLeg');
+        const rightLeg = document.getElementById('rightLeg');
+        const car = document.getElementById('car');
+        const frontWheel = document.getElementById('frontWheel');
+        const backWheel = document.getElementById('backWheel');
+        const birds = document.getElementById('birds');
+        
+        // Info displays
+        const clockTime = document.getElementById('clockTime');
+        const clockDate = document.getElementById('clockDate');
+        const heartRate = document.getElementById('heartRate');
+        const speechSpeed = document.getElementById('speechSpeed');
+        const reactionTime = document.getElementById('reactionTime');
+        const subjectiveTime = document.getElementById('subjectiveTime');
+        const simulationInfo = document.getElementById('simulationInfo');
+        
+        // Effect displays
+        const effectTimeFlow = document.getElementById('effectTimeFlow');
+        const effectAudio = document.getElementById('effectAudio');
+        const effectThinking = document.getElementById('effectThinking');
+        const effectAging = document.getElementById('effectAging');
+        
+        // Initialize the simulation
+        function initSimulation() {
+            // Set up initial animations
+            setupAnimations();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Start the simulation loop
+            requestAnimationFrame(updateSimulation);
+            
+            // Start the clock update
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Create rain effect
+            createRain();
+        }
+        
+        // Set up CSS animations based on current speed
+        function setupAnimations() {
+            // Remove all existing animations
+            document.querySelectorAll('*').forEach(el => {
+                el.style.animation = 'none';
+            });
+            
+            // Calculate animation durations based on speed
+            const baseDuration = 60; // Base duration in seconds
+            const duration = baseDuration / Math.abs(timeState.speed);
+            
+            // Sun movement (day/night cycle)
+            if (timeState.speed !== 0) {
+                sun.style.animation = `sunMove ${duration}s linear infinite`;
+                if (timeState.speed < 0) {
+                    sun.style.animationDirection = 'reverse';
+                }
+            }
+            
+            // Cloud movement
+            clouds.forEach((cloud, index) => {
+                if (timeState.speed !== 0) {
+                    const cloudDuration = (baseDuration * (1 + index * 0.5)) / Math.abs(timeState.speed);
+                    cloud.style.animation = `cloudMove ${cloudDuration}s linear infinite alternate`;
+                    if (timeState.speed < 0) {
+                        cloud.style.animationDirection = 'reverse';
+                    }
+                }
+            });
+            
+            // Person walking
+            if (timeState.speed !== 0) {
+                const walkDuration = 2 / Math.abs(timeState.speed);
+                person.style.animation = `personWalk ${walkDuration}s ease-in-out infinite`;
+                leftArm.style.animation = `armSwing ${walkDuration}s ease-in-out infinite`;
+                rightArm.style.animation = `armSwing ${walkDuration}s ease-in-out infinite`;
+                
+                if (timeState.speed < 0) {
+                    person.style.animationDirection = 'reverse';
+                    leftArm.style.animationDirection = 'reverse';
+                    rightArm.style.animationDirection = 'reverse';
+                }
+            }
+            
+            // Car movement
+            if (timeState.speed !== 0) {
+                const carDuration = 30 / Math.abs(timeState.speed);
+                car.style.animation = `carMove ${carDuration}s linear infinite`;
+                
+                if (timeState.speed < 0) {
+                    car.style.animationDirection = 'reverse';
+                }
+                
+                // Wheel spinning
+                const wheelDuration = 1 / Math.abs(timeState.speed);
+                frontWheel.style.animation = `wheelSpin ${wheelDuration}s linear infinite`;
+                backWheel.style.animation = `wheelSpin ${wheelDuration}s linear infinite`;
+                
+                if (timeState.speed < 0) {
+                    frontWheel.style.animationDirection = 'reverse';
+                    backWheel.style.animationDirection = 'reverse';
+                }
+            }
+            
+            // Birds flying
+            if (timeState.speed !== 0) {
+                const birdDuration = 10 / Math.abs(timeState.speed);
+                birds.style.animation = `birdFly ${birdDuration}s ease-in-out infinite`;
+                
+                if (timeState.speed < 0) {
+                    birds.style.animationDirection = 'reverse';
+                }
+            }
+            
+            // Update visual effects based on speed
+            updateVisualEffects();
+        }
+        
+        // Update visual effects based on current speed
+        function updateVisualEffects() {
+            // Remove all time classes
+            worldCanvas.classList.remove('time-frozen', 'time-slow', 'time-normal', 'time-fast', 'time-extreme', 'time-reversed');
+            
+            // Add appropriate class based on speed
+            if (timeState.speed === 0) {
+                worldCanvas.classList.add('time-frozen');
+            } else if (timeState.speed > 0 && timeState.speed < 0.5) {
+                worldCanvas.classList.add('time-slow');
+            } else if (timeState.speed >= 0.5 && timeState.speed < 5) {
+                worldCanvas.classList.add('time-normal');
+            } else if (timeState.speed >= 5 && timeState.speed < 50) {
+                worldCanvas.classList.add('time-fast');
+            } else if (timeState.speed >= 50) {
+                worldCanvas.classList.add('time-extreme');
+            }
+            
+            if (timeState.speed < 0) {
+                worldCanvas.classList.add('time-reversed');
+            }
+        }
+        
+        // Update the simulation
+        function updateSimulation() {
+            const now = Date.now();
+            const deltaTime = (now - timeState.lastUpdate) / 1000; // Convert to seconds
+            timeState.lastUpdate = now;
+            
+            // Accumulate time based on speed
+            if (timeState.speed !== 0) {
+                timeState.accumulatedTime += deltaTime * timeState.speed;
+            }
+            
+            // Update clock based on accumulated time
+            updateClockFromSimulation();
+            
+            // Update information displays
+            updateInfoDisplays();
+            
+            // Continue the loop
+            requestAnimationFrame(updateSimulation);
+        }
+        
+        // Update clock based on simulation time
+        function updateClockFromSimulation() {
+            if (timeState.speed === 0) return;
+            
+            // Update the clock time based on accumulated time
+            const timeChange = timeState.accumulatedTime * 1000; // Convert to milliseconds
+            timeState.accumulatedTime = 0;
+            
+            if (timeState.isReversed) {
+                timeState.clockTime = new Date(timeState.clockTime.getTime() - timeChange);
+            } else {
+                timeState.clockTime = new Date(timeState.clockTime.getTime() + timeChange);
+            }
+            
+            updateClockDisplay();
+        }
+        
+        // Update the digital clock display
+        function updateClock() {
+            if (timeState.speed === 0) {
+                // For frozen time, just update the display once
+                updateClockDisplay();
+            }
+        }
+        
+        function updateClockDisplay() {
+            const time = timeState.clockTime;
+            
+            // Format time as HH:MM:SS
+            const hours = time.getHours().toString().padStart(2, '0');
+            const minutes = time.getMinutes().toString().padStart(2, '0');
+            const seconds = time.getSeconds().toString().padStart(2, '0');
+            
+            clockTime.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // Format date
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            clockDate.textContent = time.toLocaleDateString('en-US', options);
+        }
+        
+        // Update information displays
+        function updateInfoDisplays() {
+            const speed = timeState.speed;
+            
+            // Update speed display
+            if (speed === 0) {
+                speedValue.textContent = "0.0x";
+                speedLabel.textContent = "TIME FROZEN";
+                speedValue.style.color = "#ff0080";
+            } else if (speed < 0) {
+                speedValue.textContent = `${Math.abs(speed).toFixed(1)}x`;
+                speedLabel.textContent = "TIME REVERSED";
+                speedValue.style.color = "#9b59b6";
+            } else if (speed < 0.1) {
+                speedValue.textContent = `${speed.toFixed(3)}x`;
+                speedLabel.textContent = "EXTREME SLOW MOTION";
+                speedValue.style.color = "#3498db";
+            } else if (speed < 0.5) {
+                speedValue.textContent = `${speed.toFixed(2)}x`;
+                speedLabel.textContent = "SLOW MOTION";
+                speedValue.style.color = "#2ecc71";
+            } else if (speed < 2) {
+                speedValue.textContent = `${speed.toFixed(1)}x`;
+                speedLabel.textContent = "NORMAL TIME";
+                speedValue.style.color = "#00ffcc";
+            } else if (speed < 20) {
+                speedValue.textContent = `${speed.toFixed(1)}x`;
+                speedLabel.textContent = "FAST FORWARD";
+                speedValue.style.color = "#f39c12";
+            } else {
+                speedValue.textContent = `${speed.toFixed(1)}x`;
+                speedLabel.textContent = "EXTREME FAST FORWARD";
+                speedValue.style.color = "#e74c3c";
+            }
+            
+            // Update human perception metrics
+            updatePerceptionMetrics();
+            
+            // Update effect displays
+            updateEffectDisplays();
+            
+            // Update simulation info
+            updateSimulationInfo();
+        }
+        
+        // Update human perception metrics
+        function updatePerceptionMetrics() {
+            const speed = timeState.speed;
+            
+            // Heart rate (simulated)
+            if (speed === 0) {
+                timeState.perception.heartRate = 0;
+                heartRate.textContent = "FROZEN";
+                heartRate.style.color = "#ff0080";
+            } else if (speed < 0) {
+                timeState.perception.heartRate = Math.round(72 / Math.abs(speed));
+                heartRate.textContent = `${timeState.perception.heartRate} BPM (REVERSED)`;
+                heartRate.style.color = "#9b59b6";
+            } else if (speed < 0.1) {
+                timeState.perception.heartRate = Math.round(72 * speed);
+                heartRate.textContent = `${timeState.perception.heartRate} BPM`;
+                heartRate.style.color = "#3498db";
+            } else if (speed < 0.5) {
+                timeState.perception.heartRate = Math.round(72 * speed);
+                heartRate.textContent = `${timeState.perception.heartRate} BPM (SLOW)`;
+                heartRate.style.color = "#2ecc71";
+            } else if (speed < 2) {
+                timeState.perception.heartRate = Math.round(72 * speed);
+                heartRate.textContent = `${timeState.perception.heartRate} BPM`;
+                heartRate.style.color = "#00ffcc";
+            } else if (speed < 20) {
+                timeState.perception.heartRate = Math.round(72 * speed);
+                heartRate.textContent = `${timeState.perception.heartRate} BPM (FAST)`;
+                heartRate.style.color = "#f39c12";
+            } else {
+                timeState.perception.heartRate = Math.round(72 * speed);
+                heartRate.textContent = `${timeState.perception.heartRate} BPM (EXTREME)`;
+                heartRate.style.color = "#e74c3c";
+            }
+            
+            // Speech speed
+            if (speed === 0) {
+                timeState.perception.speechSpeed = "Frozen";
+                speechSpeed.textContent = "FROZEN";
+                speechSpeed.style.color = "#ff0080";
+            } else if (speed < 0) {
+                timeState.perception.speechSpeed = "Reversed";
+                speechSpeed.textContent = "REVERSED SPEECH";
+                speechSpeed.style.color = "#9b59b6";
+            } else if (speed < 0.1) {
+                timeState.perception.speechSpeed = "Extremely slow";
+                speechSpeed.textContent = "EXTREMELY SLOW";
+                speechSpeed.style.color = "#3498db";
+            } else if (speed < 0.5) {
+                timeState.perception.speechSpeed = "Slow";
+                speechSpeed.textContent = "SLOW SPEECH";
+                speechSpeed.style.color = "#2ecc71";
+            } else if (speed < 2) {
+                timeState.perception.speechSpeed = "Normal speed";
+                speechSpeed.textContent = "NORMAL SPEED";
+                speechSpeed.style.color = "#00ffcc";
+            } else if (speed < 20) {
+                timeState.perception.speechSpeed = "Fast";
+                speechSpeed.textContent = "FAST SPEECH";
+                speechSpeed.style.color = "#f39c12";
+            } else {
+                timeState.perception.speechSpeed = "Extremely fast";
+                speechSpeed.textContent = "EXTREMELY FAST";
+                speechSpeed.style.color = "#e74c3c";
+            }
+            
+            // Reaction time
+            if (speed === 0) {
+                timeState.perception.reactionTime = Infinity;
+                reactionTime.textContent = "INFINITE";
+                reactionTime.style.color = "#ff0080";
+            } else if (speed < 0) {
+                timeState.perception.reactionTime = 0.25 / Math.abs(speed);
+                reactionTime.textContent = `${timeState.perception.reactionTime.toFixed(2)}s (REVERSED)`;
+                reactionTime.style.color = "#9b59b6";
+            } else {
+                timeState.perception.reactionTime = 0.25 / speed;
+                reactionTime.textContent = `${timeState.perception.reactionTime.toFixed(2)} seconds`;
+                
+                if (speed < 0.1) {
+                    reactionTime.style.color = "#3498db";
+                } else if (speed < 0.5) {
+                    reactionTime.style.color = "#2ecc71";
+                } else if (speed < 2) {
+                    reactionTime.style.color = "#00ffcc";
+                } else if (speed < 20) {
+                    reactionTime.style.color = "#f39c12";
+                } else {
+                    reactionTime.style.color = "#e74c3c";
+                }
+            }
+            
+            // Subjective time
+            if (speed === 0) {
+                timeState.perception.subjectiveTime = "Time is frozen";
+                subjectiveTime.textContent = "TIME IS FROZEN";
+                subjectiveTime.style.color = "#ff0080";
+            } else if (speed < 0) {
+                timeState.perception.subjectiveTime = "Time flows backward";
+                subjectiveTime.textContent = "TIME FLOWS BACKWARD";
+                subjectiveTime.style.color = "#9b59b6";
+            } else if (speed < 0.1) {
+                timeState.perception.subjectiveTime = `1 second feels like ${(1/speed).toFixed(0)} seconds`;
+                subjectiveTime.textContent = `1s feels like ${(1/speed).toFixed(0)}s`;
+                subjectiveTime.style.color = "#3498db";
+            } else if (speed < 0.5) {
+                timeState.perception.subjectiveTime = `1 second feels like ${(1/speed).toFixed(1)} seconds`;
+                subjectiveTime.textContent = `1s feels like ${(1/speed).toFixed(1)}s`;
+                subjectiveTime.style.color = "#2ecc71";
+            } else if (speed < 2) {
+                timeState.perception.subjectiveTime = "1 second feels like 1 second";
+                subjectiveTime.textContent = "1s feels like 1s";
+                subjectiveTime.style.color = "#00ffcc";
+            } else if (speed < 20) {
+                timeState.perception.subjectiveTime = `1 second feels like ${(1/speed).toFixed(2)} seconds`;
+                subjectiveTime.textContent = `1s feels like ${(1/speed).toFixed(2)}s`;
+                subjectiveTime.style.color = "#f39c12";
+            } else {
+                timeState.perception.subjectiveTime = `1 second feels like ${(1/speed).toFixed(3)} seconds`;
+                subjectiveTime.textContent = `1s feels like ${(1/speed).toFixed(3)}s`;
+                subjectiveTime.style.color = "#e74c3c";
+            }
+        }
+        
+        // Update effect displays
+        function updateEffectDisplays() {
+            const speed = timeState.speed;
+            
+            // Time flow effect
+            if (speed === 0) {
+                effectTimeFlow.classList.add('active');
+                effectTimeFlow.querySelector('p').textContent = "All movement and processes are completely frozen";
+            } else if (speed < 0) {
+                effectTimeFlow.classList.add('active');
+                effectTimeFlow.querySelector('p').textContent = "Everything moves backward in time";
+            } else if (speed < 0.1) {
+                effectTimeFlow.classList.add('active');
+                effectTimeFlow.querySelector('p').textContent = "Extreme slow motion - barely perceptible movement";
+            } else if (speed < 0.5) {
+                effectTimeFlow.classList.add('active');
+                effectTimeFlow.querySelector('p').textContent = "Slow motion - movements are easily trackable";
+            } else if (speed < 2) {
+                effectTimeFlow.classList.remove('active');
+                effectTimeFlow.querySelector('p').textContent = "Normal flow of time and movement";
+            } else if (speed < 20) {
+                effectTimeFlow.classList.add('active');
+                effectTimeFlow.querySelector('p').textContent = "Fast motion - movements become blurred";
+            } else {
+                effectTimeFlow.classList.add('active');
+                effectTimeFlow.querySelector('p').textContent = "Extreme fast motion - movements are streaks";
+            }
+            
+            // Audio effect
+            if (speed === 0) {
+                effectAudio.classList.add('active');
+                effectAudio.querySelector('p').textContent = "Complete silence - sound waves are frozen";
+            } else if (speed < 0) {
+                effectAudio.classList.add('active');
+                effectAudio.querySelector('p').textContent = "Sound plays backward - reversed audio";
+            } else if (speed < 0.1) {
+                effectAudio.classList.add('active');
+                effectAudio.querySelector('p').textContent = "Extremely low pitch - deep rumbling sounds";
+            } else if (speed < 0.5) {
+                effectAudio.classList.add('active');
+                effectAudio.querySelector('p').textContent = "Low pitch - slowed down speech and sounds";
+            } else if (speed < 2) {
+                effectAudio.classList.remove('active');
+                effectAudio.querySelector('p').textContent = "Normal pitch and audio perception";
+            } else if (speed < 20) {
+                effectAudio.classList.add('active');
+                effectAudio.querySelector('p').textContent = "High pitch - sped up chipmunk-like sounds";
+            } else {
+                effectAudio.classList.add('active');
+                effectAudio.querySelector('p').textContent = "Extreme high pitch - ultrasonic frequencies";
+            }
+            
+            // Thinking effect
+            if (speed === 0) {
+                effectThinking.classList.add('active');
+                effectThinking.querySelector('p').textContent = "Thought processes are completely frozen";
+            } else if (speed < 0) {
+                effectThinking.classList.add('active');
+                effectThinking.querySelector('p').textContent = "Thinking backward - remembering before perceiving";
+            } else if (speed < 0.1) {
+                effectThinking.classList.add('active');
+                effectThinking.querySelector('p').textContent = "Extremely slow thinking - deep contemplation";
+            } else if (speed < 0.5) {
+                effectThinking.classList.add('active');
+                effectThinking.querySelector('p').textContent = "Slow thinking - deliberate decision making";
+            } else if (speed < 2) {
+                effectThinking.classList.remove('active');
+                effectThinking.querySelector('p').textContent = "Normal cognitive processing speed";
+            } else if (speed < 20) {
+                effectThinking.classList.add('active');
+                effectThinking.querySelector('p').textContent = "Fast thinking - rapid problem solving";
+            } else {
+                effectThinking.classList.add('active');
+                effectThinking.querySelector('p').textContent = "Extreme fast thinking - instant comprehension";
+            }
+            
+            // Aging effect
+            if (speed === 0) {
+                effectAging.classList.add('active');
+                effectAging.querySelector('p').textContent = "Aging process is completely halted";
+            } else if (speed < 0) {
+                effectAging.classList.add('active');
+                effectAging.querySelector('p').textContent = "Reverse aging - getting younger over time";
+            } else if (speed < 0.1) {
+                effectAging.classList.add('active');
+                effectAging.querySelector('p').textContent = "Extremely slow aging - near immortality";
+            } else if (speed < 0.5) {
+                effectAging.classList.add('active');
+                effectAging.querySelector('p').textContent = "Slow aging - extended lifespan";
+            } else if (speed < 2) {
+                effectAging.classList.remove('active');
+                effectAging.querySelector('p').textContent = "Normal biological aging process";
+            } else if (speed < 20) {
+                effectAging.classList.add('active');
+                effectAging.querySelector('p').textContent = "Fast aging - accelerated life cycle";
+            } else {
+                effectAging.classList.add('active');
+                effectAging.querySelector('p').textContent = "Extreme fast aging - rapid decay and growth";
+            }
+        }
+        
+        // Update simulation info
+        function updateSimulationInfo() {
+            const speed = timeState.speed;
+            
+            if (speed === 0) {
+                simulationInfo.textContent = "Simulating frozen time - all processes are halted";
+            } else if (speed < 0) {
+                simulationInfo.textContent = `Simulating time reversal at ${Math.abs(speed).toFixed(1)}x speed`;
+            } else if (speed < 0.1) {
+                simulationInfo.textContent = `Simulating extreme slow motion at ${speed.toFixed(3)}x speed`;
+            } else if (speed < 0.5) {
+                simulationInfo.textContent = `Simulating slow motion at ${speed.toFixed(2)}x speed`;
+            } else if (speed < 2) {
+                simulationInfo.textContent = "Simulating normal Earth time flow";
+            } else if (speed < 20) {
+                simulationInfo.textContent = `Simulating fast-forward at ${speed.toFixed(1)}x speed`;
+            } else {
+                simulationInfo.textContent = `Simulating extreme fast-forward at ${speed.toFixed(1)}x speed`;
+            }
+        }
+        
+        // Create rain effect
+        function createRain() {
+            const rainContainer = document.createElement('div');
+            rainContainer.style.position = 'absolute';
+            rainContainer.style.top = '0';
+            rainContainer.style.left = '0';
+            rainContainer.style.width = '100%';
+            rainContainer.style.height = '100%';
+            rainContainer.style.pointerEvents = 'none';
+            rainContainer.style.zIndex = '3';
+            worldCanvas.appendChild(rainContainer);
+            
+            // Create multiple rain drops
+            for (let i = 0; i < 50; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'water-drop';
+                drop.style.left = `${Math.random() * 100}%`;
+                drop.style.animationDelay = `${Math.random() * 5}s`;
+                rainContainer.appendChild(drop);
+            }
+            
+            // Update rain animation based on speed
+            updateRainAnimation();
+        }
+        
+        // Update rain animation based on current speed
+        function updateRainAnimation() {
+            const rainDrops = document.querySelectorAll('.water-drop');
+            const speed = timeState.speed;
+            
+            rainDrops.forEach(drop => {
+                if (speed === 0) {
+                    drop.style.animation = 'none';
+                    drop.style.opacity = '0.7';
+                } else {
+                    const duration = 2 / Math.abs(speed);
+                    drop.style.animation = `rainFall ${duration}s linear infinite`;
+                    drop.style.opacity = '0.7';
+                    
+                    if (speed < 0) {
+                        drop.style.animationDirection = 'reverse';
+                    }
+                }
+            });
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Speed slider
+            speedSlider.addEventListener('input', () => {
+                const sliderValue = parseInt(speedSlider.value);
+                let speed;
+                
+                // Convert slider value to exponential scale (0.001x to 100x)
+                if (sliderValue < 50) {
+                    // 0-50 maps to 0.001x to 1x (logarithmic)
+                    const normalized = sliderValue / 50;
+                    speed = 0.001 * Math.pow(1000, normalized);
+                } else {
+                    // 50-100 maps to 1x to 100x (logarithmic)
+                    const normalized = (sliderValue - 50) / 50;
+                    speed = 1 * Math.pow(100, normalized);
+                }
+                
+                // Round to reasonable precision
+                if (speed < 0.01) speed = Number(speed.toFixed(4));
+                else if (speed < 0.1) speed = Number(speed.toFixed(3));
+                else if (speed < 1) speed = Number(speed.toFixed(2));
+                else if (speed < 10) speed = Number(speed.toFixed(1));
+                else speed = Math.round(speed);
+                
+                updateSpeed(speed, false);
+            });
+            
+            // Preset buttons
+            presetButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const speed = parseFloat(button.dataset.speed);
+                    
+                    // Update active button
+                    presetButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // Update speed
+                    updateSpeed(speed, true);
+                    
+                    // Update slider position
+                    updateSliderPosition(speed);
+                });
+            });
+        }
+        
+        // Update the time speed
+        function updateSpeed(newSpeed, fromPreset) {
+            timeState.speed = newSpeed;
+            timeState.isReversed = newSpeed < 0;
+            
+            // Update animations
+            setupAnimations();
+            
+            // Update rain animation
+            updateRainAnimation();
+            
+            // Update info displays
+            updateInfoDisplays();
+            
+            // If not from preset, update active preset button
+            if (!fromPreset) {
+                // Find the closest preset
+                let closestPreset = null;
+                let minDifference = Infinity;
+                
+                presetButtons.forEach(button => {
+                    const presetSpeed = parseFloat(button.dataset.speed);
+                    const difference = Math.abs(newSpeed - presetSpeed);
+                    
+                    // Special handling for reverse
+                    if (newSpeed < 0 && presetSpeed < 0) {
+                        closestPreset = button;
+                        minDifference = 0;
+                    } else if (difference < minDifference && !(newSpeed < 0 && presetSpeed >= 0)) {
+                        minDifference = difference;
+                        closestPreset = button;
+                    }
+                });
+                
+                // Update active button
+                if (closestPreset) {
+                    presetButtons.forEach(btn => btn.classList.remove('active'));
+                    closestPreset.classList.add('active');
+                }
+            }
+        }
+        
+        // Update slider position based on speed
+        function updateSliderPosition(speed) {
+            let sliderValue;
+            
+            if (speed <= 1) {
+                // Map from 0.001-1 to 0-50 (logarithmic)
+                const normalized = Math.log(speed / 0.001) / Math.log(1000);
+                sliderValue = Math.round(normalized * 50);
+            } else {
+                // Map from 1-100 to 50-100 (logarithmic)
+                const normalized = Math.log(speed) / Math.log(100);
+                sliderValue = Math.round(50 + normalized * 50);
+            }
+            
+            // Ensure slider value is within bounds
+            sliderValue = Math.max(0, Math.min(100, sliderValue));
+            speedSlider.value = sliderValue;
+        }
+        
+        // Initialize the simulation when page loads
+        window.addEventListener('load', initSimulation);
+    </script>
+</body>
+</html>
