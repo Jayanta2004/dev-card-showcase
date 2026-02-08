@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ignore the Noise Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a0a0c0;
+            margin-bottom: 20px;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 30px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-box {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            color: #8a8ac4;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #6a11cb;
+        }
+        
+        .game-container {
+            width: 100%;
+            height: 400px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .focus-object {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            box-shadow: 0 0 30px rgba(106, 17, 203, 0.7);
+            z-index: 10;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .focus-object:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+        
+        .focus-object:active {
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+        
+        .noise-element {
+            position: absolute;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            opacity: 0.7;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .noise-element:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+        
+        .noise-element:active {
+            transform: scale(0.95);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        #startBtn {
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+        
+        #resetBtn {
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .instructions {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .instructions h2 {
+            color: #6a11cb;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .instructions p {
+            margin-bottom: 10px;
+            color: #c0c0e0;
+            line-height: 1.5;
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+            color: #c0c0e0;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .game-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 30px 50px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 0 50px rgba(106, 17, 203, 0.5);
+            border: 2px solid #6a11cb;
+        }
+        
+        .game-message h2 {
+            color: #6a11cb;
+            margin-bottom: 15px;
+            font-size: 2.5rem;
+        }
+        
+        .game-message p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #f0f0f0;
+        }
+        
+        .level-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            color: #6a11cb;
+            border: 1px solid rgba(106, 17, 203, 0.5);
+            z-index: 20;
+        }
+        
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 20;
+            color: #6a11cb;
+            border: 1px solid rgba(106, 17, 203, 0.5);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .sound-toggle:hover {
+            background-color: rgba(106, 17, 203, 0.2);
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #8a8ac4;
+            font-size: 0.9rem;
+            padding: 20px;
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .game-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .game-container {
+                height: 350px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-brain"></i> Ignore the Noise</h1>
+            <p class="subtitle">A focus and concentration training game. Click the target while ignoring distractions.</p>
+        </header>
+        
+        <div class="game-area">
+            <div class="game-info">
+                <div class="info-box">
+                    <div class="info-label">SCORE</div>
+                    <div id="score" class="info-value">0</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">TIME</div>
+                    <div id="time" class="info-value">60</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">LEVEL</div>
+                    <div id="level" class="info-value">1</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">DISTRACTIONS</div>
+                    <div id="distractions" class="info-value">0</div>
+                </div>
+            </div>
+            
+            <div class="game-container" id="gameContainer">
+                <div class="level-indicator" id="levelIndicator">Level 1</div>
+                <div class="sound-toggle" id="soundToggle">
+                    <i class="fas fa-volume-up"></i>
+                </div>
+                <div class="focus-object" id="focusObject">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div class="game-message" id="gameMessage">
+                    <h2 id="messageTitle">Game Over</h2>
+                    <p id="messageText">Your final score is: <span id="finalScore">0</span></p>
+                    <button id="playAgainBtn">Play Again</button>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button id="startBtn">
+                    <i class="fas fa-play"></i> Start Game
+                </button>
+                <button id="resetBtn">
+                    <i class="fas fa-redo"></i> Reset Game
+                </button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2><i class="fas fa-info-circle"></i> How to Play</h2>
+            <p>Your goal is to click the blue target as many times as possible within 60 seconds while ignoring all distractions.</p>
+            <ul>
+                <li><strong>Click the blue circle</strong> with the bullseye to earn points</li>
+                <li><strong>Avoid clicking the colorful distractions</strong> that appear around the screen</li>
+                <li>Each correct click gives you +10 points</li>
+                <li>Each distraction clicked gives you -5 points</li>
+                <li>The game gets harder each level with more distractions and faster movement</li>
+                <li>Complete all 5 levels to win the game!</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Ignore the Noise Game &copy; 2023 | Practice focus and concentration in a distracting world</p>
+        </footer>
+    </div>
+
+    <script>
+        // Game variables
+        let score = 0;
+        let timeLeft = 60;
+        let level = 1;
+        let distractionsClicked = 0;
+        let gameActive = false;
+        let gameTimer;
+        let noiseElements = [];
+        let soundEnabled = true;
+        let targetClicks = 0;
+        let maxLevel = 5;
+        
+        // DOM elements
+        const scoreElement = document.getElementById('score');
+        const timeElement = document.getElementById('time');
+        const levelElement = document.getElementById('level');
+        const distractionsElement = document.getElementById('distractions');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const focusObject = document.getElementById('focusObject');
+        const gameContainer = document.getElementById('gameContainer');
+        const gameMessage = document.getElementById('gameMessage');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const finalScoreElement = document.getElementById('finalScore');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const levelIndicator = document.getElementById('levelIndicator');
+        const soundToggle = document.getElementById('soundToggle');
+        
+        // Sound effects
+        const clickSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3');
+        const correctSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3');
+        const wrongSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3');
+        const levelUpSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3');
+        const gameOverSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-sad-game-over-trombone-471.mp3');
+        
+        // Set sound volume
+        clickSound.volume = 0.3;
+        correctSound.volume = 0.5;
+        wrongSound.volume = 0.5;
+        levelUpSound.volume = 0.5;
+        gameOverSound.volume = 0.5;
+        
+        // Game initialization
+        function initGame() {
+            score = 0;
+            timeLeft = 60;
+            level = 1;
+            distractionsClicked = 0;
+            targetClicks = 0;
+            updateUI();
+            removeAllNoiseElements();
+            focusObject.style.display = 'flex';
+            focusObject.style.left = '50%';
+            focusObject.style.top = '50%';
+            gameMessage.style.display = 'none';
+            levelIndicator.textContent = `Level ${level}`;
+        }
+        
+        // Update UI elements
+        function updateUI() {
+            scoreElement.textContent = score;
+            timeElement.textContent = timeLeft;
+            levelElement.textContent = level;
+            distractionsElement.textContent = distractionsClicked;
+        }
+        
+        // Start the game
+        function startGame() {
+            if (gameActive) return;
+            
+            gameActive = true;
+            startBtn.disabled = true;
+            resetBtn.disabled = false;
+            
+            // Start game timer
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                timeElement.textContent = timeLeft;
+                
+                // Check if time is up
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+                
+                // Level progression based on target clicks
+                if (targetClicks >= level * 5 && level < maxLevel) {
+                    levelUp();
+                }
+                
+                // Add noise elements periodically
+                if (timeLeft % (10 - level) === 0) {
+                    addNoiseElement();
+                }
+                
+                // Move existing noise elements
+                moveNoiseElements();
+                
+            }, 1000);
+            
+            // Add initial noise elements
+            for (let i = 0; i < level * 2; i++) {
+                setTimeout(() => addNoiseElement(), i * 500);
+            }
+            
+            // Play start sound if enabled
+            if (soundEnabled) {
+                clickSound.currentTime = 0;
+                clickSound.play();
+            }
+        }
+        
+        // Level up function
+        function levelUp() {
+            level++;
+            targetClicks = 0;
+            levelIndicator.textContent = `Level ${level}`;
+            
+            // Update level display
+            levelElement.textContent = level;
+            
+            // Show level up message
+            showTemporaryMessage(`Level ${level}`, `More distractions incoming!`);
+            
+            // Add more noise elements for new level
+            for (let i = 0; i < level * 2; i++) {
+                setTimeout(() => addNoiseElement(), i * 300);
+            }
+            
+            // Play level up sound if enabled
+            if (soundEnabled) {
+                levelUpSound.currentTime = 0;
+                levelUpSound.play();
+            }
+        }
+        
+        // End the game
+        function endGame() {
+            gameActive = false;
+            clearInterval(gameTimer);
+            startBtn.disabled = false;
+            
+            // Show game over message
+            gameMessage.style.display = 'block';
+            
+            // Determine message based on score
+            if (level >= maxLevel) {
+                messageTitle.textContent = "You Win!";
+                messageText.textContent = "Congratulations! You mastered all levels!";
+            } else {
+                messageTitle.textContent = "Game Over";
+                messageText.textContent = "Your final score is:";
+            }
+            
+            finalScoreElement.textContent = score;
+            
+            // Remove all noise elements
+            removeAllNoiseElements();
+            
+            // Play game over sound if enabled
+            if (soundEnabled) {
+                gameOverSound.currentTime = 0;
+                gameOverSound.play();
+            }
+        }
+        
+        // Add a noise/distraction element
+        function addNoiseElement() {
+            if (!gameActive) return;
+            
+            const noiseElement = document.createElement('div');
+            noiseElement.className = 'noise-element';
+            
+            // Random size
+            const size = Math.random() * 80 + 40;
+            noiseElement.style.width = `${size}px`;
+            noiseElement.style.height = `${size}px`;
+            
+            // Random position
+            const x = Math.random() * (gameContainer.offsetWidth - size);
+            const y = Math.random() * (gameContainer.offsetHeight - size);
+            noiseElement.style.left = `${x}px`;
+            noiseElement.style.top = `${y}px`;
+            
+            // Random color
+            const colors = [
+                'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)',
+                'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
+                'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)',
+                'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)',
+                'linear-gradient(135deg, #a6c0fe 0%, #f68084 100%)',
+                'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)'
+            ];
+            noiseElement.style.background = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Random icon
+            const icons = [
+                'fas fa-star', 'fas fa-heart', 'fas fa-bell', 'fas fa-gem',
+                'fas fa-cloud', 'fas fa-bolt', 'fas fa-fire', 'fas fa-music'
+            ];
+            const icon = document.createElement('i');
+            icon.className = icons[Math.floor(Math.random() * icons.length)];
+            noiseElement.appendChild(icon);
+            
+            // Add click event
+            noiseElement.addEventListener('click', () => {
+                if (!gameActive) return;
+                
+                distractionsClicked++;
+                score = Math.max(0, score - 5); // Prevent negative score
+                updateUI();
+                
+                // Remove the noise element
+                noiseElement.remove();
+                const index = noiseElements.indexOf(noiseElement);
+                if (index > -1) noiseElements.splice(index, 1);
+                
+                // Play wrong sound if enabled
+                if (soundEnabled) {
+                    wrongSound.currentTime = 0;
+                    wrongSound.play();
+                }
+                
+                // Show feedback
+                noiseElement.style.backgroundColor = '#ff0000';
+                setTimeout(() => {
+                    if (noiseElement.parentNode) {
+                        noiseElement.remove();
+                    }
+                }, 200);
+            });
+            
+            // Add to game container and noiseElements array
+            gameContainer.appendChild(noiseElement);
+            noiseElements.push(noiseElement);
+        }
+        
+        // Move existing noise elements
+        function moveNoiseElements() {
+            if (!gameActive) return;
+            
+            noiseElements.forEach(element => {
+                // Random movement
+                const x = parseFloat(element.style.left) + (Math.random() * 40 - 20);
+                const y = parseFloat(element.style.top) + (Math.random() * 40 - 20);
+                
+                // Keep within bounds
+                const maxX = gameContainer.offsetWidth - element.offsetWidth;
+                const maxY = gameContainer.offsetHeight - element.offsetHeight;
+                
+                element.style.left = `${Math.max(0, Math.min(maxX, x))}px`;
+                element.style.top = `${Math.max(0, Math.min(maxY, y))}px`;
+            });
+        }
+        
+        // Remove all noise elements
+        function removeAllNoiseElements() {
+            noiseElements.forEach(element => {
+                if (element.parentNode) {
+                    element.parentNode.removeChild(element);
+                }
+            });
+            noiseElements = [];
+        }
+        
+        // Show a temporary message
+        function showTemporaryMessage(title, text) {
+            const tempMessage = document.createElement('div');
+            tempMessage.className = 'game-message';
+            tempMessage.innerHTML = `
+                <h2>${title}</h2>
+                <p>${text}</p>
+            `;
+            tempMessage.style.display = 'block';
+            tempMessage.style.zIndex = '50';
+            gameContainer.appendChild(tempMessage);
+            
+            setTimeout(() => {
+                tempMessage.remove();
+            }, 2000);
+        }
+        
+        // Event Listeners
+        startBtn.addEventListener('click', startGame);
+        
+        resetBtn.addEventListener('click', () => {
+            clearInterval(gameTimer);
+            gameActive = false;
+            startBtn.disabled = false;
+            resetBtn.disabled = false;
+            initGame();
+        });
+        
+        playAgainBtn.addEventListener('click', () => {
+            gameMessage.style.display = 'none';
+            initGame();
+            startGame();
+        });
+        
+        focusObject.addEventListener('click', () => {
+            if (!gameActive) return;
+            
+            // Update score and target clicks
+            score += 10;
+            targetClicks++;
+            updateUI();
+            
+            // Move focus object to random position
+            const maxX = gameContainer.offsetWidth - focusObject.offsetWidth;
+            const maxY = gameContainer.offsetHeight - focusObject.offsetHeight;
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
+            
+            focusObject.style.left = `${x}px`;
+            focusObject.style.top = `${y}px`;
+            
+            // Play correct sound if enabled
+            if (soundEnabled) {
+                correctSound.currentTime = 0;
+                correctSound.play();
+            }
+            
+            // Add visual feedback
+            focusObject.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                focusObject.style.transform = 'scale(1)';
+            }, 100);
+        });
+        
+        soundToggle.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            const icon = soundToggle.querySelector('i');
+            if (soundEnabled) {
+                icon.className = 'fas fa-volume-up';
+                soundToggle.style.color = '#6a11cb';
+            } else {
+                icon.className = 'fas fa-volume-mute';
+                soundToggle.style.color = '#888';
+            }
+        });
+        
+        // Initialize the game
+        initGame();
+        
+        // Add some visual effects for the focus object
+        setInterval(() => {
+            if (!gameActive) return;
+            
+            // Pulsing effect for focus object
+            focusObject.style.boxShadow = `0 0 ${20 + Math.sin(Date.now() / 300) * 10}px rgba(106, 17, 203, 0.7)`;
+        }, 50);
+    </script>
+</body>
+</html>
