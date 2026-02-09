@@ -1258,6 +1258,46 @@ function renderProjects(projects) {
                 github: "https://github.com/neeru24",
             },
         },
+
+        {
+title:"Snake Game",
+description:"A classic snake game where players control a snake to eat food, grow longer, and avoid collisions. Features increasing speed and score tracking for added challenge.",
+tags: ["HTML", "CSS", "JavaScript"],
+links: {
+    live: "./projects/snake-game-project/index.html",
+},
+author:{
+    name: "Kartikey Saxena",
+    github: "https://github.com/kartikey-0",
+},         
+ },
+
+  {
+title:"FruitMaster",
+description:"fruit hunting and collecting based game where players control a character to catch falling fruits while avoiding obstacles. Features increasing difficulty and score tracking for added fun.",
+tags: ["HTML", "CSS", "JavaScript"],
+links: {
+    live: "./projects/FruitMaster/index.html",
+},
+author:{
+    name: "Kartikey Saxena",
+    github: "https://github.com/kartikey-0",
+},         
+ },
+
+  {
+title:"Imageular",
+description:"a lightweight image editing tool that allows users to upload images and perform essential adjustments such as rotation, flipping, cropping, brightness, contrast, and saturation control for improved visual output.",
+tags: ["HTML", "CSS", "JavaScript"],
+links: {
+    live: "./projects/Imageular/landing.html",
+},
+author:{
+    name: "Kartikey Saxena",
+    github: "https://github.com/kartikey-0",
+},         
+ },
+ 
         {
             title: "Solar System",
             description:
@@ -1557,6 +1597,7 @@ function renderProjects(projects) {
                 github: "https://github.com/Bavanetha27",
             },
         },
+
         {
             title: "NoteGram 📓",
             description:
