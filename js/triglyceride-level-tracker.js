@@ -319,6 +319,37 @@ function updateChart() {
                 pointBorderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6
+            },
+            // Reference range lines
+            {
+                label: 'Normal (< 150)',
+                data: Array(labels.length).fill(150),
+                borderColor: '#38a169',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                pointRadius: 0,
+                fill: false,
+                tension: 0
+            },
+            {
+                label: 'Borderline High (150-199)',
+                data: Array(labels.length).fill(200),
+                borderColor: '#d69e2e',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                pointRadius: 0,
+                fill: false,
+                tension: 0
+            },
+            {
+                label: 'High (200-499)',
+                data: Array(labels.length).fill(500),
+                borderColor: '#dd6b20',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                pointRadius: 0,
+                fill: false,
+                tension: 0
             }]
         },
         options: {
@@ -330,7 +361,26 @@ function updateChart() {
                     text: `Triglyceride Levels Over Time (${timeRange === 'all' ? 'All Time' : `Last ${timeRange} Months`})`
                 },
                 legend: {
-                    display: false
+                    display: true,
+                    labels: {
+                        filter: function(legendItem, chartData) {
+                            // Hide reference range lines from legend
+                            return legendItem.datasetIndex === 0;
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const level = context.parsed.y;
+                            let range = '';
+                            if (level < 150) range = 'Normal';
+                            else if (level < 200) range = 'Borderline High';
+                            else if (level < 500) range = 'High';
+                            else range = 'Very High';
+                            return `Risk Level: ${range}`;
+                        }
+                    }
                 }
             },
             scales: {
