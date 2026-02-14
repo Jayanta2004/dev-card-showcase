@@ -40,39 +40,42 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener('DOMContentLoaded', function () {
     const themeToggle = document.getElementById('themeToggle');
-    const body = document.body;
+    if (!themeToggle) return;
 
-    function setTheme(theme) {
-        if (theme === 'light') {
-            body.classList.add('light-mode');
-        } else {
-            body.classList.remove('light-mode');
-        }
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const savedTheme = localStorage.getItem('theme');
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
-        themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
     }
 
-    function toggleTheme() {
-        const isLight = body.classList.contains('light-mode');
-        setTheme(isLight ? 'dark' : 'light');
-    }
+    const initialTheme =
+        savedTheme || (prefersDark.matches ? 'dark' : 'light');
 
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    setTheme(savedTheme);
+    applyTheme(initialTheme);
 
-    themeToggle.addEventListener('click', toggleTheme);
+    themeToggle.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
 });
+
 
 
 // <!-- Mobile Menu -->
+document.addEventListener("DOMContentLoaded", () => {
+    const hamburger = document.getElementById('hamburger');
+    const navLinks = document.getElementById('navLinks');
 
-const hamburger = document.getElementById('hamburger');
-const navLinks = document.getElementById('navLinks');
-
-hamburger.addEventListener('click', () => {
-    navLinks.classList.toggle('active');
-    hamburger.classList.toggle('active');
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        });
+    }
 });
+
 
 
 // <!-- Statistics Dashboard Script -->
@@ -694,4 +697,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.matches ? 'dark' : 'light');
         }
     });
+});
+
+document.addEventListener("navbarLoaded", () => {
+    const themeToggle = document.getElementById("themeToggle");
+    const body = document.body;
+
+    if (!themeToggle) return;
+
+    function setTheme(theme) {
+        body.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        themeToggle.textContent = theme === "dark" ? "🌙" : "☀️";
+    }
+
+    function toggleTheme() {
+        const currentTheme = body.getAttribute("data-theme") || "dark";
+        setTheme(currentTheme === "dark" ? "light" : "dark");
+    }
+
+    setTheme(localStorage.getItem("theme") || "dark");
+    themeToggle.addEventListener("click", toggleTheme);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadProjects();
 });

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Hallway Illusion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            z-index: 100;
+            position: relative;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #8a2387, #e94057, #f27121);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(226, 88, 34, 0.5);
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .hallway-container {
+            width: 800px;
+            height: 500px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(15deg);
+            margin-bottom: 30px;
+        }
+
+        .hallway {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .wall {
+            position: absolute;
+            background: linear-gradient(to bottom, #111, #222);
+            transform-origin: center;
+        }
+
+        .floor {
+            position: absolute;
+            background: repeating-linear-gradient(
+                90deg,
+                #222 0px, #222 10px,
+                #2a2a2a 10px, #2a2a2a 20px,
+                #333 20px, #333 30px
+            );
+            background-size: 30px 100%;
+            transform-origin: center;
+        }
+
+        .ceiling {
+            position: absolute;
+            background: repeating-linear-gradient(
+                90deg,
+                #111 0px, #111 15px,
+                #1a1a1a 15px, #1a1a1a 30px
+            );
+            background-size: 30px 100%;
+            transform-origin: center;
+        }
+
+        .light {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255,255,200,0.8) 0%, rgba(255,255,150,0.4) 30%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(5px);
+            opacity: 0.7;
+            z-index: 2;
+        }
+
+        .door {
+            position: absolute;
+            background: linear-gradient(to bottom, #3a2618, #2c1c10);
+            border: 5px solid #5d4037;
+            transform-origin: center;
+        }
+
+        .door-knob {
+            position: absolute;
+            background: radial-gradient(circle, #ffd700 30%, #b8860b 100%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            box-shadow: 0 0 10px #ffd700;
+        }
+
+        .window {
+            position: absolute;
+            background: linear-gradient(135deg, #87ceeb 0%, #1e90ff 100%);
+            border: 3px solid #2c3e50;
+            transform-origin: center;
+            overflow: hidden;
+        }
+
+        .window-frame {
+            position: absolute;
+            background-color: #2c3e50;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            z-index: 100;
+            position: relative;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .slider-container {
+            width: 200px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #8a2387, #e94057, #f27121);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .speed-display {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            z-index: 100;
+            max-width: 300px;
+        }
+
+        .info-title {
+            color: #f27121;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .info-text {
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            z-index: 100;
+            max-width: 300px;
+        }
+
+        @media (max-width: 850px) {
+            .hallway-container {
+                width: 95vw;
+                height: 60vh;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+                width: 90%;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .info-panel, .instructions {
+                position: relative;
+                top: auto;
+                right: auto;
+                bottom: auto;
+                left: auto;
+                max-width: 90%;
+                margin: 10px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Infinite Hallway Illusion</h1>
+        <p class="subtitle">A looping corridor with parallax depth effect</p>
+    </div>
+
+    <div class="hallway-container">
+        <div class="hallway" id="hallway">
+            <!-- Hallway elements will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <div class="control-label">Speed</div>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="30" class="slider" id="speedSlider">
+                <div class="speed-display">
+                    <span>Slow</span>
+                    <span>Fast</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <div class="control-label">Depth</div>
+            <div class="slider-container">
+                <input type="range" min="1" max="50" value="15" class="slider" id="depthSlider">
+                <div class="speed-display">
+                    <span>Shallow</span>
+                    <span>Deep</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <div class="info-title">About This Illusion</div>
+        <div class="info-text">
+            This infinite hallway uses parallax scrolling and perspective distortion to create the illusion of endless depth. Objects closer to you move faster than those further away, simulating real-world depth perception.
+        </div>
+    </div>
+
+    <div class="instructions">
+        <div class="info-title">Controls</div>
+        <div class="info-text">
+            • Adjust the Speed slider to control how fast you move through the hallway<br>
+            • Adjust the Depth slider to change the perceived depth of the hallway<br>
+            • The hallway will continue looping infinitely
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

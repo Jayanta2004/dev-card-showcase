@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alternate Timeline Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #d0d0ff;
+            color: #f0f0f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #00dbde, #fc00ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #00002c;
+            max-width: 700px;
+            margin: 0 auto 20px;
+            line-height: 1.6;
+        }
+
+        .generator-card {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .input-panel {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(20, 20, 40, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(100, 100, 255, 0.2);
+        }
+
+        .output-panel {
+            flex: 2;
+            min-width: 300px;
+            background: rgba(20, 20, 40, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(100, 100, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(100, 100, 255, 0.4);
+            font-size: 1.5rem;
+        }
+
+        .panel-title i {
+            color: #6c63ff;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #a0a0ff;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(10, 10, 30, 0.7);
+            border: 1px solid rgba(100, 100, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #6c63ff;
+            box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.2);
+        }
+
+        .slider-container {
+            margin-top: 10px;
+        }
+
+        .slider-value {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+            color: #6c63ff;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input {
+            width: auto;
+        }
+
+        button {
+            background: linear-gradient(135deg, #6c63ff, #3a34a0);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(108, 99, 255, 0.3);
+            background: linear-gradient(135deg, #7a73ff, #4a44b0);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .alternate-btn {
+            background: linear-gradient(135deg, #ff6b6b, #c44545);
+        }
+
+        .alternate-btn:hover {
+            background: linear-gradient(135deg, #ff7b7b, #d45555);
+        }
+
+        .timeline-container {
+            flex-grow: 1;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline {
+            position: relative;
+            height: 100%;
+            min-height: 400px;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #6c63ff, #ff6b6b);
+            border-radius: 2px;
+        }
+
+        .timeline-event {
+            position: relative;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(30, 30, 60, 0.8);
+            border-radius: 10px;
+            border-left: 5px solid #6c63ff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .timeline-event.alternate {
+            border-left-color: #ff6b6b;
+        }
+
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: -35px;
+            top: 25px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6c63ff;
+            z-index: 1;
+        }
+
+        .timeline-event.alternate::before {
+            background: #ff6b6b;
+        }
+
+        .event-year {
+            font-weight: bold;
+            color: #6c63ff;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .timeline-event.alternate .event-year {
+            color: #ff6b6b;
+        }
+
+        .event-title {
+            font-weight: bold;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #f0f0f0;
+        }
+
+        .event-description {
+            line-height: 1.6;
+            color: #d0d0ff;
+        }
+
+        .timeline-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .timeline-controls button {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        .history-log {
+            margin-top: 30px;
+            background: rgba(20, 20, 40, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(100, 100, 255, 0.2);
+        }
+
+        .log-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .log-items {
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .log-item {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background: rgba(30, 30, 60, 0.6);
+            border-radius: 8px;
+            border-left: 4px solid #6c63ff;
+            font-size: 0.9rem;
+        }
+
+        .log-item.alternate {
+            border-left-color: #ff6b6b;
+        }
+
+        .log-time {
+            font-size: 0.8rem;
+            color: #a0a0ff;
+            margin-top: 5px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(100, 100, 255, 0.2);
+            color: #a0a0ff;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .generator-card {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .timeline {
+                min-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-history"></i> Alternate Timeline Generator</h1>
+            <p class="subtitle">Explore infinite possibilities of history. Change pivotal moments and generate alternate realities based on your choices.</p>
+        </header>
+        
+        <main>
+            <div class="generator-card">
+                <div class="input-panel">
+                    <div class="panel-title">
+                        <i class="fas fa-sliders-h"></i>
+                        <h2>Timeline Parameters</h2>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="era"><i class="fas fa-hourglass-start"></i> Historical Era</label>
+                        <select id="era">
+                            <option value="ancient">Ancient World (Before 500 AD)</option>
+                            <option value="medieval">Medieval Period (500-1500)</option>
+                            <option value="renaissance">Renaissance & Exploration (1500-1700)</option>
+                            <option value="industrial">Industrial Revolution (1700-1900)</option>
+                            <option value="modern" selected>Modern Era (1900-Present)</option>
+                            <option value="future">Future Speculation</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="divergence"><i class="fas fa-code-branch"></i> Divergence Point</label>
+                        <select id="divergence">
+                            <option value="military">Military Conflict</option>
+                            <option value="technology">Technological Development</option>
+                            <option value="politics">Political Decision</option>
+                            <option value="science">Scientific Discovery</option>
+                            <option value="culture" selected>Cultural Shift</option>
+                            <option value="individual">Individual Action</option>
+                            <option value="natural">Natural Event</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label><i class="fas fa-cogs"></i> Timeline Complexity</label>
+                        <div class="slider-container">
+                            <input type="range" id="complexity" min="1" max="10" value="5" class="slider">
+                            <div class="slider-value">Complexity: <span id="complexityValue">5</span>/10</div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label><i class="fas fa-check-circle"></i> Alternate Reality Features</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="feature1" checked>
+                                <label for="feature1">Advanced Tech</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="feature2" checked>
+                                <label for="feature2">Different Borders</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="feature3">
+                                <label for="feature3">Aliens Exist</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="feature4">
+                                <label for="feature4">Magic System</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="feature5" checked>
+                                <label for="feature5">New Empires</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="customEvent"><i class="fas fa-edit"></i> Custom Divergence (Optional)</label>
+                        <textarea id="customEvent" rows="3" placeholder="Describe your own historical divergence point..."></textarea>
+                    </div>
+                    
+                    <button id="generateBtn">
+                        <i class="fas fa-bolt"></i> Generate Alternate Timeline
+                    </button>
+                    
+                    <button class="alternate-btn" id="randomBtn">
+                        <i class="fas fa-random"></i> Random Timeline
+                    </button>
+                </div>
+                
+                <div class="output-panel">
+                    <div class="panel-title">
+                        <i class="fas fa-project-diagram"></i>
+                        <h2>Alternate Timeline</h2>
+                    </div>
+                    
+                    <div class="timeline-container">
+                        <div class="timeline" id="timeline">
+                            <div class="timeline-event">
+                                <div class="event-year">1945</div>
+                                <div class="event-title">Original Timeline: World War II Ends</div>
+                                <div class="event-description">Allied forces defeat Axis powers, leading to the establishment of the United Nations and the beginning of the Cold War.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-controls">
+                        <button id="addEventBtn">
+                            <i class="fas fa-plus-circle"></i> Add Event
+                        </button>
+                        <button id="exportBtn">
+                            <i class="fas fa-download"></i> Export Timeline
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="history-log">
+                <div class="log-title">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h2>Timeline Generation Log</h2>
+                </div>
+                <div class="log-items" id="logItems">
+                    <div class="log-item">
+                        <div>Initial timeline loaded: Standard WWII ending</div>
+                        <div class="log-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Alternate Timeline Generator &copy; 2026 | Explore infinite histories | Created with <i class="fas fa-heart" style="color:#ff6b6b;"></i></p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const generateBtn = document.getElementById('generateBtn');
+        const randomBtn = document.getElementById('randomBtn');
+        const addEventBtn = document.getElementById('addEventBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const timeline = document.getElementById('timeline');
+        const logItems = document.getElementById('logItems');
+        const complexitySlider = document.getElementById('complexity');
+        const complexityValue = document.getElementById('complexityValue');
+        
+        // Historical data for generation
+        const historicalEvents = {
+            ancient: [
+                {year: "323 BCE", title: "Alexander the Great Survives", description: "Alexander recovers from his illness and continues his campaign, eventually uniting East and West under a single empire that lasts for centuries."},
+                {year: "44 BCE", title: "Julius Caesar Avoids Assassination", description: "Caesar heeds the warning of the soothsayer and skips the Senate meeting, later reforming the Roman Republic into a stable constitutional monarchy."},
+                {year: "480 BCE", title: "Persians Win at Thermopylae", description: "Xerxes' forces overcome the Spartan defense, leading to Persian conquest of Greece and altering Western civilization's development."}
+            ],
+            medieval: [
+                {year: "1066", title: "Harold Godwinson Wins at Hastings", description: "The Anglo-Saxons repel the Norman invasion, preserving Old English culture and preventing the French influence on the English language."},
+                {year: "1206", title: "Genghis Khan Converts to Christianity", description: "After meeting Nestorian missionaries, Genghis Khan adopts Christianity, creating a Christian Mongol Empire that spreads the faith across Asia."},
+                {year: "1453", title: "Constantinople Holds Against Ottomans", description: "Byzantine forces successfully defend Constantinople, preserving the Eastern Roman Empire as a buffer between Europe and the Ottoman advance."}
+            ],
+            renaissance: [
+                {year: "1492", title: "Columbus's Ships Are Lost at Sea", description: "The Niña, Pinta, and Santa Maria disappear in a storm, delaying European discovery of the Americas by decades and altering colonization patterns."},
+                {year: "1517", title: "Martin Luther Recants", description: "Under pressure, Luther renounces his 95 Theses, preventing the Protestant Reformation and maintaining Catholic religious unity in Europe."},
+                {year: "1588", title: "Spanish Armada Succeeds", description: "The Spanish successfully invade England, deposing Elizabeth I and restoring Catholicism, altering the balance of power in Europe."}
+            ],
+            industrial: [
+                {year: "1776", title: "American Revolution Fails", description: "British forces crush the rebellion, keeping America as a colony and altering the development of democracy and republicanism worldwide."},
+                {year: "1815", title: "Napoleon Wins at Waterloo", description: "Napoleon defeats the Seventh Coalition, establishing French hegemony over Europe and spreading revolutionary ideals more widely."},
+                {year: "1848", title: "Revolutions Succeed Across Europe", description: "Liberal and nationalist revolutions successfully reform monarchies, establishing constitutional governments decades earlier than in our timeline."}
+            ],
+            modern: [
+                {year: "1914", title: "Archduke Ferdinand Survives", description: "The assassination attempt fails, preventing World War I and altering the course of 20th century conflicts and alliances."},
+                {year: "1929", title: "Stock Market Doesn't Crash", description: "Regulatory measures prevent the Wall Street Crash, avoiding the Great Depression and altering economic policies worldwide."},
+                {year: "1945", title: "Nazi Germany Develops Atomic Bomb First", description: "German scientists succeed in nuclear weapons development, forcing Allied powers to negotiate a ceasefire and changing the post-war world order."},
+                {year: "1962", title: "Cuban Missile Crisis Escalates", description: "Miscommunication leads to nuclear exchange between US and USSR, creating a post-apocalyptic world with drastically reduced population."},
+                {year: "1989", title: "Berlin Wall Doesn't Fall", description: "East German authorities violently suppress protests, maintaining the Iron Curtain and delaying the end of the Cold War by decades."}
+            ],
+            future: [
+                {year: "2030", title: "AI Achieves True Consciousness", description: "Artificial general intelligence emerges, rapidly advancing technology but creating ethical dilemmas about machine rights and human purpose."},
+                {year: "2045", title: "First Successful Mars Colony", description: "Humanity establishes a permanent settlement on Mars, beginning the multi-planetary era and altering our perspective on Earth's resources."},
+                {year: "2060", title: "Climate Change Reversal", description: "Breakthrough technology successfully removes excess CO2 from the atmosphere, restoring pre-industrial climate conditions and preventing ecological collapse."}
+            ]
+        };
+        
+        // Divergence effects
+        const divergenceEffects = {
+            military: ["changes the outcome of a major battle", "alters military alliances", "creates a different superpower"],
+            technology: ["accelerates technological progress", "delays a key invention", "creates an entirely new technology branch"],
+            politics: ["prevents a political assassination", "changes an election result", "alters a key diplomatic agreement"],
+            science: ["discovers a scientific principle earlier", "proves a theory wrong", "finds evidence of extraterrestrial life"],
+            culture: ["prevents the burning of a library", "popularizes a different art style", "changes religious development"],
+            individual: ["a key historical figure survives", "a different person rises to power", "an inventor has a breakthrough earlier"],
+            natural: ["a natural disaster is avoided", "climate patterns shift differently", "a disease pandemic is contained"]
+        };
+        
+        // Features
+        const featureEffects = {
+            feature1: "Advanced technology changes daily life and global power dynamics.",
+            feature2: "National borders are radically different, with new countries and dissolved empires.",
+            feature3: "Extraterrestrial life has been discovered and integrated into society.",
+            feature4: "A system of magic or psychic abilities exists and is studied scientifically.",
+            feature5: "New global empires have risen with different cultural values and governance."
+        };
+        
+        // Initialize
+        complexityValue.textContent = complexitySlider.value;
+        
+        // Event Listeners
+        complexitySlider.addEventListener('input', function() {
+            complexityValue.textContent = this.value;
+        });
+        
+        generateBtn.addEventListener('click', generateTimeline);
+        randomBtn.addEventListener('click', generateRandomTimeline);
+        addEventBtn.addEventListener('click', addCustomEvent);
+        exportBtn.addEventListener('click', exportTimeline);
+        
+        // Generate a new alternate timeline
+        function generateTimeline() {
+            const era = document.getElementById('era').value;
+            const divergence = document.getElementById('divergence').value;
+            const complexity = parseInt(complexitySlider.value);
+            const customEvent = document.getElementById('customEvent').value.trim();
+            
+            // Clear the timeline except for the original event
+            while (timeline.children.length > 1) {
+                timeline.removeChild(timeline.lastChild);
+            }
+            
+            // Get era-specific events
+            const eraEvents = historicalEvents[era];
+            const numEvents = Math.min(complexity + 2, eraEvents.length);
+            
+            // Shuffle and select events
+            const shuffledEvents = [...eraEvents].sort(() => 0.5 - Math.random());
+            const selectedEvents = shuffledEvents.slice(0, numEvents);
+            
+            // Add divergence point as first event
+            const divergenceEvent = createDivergenceEvent(era, divergence, customEvent);
+            addEventToTimeline(divergenceEvent, true);
+            
+            // Add selected historical events
+            selectedEvents.forEach(event => {
+                addEventToTimeline(event, true);
+            });
+            
+            // Add feature effects
+            addFeatureEffects();
+            
+            // Log the generation
+            addToLog(`Generated ${era} timeline with ${divergence} divergence`);
+            
+            // Visual feedback
+            generateBtn.classList.add('pulse');
+            setTimeout(() => generateBtn.classList.remove('pulse'), 500);
+        }
+        
+        // Generate a completely random timeline
+        function generateRandomTimeline() {
+            // Randomize all inputs
+            const eras = Object.keys(historicalEvents);
+            const divergences = Object.keys(divergenceEffects);
+            
+            document.getElementById('era').value = eras[Math.floor(Math.random() * eras.length)];
+            document.getElementById('divergence').value = divergences[Math.floor(Math.random() * divergences.length)];
+            complexitySlider.value = Math.floor(Math.random() * 10) + 1;
+            complexityValue.textContent = complexitySlider.value;
+            
+            // Randomize checkboxes
+            document.querySelectorAll('.checkbox-item input').forEach(checkbox => {
+                checkbox.checked = Math.random() > 0.5;
+            });
+            
+            // Generate timeline
+            generateTimeline();
+            
+            // Log
+            addToLog("Generated completely random timeline");
+            
+            // Visual feedback
+            randomBtn.classList.add('pulse');
+            setTimeout(() => randomBtn.classList.remove('pulse'), 500);
+        }
+        
+        // Create a divergence event based on parameters
+        function createDivergenceEvent(era, divergence, customEvent) {
+            const eraNames = {
+                ancient: "Ancient World",
+                medieval: "Medieval Period", 
+                renaissance: "Renaissance Era",
+                industrial: "Industrial Age",
+                modern: "Modern Era",
+                future: "Future"
+            };
+            
+            const divergenceNames = {
+                military: "Military Conflict",
+                technology: "Technological Development", 
+                politics: "Political Decision",
+                science: "Scientific Discovery",
+                culture: "Cultural Shift",
+                individual: "Individual Action",
+                natural: "Natural Event"
+            };
+            
+            let year;
+            let title;
+            let description;
+            
+            if (customEvent) {
+                // Use custom event if provided
+                year = getYearForEra(era);
+                title = "Custom Divergence: " + customEvent.substring(0, 50) + (customEvent.length > 50 ? "..." : "");
+                description = customEvent;
+            } else {
+                // Generate based on parameters
+                year = getYearForEra(era);
+                title = `Divergence Point: ${divergenceNames[divergence]} in the ${eraNames[era]}`;
+                
+                const effects = divergenceEffects[divergence];
+                const randomEffect = effects[Math.floor(Math.random() * effects.length)];
+                
+                description = `A pivotal ${divergence} in the ${eraNames[era].toLowerCase()} ${randomEffect}. This single event creates a cascade of changes that reshape history.`;
+            }
+            
+            return {year, title, description};
+        }
+        
+        // Get a plausible year for the selected era
+        function getYearForEra(era) {
+            const eraRanges = {
+                ancient: {min: -3000, max: 500},
+                medieval: {min: 500, max: 1500},
+                renaissance: {min: 1500, max: 1700},
+                industrial: {min: 1700, max: 1900},
+                modern: {min: 1900, max: 2023},
+                future: {min: 2024, max: 2100}
+            };
+            
+            const range = eraRanges[era];
+            const year = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+            return year > 0 ? `${year}` : `${Math.abs(year)} BCE`;
+        }
+        
+        // Add feature effects to the timeline
+        function addFeatureEffects() {
+            const checkboxes = document.querySelectorAll('.checkbox-item input:checked');
+            
+            checkboxes.forEach(checkbox => {
+                if (featureEffects[checkbox.id]) {
+                    const featureEvent = {
+                        year: "Ongoing",
+                        title: `Feature: ${checkbox.nextElementSibling.textContent}`,
+                        description: featureEffects[checkbox.id]
+                    };
+                    
+                    addEventToTimeline(featureEvent, true);
+                }
+            });
+        }
+        
+        // Add an event to the timeline
+        function addEventToTimeline(event, isAlternate = false) {
+            const eventElement = document.createElement('div');
+            eventElement.className = `timeline-event ${isAlternate ? 'alternate' : ''}`;
+            
+            eventElement.innerHTML = `
+                <div class="event-year">${event.year}</div>
+                <div class="event-title">${event.title}</div>
+                <div class="event-description">${event.description}</div>
+            `;
+            
+            timeline.appendChild(eventElement);
+        }
+        
+        // Add a custom event
+        function addCustomEvent() {
+            const year = prompt("Enter year for the event:", "2000");
+            if (!year) return;
+            
+            const title = prompt("Enter event title:", "Custom Timeline Event");
+            if (!title) return;
+            
+            const description = prompt("Enter event description:", "This event changes the course of history in significant ways.");
+            
+            if (description) {
+                const event = {year, title, description};
+                addEventToTimeline(event, true);
+                addToLog(`Added custom event: ${title}`);
+                
+                // Visual feedback
+                addEventBtn.classList.add('pulse');
+                setTimeout(() => addEventBtn.classList.remove('pulse'), 500);
+            }
+        }
+        
+        // Export timeline as text
+        function exportTimeline() {
+            const events = document.querySelectorAll('.timeline-event');
+            let exportText = "ALTERNATE TIMELINE GENERATOR EXPORT\n";
+            exportText += "=====================================\n\n";
+            
+            events.forEach(event => {
+                const year = event.querySelector('.event-year').textContent;
+                const title = event.querySelector('.event-title').textContent;
+                const description = event.querySelector('.event-description').textContent;
+                
+                exportText += `${year}: ${title}\n`;
+                exportText += `${description}\n`;
+                exportText += "―".repeat(50) + "\n\n";
+            });
+            
+            // Create download
+            const blob = new Blob([exportText], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'alternate-timeline.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            addToLog("Exported timeline to text file");
+            
+            // Visual feedback
+            exportBtn.classList.add('pulse');
+            setTimeout(() => exportBtn.classList.remove('pulse'), 500);
+        }
+        
+        // Add entry to the log
+        function addToLog(message) {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+            logItem.innerHTML = `
+                <div>${message}</div>
+                <div class="log-time">${timeString}</div>
+            `;
+            
+            logItems.prepend(logItem);
+            
+            // Limit log to 10 items
+            if (logItems.children.length > 10) {
+                logItems.removeChild(logItems.lastChild);
+            }
+        }
+        
+        // Initialize with a sample timeline
+        window.addEventListener('DOMContentLoaded', () => {
+            // Add a sample alternate event
+            const sampleEvent = {
+                year: "1947",
+                title: "Divergence: Cold War Avoided",
+                description: "Stalin agrees to withdraw from Eastern Europe in exchange for massive economic aid through an expanded Marshall Plan, preventing the Iron Curtain from descending."
+            };
+            
+            addEventToTimeline(sampleEvent, true);
+            addToLog("Sample alternate timeline loaded");
+        });
+    </script>
+</body>
+</html>

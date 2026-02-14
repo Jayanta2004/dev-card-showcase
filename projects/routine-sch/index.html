@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>daily rhythm · light scheduler</title>
+  <!-- soft, legible, calm — a daily routine companion -->
+  <style>
+    /* ---------- LIGHT & AIRY BASE ---------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(165deg, #f8fafd 0%, #f1f5f9 100%);
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #1e2f40;
+    }
+
+    .scheduler-container {
+      max-width: 1100px;
+      width: 100%;
+    }
+
+    /* ----- header: gentle start ----- */
+    .rhythm-header {
+      margin-bottom: 2.8rem;
+      text-align: center;
+    }
+
+    .rhythm-header h1 {
+      font-size: 2.6rem;
+      font-weight: 480;
+      letter-spacing: -0.02em;
+      color: #1a2e3f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .rhythm-header h1 span {
+      background: #e3eaf0;
+      padding: 0.3rem 1.2rem;
+      border-radius: 60px;
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: #1e3b4f;
+      border: 1px solid rgba(255,255,255,0.7);
+      box-shadow: inset 0 1px 3px white, 0 4px 8px rgba(0,20,30,0.02);
+    }
+
+    .sub-daily {
+      color: #4e6b7e;
+      font-size: 1.1rem;
+      font-weight: 330;
+      margin-top: 0.5rem;
+      border-bottom: 1px solid #cbd6e2;
+      display: inline-block;
+      padding-bottom: 0.35rem;
+    }
+
+    /* ----- main scheduler card (light, floating) ----- */
+    .scheduler-card {
+      background: white;
+      border-radius: 44px 44px 36px 36px;
+      box-shadow: 
+        0 12px 26px -8px rgba(0,32,64,0.04),
+        0 2px 4px rgba(0,0,0,0.01),
+        inset 0 0 0 1px rgba(255,255,255,0.9);
+      padding: 2.2rem 2rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(2px);
+    }
+
+    /* ----- add routine row ----- */
+    .add-task-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+      align-items: flex-end;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      flex: 1 1 180px;
+    }
+
+    .input-group label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #537183;
+      font-weight: 600;
+      margin-left: 0.3rem;
+    }
+
+    .input-field {
+      background: #f6fafd;
+      border: 1px solid #dbe2ec;
+      border-radius: 24px;
+      padding: 0.8rem 1.2rem;
+      font-size: 0.95rem;
+      color: #1e3b4f;
+      transition: 0.15s ease;
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.01);
+    }
+
+    .input-field:focus {
+      border-color: #aac0d0;
+      background: white;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(180, 206, 228, 0.2);
+    }
+
+    .time-inputs {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .time-input {
+      background: #f6fafd;
+      border: 1px solid #dbe2ec;
+      border-radius: 30px;
+      padding: 0.8rem 1rem;
+      font-size: 0.9rem;
+      color: #1e3b4f;
+    }
+
+    .btn {
+      background: white;
+      border: 1px solid #cddae5;
+      border-radius: 40px;
+      padding: 0.8rem 1.8rem;
+      font-size: 0.95rem;
+      font-weight: 470;
+      color: #2c4b60;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: 0.12s;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.01);
+      border-bottom: 2px solid #c0cedb;
+    }
+
+    .btn-primary {
+      background: #f0f5fa;
+      border: 1px solid #c2d5e2;
+      border-bottom: 2px solid #a5baca;
+      color: #1e405b;
+      font-weight: 500;
+    }
+
+    .btn-primary:hover {
+      background: #e6f0f7;
+      border-color: #9cb4c9;
+      box-shadow: 0 10px 14px -8px rgba(60,100,120,0.08);
+      transform: translateY(-1px);
+    }
+
+    .btn:hover {
+      background: #ffffff;
+      border-color: #b1cbdb;
+    }
+
+    /* ----- routine timeline (light, structured) ----- */
+    .routine-grid-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 1.8rem 0 0.8rem 0.3rem;
+    }
+
+    .routine-grid-header h2 {
+      font-size: 1.4rem;
+      font-weight: 440;
+      color: #1f384b;
+      letter-spacing: -0.01em;
+    }
+
+    .clear-btn {
+      background: transparent;
+      border: 1px dashed #b2c4d3;
+      padding: 0.4rem 1.2rem;
+      border-radius: 60px;
+      color: #516f82;
+      font-size: 0.8rem;
+      transition: 0.1s;
+    }
+
+    .clear-btn:hover {
+      background: #f2f6fb;
+      border: 1px solid #aabacb;
+    }
+
+    /* ----- daily list – clean cards ----- */
+    .routine-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      margin-top: 0.6rem;
+    }
+
+    .routine-item {
+      background: #fcfdff;
+      border-radius: 28px;
+      padding: 1.1rem 1.6rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: inset 0 1px 0 white, 0 2px 6px rgba(0,0,0,0.01), 0 0 0 1px #e7ecf2;
+      transition: 0.1s;
+    }
+
+    .routine-item:hover {
+      background: white;
+      box-shadow: inset 0 1px 0 white, 0 8px 16px -10px rgba(40,80,100,0.06), 0 0 0 1px #d7e0e9;
+    }
+
+    .routine-info {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 1.2rem;
+    }
+
+    .routine-time {
+      font-weight: 550;
+      color: #3f627a;
+      background: #eaf0f6;
+      padding: 0.25rem 1rem;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      letter-spacing: 0.01em;
+      border: 1px solid white;
+    }
+
+    .routine-title {
+      font-size: 1.18rem;
+      font-weight: 460;
+      color: #1f3b4c;
+    }
+
+    .routine-category {
+      background: transparent;
+      border: 1px solid #d4dfe8;
+      padding: 0.2rem 0.9rem;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: #4d6b7c;
+      letter-spacing: 0.02em;
+    }
+
+    .empty-message {
+      background: #f2f6fc;
+      border-radius: 40px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      color: #59768a;
+      font-size: 1rem;
+      font-weight: 350;
+      border: 1px solid #e2eaf1;
+      margin-top: 1rem;
+    }
+
+    .delete-btn {
+      background: transparent;
+      border: none;
+      color: #8ea5b7;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 0.2rem 0.6rem;
+      border-radius: 40px;
+      transition: 0.1s;
+      display: flex;
+      align-items: center;
+    }
+
+    .delete-btn:hover {
+      background: #f0f3f8;
+      color: #4f6f85;
+    }
+
+    /* ----- footer & meta ----- */
+    .scheduler-footer {
+      margin-top: 3rem;
+      text-align: center;
+      color: #6a859a;
+      font-size: 0.85rem;
+      border-top: 1px solid #dee7ef;
+      padding-top: 1.8rem;
+    }
+
+    /* small helpers */
+    .flex-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* responsive */
+    @media (max-width: 650px) {
+      .scheduler-card { padding: 1.8rem 1.2rem; }
+      .routine-item { padding: 1rem 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scheduler-container">
+    <!-- header: daily rhythm, soft light -->
+    <div class="rhythm-header">
+      <h1>
+        🕊️ daily routine
+        <span>scheduler</span>
+      </h1>
+      <div class="sub-daily">plan your day · gentle & clear</div>
+    </div>
+
+    <!-- main scheduler card (add + list) -->
+    <div class="scheduler-card">
+      <!-- add routine section -->
+      <div class="add-task-row">
+        <div class="input-group">
+          <label>activity</label>
+          <input type="text" id="taskTitleInput" class="input-field" placeholder="e.g. morning walk, read, meeting ..." autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label>category (optional)</label>
+          <input type="text" id="taskCategoryInput" class="input-field" placeholder="work · self · family" autocomplete="off">
+        </div>
+        <div class="time-inputs">
+          <div class="input-group">
+            <label>from</label>
+            <input type="time" id="startTimeInput" class="time-input" value="09:00">
+          </div>
+          <div class="input-group">
+            <label>to</label>
+            <input type="time" id="endTimeInput" class="time-input" value="09:30">
+          </div>
+        </div>
+        <button class="btn btn-primary" id="addRoutineBtn" style="align-self: center; margin-left: auto;">
+          <span style="font-size:1.2rem;">+</span> add routine
+        </button>
+      </div>
+
+      <!-- routine timeline header -->
+      <div class="routine-grid-header">
+        <h2>📋 today's rhythm</h2>
+        <button class="btn clear-btn" id="clearAllBtn">clear all</button>
+      </div>
+
+      <!-- dynamic routine list injected here -->
+      <div id="routineListContainer" class="routine-list">
+        <!-- javascript will fill tasks; fallback empty message inside JS -->
+      </div>
+
+      <!-- empty placeholder message (js will manage visibility) -->
+      <div id="emptyStatePlaceholder" class="empty-message">
+        ⏂ your day is quiet · add a routine to begin
+      </div>
+    </div>
+
+    <!-- subtle daily note -->
+    <div class="scheduler-footer">
+      <span>✨ light daily scheduler · everything stored in your browser</span>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      // ---------- LIGHT & FRESH STATE ----------
+      let routines = [];
+
+      // DOM elements
+      const taskTitleInput = document.getElementById('taskTitleInput');
+      const taskCategoryInput = document.getElementById('taskCategoryInput');
+      const startTimeInput = document.getElementById('startTimeInput');
+      const endTimeInput = document.getElementById('endTimeInput');
+      const addBtn = document.getElementById('addRoutineBtn');
+      const clearAllBtn = document.getElementById('clearAllBtn');
+      const routineContainer = document.getElementById('routineListContainer');
+      const emptyState = document.getElementById('emptyStatePlaceholder');
+
+      // ---------- helper: format time nicely (locale) ----------
+      function formatTimeForDisplay(timeStr) {
+        if (!timeStr) return '';
+        try {
+          // timeStr format: "HH:MM"
+          const [hour, minute] = timeStr.split(':');
+          const date = new Date();
+          date.setHours(parseInt(hour, 10), parseInt(minute, 10));
+          return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+        } catch (e) {
+          return timeStr; // fallback
+        }
+      }
+
+      // ---------- render routine list ----------
+      function renderRoutines() {
+        // clear container, keep empty state separate
+        routineContainer.innerHTML = '';
+
+        if (routines.length === 0) {
+          emptyState.classList.remove('hidden');
+        } else {
+          emptyState.classList.add('hidden');
+
+          // sort routines by start time (earliest first)
+          const sorted = [...routines].sort((a, b) => {
+            if (a.startTime < b.startTime) return -1;
+            if (a.startTime > b.startTime) return 1;
+            return 0;
+          });
+
+          sorted.forEach((routine, index) => {
+            const routineEl = document.createElement('div');
+            routineEl.className = 'routine-item';
+            routineEl.dataset.id = routine.id;
+
+            // time range display
+            const startFormatted = formatTimeForDisplay(routine.startTime);
+            const endFormatted = formatTimeForDisplay(routine.endTime);
+
+            // category display (if exists)
+            const category = routine.category?.trim() || '';
+            
+            // left side info
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'routine-info';
+            
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'routine-time';
+            timeSpan.textContent = `${startFormatted} – ${endFormatted}`;
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'routine-title';
+            titleSpan.textContent = routine.title || 'untitled';
+            
+            infoDiv.appendChild(timeSpan);
+            infoDiv.appendChild(titleSpan);
+            
+            // optional category pill
+            if (category !== '') {
+              const catSpan = document.createElement('span');
+              catSpan.className = 'routine-category';
+              catSpan.textContent = category;
+              infoDiv.appendChild(catSpan);
+            }
+
+            // delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.setAttribute('aria-label', 'remove routine');
+            deleteBtn.innerHTML = '✕'; // multiplication sign
+            deleteBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              deleteRoutineById(routine.id);
+            });
+
+            routineEl.appendChild(infoDiv);
+            routineEl.appendChild(deleteBtn);
+            routineContainer.appendChild(routineEl);
+          });
+        }
+      }
+
+      // ---------- generate unique id (simple) ----------
+      function generateId() {
+        return Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+      }
+
+      // ---------- add new routine ----------
+      function addRoutine() {
+        const title = taskTitleInput.value.trim();
+        let category = taskCategoryInput.value.trim();
+        const startTime = startTimeInput.value;
+        const endTime = endTimeInput.value;
+
+        // basic validation: title and times must exist
+        if (!title) {
+          alert('✨ please name your routine');
+          return;
+        }
+        if (!startTime || !endTime) {
+          alert('⏰ set start & end time');
+          return;
+        }
+
+        // optional: set default category if left blank
+        if (category === '') {
+          category = 'routine';
+        }
+
+        const newRoutine = {
+          id: generateId(),
+          title: title,
+          category: category,
+          startTime: startTime,
+          endTime: endTime,
+        };
+
+        routines.push(newRoutine);
+        renderRoutines();
+
+        // clear title & category (keep times maybe)
+        taskTitleInput.value = '';
+        taskCategoryInput.value = '';
+        // reset times to default 9:00 / 9:30? keep as convenience
+        startTimeInput.value = '09:00';
+        endTimeInput.value = '09:30';
+        taskTitleInput.focus();
+      }
+
+      // ---------- delete routine by id ----------
+      function deleteRoutineById(id) {
+        routines = routines.filter(r => r.id !== id);
+        renderRoutines();
+      }
+
+      // ---------- clear all ----------
+      function clearAllRoutines() {
+        if (routines.length > 0 && confirm('clear all daily routines?')) {
+          routines = [];
+          renderRoutines();
+        } else if (routines.length === 0) {
+          // just silent
+        }
+      }
+
+      // ---------- load initial sample routines (light & friendly) ----------
+      function loadSampleRoutines() {
+        // a few gentle daily examples
+        routines = [
+          {
+            id: 'sample1-' + Date.now(),
+            title: 'morning pages',
+            category: 'mindfulness',
+            startTime: '08:30',
+            endTime: '09:00',
+          },
+          {
+            id: 'sample2-' + Date.now(),
+            title: 'deep work block',
+            category: 'focus',
+            startTime: '09:30',
+            endTime: '11:00',
+          },
+          {
+            id: 'sample3-' + Date.now(),
+            title: 'lunch & walk',
+            category: 'break',
+            startTime: '12:00',
+            endTime: '13:00',
+          },
+          {
+            id: 'sample4-' + Date.now(),
+            title: 'email catch-up',
+            category: 'work',
+            startTime: '15:00',
+            endTime: '15:45',
+          }
+        ];
+        renderRoutines();
+      }
+
+      // ---------- event listeners ----------
+      function bindEvents() {
+        addBtn.addEventListener('click', addRoutine);
+        clearAllBtn.addEventListener('click', clearAllRoutines);
+
+        // allow enter key in title field
+        taskTitleInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            addRoutine();
+          }
+        });
+      }
+
+      // ---------- initial bootstrap ----------
+      function init() {
+        bindEvents();
+        // start with sample routines so it doesn't feel empty
+        loadSampleRoutines();
+      }
+      init();
+    })();
+  </script>
+
+  <!-- tiny extra style: hidden utility -->
+  <style>
+    .hidden { display: none !important; }
+    /* empty state is shown/hidden via js */
+  </style>
+
+  <!-- ensure that manual addition of empty category displays 'routine' -->
+  <script>
+    // minor patch: if category is empty string we transform to 'routine' in addRoutine already.
+    // also when rendering, if category is 'routine' we still show it.
+  </script>
+</body>
+</html>

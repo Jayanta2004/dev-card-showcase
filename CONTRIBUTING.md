@@ -63,6 +63,14 @@ Not sure which file to modify? Use the table below to quickly find the right pla
 - Wait for a maintainer to assign the issue to you.
 - This helps avoid duplicate work and conflicts.
 
+## Contributor Identity & Ownership
+
+To maintain the integrity of the community showcase:
+
+- You may only add a profile card for yourself.
+- The GitHub profile linked in your card must match the GitHub account used to open the Pull Request.
+- Editing an existing contributor card is allowed only by the original contributor or project maintainers.
+
 # 🛠 Tech Stack Overview
 Before contributing, it helps to know what we’re working with:
   - HTML5 – Structure and markup for profile cards and layout

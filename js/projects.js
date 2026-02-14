@@ -3,6 +3,8 @@ let projectsData = [];
 let projectCards = [];
 let activeFilter = "all";
 
+
+
 // Load projects from JSON
 function createProjectCard(project, index) {
     const card = document.createElement("div");
@@ -32,6 +34,7 @@ function createProjectCard(project, index) {
     projectCards.push(card);
     return card;
 }
+
 
 async function loadProjects() {
     try {
@@ -1255,6 +1258,46 @@ function renderProjects(projects) {
                 github: "https://github.com/neeru24",
             },
         },
+
+        {
+title:"Snake Game",
+description:"A classic snake game where players control a snake to eat food, grow longer, and avoid collisions. Features increasing speed and score tracking for added challenge.",
+tags: ["HTML", "CSS", "JavaScript"],
+links: {
+    live: "./projects/snake-game-project/index.html",
+},
+author:{
+    name: "Kartikey Saxena",
+    github: "https://github.com/kartikey-0",
+},         
+ },
+
+  {
+title:"FruitMaster",
+description:"fruit hunting and collecting based game where players control a character to catch falling fruits while avoiding obstacles. Features increasing difficulty and score tracking for added fun.",
+tags: ["HTML", "CSS", "JavaScript"],
+links: {
+    live: "./projects/FruitMaster/index.html",
+},
+author:{
+    name: "Kartikey Saxena",
+    github: "https://github.com/kartikey-0",
+},         
+ },
+
+  {
+title:"Imageular",
+description:"a lightweight image editing tool that allows users to upload images and perform essential adjustments such as rotation, flipping, cropping, brightness, contrast, and saturation control for improved visual output.",
+tags: ["HTML", "CSS", "JavaScript"],
+links: {
+    live: "./projects/Imageular/landing.html",
+},
+author:{
+    name: "Kartikey Saxena",
+    github: "https://github.com/kartikey-0",
+},         
+ },
+ 
         {
             title: "Solar System",
             description:
@@ -1554,6 +1597,7 @@ function renderProjects(projects) {
                 github: "https://github.com/Bavanetha27",
             },
         },
+
         {
             title: "NoteGram 📓",
             description:
@@ -1903,6 +1947,40 @@ function renderProjects(projects) {
         if (projectsContainer) projectsContainer.classList.add("compact-view");
     }
 }
+    // Circle cursor animation
+document.addEventListener("DOMContentLoaded", function () {
+    const coords = { x: 0, y: 0 };
+    const circles = document.querySelectorAll(".circle");
+
+    circles.forEach(function (circle) {
+        circle.x = 0;
+        circle.y = 0;
+    });
+
+    window.addEventListener("mousemove", function (e) {
+        coords.x = e.pageX;
+        coords.y = e.pageY - window.scrollY;
+    });
+
+    function animateCircles() {
+        let x = coords.x;
+        let y = coords.y;
+        circles.forEach(function (circle, index) {
+            circle.style.left = `${x - 12}px`;
+            circle.style.top = `${y - 12}px`;
+            circle.style.transform = `scale(${(circles.length - index) / circles.length})`;
+            const nextCircle = circles[index + 1] || circles[0];
+            circle.x = x;
+            circle.y = y;
+            x += (nextCircle.x - x) * 0.3;
+            y += (nextCircle.y - y) * 0.3;
+        });
+
+        requestAnimationFrame(animateCircles);
+    }
+
+    animateCircles();});
+
 
 // 1. Navbar Hamburger Menu Logic
 const hamburger = document.getElementById("hamburger");
@@ -1952,6 +2030,25 @@ filterButtons.forEach((btn) => {
         runFilter(searchInput.value.toLowerCase(), activeFilter);
     });
 });
+
+// Scroll to top function
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+// Show button only when scrolled down
+window.addEventListener("scroll", function () {
+  const btn = document.getElementById("scrollToTop");
+  if (window.scrollY > 300) {
+    btn.style.display = "block";
+  } else {
+    btn.style.display = "none";
+  }
+});
+
 
 // --- Sort Event ---
 sortSelect.addEventListener("change", () => {
@@ -2023,28 +2120,55 @@ function runFilter(query, tech) {
     }
 }
 
-document.addEventListener("navbarLoaded", () => {
-    const themeToggle = document.getElementById("themeToggle");
-    const body = document.body;
-
-    if (!themeToggle) return;
-
-    function setTheme(theme) {
-        body.setAttribute("data-theme", theme);
-        localStorage.setItem("theme", theme);
-        themeToggle.textContent = theme === "dark" ? "🌙" : "☀️";
-    }
-
-    function toggleTheme() {
-        const currentTheme = body.getAttribute("data-theme") || "dark";
-        setTheme(currentTheme === "dark" ? "light" : "dark");
-    }
-
-    setTheme(localStorage.getItem("theme") || "dark");
-    themeToggle.addEventListener("click", toggleTheme);
-});
-
 document.addEventListener("DOMContentLoaded", () => {
     loadProjects();
+});
+
+// Keyboard Shortcuts Overlay Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const shortcutsOverlay = document.getElementById('keyboardShortcutsOverlay');
+    const closeShortcutsBtn = document.getElementById('closeShortcuts');
+    
+    // Function to show shortcuts overlay
+    function showShortcutsOverlay() {
+        shortcutsOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+    
+    // Function to hide shortcuts overlay
+    function hideShortcutsOverlay() {
+        shortcutsOverlay.classList.remove('show');
+        document.body.style.overflow = 'auto'; // Restore scrolling
+    }
+    
+    // Show overlay when "?" key is pressed
+    document.addEventListener('keydown', function(e) {
+        // Only trigger if not typing in an input/textarea
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        if (e.key === '?' || e.key === '¿') {
+            e.preventDefault();
+            showShortcutsOverlay();
+        }
+        
+        // Also hide overlay with Escape key
+        if (e.key === 'Escape' && shortcutsOverlay.classList.contains('show')) {
+            hideShortcutsOverlay();
+        }
+    });
+    
+    // Close overlay when close button is clicked
+    if (closeShortcutsBtn) {
+        closeShortcutsBtn.addEventListener('click', hideShortcutsOverlay);
+    }
+    
+    // Close overlay when clicking outside the modal
+    shortcutsOverlay.addEventListener('click', function(e) {
+        if (e.target === shortcutsOverlay) {
+            hideShortcutsOverlay();
+        }
+    });
 });
 

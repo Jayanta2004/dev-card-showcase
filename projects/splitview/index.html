@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SplitView - Distributed Image Puzzle</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/controls.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <div class="split-grid">
+                        <div class="split-cell"></div>
+                        <div class="split-cell"></div>
+                        <div class="split-cell"></div>
+                        <div class="split-cell"></div>
+                    </div>
+                </div>
+                <h1 class="title">SplitView</h1>
+            </div>
+            <p class="subtitle">Distributed Image Puzzle</p>
+        </header>
+
+        <main class="main-content">
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <h2 class="upload-title">Choose Your Image</h2>
+                    <p class="upload-description">Upload an image to split into four puzzle pieces</p>
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                    <button class="upload-button" id="uploadButton">
+                        <span>Select Image</span>
+                    </button>
+                    <div class="upload-hint">or drag and drop here</div>
+                </div>
+
+                <div class="sample-images">
+                    <h3 class="sample-title">Or try a sample:</h3>
+                    <div class="sample-grid" id="sampleGrid">
+                        <div class="sample-item" data-sample="landscape">
+                            <div class="sample-preview sample-landscape"></div>
+                            <span>Landscape</span>
+                        </div>
+                        <div class="sample-item" data-sample="abstract">
+                            <div class="sample-preview sample-abstract"></div>
+                            <span>Abstract</span>
+                        </div>
+                        <div class="sample-item" data-sample="geometric">
+                            <div class="sample-preview sample-geometric"></div>
+                            <span>Geometric</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="preview-section hidden" id="previewSection">
+                <div class="preview-container">
+                    <div class="preview-header">
+                        <h2>Image Preview</h2>
+                        <button class="change-button" id="changeButton">Change Image</button>
+                    </div>
+                    <div class="preview-image-wrapper">
+                        <canvas id="previewCanvas"></canvas>
+                        <div class="preview-grid-overlay">
+                            <div class="grid-line grid-line-v"></div>
+                            <div class="grid-line grid-line-h"></div>
+                        </div>
+                    </div>
+                    <div class="preview-info">
+                        <p>This image will be split into 4 pieces, each in its own window</p>
+                    </div>
+                </div>
+
+                <div class="controls-container">
+                    <div class="control-group">
+                        <label class="control-label">Difficulty</label>
+                        <div class="difficulty-options">
+                            <button class="difficulty-btn active" data-difficulty="easy">
+                                <span class="difficulty-icon">🟢</span>
+                                <span>Easy</span>
+                                <span class="difficulty-desc">Loose alignment</span>
+                            </button>
+                            <button class="difficulty-btn" data-difficulty="medium">
+                                <span class="difficulty-icon">🟡</span>
+                                <span>Medium</span>
+                                <span class="difficulty-desc">Moderate precision</span>
+                            </button>
+                            <button class="difficulty-btn" data-difficulty="hard">
+                                <span class="difficulty-icon">🔴</span>
+                                <span>Hard</span>
+                                <span class="difficulty-desc">Pixel perfect</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            <input type="checkbox" id="hintsToggle" checked>
+                            <span>Show alignment hints</span>
+                        </label>
+                    </div>
+
+                    <button class="start-button" id="startButton">
+                        <span class="start-icon">🧩</span>
+                        <span>Start Puzzle</span>
+                    </button>
+                </div>
+            </section>
+
+            <section class="game-section hidden" id="gameSection">
+                <div class="game-header">
+                    <h2>Arrange the Windows</h2>
+                    <div class="game-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Time</span>
+                            <span class="stat-value" id="timeValue">00:00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Alignment</span>
+                            <span class="stat-value" id="alignmentValue">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-instructions">
+                    <div class="instruction-card">
+                        <div class="instruction-icon">📐</div>
+                        <div class="instruction-text">
+                            <h3>How to Play</h3>
+                            <ol>
+                                <li>Four windows will open, each showing a piece of the image</li>
+                                <li>Drag and position the windows on your screen</li>
+                                <li>Align them correctly to reconstruct the full image</li>
+                                <li>Watch for visual hints when pieces are close to alignment</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <button class="control-btn" id="resetButton">
+                        <span>Reset Positions</span>
+                    </button>
+                    <button class="control-btn" id="closeAllButton">
+                        <span>Close All Windows</span>
+                    </button>
+                    <button class="control-btn secondary" id="newGameButton">
+                        <span>New Game</span>
+                    </button>
+                </div>
+
+                <div class="alignment-indicator">
+                    <div class="alignment-bar">
+                        <div class="alignment-fill" id="alignmentFill"></div>
+                    </div>
+                    <div class="alignment-labels">
+                        <span>Keep going...</span>
+                        <span>Almost there!</span>
+                        <span>Perfect! 🎉</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="success-section hidden" id="successSection">
+                <div class="success-content">
+                    <div class="success-animation">
+                        <div class="success-icon">🎉</div>
+                        <div class="confetti"></div>
+                    </div>
+                    <h2 class="success-title">Puzzle Solved!</h2>
+                    <div class="success-stats">
+                        <div class="success-stat">
+                            <span class="success-stat-label">Time</span>
+                            <span class="success-stat-value" id="finalTime">00:00</span>
+                        </div>
+                        <div class="success-stat">
+                            <span class="success-stat-label">Difficulty</span>
+                            <span class="success-stat-value" id="finalDifficulty">Easy</span>
+                        </div>
+                    </div>
+                    <div class="success-actions">
+                        <button class="success-btn primary" id="playAgainButton">
+                            <span>Play Again</span>
+                        </button>
+                        <button class="success-btn" id="newImageButton">
+                            <span>Try New Image</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>Arrange browser windows to solve the puzzle</p>
+        </footer>
+    </div>
+
+    <div class="toast hidden" id="toast">
+        <div class="toast-content">
+            <span class="toast-icon"></span>
+            <span class="toast-message"></span>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/imageProcessor.js"></script>
+    <script src="js/windowManager.js"></script>
+    <script src="js/alignmentDetector.js"></script>
+    <script src="js/gameController.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

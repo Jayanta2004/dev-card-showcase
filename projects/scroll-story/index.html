@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>scroll story · drift</title>
+    <!-- smooth fonts & base styling -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0b141a;
+            font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+            color: #e4f0f5;
+            line-height: 1.5;
+            overflow-x: hidden;
+            counter-reset: section;
+        }
+
+        /* smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* canvas-like feel, dark & atmospheric */
+        .story-container {
+            width: 100%;
+            max-width: 100%;
+            position: relative;
+        }
+
+        /* each scroll chapter — sticky panels with parallax layers */
+        .chapter {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            will-change: transform;
+            /* border-bottom: 1px solid #2d4b5a60; soft separator */
+        }
+
+        /* background image layer (parallax) */
+        .chapter-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 120%;            /* overflow to create movement */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 0;
+            will-change: transform;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        /* overlay for readability */
+        .chapter::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(0deg, rgba(2,20,28,0.7) 0%, rgba(10,30,38,0.3) 50%, rgba(2,15,22,0.7) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* text card — floating, gently blurred */
+        .story-card {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            width: 90%;
+            background: rgba(10, 30, 38, 0.6);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(90, 170, 200, 0.25);
+            border-radius: 48px;
+            padding: 2.5rem 2.8rem;
+            box-shadow: 0 30px 40px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(150,220,255,0.1) inset;
+            transition: transform 0.2s;
+            color: #f0fcff;
+        }
+
+        .story-card h2 {
+            font-size: 3.2rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 1.2rem;
+            background: linear-gradient(120deg, #fff, #b3e7ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 5px #00161e;
+        }
+
+        .story-card p {
+            font-size: 1.2rem;
+            font-weight: 300;
+            margin-bottom: 1.2rem;
+            color: #d2eefc;
+            text-shadow: 0 1px 4px #00000050;
+        }
+
+        .chapter-meta {
+            display: inline-block;
+            background: #1c495b30;
+            border: 1px solid #427e99;
+            border-radius: 60px;
+            padding: 0.3rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #a7dfff;
+            backdrop-filter: blur(8px);
+        }
+
+        /* progress bar — scroll spy */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            z-index: 999;
+        }
+
+        .progress-fill {
+            height: 4px;
+            width: 0%;
+            background: linear-gradient(90deg, #56c8ff, #b378ff);
+            box-shadow: 0 0 20px #66d9ff;
+            transition: width 0.1s ease-out;
+        }
+
+        /* floating navigation (chapter dots) */
+        .chapter-nav {
+            position: fixed;
+            right: 1.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #608b9b;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            box-shadow: 0 2px 6px #00000070;
+        }
+
+        .nav-dot.active {
+            background: #dcf2ff;
+            transform: scale(1.8);
+            border-color: #6cc3e6;
+            box-shadow: 0 0 15px #00bbff;
+        }
+
+        /* footer / colophon */
+        .story-footer {
+            min-height: 30vh;
+            background: #041016;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-top: 1px solid #194454;
+            color: #8daebd;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            padding: 3rem;
+        }
+
+        /* custom layer images — each bg unique */
+        .chapter-1 .chapter-bg {
+            background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2070&auto=format&fit=crop'); /* mountain lake */
+        }
+        .chapter-2 .chapter-bg {
+            background-image: url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2074&auto=format&fit=crop'); /* forest */
+        }
+        .chapter-3 .chapter-bg {
+            background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2071&auto=format&fit=crop'); /* sun rays */
+        }
+        .chapter-4 .chapter-bg {
+            background-image: url('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1948&auto=format&fit=crop'); /* foggy pines */
+        }
+        .chapter-5 .chapter-bg {
+            background-image: url('https://images.unsplash.com/photo-1588392382834-a891154bca4d?q=80&w=2076&auto=format&fit=crop'); /* stars */
+        }
+
+        /* ensure all chapters have relative for bg */
+        .chapter {
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* small adjustments */
+        @media (max-width: 640px) {
+            .story-card { padding: 2rem 1.5rem; }
+            .story-card h2 { font-size: 2.5rem; }
+            .chapter-nav { display: none; } /* hide dots on mobile for simplicity */
+        }
+
+        /* footnote */
+        .signature {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- progress bar -->
+    <div class="scroll-progress">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- right nav dots (desktop) -->
+    <div class="chapter-nav" id="chapterNav">
+        <div class="nav-dot" data-index="0"></div>
+        <div class="nav-dot" data-index="1"></div>
+        <div class="nav-dot" data-index="2"></div>
+        <div class="nav-dot" data-index="3"></div>
+        <div class="nav-dot" data-index="4"></div>
+    </div>
+
+    <main class="story-container">
+        <!-- CHAPTER 1 :: DRIFT -->
+        <section class="chapter chapter-1" id="ch1">
+            <div class="chapter-bg" id="bg1"></div>
+            <div class="story-card">
+                <span class="chapter-meta">⼀ ·  horizon</span>
+                <h2>the silent drift</h2>
+                <p>Before the world knew our names, we walked along the ridgeline. The wind carried voices from the valley — echoes of a story not yet written. This is where it begins, with the ground shifting beneath our feet.</p>
+                <p style="font-size:1rem; opacity:0.7;">scroll to continue ↓</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 2 :: ROOTS -->
+        <section class="chapter chapter-2" id="ch2">
+            <div class="chapter-bg" id="bg2"></div>
+            <div class="story-card">
+                <span class="chapter-meta">⼆ ·  memory</span>
+                <h2>roots & shadows</h2>
+                <p>In the forest, every step stirs the past. The pines remember fires, storms, and the quiet patience of growth. We stopped beneath the canopy and felt the weight of years — not heavy, but deep.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 3 :: ILLUME -->
+        <section class="chapter chapter-3" id="ch3">
+            <div class="chapter-bg" id="bg3"></div>
+            <div class="story-card">
+                <span class="chapter-meta">三 ·  radiance</span>
+                <h2>light through</h2>
+                <p>Morning broke through the fog. Slanted rays painted the grass gold. For a moment, the journey seemed worth every wrong turn. We stood there, letting the warmth erase the cold from our bones.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 4 :: SOLITUDE -->
+        <section class="chapter chapter-4" id="ch4">
+            <div class="chapter-bg" id="bg4"></div>
+            <div class="story-card">
+                <span class="chapter-meta">四 ·  solitude</span>
+                <h2>fog & company</h2>
+                <p>High in the mist, alone but not lonely. The trees became silhouettes, soft as ghosts. Solitude here is a presence — not an absence. We spoke little, and the fog listened.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 5 :: ASTRA -->
+        <section class="chapter chapter-5" id="ch5">
+            <div class="chapter-bg" id="bg5"></div>
+            <div class="story-card">
+                <span class="chapter-meta">五 ·  infinite</span>
+                <h2>under one sky</h2>
+                <p>Night fell, and the stars arrived like old friends. We lay on the cool earth and traced constellations. The story doesn't end — it scatters into the sky, waiting for the next seeker.</p>
+            </div>
+        </section>
+
+        <!-- colophon / end -->
+        <footer class="story-footer">
+            <div>
+                <p>✶  scroll story · drift  ✶</p>
+                <p style="margin-top: 0.8rem; font-size: 0.85rem;">atmospheric chapters · parallax layers · infinite horizon</p>
+                <p class="signature" style="margin-top: 2rem;">🌿  five movements  🌌</p>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ----- DOM elements -----
+            const chapters = document.querySelectorAll('.chapter');
+            const bgLayers = document.querySelectorAll('.chapter-bg');
+            const progressFill = document.getElementById('progressFill');
+            const navDots = document.querySelectorAll('.nav-dot');
+
+            // ----- state: current active chapter index (for dots) -----
+            let activeIndex = 0;
+            const chapterCount = chapters.length;
+
+            // ----- throttling helper for rAF -----
+            let ticking = false;
+
+            // ----- update scroll progress bar & parallax + active dot -----
+            function updateScroll() {
+                const scrollY = window.scrollY;
+                const winHeight = window.innerHeight;
+                const docHeight = document.documentElement.scrollHeight - winHeight;
+                const scrollPercent = docHeight > 0 ? (scrollY / docHeight) * 100 : 0;
+                progressFill.style.width = scrollPercent + '%';
+
+                // ----- determine active chapter (for nav dot) -----
+                // find which chapter is most visible in viewport
+                let maxVisible = 0;
+                let newActiveIndex = activeIndex; // fallback
+
+                chapters.forEach((ch, idx) => {
+                    const rect = ch.getBoundingClientRect();
+                    const visible = Math.min(rect.bottom, winHeight) - Math.max(rect.top, 0);
+                    if (visible > maxVisible && visible > winHeight * 0.2) {
+                        maxVisible = visible;
+                        newActiveIndex = idx;
+                    }
+                });
+
+                if (newActiveIndex !== activeIndex) {
+                    activeIndex = newActiveIndex;
+                    updateActiveDot(activeIndex);
+                }
+
+                // ----- parallax effect on background layers -----
+                // shift each bg at different speed based on scroll & chapter position
+                chapters.forEach((ch, idx) => {
+                    const rect = ch.getBoundingClientRect();
+                    const chapterTop = rect.top;  // relative to viewport
+                    const chapterHeight = rect.height;
+                    const bg = ch.querySelector('.chapter-bg');
+                    if (!bg) return;
+
+                    // calculate how far the chapter is from viewport center
+                    // factor: 0 when chapter is exactly at center? we want smooth movement.
+                    // formula: shift based on chapter's relative position to window.
+                    // speed factor ~0.3 (slower than scroll)
+                    const viewportCenter = winHeight / 2;
+                    const chapterCenter = chapterTop + chapterHeight / 2;
+                    const distanceFromCenter = chapterCenter - viewportCenter;
+
+                    // translate bg vertically: max 20% of its extra height (120% => 20% overflow)
+                    // map distance to a shift range [-15%, 15%] of bg height
+                    const maxShift = 15; // percent of bg element height
+                    const shiftPercent = (distanceFromCenter / (winHeight * 0.8)) * maxShift;
+                    // clamp to avoid extreme sliding
+                    const clampShift = Math.min(maxShift, Math.max(-maxShift, shiftPercent));
+
+                    // apply as translateY in percentage (relative to bg itself)
+                    bg.style.transform = `translateY(${clampShift}%)`;
+                });
+
+                ticking = false;
+            }
+
+            // ----- update active class on nav dots -----
+            function updateActiveDot(index) {
+                navDots.forEach((dot, i) => {
+                    if (i === index) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            }
+
+            // ----- scroll listener with requestAnimationFrame -----
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    window.requestAnimationFrame(updateScroll);
+                    ticking = true;
+                }
+            });
+
+            // ----- also run on resize to recalc dimensions -----
+            window.addEventListener('resize', function() {
+                if (!ticking) {
+                    window.requestAnimationFrame(updateScroll);
+                    ticking = true;
+                }
+            });
+
+            // ----- nav dot click: scroll to chapter -----
+            navDots.forEach((dot, idx) => {
+                dot.addEventListener('click', function() {
+                    chapters[idx].scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+
+            // ----- initial update to set correct progress and parallax & dot -----
+            updateScroll();
+
+            // optional: subtle parallax on mouse move? not needed, pure scroll
+
+            // also ensure background layers start correctly
+            // preload images / no flash
+            window.addEventListener('load', function() {
+                updateScroll(); // recalc after all images
+            });
+
+            // manually trigger after a tiny delay to catch any layout shift
+            setTimeout(updateScroll, 150);
+        })();
+    </script>
+
+    <!-- small note / watermark (soft) -->
+    <div style="position: fixed; bottom: 12px; left: 20px; color: #6b93a1; font-size: 0.7rem; opacity: 0.4; z-index: 999; pointer-events: none; backdrop-filter: blur(2px); padding: 4px 12px; border-radius: 60px; background: #0b1a2420;">📖 scroll story · parallax narrative</div>
+</body>
+</html>

@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Type to Change Universe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+            background: #000;
+            color: white;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .universe-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #000 0%, #111 100%);
+        }
+
+        .galaxy {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.7;
+            mix-blend-mode: screen;
+            transition: all 3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(20px);
+            mix-blend-mode: screen;
+            transition: all 2s ease;
+        }
+
+        .nebula {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.4;
+            mix-blend-mode: lighten;
+            transition: all 4s ease;
+        }
+
+        .interface {
+            position: relative;
+            z-index: 100;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 4rem;
+            background: linear-gradient(45deg, #ff00ff, #00ffff, #ffff00);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        .typing-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        #universe-input {
+            width: 100%;
+            padding: 25px;
+            font-size: 1.8rem;
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 15px;
+            outline: none;
+            transition: all 0.3s;
+            font-family: 'Orbitron', monospace;
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+
+        #universe-input:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .prompt-container {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .prompt-title {
+            color: #00ffff;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prompt-title::before {
+            content: "✨";
+            font-size: 1.5rem;
+        }
+
+        #current-prompt {
+            font-size: 1.6rem;
+            color: #ffff00;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .effects-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .effect-card {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .effect-card.active {
+            border-color: #ff00ff;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .effect-name {
+            color: #00ffff;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .effect-name::before {
+            content: "⚡";
+        }
+
+        .effect-description {
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .stats-panel {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffff00;
+            text-shadow: 0 0 20px currentColor;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .word-history {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .floating-word {
+            position: absolute;
+            font-size: 2rem;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            text-shadow: 0 0 10px currentColor;
+            animation: floatUp 4s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 200;
+        }
+
+        .control-btn {
+            padding: 12px 25px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .control-btn:hover {
+            border-color: #00ffff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .universe-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #00ffff;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+            max-width: 500px;
+            width: 90%;
+            backdrop-filter: blur(20px);
+        }
+
+        .message-title {
+            font-size: 2.5rem;
+            color: #ffff00;
+            margin-bottom: 20px;
+        }
+
+        .message-text {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .word-suggestions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .suggestion {
+            padding: 8px 15px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            color: #00ffff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .suggestion:hover {
+            background: rgba(0, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            #universe-input { font-size: 1.3rem; padding: 15px; }
+            #current-prompt { font-size: 1.3rem; }
+            .effects-display { grid-template-columns: 1fr; }
+            .stat-value { font-size: 2rem; }
+            .controls { flex-direction: column; right: 15px; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="universe-container" id="universeContainer">
+        <div class="stars" id="stars"></div>
+        <!-- Cosmic elements will be generated here -->
+    </div>
+
+    <div class="word-history" id="wordHistory"></div>
+
+    <div class="interface">
+        <header class="header">
+            <h1>TYPE TO CHANGE UNIVERSE</h1>
+            <div class="subtitle">Your words shape reality. Type to transform the cosmos.</div>
+        </header>
+
+        <div class="typing-area">
+            <input type="text" 
+                   id="universe-input" 
+                   placeholder="Type your cosmic command..." 
+                   autocomplete="off"
+                   maxlength="50">
+
+            <div class="prompt-container">
+                <div class="prompt-title">COSMIC PROMPT</div>
+                <div id="current-prompt">Type words related to space, color, or energy to transform the universe</div>
+            </div>
+
+            <div class="effects-display" id="effectsDisplay">
+                <!-- Effect cards will be generated here -->
+            </div>
+
+            <div class="stats-panel">
+                <div class="stat">
+                    <div class="stat-value" id="words-typed">0</div>
+                    <div class="stat-label">Words Typed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="universe-age">1</div>
+                    <div class="stat-label">Universe Age</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="cosmic-energy">100</div>
+                    <div class="stat-label">Cosmic Energy</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="transformations">0</div>
+                    <div class="stat-label">Transformations</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" id="resetBtn">Reset Universe</button>
+        <button class="control-btn" id="hintBtn">Show Hints</button>
+        <button class="control-btn" id="themeBtn">Change Theme</button>
+    </div>
+
+    <div class="universe-message" id="universeMessage">
+        <h2 class="message-title" id="messageTitle">Cosmic Discovery!</h2>
+        <p class="message-text" id="messageText"></p>
+        <div class="word-suggestions" id="wordSuggestions"></div>
+        <button class="control-btn" id="closeMessageBtn" style="margin-top: 20px;">Continue</button>
+    </div>
+
+    <script>
+        // Universe elements
+        const universe = {
+            galaxies: [],
+            planets: [],
+            nebulae: [],
+            stars: []
+        };
+
+        // Game state
+        const state = {
+            wordsTyped: 0,
+            universeAge: 1,
+            cosmicEnergy: 100,
+            transformations: 0,
+            activeEffects: new Set(),
+            currentTheme: 'dark',
+            lastWord: '',
+            streak: 0
+        };
+
+        // DOM elements
+        const universeInput = document.getElementById('universe-input');
+        const currentPrompt = document.getElementById('current-prompt');
+        const effectsDisplay = document.getElementById('effectsDisplay');
+        const universeContainer = document.getElementById('universeContainer');
+        const stars = document.getElementById('stars');
+        const wordHistory = document.getElementById('wordHistory');
+        const resetBtn = document.getElementById('resetBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const themeBtn = document.getElementById('themeBtn');
+        const universeMessage = document.getElementById('universeMessage');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const wordSuggestions = document.getElementById('wordSuggestions');
+        const closeMessageBtn = document.getElementById('closeMessageBtn');
+
+        // Stats elements
+        const wordsTypedEl = document.getElementById('words-typed');
+        const universeAgeEl = document.getElementById('universe-age');
+        const cosmicEnergyEl = document.getElementById('cosmic-energy');
+        const transformationsEl = document.getElementById('transformations');
+
+        // Word categories and their effects
+        const wordCategories = {
+            colors: {
+                words: ['red', 'blue', 'green', 'purple', 'orange', 'pink', 'yellow', 'cyan', 'magenta', 'gold', 'silver', 'rainbow'],
+                effect: (word) => {
+                    const colors = {
+                        red: '#ff0000',
+                        blue: '#0066ff',
+                        green: '#00ff00',
+                        purple: '#9900ff',
+                        orange: '#ff6600',
+                        pink: '#ff00ff',
+                        yellow: '#ffff00',
+                        cyan: '#00ffff',
+                        magenta: '#ff00ff',
+                        gold: '#ffd700',
+                        silver: '#c0c0c0',
+                        rainbow: 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)'
+                    };
+                    
+                    if (word === 'rainbow') {
+                        document.body.style.background = colors.rainbow;
+                        createNebula(colors.rainbow);
+                    } else {
+                        createGalaxy(colors[word]);
+                    }
+                    
+                    showMessage('Color Shift', `The universe now resonates with ${word} energy!`);
+                }
+            },
+            
+            space: {
+                words: ['star', 'planet', 'galaxy', 'nebula', 'comet', 'blackhole', 'supernova', 'quasar', 'pulsar', 'asteroid', 'constellation'],
+                effect: (word) => {
+                    switch(word) {
+                        case 'star':
+                            createStars(50);
+                            break;
+                        case 'planet':
+                            createPlanets(3);
+                            break;
+                        case 'galaxy':
+                            createGalaxy();
+                            break;
+                        case 'nebula':
+                            createNebula();
+                            break;
+                        case 'blackhole':
+                            createBlackHole();
+                            break;
+                        case 'supernova':
+                            createSupernova();
+                            break;
+                    }
+                    
+                    showMessage('Cosmic Creation', `You've manifested ${word}s into existence!`);
+                }
+            },
+            
+            elements: {
+                words: ['fire', 'water', 'earth', 'air', 'lightning', 'ice', 'light', 'dark', 'energy', 'void', 'plasma'],
+                effect: (word) => {
+                    const elementColors = {
+                        fire: '#ff3300',
+                        water: '#0066ff',
+                        earth: '#663300',
+                        air: '#66ccff',
+                        lightning: '#ffff00',
+                        ice: '#00ffff',
+                        light: '#ffffff',
+                        dark: '#000000',
+                        energy: '#ff00ff',
+                        void: '#330033',
+                        plasma: '#ff0066'
+                    };
+                    
+                    createElementEffect(word, elementColors[word]);
+                    showMessage('Elemental Force', `The ${word} element now flows through the cosmos!`);
+                }
+            },
+            
+            actions: {
+                words: ['expand', 'collapse', 'rotate', 'explode', 'implode', 'vibrate', 'warp', 'glow', 'pulse', 'shimmer', 'twinkle'],
+                effect: (word) => {
+                    applyUniverseAction(word);
+                    showMessage('Universal Action', `The cosmos ${word}s in response to your command!`);
+                }
+            },
+            
+            cosmic: {
+                words: ['infinity', 'eternity', 'void', 'singularity', 'multiverse', 'dimension', 'time', 'space', 'gravity', 'quantum', 'cosmic'],
+                effect: (word) => {
+                    state.cosmicEnergy += 50;
+                    createCosmicEffect(word);
+                    showMessage('Cosmic Revelation', `You've tapped into the power of ${word}!`);
+                }
+            }
+        };
+
+        // Initialize universe
+        function initUniverse() {
+            // Create initial stars
+            createStars(100);
+            
+            // Create initial galaxies
+            createGalaxy('#9900ff');
+            createGalaxy('#0066ff');
+            
+            // Create initial nebula
+            createNebula();
+            
+            // Update UI
+            updateStats();
+            updatePrompt();
+            createEffectCards();
+            
+            // Start universe aging
+            setInterval(() => {
+                state.universeAge++;
+                updateStats();
+            }, 10000);
+            
+            // Recharge cosmic energy
+            setInterval(() => {
+                if (state.cosmicEnergy < 100) {
+                    state.cosmicEnergy = Math.min(100, state.cosmicEnergy + 5);
+                    updateStats();
+                }
+            }, 3000);
+        }
+
+        // Create stars
+        function createStars(count) {
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                const size = Math.random() * 3;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.position = 'absolute';
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.background = '#fff';
+                star.style.borderRadius = '50%';
+                star.style.boxShadow = '0 0 10px #fff';
+                star.style.opacity = Math.random() * 0.8 + 0.2;
+                
+                // Add twinkle animation
+                star.style.animation = `twinkle ${Math.random() * 3 + 2}s infinite alternate`;
+                
+                stars.appendChild(star);
+                universe.stars.push(star);
+            }
+        }
+
+        // Create galaxy
+        function createGalaxy(color = null) {
+            const galaxy = document.createElement('div');
+            galaxy.className = 'galaxy';
+            
+            const size = Math.random() * 300 + 200;
+            galaxy.style.width = `${size}px`;
+            galaxy.style.height = `${size}px`;
+            galaxy.style.left = `${Math.random() * 70 + 15}%`;
+            galaxy.style.top = `${Math.random() * 70 + 15}%`;
+            
+            if (!color) {
+                const colors = ['#9900ff', '#0066ff', '#ff0066', '#00ffcc'];
+                color = colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            galaxy.style.background = `radial-gradient(circle, ${color}40, transparent 70%)`;
+            
+            universeContainer.appendChild(galaxy);
+            universe.galaxies.push(galaxy);
+            
+            // Animate rotation
+            galaxy.dataset.rotation = 0;
+            animateGalaxy(galaxy);
+        }
+
+        // Animate galaxy rotation
+        function animateGalaxy(galaxy) {
+            const animate = () => {
+                galaxy.dataset.rotation = (parseFloat(galaxy.dataset.rotation) + 0.2) % 360;
+                galaxy.style.transform = `rotate(${galaxy.dataset.rotation}deg)`;
+                requestAnimationFrame(animate);
+            };
+            animate();
+        }
+
+        // Create nebula
+        function createNebula(color = null) {
+            const nebula = document.createElement('div');
+            nebula.className = 'nebula';
+            
+            const size = Math.random() * 400 + 300;
+            nebula.style.width = `${size}px`;
+            nebula.style.height = `${size}px`;
+            nebula.style.left = `${Math.random() * 60 + 20}%`;
+            nebula.style.top = `${Math.random() * 60 + 20}%`;
+            
+            if (!color) {
+                const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff6600'];
+                color = colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            nebula.style.background = `radial-gradient(circle, ${color}30, transparent 70%)`;
+            
+            universeContainer.appendChild(nebula);
+            universe.nebulae.push(nebula);
+        }
+
+        // Create planets
+        function createPlanets(count) {
+            for (let i = 0; i < count; i++) {
+                const planet = document.createElement('div');
+                planet.className = 'planet';
+                
+                const size = Math.random() * 100 + 50;
+                planet.style.width = `${size}px`;
+                planet.style.height = `${size}px`;
+                planet.style.left = `${Math.random() * 80 + 10}%`;
+                planet.style.top = `${Math.random() * 80 + 10}%`;
+                
+                const colors = ['#ff6600', '#0066ff', '#00ff00', '#ff00ff', '#ffff00'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                planet.style.background = `radial-gradient(circle, ${color}, ${color}40)`;
+                
+                universeContainer.appendChild(planet);
+                universe.planets.push(planet);
+                
+                // Animate orbit
+                animatePlanet(planet);
+            }
+        }
+
+        // Animate planet orbit
+        function animatePlanet(planet) {
+            const centerX = 50; // percentage
+            const centerY = 50;
+            const radius = Math.random() * 30 + 20;
+            let angle = Math.random() * Math.PI * 2;
+            
+            const animate = () => {
+                angle += 0.01;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                
+                planet.style.left = `${x}%`;
+                planet.style.top = `${y}%`;
+                
+                requestAnimationFrame(animate);
+            };
+            animate();
+        }
+
+        // Create black hole
+        function createBlackHole() {
+            const blackhole = document.createElement('div');
+            blackhole.style.position = 'absolute';
+            blackhole.style.width = '200px';
+            blackhole.style.height = '200px';
+            blackhole.style.left = '50%';
+            blackhole.style.top = '50%';
+            blackhole.style.transform = 'translate(-50%, -50%)';
+            blackhole.style.background = 'radial-gradient(circle, #000000, #330033 70%)';
+            blackhole.style.borderRadius = '50%';
+            blackhole.style.filter = 'blur(10px)';
+            blackhole.style.boxShadow = '0 0 100px #9900ff';
+            
+            universeContainer.appendChild(blackhole);
+            
+            // Animate black hole
+            let scale = 1;
+            const animate = () => {
+                scale += 0.001;
+                blackhole.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                requestAnimationFrame(animate);
+            };
+            animate();
+        }
+
+        // Create supernova
+        function createSupernova() {
+            const supernova = document.createElement('div');
+            supernova.style.position = 'absolute';
+            supernova.style.width = '10px';
+            supernova.style.height = '10px';
+            supernova.style.left = `${Math.random() * 80 + 10}%`;
+            supernova.style.top = `${Math.random() * 80 + 10}%`;
+            supernova.style.background = '#ffff00';
+            supernova.style.borderRadius = '50%';
+            supernova.style.transform = 'translate(-50%, -50%)';
+            
+            universeContainer.appendChild(supernova);
+            
+            // Explode animation
+            let size = 10;
+            const explode = () => {
+                size += 20;
+                supernova.style.width = `${size}px`;
+                supernova.style.height = `${size}px`;
+                supernova.style.opacity = 1 - (size / 500);
+                
+                if (size < 500) {
+                    requestAnimationFrame(explode);
+                } else {
+                    supernova.remove();
+                }
+            };
+            explode();
+        }
+
+        // Create element effect
+        function createElementEffect(element, color) {
+            const effect = document.createElement('div');
+            effect.style.position = 'absolute';
+            effect.style.width = '100%';
+            effect.style.height = '100%';
+            effect.style.background = `radial-gradient(circle, ${color}20, transparent 70%)`;
+            effect.style.pointerEvents = 'none';
+            effect.style.zIndex = '2';
+            
+            universeContainer.appendChild(effect);
+            
+            // Fade out
+            setTimeout(() => {
+                effect.style.opacity = '0';
+                effect.style.transition = 'opacity 2s';
+                setTimeout(() => effect.remove(), 2000);
+            }, 1000);
+        }
+
+        // Apply universe action
+        function applyUniverseAction(action) {
+            switch(action) {
+                case 'expand':
+                    document.body.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        document.body.style.transform = 'scale(1)';
+                        document.body.style.transition = 'transform 2s';
+                    }, 100);
+                    break;
+                    
+                case 'rotate':
+                    universeContainer.style.transform = 'rotate(180deg)';
+                    universeContainer.style.transition = 'transform 3s';
+                    setTimeout(() => {
+                        universeContainer.style.transform = 'rotate(0deg)';
+                    }, 3000);
+                    break;
+                    
+                case 'pulse':
+                    const pulse = document.createElement('div');
+                    pulse.style.position = 'fixed';
+                    pulse.style.width = '100%';
+                    pulse.style.height = '100%';
+                    pulse.style.background = 'radial-gradient(circle, #ffffff10, transparent 70%)';
+                    pulse.style.pointerEvents = 'none';
+                    pulse.style.zIndex = '10';
+                    
+                    document.body.appendChild(pulse);
+                    
+                    let scale = 1;
+                    const animatePulse = () => {
+                        scale += 0.02;
+                        pulse.style.transform = `scale(${scale})`;
+                        pulse.style.opacity = 1 - (scale - 1);
+                        
+                        if (scale < 2) {
+                            requestAnimationFrame(animatePulse);
+                        } else {
+                            pulse.remove();
+                        }
+                    };
+                    animatePulse();
+                    break;
+            }
+        }
+
+        // Create cosmic effect
+        function createCosmicEffect(type) {
+            const effect = document.createElement('div');
+            effect.style.position = 'absolute';
+            effect.style.width = '100%';
+            effect.style.height = '100%';
+            effect.style.pointerEvents = 'none';
+            
+            switch(type) {
+                case 'quantum':
+                    effect.style.background = 'radial-gradient(circle, #ff00ff20, #00ffff20, transparent 70%)';
+                    effect.style.filter = 'blur(50px)';
+                    break;
+                case 'multiverse':
+                    effect.style.background = 'repeating-linear-gradient(45deg, #ff000010, #00ff0010, #0000ff10)';
+                    break;
+            }
+            
+            universeContainer.appendChild(effect);
+            
+            setTimeout(() => {
+                effect.style.opacity = '0';
+                effect.style.transition = 'opacity 3s';
+                setTimeout(() => effect.remove(), 3000);
+            }, 2000);
+        }
+
+        // Create floating word
+        function createFloatingWord(word) {
+            const floatingWord = document.createElement('div');
+            floatingWord.className = 'floating-word';
+            floatingWord.textContent = word;
+            
+            // Random color
+            const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff6600', '#00ff00'];
+            floatingWord.style.color = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Random position
+            floatingWord.style.left = `${Math.random() * 80 + 10}%`;
+            floatingWord.style.top = `${Math.random() * 60 + 20}%`;
+            
+            wordHistory.appendChild(floatingWord);
+            
+            // Remove after animation
+            setTimeout(() => {
+                floatingWord.remove();
+            }, 4000);
+        }
+
+        // Update prompt
+        function updatePrompt() {
+            const categories = Object.keys(wordCategories);
+            const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+            const words = wordCategories[randomCategory].words;
+            const randomWord = words[Math.floor(Math.random() * words.length)];
+            
+            currentPrompt.textContent = `Try typing "${randomWord}" or any word that comes to mind`;
+            
+            // Update prompt every 30 seconds
+            setTimeout(updatePrompt, 30000);
+        }
+
+        // Create effect cards
+        function createEffectCards() {
+            effectsDisplay.innerHTML = '';
+            
+            Object.keys(wordCategories).forEach(category => {
+                const card = document.createElement('div');
+                card.className = 'effect-card';
+                card.innerHTML = `
+                    <div class="effect-name">${category.toUpperCase()}</div>
+                    <div class="effect-description">
+                        Words: ${wordCategories[category].words.slice(0, 3).join(', ')}...
+                    </div>
+                `;
+                
+                effectsDisplay.appendChild(card);
+            });
+        }
+
+        // Update stats
+        function updateStats() {
+            wordsTypedEl.textContent = state.wordsTyped;
+            universeAgeEl.textContent = state.universeAge;
+            cosmicEnergyEl.textContent = state.cosmicEnergy;
+            transformationsEl.textContent = state.transformations;
+        }
+
+        // Show message
+        function showMessage(title, text) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            
+            // Add word suggestions
+            wordSuggestions.innerHTML = '';
+            const categories = Object.keys(wordCategories);
+            const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+            const words = wordCategories[randomCategory].words.slice(0, 3);
+            
+            words.forEach(word => {
+                const suggestion = document.createElement('div');
+                suggestion.className = 'suggestion';
+                suggestion.textContent = word;
+                suggestion.onclick = () => {
+                    universeInput.value = word;
+                    processWord(word);
+                    universeMessage.style.display = 'none';
+                };
+                wordSuggestions.appendChild(suggestion);
+            });
+            
+            universeMessage.style.display = 'block';
+        }
+
+        // Process typed word
+        function processWord(word) {
+            if (word.length < 2) return;
+            
+            word = word.toLowerCase().trim();
+            state.lastWord = word;
+            
+            // Create floating word
+            createFloatingWord(word);
+            
+            // Update stats
+            state.wordsTyped++;
+            state.cosmicEnergy = Math.max(0, state.cosmicEnergy - 1);
+            
+            // Check for category matches
+            let effectApplied = false;
+            
+            for (const [category, data] of Object.entries(wordCategories)) {
+                if (data.words.includes(word)) {
+                    data.effect(word);
+                    effectApplied = true;
+                    state.transformations++;
+                    state.streak++;
+                    
+                    // Activate effect card
+                    document.querySelectorAll('.effect-card').forEach(card => {
+                        if (card.querySelector('.effect-name').textContent.toLowerCase() === category) {
+                            card.classList.add('active');
+                            setTimeout(() => card.classList.remove('active'), 3000);
+                        }
+                    });
+                    
+                    break;
+                }
+            }
+            
+            // If no category match, still create some effect
+            if (!effectApplied) {
+                // Random effect based on word properties
+                if (word.includes('light') || word.includes('bright')) {
+                    createElementEffect('light', '#ffffff');
+                } else if (word.includes('dark') || word.includes('shadow')) {
+                    createElementEffect('dark', '#000000');
+                } else if (word.length > 8) {
+                    createGalaxy();
+                }
+                
+                state.streak = 0;
+            }
+            
+            // Bonus for streaks
+            if (state.streak >= 3) {
+                state.cosmicEnergy += 20;
+                showMessage('Cosmic Streak!', `You're on fire! ${state.streak} transformations in a row!`);
+            }
+            
+            updateStats();
+            universeInput.value = '';
+        }
+
+        // Reset universe
+        function resetUniverse() {
+            // Clear all elements
+            universeContainer.innerHTML = '<div class="stars" id="stars"></div>';
+            stars = document.getElementById('stars');
+            
+            // Reset state
+            state.wordsTyped = 0;
+            state.universeAge = 1;
+            state.cosmicEnergy = 100;
+            state.transformations = 0;
+            state.activeEffects.clear();
+            state.streak = 0;
+            
+            // Reinitialize
+            initUniverse();
+            
+            showMessage('Big Bang!', 'A new universe has been created!');
+        }
+
+        // Show hints
+        function showHints() {
+            const hints = [
+                "Try typing colors: red, blue, green, rainbow",
+                "Space words create celestial bodies: star, planet, galaxy",
+                "Elements transform the cosmos: fire, water, lightning",
+                "Actions affect the universe: expand, rotate, pulse",
+                "Cosmic words grant extra energy: infinity, quantum, multiverse"
+            ];
+            
+            showMessage('Cosmic Hints', hints[Math.floor(Math.random() * hints.length)]);
+        }
+
+        // Change theme
+        function changeTheme() {
+            const themes = ['dark', 'nebula', 'galactic', 'fire', 'ocean'];
+            state.currentTheme = themes[(themes.indexOf(state.currentTheme) + 1) % themes.length];
+            
+            switch(state.currentTheme) {
+                case 'nebula':
+                    document.body.style.background = 'radial-gradient(circle, #330033, #000033)';
+                    break;
+                case 'galactic':
+                    document.body.style.background = 'radial-gradient(circle, #000033, #000000)';
+                    break;
+                case 'fire':
+                    document.body.style.background = 'radial-gradient(circle, #663300, #330000)';
+                    break;
+                case 'ocean':
+                    document.body.style.background = 'radial-gradient(circle, #003366, #000033)';
+                    break;
+                default:
+                    document.body.style.background = '#000';
+            }
+            
+            showMessage('Theme Changed', `The universe now reflects the ${state.currentTheme} theme!`);
+        }
+
+        // Event Listeners
+        universeInput.addEventListener('input', function() {
+            const word = this.value.trim();
+            if (word.includes(' ') && word.length > 1) {
+                processWord(word);
+            }
+        });
+
+        universeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.trim().length > 0) {
+                processWord(this.value.trim());
+            }
+        });
+
+        resetBtn.addEventListener('click', resetUniverse);
+        hintBtn.addEventListener('click', showHints);
+        themeBtn.addEventListener('click', changeTheme);
+        closeMessageBtn.addEventListener('click', () => {
+            universeMessage.style.display = 'none';
+        });
+
+        // Initialize
+        initUniverse();
+
+        // Add CSS for twinkle animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes twinkle {
+                0%, 100% { opacity: 0.2; }
+                50% { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soft Interactive Butterfly Garden 🦋</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #e0f7fa, #b2ebf2, #80deea);
+            color: #2c3e50;
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            cursor: none;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+        
+        header {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 10px;
+            color: #1565c0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 i {
+            margin-right: 15px;
+            color: #ff4081;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto 20px;
+            line-height: 1.6;
+            color: #37474f;
+        }
+        
+        .instructions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .instruction {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 12px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .instruction i {
+            color: #4caf50;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            background-color: #4fc3f7;
+            color: white;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .control-btn:active {
+            transform: translateY(-2px);
+        }
+        
+        #reset-btn {
+            background-color: #ff9800;
+        }
+        
+        #night-btn {
+            background-color: #5c6bc0;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .stat {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 15px;
+            min-width: 150px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1565c0;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #546e7a;
+            font-weight: 500;
+        }
+        
+        footer {
+            margin-top: 30px;
+            color: #37474f;
+            font-size: 0.9rem;
+            padding: 20px;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        /* Garden elements */
+        #garden {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        /* Butterfly styles */
+        .butterfly {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            z-index: 5;
+            pointer-events: none;
+            transition: transform 0.3s ease;
+            filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.2));
+        }
+        
+        .butterfly .wing {
+            position: absolute;
+            border-radius: 50%;
+            transform-origin: center;
+        }
+        
+        .butterfly .left-wing {
+            left: 0;
+            top: 0;
+            width: 20px;
+            height: 35px;
+            transform: rotate(15deg);
+        }
+        
+        .butterfly .right-wing {
+            right: 0;
+            top: 0;
+            width: 20px;
+            height: 35px;
+            transform: rotate(-15deg);
+        }
+        
+        .butterfly .body {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 40px;
+            border-radius: 2px;
+        }
+        
+        /* Flower styles */
+        .flower {
+            position: absolute;
+            z-index: 2;
+            transform-origin: bottom center;
+        }
+        
+        .flower-center {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 3;
+        }
+        
+        .flower-petal {
+            position: absolute;
+            border-radius: 50%;
+            transform-origin: center;
+        }
+        
+        .flower-stem {
+            position: absolute;
+            width: 4px;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+        
+        .flower-leaf {
+            position: absolute;
+            border-radius: 50%;
+            transform: rotate(45deg);
+        }
+        
+        /* Grass */
+        .grass-blade {
+            position: absolute;
+            bottom: 0;
+            width: 3px;
+            border-radius: 0 0 5px 5px;
+            transform-origin: bottom center;
+        }
+        
+        /* Cursor */
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: rgba(255, 64, 129, 0.3);
+            pointer-events: none;
+            z-index: 100;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+        
+        .custom-cursor.hover {
+            width: 30px;
+            height: 30px;
+            background-color: rgba(255, 64, 129, 0.5);
+        }
+        
+        /* Night mode */
+        .night-mode {
+            background: linear-gradient(to bottom, #0d47a1, #1565c0, #1e88e5);
+            color: #e3f2fd;
+        }
+        
+        .night-mode header,
+        .night-mode .instruction,
+        .night-mode .stat,
+        .night-mode footer {
+            background-color: rgba(30, 30, 46, 0.8);
+            color: #e3f2fd;
+        }
+        
+        .night-mode h1 {
+            color: #bb86fc;
+        }
+        
+        .night-mode .stat-value {
+            color: #bb86fc;
+        }
+        
+        .night-mode .butterfly {
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+        }
+        
+        /* Animations */
+        @keyframes sway {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+        
+        @keyframes flutter {
+            0%, 100% { transform: rotate(0) scaleY(1); }
+            50% { transform: rotate(5deg) scaleY(0.9); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .control-btn {
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+            
+            .stat {
+                min-width: 120px;
+                padding: 12px 20px;
+            }
+            
+            .stat-value {
+                font-size: 1.7rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .instructions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                width: 80%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-butterfly"></i> Soft Interactive Butterfly Garden</h1>
+            <p class="subtitle">Move your cursor around the screen to attract butterflies. Watch as they flutter towards you while flowers sway gently in the breeze.</p>
+            
+            <div class="instructions">
+                <div class="instruction">
+                    <i class="fas fa-mouse-pointer"></i> Move cursor to attract butterflies
+                </div>
+                <div class="instruction">
+                    <i class="fas fa-expand"></i> Click to create more flowers
+                </div>
+                <div class="instruction">
+                    <i class="fas fa-moon"></i> Toggle night mode for a different mood
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="control-btn" id="add-butterfly">
+                    <i class="fas fa-plus"></i> Add Butterfly
+                </button>
+                <button class="control-btn" id="add-flower">
+                    <i class="fas fa-seedling"></i> Add Flower
+                </button>
+                <button class="control-btn" id="night-btn">
+                    <i class="fas fa-moon"></i> Toggle Night Mode
+                </button>
+                <button class="control-btn" id="reset-btn">
+                    <i class="fas fa-redo"></i> Reset Garden
+                </button>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="butterfly-count">12</div>
+                    <div class="stat-label">Butterflies</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="flower-count">18</div>
+                    <div class="stat-label">Flowers</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="interactions">0</div>
+                    <div class="stat-label">Interactions</div>
+                </div>
+            </div>
+        </header>
+        
+        <footer>
+            <p>Soft Interactive Art | Butterfly Garden 🦋 | Move your cursor to explore the garden | Created with HTML, CSS & JavaScript</p>
+        </footer>
+    </div>
+    
+    <div id="garden"></div>
+    <div class="custom-cursor"></div>
+
+    <script>
+        // Garden state
+        const garden = document.getElementById('garden');
+        const cursor = document.querySelector('.custom-cursor');
+        let butterflyCount = 12;
+        let flowerCount = 18;
+        let interactions = 0;
+        let nightMode = false;
+        let butterflies = [];
+        let flowers = [];
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let animationId = null;
+        
+        // Butterfly colors
+        const butterflyColors = [
+            { wings: '#FF4081', body: '#C2185B' }, // Pink
+            { wings: '#E91E63', body: '#AD1457' }, // Deep Pink
+            { wings: '#9C27B0', body: '#6A1B9A' }, // Purple
+            { wings: '#673AB7', body: '#4527A0' }, // Deep Purple
+            { wings: '#3F51B5', body: '#283593' }, // Indigo
+            { wings: '#2196F3', body: '#1565C0' }, // Blue
+            { wings: '#03A9F4', body: '#0277BD' }, // Light Blue
+            { wings: '#00BCD4', body: '#00838F' }, // Cyan
+            { wings: '#009688', body: '#00695C' }, // Teal
+            { wings: '#4CAF50', body: '#2E7D32' }, // Green
+            { wings: '#8BC34A', body: '#558B2F' }, // Light Green
+            { wings: '#CDDC39', body: '#9E9D24' }, // Lime
+            { wings: '#FFEB3B', body: '#F9A825' }, // Yellow
+            { wings: '#FFC107', body: '#FF8F00' }, // Amber
+            { wings: '#FF9800', body: '#EF6C00' }, // Orange
+            { wings: '#FF5722', body: '#D84315' }  // Deep Orange
+        ];
+        
+        // Flower colors
+        const flowerColors = [
+            { petal: '#FF4081', center: '#FFEB3B' }, // Pink with yellow center
+            { petal: '#E91E63', center: '#FF9800' }, // Deep pink with orange center
+            { petal: '#9C27B0', center: '#FFC107' }, // Purple with amber center
+            { petal: '#673AB7', center: '#8BC34A' }, // Deep purple with light green center
+            { petal: '#2196F3', center: '#FFEB3B' }, // Blue with yellow center
+            { petal: '#00BCD4', center: '#FF5722' }, // Cyan with deep orange center
+            { petal: '#4CAF50', center: '#FFEB3B' }, // Green with yellow center
+            { petal: '#8BC34A', center: '#E91E63' }, // Light green with pink center
+            { petal: '#FFEB3B', center: '#9C27B0' }, // Yellow with purple center
+            { petal: '#FF9800', center: '#673AB7' }  // Orange with deep purple center
+        ];
+        
+        // Initialize the garden
+        function initGarden() {
+            createGrass();
+            createInitialFlowers();
+            createInitialButterflies();
+            setupEventListeners();
+            startAnimation();
+            updateStats();
+        }
+        
+        // Create grass
+        function createGrass() {
+            const grassCount = 150;
+            for (let i = 0; i < grassCount; i++) {
+                const blade = document.createElement('div');
+                blade.className = 'grass-blade';
+                
+                // Random properties
+                const left = Math.random() * 100;
+                const height = Math.random() * 60 + 20;
+                const swayDuration = Math.random() * 4 + 3;
+                const swayDelay = Math.random() * 5;
+                const greenShade = Math.floor(Math.random() * 100 + 100);
+                
+                // Apply styles
+                blade.style.left = `${left}%`;
+                blade.style.height = `${height}px`;
+                blade.style.backgroundColor = `rgb(100, ${greenShade}, 70)`;
+                blade.style.animation = `sway ${swayDuration}s ${swayDelay}s infinite ease-in-out alternate`;
+                
+                garden.appendChild(blade);
+            }
+        }
+        
+        // Create initial flowers
+        function createInitialFlowers() {
+            for (let i = 0; i < flowerCount; i++) {
+                createRandomFlower();
+            }
+        }
+        
+        // Create a random flower
+        function createRandomFlower() {
+            const flower = document.createElement('div');
+            flower.className = 'flower';
+            
+            // Random position (avoid top 30% of screen)
+            const left = Math.random() * 90 + 5;
+            const bottom = Math.random() * 40 + 5;
+            
+            // Random size
+            const size = Math.random() * 30 + 20;
+            
+            // Random color
+            const colorSet = flowerColors[Math.floor(Math.random() * flowerColors.length)];
+            
+            // Random sway properties
+            const swayDuration = Math.random() * 6 + 4;
+            const swayDelay = Math.random() * 5;
+            
+            // Apply styles
+            flower.style.left = `${left}%`;
+            flower.style.bottom = `${bottom}px`;
+            flower.style.width = `${size}px`;
+            flower.style.height = `${size}px`;
+            flower.style.animation = `sway ${swayDuration}s ${swayDelay}s infinite ease-in-out alternate`;
+            
+            // Create flower parts
+            const stemHeight = Math.random() * 80 + 40;
+            const stem = document.createElement('div');
+            stem.className = 'flower-stem';
+            stem.style.height = `${stemHeight}px`;
+            stem.style.backgroundColor = `rgb(70, ${Math.floor(Math.random() * 100 + 100)}, 70)`;
+            flower.appendChild(stem);
+            
+            // Create flower center
+            const centerSize = size * 0.4;
+            const center = document.createElement('div');
+            center.className = 'flower-center';
+            center.style.width = `${centerSize}px`;
+            center.style.height = `${centerSize}px`;
+            center.style.backgroundColor = colorSet.center;
+            center.style.left = '50%';
+            center.style.top = '50%';
+            center.style.transform = 'translate(-50%, -50%)';
+            center.style.animation = `pulse ${swayDuration * 1.5}s infinite ease-in-out`;
+            flower.appendChild(center);
+            
+            // Create petals
+            const petalCount = Math.floor(Math.random() * 3) + 5; // 5-7 petals
+            for (let i = 0; i < petalCount; i++) {
+                const petal = document.createElement('div');
+                petal.className = 'flower-petal';
+                
+                // Position petals in a circle
+                const angle = (i / petalCount) * Math.PI * 2;
+                const distance = size * 0.4;
+                const petalSize = size * 0.5;
+                
+                petal.style.width = `${petalSize}px`;
+                petal.style.height = `${petalSize}px`;
+                petal.style.backgroundColor = colorSet.petal;
+                petal.style.left = '50%';
+                petal.style.top = '50%';
+                petal.style.transform = `translate(-50%, -50%) rotate(${angle}rad) translate(${distance}px)`;
+                petal.style.opacity = '0.9';
+                
+                flower.appendChild(petal);
+            }
+            
+            // Create leaves
+            const leafCount = Math.floor(Math.random() * 3) + 1; // 1-3 leaves
+            for (let i = 0; i < leafCount; i++) {
+                const leaf = document.createElement('div');
+                leaf.className = 'flower-leaf';
+                
+                const leafSize = Math.random() * 20 + 10;
+                const leafPosition = Math.random() * stemHeight;
+                const leafSide = Math.random() > 0.5 ? 'left' : 'right';
+                
+                leaf.style.width = `${leafSize}px`;
+                leaf.style.height = `${leafSize * 0.6}px`;
+                leaf.style.backgroundColor = `rgb(70, ${Math.floor(Math.random() * 100 + 120)}, 70)`;
+                leaf.style.bottom = `${leafPosition}px`;
+                
+                if (leafSide === 'left') {
+                    leaf.style.left = `calc(50% - ${leafSize}px)`;
+                } else {
+                    leaf.style.right = `calc(50% - ${leafSize}px)`;
+                }
+                
+                flower.appendChild(leaf);
+            }
+            
+            garden.appendChild(flower);
+            flowers.push(flower);
+            return flower;
+        }
+        
+        // Create initial butterflies
+        function createInitialButterflies() {
+            for (let i = 0; i < butterflyCount; i++) {
+                createRandomButterfly();
+            }
+        }
+        
+        // Create a random butterfly
+        function createRandomButterfly() {
+            const butterfly = document.createElement('div');
+            butterfly.className = 'butterfly';
+            
+            // Random position
+            const left = Math.random() * 80 + 10;
+            const top = Math.random() * 80 + 10;
+            
+            // Random size
+            const size = Math.random() * 20 + 30;
+            
+            // Random color
+            const colorSet = butterflyColors[Math.floor(Math.random() * butterflyColors.length)];
+            
+            // Random flutter properties
+            const flutterSpeed = Math.random() * 0.3 + 0.2;
+            
+            // Apply styles
+            butterfly.style.left = `${left}%`;
+            butterfly.style.top = `${top}%`;
+            butterfly.style.width = `${size}px`;
+            butterfly.style.height = `${size}px`;
+            
+            // Create butterfly parts
+            const body = document.createElement('div');
+            body.className = 'body';
+            body.style.backgroundColor = colorSet.body;
+            butterfly.appendChild(body);
+            
+            const leftWing = document.createElement('div');
+            leftWing.className = 'wing left-wing';
+            leftWing.style.backgroundColor = colorSet.wings;
+            leftWing.style.animation = `flutter ${flutterSpeed}s infinite ease-in-out alternate`;
+            butterfly.appendChild(leftWing);
+            
+            const rightWing = document.createElement('div');
+            rightWing.className = 'wing right-wing';
+            rightWing.style.backgroundColor = colorSet.wings;
+            rightWing.style.animation = `flutter ${flutterSpeed}s infinite ease-in-out alternate-reverse`;
+            butterfly.appendChild(rightWing);
+            
+            garden.appendChild(butterfly);
+            
+            // Store butterfly data
+            butterflies.push({
+                element: butterfly,
+                x: parseFloat(butterfly.style.left),
+                y: parseFloat(butterfly.style.top),
+                speed: Math.random() * 1.5 + 0.5,
+                targetX: left,
+                targetY: top,
+                color: colorSet,
+                size: size,
+                followingCursor: false
+            });
+            
+            return butterfly;
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Mouse movement
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                
+                // Update cursor position
+                cursor.style.left = `${mouseX}px`;
+                cursor.style.top = `${mouseY}px`;
+                
+                // Sometimes attract a random butterfly
+                if (Math.random() > 0.97 && butterflies.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * butterflies.length);
+                    butterflies[randomIndex].followingCursor = true;
+                    interactions++;
+                    updateStats();
+                }
+            });
+            
+            // Click to add flowers
+            document.addEventListener('click', (e) => {
+                // Don't add flowers if clicking on buttons
+                if (e.target.closest('button')) return;
+                
+                createFlowerAt(e.clientX, e.clientY);
+                interactions++;
+                updateStats();
+                
+                // Briefly enlarge cursor
+                cursor.classList.add('hover');
+                setTimeout(() => cursor.classList.remove('hover'), 200);
+            });
+            
+            // Control buttons
+            document.getElementById('add-butterfly').addEventListener('click', () => {
+                createRandomButterfly();
+                butterflyCount++;
+                updateStats();
+            });
+            
+            document.getElementById('add-flower').addEventListener('click', () => {
+                createRandomFlower();
+                flowerCount++;
+                updateStats();
+            });
+            
+            document.getElementById('night-btn').addEventListener('click', toggleNightMode);
+            document.getElementById('reset-btn').addEventListener('click', resetGarden);
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                // Update mouse position relative to new window size
+                mouseX = Math.min(mouseX, window.innerWidth);
+                mouseY = Math.min(mouseY, window.innerHeight);
+            });
+        }
+        
+        // Create flower at specific position
+        function createFlowerAt(x, y) {
+            const flower = createRandomFlower();
+            flower.style.left = `${(x / window.innerWidth) * 100}%`;
+            flower.style.bottom = `${(1 - y / window.innerHeight) * 100}%`;
+            flowerCount++;
+        }
+        
+        // Toggle night mode
+        function toggleNightMode() {
+            nightMode = !nightMode;
+            document.body.classList.toggle('night-mode', nightMode);
+            document.getElementById('night-btn').innerHTML = nightMode ? 
+                '<i class="fas fa-sun"></i> Day Mode' : 
+                '<i class="fas fa-moon"></i> Night Mode';
+            
+            // Add stars in night mode
+            if (nightMode) {
+                createStars();
+            } else {
+                removeStars();
+            }
+        }
+        
+        // Create stars for night mode
+        function createStars() {
+            const starCount = 50;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const size = Math.random() * 3 + 1;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const duration = Math.random() * 3 + 2;
+                const delay = Math.random() * 5;
+                
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${left}%`;
+                star.style.top = `${top}%`;
+                star.style.backgroundColor = 'white';
+                star.style.borderRadius = '50%';
+                star.style.position = 'absolute';
+                star.style.animation = `twinkle ${duration}s ${delay}s infinite alternate`;
+                
+                garden.appendChild(star);
+            }
+        }
+        
+        // Remove stars
+        function removeStars() {
+            const stars = document.querySelectorAll('.star');
+            stars.forEach(star => star.remove());
+        }
+        
+        // Reset garden
+        function resetGarden() {
+            // Remove all butterflies and flowers
+            butterflies.forEach(b => b.element.remove());
+            flowers.forEach(f => f.remove());
+            
+            // Reset counts
+            butterflyCount = 12;
+            flowerCount = 18;
+            interactions = 0;
+            
+            // Clear arrays
+            butterflies = [];
+            flowers = [];
+            
+            // Recreate garden
+            createInitialFlowers();
+            createInitialButterflies();
+            
+            // Turn off night mode if active
+            if (nightMode) {
+                toggleNightMode();
+            }
+            
+            updateStats();
+        }
+        
+        // Update statistics display
+        function updateStats() {
+            document.getElementById('butterfly-count').textContent = butterflies.length;
+            document.getElementById('flower-count').textContent = flowers.length;
+            document.getElementById('interactions').textContent = interactions;
+        }
+        
+        // Animation loop
+        function startAnimation() {
+            function animate() {
+                // Update butterfly positions
+                butterflies.forEach(butterfly => {
+                    let targetX, targetY;
+                    
+                    // Determine target
+                    if (butterfly.followingCursor) {
+                        // Follow cursor
+                        targetX = (mouseX / window.innerWidth) * 100;
+                        targetY = (mouseY / window.innerHeight) * 100;
+                        
+                        // Occasionally stop following cursor
+                        if (Math.random() > 0.995) {
+                            butterfly.followingCursor = false;
+                        }
+                    } else {
+                        // Random wandering
+                        if (Math.random() > 0.98) {
+                            butterfly.targetX = Math.random() * 80 + 10;
+                            butterfly.targetY = Math.random() * 80 + 10;
+                        }
+                        targetX = butterfly.targetX;
+                        targetY = butterfly.targetY;
+                    }
+                    
+                    // Move towards target
+                    const dx = targetX - butterfly.x;
+                    const dy = targetY - butterfly.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > 0.5) {
+                        butterfly.x += (dx / distance) * butterfly.speed * 0.1;
+                        butterfly.y += (dy / distance) * butterfly.speed * 0.1;
+                    }
+                    
+                    // Apply position with floating animation
+                    const floatOffset = Math.sin(Date.now() * 0.002 * butterfly.speed) * 5;
+                    butterfly.element.style.left = `${butterfly.x}%`;
+                    butterfly.element.style.top = `${butterfly.y + floatOffset}%`;
+                    
+                    // Rotate towards direction
+                    if (Math.abs(dx) > 1) {
+                        const rotation = dx > 0 ? 5 : -5;
+                        butterfly.element.style.transform = `rotate(${rotation}deg)`;
+                    } else {
+                        butterfly.element.style.transform = `rotate(0deg)`;
+                    }
+                });
+                
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+        
+        // Initialize the garden when page loads
+        window.addEventListener('DOMContentLoaded', initGarden);
+    </script>
+</body>
+</html>
