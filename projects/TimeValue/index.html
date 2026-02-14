@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time vs Value Analyzer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    :root {
+      --primary: #1a365d;
+      --secondary: #2d3748;
+      --accent: #3182ce;
+      --success: #38a169;
+      --warning: #d69e2e;
+      --danger: #e53e3e;
+      --neutral: #718096;
+      --light: #f7fafc;
+      --dark: #1a202c;
+      --border: #e2e8f0;
+      --grid: #edf2f7;
+    }
+
+    body {
+      background-color: #f8f9fa;
+      color: #333;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header */
+    header {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo i {
+      font-size: 2.5rem;
+      color: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #63b3ed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .logo p {
+      font-size: 1rem;
+      color: var(--neutral);
+      margin-top: 5px;
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 25px;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 15px;
+      min-width: 120px;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--neutral);
+      margin-top: 5px;
+    }
+
+    /* Main Layout */
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 1100px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Panels */
+    .panel {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--grid);
+    }
+
+    .panel-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-title i {
+      color: var(--accent);
+    }
+
+    /* Input Panel */
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .activity-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-group label i {
+      color: var(--accent);
+    }
+
+    input, select, textarea {
+      padding: 12px 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.2s;
+      background-color: white;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    /* Slider Styles */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .slider-value {
+      min-width: 40px;
+      text-align: center;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    input[type="range"] {
+      flex: 1;
+      height: 8px;
+      -webkit-appearance: none;
+      background: var(--grid);
+      border-radius: 4px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 3px solid white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #2b6cb0;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(49, 130, 206, 0.3);
+    }
+
+    .btn-secondary {
+      background-color: white;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(49, 130, 206, 0.05);
+    }
+
+    .btn-success {
+      background-color: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: #2f855a;
+    }
+
+    .btn-danger {
+      background-color: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background-color: #c53030;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    /* Visualization Panel */
+    .chart-container {
+      height: 400px;
+      position: relative;
+      margin-top: 20px;
+    }
+
+    .chart-placeholder {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--neutral);
+      text-align: center;
+      padding: 40px;
+    }
+
+    .chart-placeholder i {
+      font-size: 3rem;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+
+    /* Analysis Panel */
+    .analysis-panel {
+      grid-column: 1 / -1;
+    }
+
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .insight-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+    }
+
+    .insight-card.high-value {
+      border-left-color: var(--success);
+    }
+
+    .insight-card.low-value {
+      border-left-color: var(--danger);
+    }
+
+    .insight-card.neutral {
+      border-left-color: var(--neutral);
+    }
+
+    .insight-title {
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .insight-content {
+      color: var(--secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .insight-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-item .value {
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    .stat-item .label {
+      font-size: 0.8rem;
+      color: var(--neutral);
+      margin-top: 3px;
+    }
+
+    /* Activities List */
+    .activities-panel {
+      grid-column: 1 / -1;
+    }
+
+    .activities-list {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      padding: 18px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .activity-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .activity-color {
+      width: 8px;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+    .activity-content {
+      flex: 1;
+      margin-left: 15px;
+    }
+
+    .activity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .activity-name {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+
+    .activity-category {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background-color: var(--grid);
+    }
+
+    .activity-meta {
+      display: flex;
+      gap: 20px;
+      color: var(--neutral);
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+
+    .activity-description {
+      color: var(--secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .activity-stats {
+      display: flex;
+      gap: 20px;
+    }
+
+    .activity-stat {
+      text-align: center;
+      min-width: 80px;
+    }
+
+    .stat-number {
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--neutral);
+    }
+
+    .activity-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Value-Time Matrix */
+    .matrix-container {
+      margin-top: 20px;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      height: 300px;
+      gap: 15px;
+    }
+
+    .matrix-cell {
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .matrix-cell h4 {
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .matrix-cell p {
+      color: rgba(255,255,255,0.9);
+      font-size: 0.9rem;
+    }
+
+    .matrix-cell .count {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    /* Quadrant colors */
+    .high-value-low-time {
+      background: linear-gradient(135deg, #38a169, #48bb78);
+    }
+
+    .high-value-high-time {
+      background: linear-gradient(135deg, #3182ce, #4299e1);
+    }
+
+    .low-value-low-time {
+      background: linear-gradient(135deg, #d69e2e, #ecc94b);
+    }
+
+    .low-value-high-time {
+      background: linear-gradient(135deg, #e53e3e, #f56565);
+    }
+
+    .matrix-labels {
+      display: grid;
+      grid-template-columns: 100px repeat(4, 1fr);
+      margin-bottom: 10px;
+    }
+
+    .matrix-label {
+      text-align: center;
+      font-weight: 600;
+      color: var(--secondary);
+      padding: 10px;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--neutral);
+    }
+
+    .close-modal:hover {
+      color: var(--danger);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--neutral);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .header-stats {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .matrix-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      
+      .activity-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .activity-content {
+        margin-left: 0;
+        margin-top: 15px;
+      }
+      
+      .activity-stats {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 15px;
+      }
+      
+      .activity-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <div class="logo">
+          <i class="fas fa-chart-line"></i>
+          <div>
+            <h1>Time vs Value Analyzer</h1>
+            <p>Track where your time goes and what value it brings</p>
+          </div>
+        </div>
+        <div class="header-stats">
+          <div class="stat-card">
+            <div class="stat-value" id="totalTime">0h</div>
+            <div class="stat-label">Total Time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="avgValue">0.0</div>
+            <div class="stat-label">Avg Value</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="activitiesCount">0</div>
+            <div class="stat-label">Activities</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="efficiencyScore">0%</div>
+            <div class="stat-label">Efficiency</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <!-- Input Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i class="fas fa-plus-circle"></i> Log New Activity
+          </h2>
+        </div>
+        
+        <div class="input-section">
+          <div class="activity-form">
+            <div class="form-group">
+              <label for="activityName"><i class="fas fa-tag"></i> Activity Name</label>
+              <input type="text" id="activityName" placeholder="e.g., Team Meeting, Project Work, Email Management">
+            </div>
+            
+            <div class="form-group">
+              <label for="activityCategory"><i class="fas fa-folder"></i> Category</label>
+              <select id="activityCategory">
+                <option value="work">Work</option>
+                <option value="personal">Personal</option>
+                <option value="learning">Learning</option>
+                <option value="health">Health</option>
+                <option value="social">Social</option>
+                <option value="entertainment">Entertainment</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="timeSpent"><i class="fas fa-clock"></i> Time Spent (hours)</label>
+                <div class="slider-container">
+                  <input type="range" id="timeSpent" min="0.5" max="40" step="0.5" value="2">
+                  <div class="slider-value" id="timeValue">2.0</div>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="perceivedValue"><i class="fas fa-star"></i> Perceived Value (1-10)</label>
+                <div class="slider-container">
+                  <input type="range" id="perceivedValue" min="1" max="10" step="1" value="5">
+                  <div class="slider-value" id="valueDisplay">5</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="valueType"><i class="fas fa-bullseye"></i> Value Type</label>
+              <select id="valueType">
+                <option value="productivity">Productivity</option>
+                <option value="enjoyment">Enjoyment</option>
+                <option value="growth">Personal Growth</option>
+                <option value="financial">Financial</option>
+                <option value="health">Health Benefits</option>
+                <option value="social">Social Connection</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="activityDate"><i class="fas fa-calendar"></i> Date</label>
+              <input type="date" id="activityDate" value="">
+            </div>
+            
+            <div class="form-group">
+              <label for="activityNotes"><i class="fas fa-sticky-note"></i> Notes (Optional)</label>
+              <textarea id="activityNotes" placeholder="Add any notes about this activity..."></textarea>
+            </div>
+            
+            <div class="button-group">
+              <button class="btn btn-primary" id="addActivityBtn">
+                <i class="fas fa-save"></i> Log Activity
+              </button>
+              <button class="btn btn-secondary" id="clearFormBtn">
+                <i class="fas fa-eraser"></i> Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visualization Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i class="fas fa-chart-bar"></i> Time vs Value Distribution
+          </h2>
+          <div class="button-group">
+            <button class="btn btn-secondary" id="toggleChart">
+              <i class="fas fa-exchange-alt"></i> Switch View
+            </button>
+          </div>
+        </div>
+        
+        <div class="chart-container">
+          <canvas id="timeValueChart"></canvas>
+          <div id="chartPlaceholder" class="chart-placeholder">
+            <i class="fas fa-chart-pie"></i>
+            <h3>No Data Yet</h3>
+            <p>Log your first activity to see the visualization</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analysis Panel -->
+      <div class="panel analysis-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i class="fas fa-search"></i> Insights & Analysis
+          </h2>
+          <button class="btn btn-success" id="generateInsights">
+            <i class="fas fa-brain"></i> Generate Insights
+          </button>
+        </div>
+        
+        <div class="insights-grid" id="insightsContainer">
+          <!-- Insights will be generated here -->
+          <div class="insight-card">
+            <div class="insight-title">
+              <i class="fas fa-info-circle"></i> Getting Started
+            </div>
+            <div class="insight-content">
+              Log your daily activities to analyze how you spend time versus the value you get from each activity. The analyzer will help you identify time drains and high-value activities.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Value-Time Matrix -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i class="fas fa-th-large"></i> Value-Time Matrix
+          </h2>
+          <div class="button-group">
+            <button class="btn btn-secondary" id="viewDetails">
+              <i class="fas fa-list"></i> View Details
+            </button>
+          </div>
+        </div>
+        
+        <div class="matrix-container">
+          <div class="matrix-labels">
+            <div></div>
+            <div class="matrix-label">Low Time</div>
+            <div class="matrix-label">Medium-Low</div>
+            <div class="matrix-label">Medium-High</div>
+            <div class="matrix-label">High Time</div>
+          </div>
+          
+          <div class="matrix-grid" id="matrixGrid">
+            <div class="matrix-cell high-value-high-time">
+              <h4>High Value, High Time</h4>
+              <p>Major investments - consider efficiency</p>
+              <div class="count">0</div>
+            </div>
+            
+            <div class="matrix-cell high-value-low-time">
+              <h4>High Value, Low Time</h4>
+              <p>Efficiency stars - maximize these</p>
+              <div class="count">0</div>
+            </div>
+            
+            <div class="matrix-cell low-value-high-time">
+              <h4>Low Value, High Time</h4>
+              <p>Time drains - reduce or eliminate</p>
+              <div class="count">0</div>
+            </div>
+            
+            <div class="matrix-cell low-value-low-time">
+              <h4>Low Value, Low Time</h4>
+              <p>Low impact - maintain or reduce</p>
+              <div class="count">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activities List -->
+      <div class="panel activities-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i class="fas fa-history"></i> Recent Activities
+          </h2>
+          <div class="button-group">
+            <button class="btn btn-secondary" id="exportData">
+              <i class="fas fa-download"></i> Export Data
+            </button>
+            <button class="btn btn-danger" id="clearData">
+              <i class="fas fa-trash"></i> Clear All
+            </button>
+          </div>
+        </div>
+        
+        <div class="activities-list" id="activitiesList">
+          <!-- Activities will be listed here -->
+          <div class="activity-item">
+            <div class="activity-color" style="background-color: #3182ce;"></div>
+            <div class="activity-content">
+              <div class="activity-header">
+                <div class="activity-name">Team Weekly Meeting</div>
+                <div class="activity-category">Work</div>
+              </div>
+              <div class="activity-meta">
+                <span><i class="far fa-clock"></i> 2.0 hours</span>
+                <span><i class="fas fa-calendar"></i> Today</span>
+                <span><i class="fas fa-bullseye"></i> Productivity</span>
+              </div>
+              <div class="activity-description">
+                Weekly sync with the team to discuss project progress and blockers.
+              </div>
+              <div class="activity-stats">
+                <div class="activity-stat">
+                  <div class="stat-number" style="color: #3182ce;">6</div>
+                  <div class="stat-label">Value Score</div>
+                </div>
+                <div class="activity-stat">
+                  <div class="stat-number">0.33</div>
+                  <div class="stat-label">Value/Hour</div>
+                </div>
+                <div class="activity-stat">
+                  <div class="stat-number">Medium</div>
+                  <div class="stat-label">Efficiency</div>
+                </div>
+              </div>
+            </div>
+            <div class="activity-actions">
+              <button class="btn btn-secondary" style="padding: 8px 12px;">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-danger" style="padding: 8px 12px;">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal for Matrix Details -->
+    <div class="modal" id="matrixModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Value-Time Matrix Details</h2>
+          <button class="close-modal" id="closeModal">&times;</button>
+        </div>
+        <div id="modalContent">
+          <!-- Content will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Time vs Value Analyzer &copy; 2026 | Make your time count</p>
+  </footer>
+
+  <script>
+    // Data structure for activities
+    let activities = [];
+    let activityIdCounter = 1;
+    let currentChart = null;
+    let chartType = 'scatter'; // 'scatter' or 'bar'
+
+    // Color scheme for categories
+    const categoryColors = {
+      work: '#3182ce',
+      personal: '#38a169',
+      learning: '#d69e2e',
+      health: '#e53e3e',
+      social: '#805ad5',
+      entertainment: '#d53f8c',
+      other: '#718096'
+    };
+
+    // Example data for demonstration
+    const exampleActivities = [
+      {
+        id: 1,
+        name: "Team Weekly Meeting",
+        category: "work",
+        timeSpent: 2,
+        perceivedValue: 6,
+        valueType: "productivity",
+        date: new Date().toISOString().split('T')[0],
+        notes: "Weekly sync with the team to discuss project progress and blockers.",
+        efficiency: 0.33
+      },
+      {
+        id: 2,
+        name: "Morning Exercise",
+        category: "health",
+        timeSpent: 1,
+        perceivedValue: 9,
+        valueType: "health",
+        date: new Date().toISOString().split('T')[0],
+        notes: "30 min run + 30 min strength training",
+        efficiency: 0.90
+      },
+      {
+        id: 3,
+        name: "Project Deep Work",
+        category: "work",
+        timeSpent: 4,
+        perceivedValue: 8,
+        valueType: "productivity",
+        date: new Date().toISOString().split('T')[0],
+        notes: "Focused work on the main project without interruptions",
+        efficiency: 0.20
+      },
+      {
+        id: 4,
+        name: "Social Media Browsing",
+        category: "entertainment",
+        timeSpent: 1.5,
+        perceivedValue: 3,
+        valueType: "enjoyment",
+        date: new Date().toISOString().split('T')[0],
+        notes: "Scrolling through Instagram and Twitter",
+        efficiency: 0.20
+      },
+      {
+        id: 5,
+        name: "Online Course",
+        category: "learning",
+        timeSpent: 2,
+        perceivedValue: 9,
+        valueType: "growth",
+        date: new Date().toISOString().split('T')[0],
+        notes: "Completed module on advanced JavaScript",
+        efficiency: 0.45
+      },
+      {
+        id: 6,
+        name: "Email Management",
+        category: "work",
+        timeSpent: 1.5,
+        perceivedValue: 5,
+        valueType: "productivity",
+        date: new Date().toISOString().split('T')[0],
+        notes: "Clearing inbox and responding to important emails",
+        efficiency: 0.33
+      }
+    ];
+
+    // Initialize the app
+    function initApp() {
+      // Set default date to today
+      document.getElementById('activityDate').valueAsDate = new Date();
+      
+      // Load from localStorage if available
+      const savedActivities = localStorage.getItem('timeValueActivities');
+      if (savedActivities) {
+        activities = JSON.parse(savedActivities);
+        activityIdCounter = activities.length > 0 ? Math.max(...activities.map(a => a.id)) + 1 : 1;
+      } else {
+        // Load example data for first-time users
+        activities = JSON.parse(JSON.stringify(exampleActivities));
+        activityIdCounter = activities.length > 0 ? Math.max(...activities.map(a => a.id)) + 1 : 1;
+      }
+      
+      updateVisualizations();
+      setupEventListeners();
+      updateStats();
+    }
+
+    // Set up event listeners
+    function setupEventListeners() {
+      // Slider value updates
+      document.getElementById('timeSpent').addEventListener('input', function(e) {
+        document.getElementById('timeValue').textContent = e.target.value;
+      });
+      
+      document.getElementById('perceivedValue').addEventListener('input', function(e) {
+        document.getElementById('valueDisplay').textContent = e.target.value;
+      });
+      
+      // Add activity button
+      document.getElementById('addActivityBtn').addEventListener('click', addActivity);
+      
+      // Clear form button
+      document.getElementById('clearFormBtn').addEventListener('click', clearForm);
+      
+      // Toggle chart view
+      document.getElementById('toggleChart').addEventListener('click', toggleChart);
+      
+      // Generate insights
+      document.getElementById('generateInsights').addEventListener('click', generateInsights);
+      
+      // View matrix details
+      document.getElementById('viewDetails').addEventListener('click', showMatrixDetails);
+      
+      // Export data
+      document.getElementById('exportData').addEventListener('click', exportData);
+      
+      // Clear all data
+      document.getElementById('clearData').addEventListener('click', clearAllData);
+      
+      // Close modal
+      document.getElementById('closeModal').addEventListener('click', () => {
+        document.getElementById('matrixModal').style.display = 'none';
+      });
+      
+      // Close modal when clicking outside
+      window.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('matrixModal')) {
+          document.getElementById('matrixModal').style.display = 'none';
+        }
+      });
+    }
+
+    // Add a new activity
+    function addActivity() {
+      const name = document.getElementById('activityName').value.trim();
+      const category = document.getElementById('activityCategory').value;
+      const timeSpent = parseFloat(document.getElementById('timeSpent').value);
+      const perceivedValue = parseInt(document.getElementById('perceivedValue').value);
+      const valueType = document.getElementById('valueType').value;
+      const date = document.getElementById('activityDate').value;
+      const notes = document.getElementById('activityNotes').value.trim();
+      
+      if (!name) {
+        showMessage('Please enter an activity name', 'warning');
+        return;
+      }
+      
+      if (timeSpent <= 0) {
+        showMessage('Please enter a valid time spent', 'warning');
+        return;
+      }
+      
+      // Calculate efficiency (value per hour)
+      const efficiency = perceivedValue / timeSpent;
+      
+      const newActivity = {
+        id: activityIdCounter++,
+        name,
+        category,
+        timeSpent,
+        perceivedValue,
+        valueType,
+        date,
+        notes,
+        efficiency: parseFloat(efficiency.toFixed(2)),
+        timestamp: new Date().toISOString()
+      };
+      
+      activities.push(newActivity);
+      saveToLocalStorage();
+      updateVisualizations();
+      updateStats();
+      clearForm();
+      
+      showMessage(`"${name}" logged successfully!`, 'success');
+    }
+
+    // Clear the form
+    function clearForm() {
+      document.getElementById('activityName').value = '';
+      document.getElementById('activityCategory').value = 'work';
+      document.getElementById('timeSpent').value = '2';
+      document.getElementById('timeValue').textContent = '2.0';
+      document.getElementById('perceivedValue').value = '5';
+      document.getElementById('valueDisplay').textContent = '5';
+      document.getElementById('valueType').value = 'productivity';
+      document.getElementById('activityDate').valueAsDate = new Date();
+      document.getElementById('activityNotes').value = '';
+      
+      // Focus on the name field
+      document.getElementById('activityName').focus();
+    }
+
+    // Update all visualizations
+    function updateVisualizations() {
+      updateChart();
+      updateActivitiesList();
+      updateMatrix();
+      updateStats();
+      
+      // Show/hide chart placeholder
+      const placeholder = document.getElementById('chartPlaceholder');
+      if (activities.length === 0) {
+        placeholder.style.display = 'flex';
+        if (currentChart) {
+          currentChart.destroy();
+          currentChart = null;
+        }
+      } else {
+        placeholder.style.display = 'none';
+      }
+    }
+
+    // Update the chart
+    function updateChart() {
+      const ctx = document.getElementById('timeValueChart').getContext('2d');
+      
+      // Destroy existing chart
+      if (currentChart) {
+        currentChart.destroy();
+      }
+      
+      if (activities.length === 0) return;
+      
+      // Prepare data based on chart type
+      if (chartType === 'scatter') {
+        // Scatter plot data
+        const data = {
+          datasets: activities.map(activity => ({
+            label: activity.name,
+            data: [{
+              x: activity.timeSpent,
+              y: activity.perceivedValue
+            }],
+            backgroundColor: categoryColors[activity.category] || '#718096',
+            borderColor: 'white',
+            borderWidth: 2,
+            pointRadius: 8,
+            pointHoverRadius: 12
+          }))
+        };
+        
+        currentChart = new Chart(ctx, {
+          type: 'scatter',
+          data: data,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Time Spent (hours)',
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  }
+                },
+                min: 0,
+                max: Math.max(...activities.map(a => a.timeSpent)) * 1.2
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: 'Perceived Value (1-10)',
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  }
+                },
+                min: 0,
+                max: 10
+              }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const activity = activities.find(a => 
+                      a.timeSpent === context.parsed.x && 
+                      a.perceivedValue === context.parsed.y
+                    );
+                    return [
+                      `Activity: ${activity.name}`,
+                      `Category: ${activity.category}`,
+                      `Value/Hour: ${activity.efficiency.toFixed(2)}`,
+                      `Value Type: ${activity.valueType}`
+                    ];
+                  }
+                }
+              },
+              legend: {
+                display: false
+              }
+            }
+          }
+        });
+      } else {
+        // Bar chart data - group by category
+        const categories = [...new Set(activities.map(a => a.category))];
+        const categoryData = categories.map(category => {
+          const categoryActivities = activities.filter(a => a.category === category);
+          const totalTime = categoryActivities.reduce((sum, a) => sum + a.timeSpent, 0);
+          const avgValue = categoryActivities.reduce((sum, a) => sum + a.perceivedValue, 0) / categoryActivities.length;
+          return {
+            category,
+            totalTime,
+            avgValue
+          };
+        });
+        
+        currentChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: categoryData.map(d => d.category.charAt(0).toUpperCase() + d.category.slice(1)),
+            datasets: [
+              {
+                label: 'Total Time (hours)',
+                data: categoryData.map(d => d.totalTime),
+                backgroundColor: categories.map(c => categoryColors[c]),
+                borderColor: 'white',
+                borderWidth: 1,
+                yAxisID: 'y'
+              },
+              {
+                label: 'Avg Value',
+                data: categoryData.map(d => d.avgValue),
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                borderColor: 'rgb(255, 99, 132)',
+                borderWidth: 1,
+                type: 'line',
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Category',
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  }
+                }
+              },
+              y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                  display: true,
+                  text: 'Total Time (hours)',
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  }
+                }
+              },
+              y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                  display: true,
+                  text: 'Avg Value (1-10)',
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  }
+                },
+                min: 0,
+                max: 10,
+                grid: {
+                  drawOnChartArea: false
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Toggle between chart types
+    function toggleChart() {
+      chartType = chartType === 'scatter' ? 'bar' : 'scatter';
+      document.getElementById('toggleChart').innerHTML = chartType === 'scatter' 
+        ? '<i class="fas fa-exchange-alt"></i> Switch to Bar Chart' 
+        : '<i class="fas fa-exchange-alt"></i> Switch to Scatter Plot';
+      
+      updateChart();
+    }
+
+    // Update activities list
+    function updateActivitiesList() {
+      const listContainer = document.getElementById('activitiesList');
+      
+      if (activities.length === 0) {
+        listContainer.innerHTML = `
+          <div class="activity-item" style="text-align: center; padding: 40px;">
+            <i class="fas fa-clipboard-list" style="font-size: 2rem; color: #cbd5e0; margin-bottom: 15px;"></i>
+            <h3 style="color: #718096; margin-bottom: 10px;">No Activities Yet</h3>
+            <p style="color: #a0aec0;">Log your first activity using the form above</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Sort by most recent first
+      const sortedActivities = [...activities].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      
+      listContainer.innerHTML = sortedActivities.map(activity => {
+        const dateObj = new Date(activity.date);
+        const formattedDate = dateObj.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric',
+          year: dateObj.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+        });
+        
+        // Determine efficiency label
+        let efficiencyLabel = 'Low';
+        let efficiencyColor = '#e53e3e';
+        
+        if (activity.efficiency > 0.5) {
+          efficiencyLabel = 'High';
+          efficiencyColor = '#38a169';
+        } else if (activity.efficiency > 0.25) {
+          efficiencyLabel = 'Medium';
+          efficiencyColor = '#d69e2e';
+        }
+        
+        return `
+          <div class="activity-item" data-id="${activity.id}">
+            <div class="activity-color" style="background-color: ${categoryColors[activity.category]};"></div>
+            <div class="activity-content">
+              <div class="activity-header">
+                <div class="activity-name">${activity.name}</div>
+                <div class="activity-category">${activity.category.charAt(0).toUpperCase() + activity.category.slice(1)}</div>
+              </div>
+              <div class="activity-meta">
+                <span><i class="far fa-clock"></i> ${activity.timeSpent.toFixed(1)} hours</span>
+                <span><i class="fas fa-calendar"></i> ${formattedDate}</span>
+                <span><i class="fas fa-bullseye"></i> ${activity.valueType.charAt(0).toUpperCase() + activity.valueType.slice(1)}</span>
+              </div>
+              <div class="activity-description">
+                ${activity.notes || 'No notes provided'}
+              </div>
+              <div class="activity-stats">
+                <div class="activity-stat">
+                  <div class="stat-number" style="color: ${categoryColors[activity.category]};">${activity.perceivedValue}</div>
+                  <div class="stat-label">Value Score</div>
+                </div>
+                <div class="activity-stat">
+                  <div class="stat-number">${activity.efficiency.toFixed(2)}</div>
+                  <div class="stat-label">Value/Hour</div>
+                </div>
+                <div class="activity-stat">
+                  <div class="stat-number" style="color: ${efficiencyColor};">${efficiencyLabel}</div>
+                  <div class="stat-label">Efficiency</div>
+                </div>
+              </div>
+            </div>
+            <div class="activity-actions">
+              <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="editActivity(${activity.id})">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-danger" style="padding: 8px 12px;" onclick="deleteActivity(${activity.id})">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Update the value-time matrix
+    function updateMatrix() {
+      if (activities.length === 0) return;
+      
+      // Calculate time and value thresholds
+      const times = activities.map(a => a.timeSpent);
+      const values = activities.map(a => a.perceivedValue);
+      
+      const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+      const avgValue = values.reduce((a, b) => a + b, 0) / values.length;
+      
+      // Categorize activities
+      const quadrants = {
+        highValueHighTime: [],
+        highValueLowTime: [],
+        lowValueHighTime: [],
+        lowValueLowTime: []
+      };
+      
+      activities.forEach(activity => {
+        if (activity.perceivedValue >= avgValue && activity.timeSpent >= avgTime) {
+          quadrants.highValueHighTime.push(activity);
+        } else if (activity.perceivedValue >= avgValue && activity.timeSpent < avgTime) {
+          quadrants.highValueLowTime.push(activity);
+        } else if (activity.perceivedValue < avgValue && activity.timeSpent >= avgTime) {
+          quadrants.lowValueHighTime.push(activity);
+        } else {
+          quadrants.lowValueLowTime.push(activity);
+        }
+      });
+      
+      // Update matrix cell counts
+      document.querySelectorAll('.matrix-cell .count').forEach((cell, index) => {
+        const counts = [
+          quadrants.highValueHighTime.length,
+          quadrants.highValueLowTime.length,
+          quadrants.lowValueHighTime.length,
+          quadrants.lowValueLowTime.length
+        ];
+        cell.textContent = counts[index];
+      });
+      
+      // Update matrix data for details view
+      window.matrixData = quadrants;
+    }
+
+    // Update statistics
+    function updateStats() {
+      if (activities.length === 0) {
+        document.getElementById('totalTime').textContent = '0h';
+        document.getElementById('avgValue').textContent = '0.0';
+        document.getElementById('activitiesCount').textContent = '0';
+        document.getElementById('efficiencyScore').textContent = '0%';
+        return;
+      }
+      
+      const totalTime = activities.reduce((sum, a) => sum + a.timeSpent, 0);
+      const avgValue = activities.reduce((sum, a) => sum + a.perceivedValue, 0) / activities.length;
+      const avgEfficiency = activities.reduce((sum, a) => sum + a.efficiency, 0) / activities.length;
+      
+      document.getElementById('totalTime').textContent = `${totalTime.toFixed(1)}h`;
+      document.getElementById('avgValue').textContent = avgValue.toFixed(1);
+      document.getElementById('activitiesCount').textContent = activities.length;
+      document.getElementById('efficiencyScore').textContent = `${Math.round(avgEfficiency * 10)}%`;
+    }
+
+    // Generate insights
+    function generateInsights() {
+      if (activities.length === 0) {
+        showMessage('No activities to analyze', 'warning');
+        return;
+      }
+      
+      const insightsContainer = document.getElementById('insightsContainer');
+      
+      // Calculate insights
+      const totalTime = activities.reduce((sum, a) => sum + a.timeSpent, 0);
+      const avgValue = activities.reduce((sum, a) => sum + a.perceivedValue, 0) / activities.length;
+      
+      // Group by category
+      const categories = {};
+      activities.forEach(activity => {
+        if (!categories[activity.category]) {
+          categories[activity.category] = {
+            totalTime: 0,
+            totalValue: 0,
+            count: 0
+          };
+        }
+        categories[activity.category].totalTime += activity.timeSpent;
+        categories[activity.category].totalValue += activity.perceivedValue;
+        categories[activity.category].count++;
+      });
+      
+      // Find highest and lowest efficiency categories
+      let highestEfficiencyCat = null;
+      let lowestEfficiencyCat = null;
+      let maxEfficiency = 0;
+      let minEfficiency = Infinity;
+      
+      for (const [category, data] of Object.entries(categories)) {
+        const efficiency = data.totalValue / data.totalTime;
+        if (efficiency > maxEfficiency) {
+          maxEfficiency = efficiency;
+          highestEfficiencyCat = category;
+        }
+        if (efficiency < minEfficiency) {
+          minEfficiency = efficiency;
+          lowestEfficiencyCat = category;
+        }
+      }
+      
+      // Find most time-consuming activity
+      const mostTimeConsuming = [...activities].sort((a, b) => b.timeSpent - a.timeSpent)[0];
+      
+      // Find highest value activity
+      const highestValue = [...activities].sort((a, b) => b.perceivedValue - a.perceivedValue)[0];
+      
+      // Generate insights HTML
+      insightsContainer.innerHTML = `
+        <div class="insight-card high-value">
+          <div class="insight-title">
+            <i class="fas fa-rocket"></i> Highest Efficiency Area
+          </div>
+          <div class="insight-content">
+            Your <strong>${highestEfficiencyCat}</strong> activities give you the most value per hour (${maxEfficiency.toFixed(2)} value/hour). Consider allocating more time to these activities.
+          </div>
+          <div class="insight-stats">
+            <div class="stat-item">
+              <div class="value">${maxEfficiency.toFixed(2)}</div>
+              <div class="label">Value/Hour</div>
+            </div>
+            <div class="stat-item">
+              <div class="value">${categories[highestEfficiencyCat].count}</div>
+              <div class="label">Activities</div>
+            </div>
+            <div class="stat-item">
+              <div class="value">${categories[highestEfficiencyCat].totalTime.toFixed(1)}h</div>
+              <div class="label">Total Time</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="insight-card low-value">
+          <div class="insight-title">
+            <i class="fas fa-exclamation-triangle"></i> Time Drain Alert
+          </div>
+          <div class="insight-content">
+            Your <strong>${lowestEfficiencyCat}</strong> activities have low efficiency (${minEfficiency.toFixed(2)} value/hour). Consider reducing time spent here or finding ways to increase value.
+          </div>
+          <div class="insight-stats">
+            <div class="stat-item">
+              <div class="value">${minEfficiency.toFixed(2)}</div>
+              <div class="label">Value/Hour</div>
+            </div>
+            <div class="stat-item">
+              <div class="value">${categories[lowestEfficiencyCat].count}</div>
+              <div class="label">Activities</div>
+            </div>
+            <div class="stat-item">
+              <div class="value">${categories[lowestEfficiencyCat].totalTime.toFixed(1)}h</div>
+              <div class="label">Total Time</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="insight-card">
+          <div class="insight-title">
+            <i class="fas fa-chart-pie"></i> Time Distribution
+          </div>
+          <div class="insight-content">
+            You've logged <strong>${totalTime.toFixed(1)} hours</strong> across ${activities.length} activities. Average value score is <strong>${avgValue.toFixed(1)}/10</strong>.
+          </div>
+          <div class="insight-stats">
+            <div class="stat-item">
+              <div class="value">${totalTime.toFixed(1)}</div>
+              <div class="label">Total Hours</div>
+            </div>
+            <div class="stat-item">
+              <div class="value">${activities.length}</div>
+              <div class="label">Activities</div>
+            </div>
+            <div class="stat-item">
+              <div class="value">${avgValue.toFixed(1)}</div>
+              <div class="label">Avg Value</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="insight-card">
+          <div class="insight-title">
+            <i class="fas fa-bullseye"></i> Activity Highlights
+          </div>
+          <div class="insight-content">
+            <strong>${mostTimeConsuming.name}</strong> takes the most time (${mostTimeConsuming.timeSpent}h).
+            <strong>${highestValue.name}</strong> provides the highest value (${highestValue.perceivedValue}/10).
+          </div>
+          <div class="insight-stats">
+            <div class="stat-item">
+              <div class="value">${mostTimeConsuming.timeSpent}h</div>
+              <div class="label">Max Time</div>
+            </div>
+            <div class="stat-item">
+              <div class="value">${highestValue.perceivedValue}</div>
+              <div class="label">Max Value</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      showMessage('Insights generated successfully!', 'success');
+    }
+
+    // Show matrix details
+    function showMatrixDetails() {
+      if (!window.matrixData || activities.length === 0) {
+        showMessage('No matrix data available', 'warning');
+        return;
+      }
+      
+      const modal = document.getElementById('matrixModal');
+      const modalContent = document.getElementById('modalContent');
+      
+      let html = `
+        <div style="margin-bottom: 25px;">
+          <h3 style="color: var(--primary); margin-bottom: 15px;">Activity Distribution by Value-Time Matrix</h3>
+          <p style="color: var(--neutral); margin-bottom: 20px;">
+            Activities are categorized based on whether they're above or below average for time spent and perceived value.
+          </p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      `;
+      
+      // Create details for each quadrant
+      const quadrants = [
+        {
+          title: "High Value, High Time",
+          data: window.matrixData.highValueHighTime,
+          colorClass: "high-value-high-time",
+          description: "Major investments - these activities provide high value but also consume significant time."
+        },
+        {
+          title: "High Value, Low Time",
+          data: window.matrixData.highValueLowTime,
+          colorClass: "high-value-low-time",
+          description: "Efficiency stars - maximize these activities as they provide high value with relatively low time investment."
+        },
+        {
+          title: "Low Value, High Time",
+          data: window.matrixData.lowValueHighTime,
+          colorClass: "low-value-high-time",
+          description: "Time drains - consider reducing or eliminating these activities as they consume time without providing much value."
+        },
+        {
+          title: "Low Value, Low Time",
+          data: window.matrixData.lowValueLowTime,
+          colorClass: "low-value-low-time",
+          description: "Low impact - these activities don't consume much time but also don't provide much value."
+        }
+      ];
+      
+      quadrants.forEach(quadrant => {
+        html += `
+          <div class="insight-card" style="border-left-color: var(--${quadrant.colorClass.split('-')[0]})">
+            <div class="insight-title">
+              <i class="fas fa-th-large"></i> ${quadrant.title}
+            </div>
+            <div class="insight-content">
+              ${quadrant.description}
+              <div style="margin-top: 15px;">
+                <strong>Activities (${quadrant.data.length}):</strong>
+                ${quadrant.data.length > 0 
+                  ? `<ul style="margin-top: 10px; padding-left: 20px;">
+                      ${quadrant.data.slice(0, 3).map(a => `<li>${a.name} (${a.timeSpent}h, ${a.perceivedValue}/10)</li>`).join('')}
+                      ${quadrant.data.length > 3 ? `<li>... and ${quadrant.data.length - 3} more</li>` : ''}
+                    </ul>`
+                  : '<p style="margin-top: 10px; color: var(--neutral);">No activities in this quadrant</p>'
+                }
+              </div>
+            </div>
+            <div class="insight-stats">
+              <div class="stat-item">
+                <div class="value">${quadrant.data.length}</div>
+                <div class="label">Activities</div>
+              </div>
+              <div class="stat-item">
+                <div class="value">${quadrant.data.reduce((sum, a) => sum + a.timeSpent, 0).toFixed(1)}h</div>
+                <div class="label">Total Time</div>
+              </div>
+              <div class="stat-item">
+                <div class="value">${quadrant.data.length > 0 ? (quadrant.data.reduce((sum, a) => sum + a.perceivedValue, 0) / quadrant.data.length).toFixed(1) : '0.0'}</div>
+                <div class="label">Avg Value</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      html += `</div>`;
+      modalContent.innerHTML = html;
+      modal.style.display = 'flex';
+    }
+
+    // Edit an activity
+    function editActivity(id) {
+      const activity = activities.find(a => a.id === id);
+      if (!activity) return;
+      
+      // Populate form with activity data
+      document.getElementById('activityName').value = activity.name;
+      document.getElementById('activityCategory').value = activity.category;
+      document.getElementById('timeSpent').value = activity.timeSpent;
+      document.getElementById('timeValue').textContent = activity.timeSpent;
+      document.getElementById('perceivedValue').value = activity.perceivedValue;
+      document.getElementById('valueDisplay').textContent = activity.perceivedValue;
+      document.getElementById('valueType').value = activity.valueType;
+      document.getElementById('activityDate').value = activity.date;
+      document.getElementById('activityNotes').value = activity.notes || '';
+      
+      // Update button to edit mode
+      const addBtn = document.getElementById('addActivityBtn');
+      addBtn.innerHTML = '<i class="fas fa-save"></i> Update Activity';
+      addBtn.onclick = function() { updateActivity(id); };
+      
+      // Scroll to form
+      document.querySelector('.input-panel').scrollIntoView({ behavior: 'smooth' });
+      
+      showMessage(`Editing "${activity.name}"`, 'info');
+    }
+
+    // Update an existing activity
+    function updateActivity(id) {
+      const activityIndex = activities.findIndex(a => a.id === id);
+      if (activityIndex === -1) return;
+      
+      const name = document.getElementById('activityName').value.trim();
+      const category = document.getElementById('activityCategory').value;
+      const timeSpent = parseFloat(document.getElementById('timeSpent').value);
+      const perceivedValue = parseInt(document.getElementById('perceivedValue').value);
+      const valueType = document.getElementById('valueType').value;
+      const date = document.getElementById('activityDate').value;
+      const notes = document.getElementById('activityNotes').value.trim();
+      
+      if (!name) {
+        showMessage('Please enter an activity name', 'warning');
+        return;
+      }
+      
+      // Calculate efficiency (value per hour)
+      const efficiency = perceivedValue / timeSpent;
+      
+      activities[activityIndex] = {
+        ...activities[activityIndex],
+        name,
+        category,
+        timeSpent,
+        perceivedValue,
+        valueType,
+        date,
+        notes,
+        efficiency: parseFloat(efficiency.toFixed(2)),
+        timestamp: new Date().toISOString()
+      };
+      
+      saveToLocalStorage();
+      updateVisualizations();
+      updateStats();
+      clearForm();
+      
+      // Reset button to add mode
+      const addBtn = document.getElementById('addActivityBtn');
+      addBtn.innerHTML = '<i class="fas fa-save"></i> Log Activity';
+      addBtn.onclick = addActivity;
+      
+      showMessage(`"${name}" updated successfully!`, 'success');
+    }
+
+    // Delete an activity
+    function deleteActivity(id) {
+      if (!confirm('Are you sure you want to delete this activity?')) {
+        return;
+      }
+      
+      const activityIndex = activities.findIndex(a => a.id === id);
+      if (activityIndex === -1) return;
+      
+      const activityName = activities[activityIndex].name;
+      activities.splice(activityIndex, 1);
+      saveToLocalStorage();
+      updateVisualizations();
+      updateStats();
+      
+      showMessage(`"${activityName}" deleted successfully`, 'success');
+    }
+
+    // Export data
+    function exportData() {
+      if (activities.length === 0) {
+        showMessage('No data to export', 'warning');
+        return;
+      }
+      
+      const dataStr = JSON.stringify(activities, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = 'time-value-data.json';
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+      showMessage('Data exported successfully!', 'success');
+    }
+
+    // Clear all data
+    function clearAllData() {
+      if (!confirm('Are you sure you want to delete all activities? This action cannot be undone.')) {
+        return;
+      }
+      
+      activities = [];
+      saveToLocalStorage();
+      updateVisualizations();
+      updateStats();
+      
+      showMessage('All activities cleared', 'success');
+    }
+
+    // Save activities to localStorage
+    function saveToLocalStorage() {
+      localStorage.setItem('timeValueActivities', JSON.stringify(activities));
+    }
+
+    // Show a temporary message
+    function showMessage(text, type) {
+      // Remove existing message if any
+      const existingMessage = document.querySelector('.message');
+      if (existingMessage) {
+        existingMessage.remove();
+      }
+      
+      const message = document.createElement('div');
+      message.className = `message ${type}`;
+      message.textContent = text;
+      message.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+      `;
+      
+      // Set background color based on type
+      if (type === 'success') {
+        message.style.backgroundColor = 'var(--success)';
+      } else if (type === 'warning') {
+        message.style.backgroundColor = 'var(--warning)';
+      } else if (type === 'info') {
+        message.style.backgroundColor = 'var(--accent)';
+      } else {
+        message.style.backgroundColor = 'var(--danger)';
+      }
+      
+      document.body.appendChild(message);
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        if (message.parentNode) {
+          message.style.animation = 'slideOut 0.3s ease';
+          setTimeout(() => {
+            if (message.parentNode) {
+              message.remove();
+            }
+          }, 300);
+        }
+      }, 3000);
+      
+      // Add CSS for animations
+      if (!document.querySelector('#message-styles')) {
+        const style = document.createElement('style');
+        style.id = 'message-styles';
+        style.textContent = `
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+
+    // Initialize the app when the page loads
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>

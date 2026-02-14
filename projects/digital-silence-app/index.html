@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Silence App - Focus Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            padding: 30px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+            font-weight: 400;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .tracker-section {
+            flex: 1;
+            min-width: 300px;
+            background-color: #f9f9f9;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+        }
+        
+        .stats-section {
+            flex: 1;
+            min-width: 300px;
+            background-color: #f9f9f9;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+        }
+        
+        .section-title {
+            color: #3498db;
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eaeaea;
+        }
+        
+        .focus-timer {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 25px;
+        }
+        
+        .timer-display {
+            font-size: 4.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 10px 0;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .timer-label {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+        
+        .status-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+        
+        .active {
+            background-color: #2ecc71;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+        
+        .inactive {
+            background-color: #e74c3c;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+        
+        .status-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-start {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .btn-start:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+        
+        .btn-reset {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-reset:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .btn-pause {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .btn-pause:hover {
+            background-color: #d35400;
+            transform: translateY(-2px);
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px dashed #ddd;
+        }
+        
+        .stat-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .stat-value {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+        
+        .focus-chart {
+            height: 200px;
+            margin-top: 25px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #eee;
+        }
+        
+        .chart-bar {
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        
+        .chart-column {
+            flex: 1;
+            background-color: #3498db;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: height 0.5s ease;
+        }
+        
+        .chart-column:hover {
+            background-color: #2980b9;
+        }
+        
+        .chart-label {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+        
+        .insights {
+            background-color: #f9f9f9;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+        
+        .insight-text {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f7ff;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .timer-display {
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-hourglass-half"></i> Digital Silence App</h1>
+            <p class="subtitle">Track your focused work time by monitoring keyboard and mouse inactivity</p>
+        </header>
+        
+        <div class="main-content">
+            <section class="tracker-section">
+                <h2 class="section-title"><i class="fas fa-chart-line"></i> Focus Tracker</h2>
+                
+                <div class="focus-timer">
+                    <div class="timer-display" id="timer">00:00:00</div>
+                    <div class="timer-label">Current Focus Session</div>
+                </div>
+                
+                <div class="status-indicator">
+                    <div class="status-dot active" id="statusDot"></div>
+                    <div class="status-text" id="statusText">Focusing</div>
+                </div>
+                
+                <div class="instructions">
+                    <p><i class="fas fa-info-circle"></i> <strong>How it works:</strong> The timer runs when you're not touching the keyboard or mouse. Interacting resets the timer.</p>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-start" id="startBtn">
+                        <i class="fas fa-play"></i> Start Tracking
+                    </button>
+                    <button class="btn btn-pause" id="pauseBtn">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button class="btn btn-reset" id="resetBtn">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
+            </section>
+            
+            <section class="stats-section">
+                <h2 class="section-title"><i class="fas fa-chart-bar"></i> Focus Statistics</h2>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Today's Focus Time:</span>
+                    <span class="stat-value" id="todayTime">00:12:34</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Longest Focus Session:</span>
+                    <span class="stat-value" id="longestSession">00:45:21</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Interruptions Today:</span>
+                    <span class="stat-value" id="interruptions">8</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Average Focus Time:</span>
+                    <span class="stat-value" id="avgFocus">00:18:42</span>
+                </div>
+                
+                <div class="focus-chart">
+                    <h3 style="margin-bottom: 15px; font-size: 1.2rem;">Today's Focus Pattern</h3>
+                    <div class="chart-bar" id="chartBar">
+                        <!-- Chart bars will be generated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <section class="insights">
+            <h2 class="section-title"><i class="fas fa-lightbulb"></i> Focus Insights</h2>
+            <div class="insight-text" id="insight1">
+                <i class="fas fa-clock"></i> <strong>Current Streak:</strong> You've been focused for <span id="currentStreak">2 minutes</span> without interruptions.
+            </div>
+            <div class="insight-text" id="insight2">
+                <i class="fas fa-trophy"></i> <strong>Best Time:</strong> Your longest focus session today was <span id="bestTime">45 minutes</span>.
+            </div>
+            <div class="insight-text" id="insight3">
+                <i class="fas fa-bell"></i> <strong>Interruption Rate:</strong> You're interrupted about every <span id="interruptionRate">15 minutes</span> on average.
+            </div>
+        </section>
+        
+        <footer>
+            <p>Digital Silence App &copy; 2026 | Track your focus, boost your productivity</p>
+            <p><i class="fas fa-mouse-pointer"></i> Move mouse or press any key to interrupt focus timer</p>
+        </footer>
+    </div>
+
+    <script>
+        // App state variables
+        let focusTimer = 0;
+        let isTracking = false;
+        let isPaused = false;
+        let timerInterval = null;
+        let lastInteractionTime = Date.now();
+        
+        // Statistics
+        let stats = {
+            todayTime: 452, // in seconds (for demo)
+            longestSession: 2721, // in seconds (for demo)
+            interruptions: 8,
+            avgFocus: 1122, // in seconds (for demo)
+            sessions: []
+        };
+        
+        // DOM Elements
+        const timerDisplay = document.getElementById('timer');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const todayTimeEl = document.getElementById('todayTime');
+        const longestSessionEl = document.getElementById('longestSession');
+        const interruptionsEl = document.getElementById('interruptions');
+        const avgFocusEl = document.getElementById('avgFocus');
+        const chartBar = document.getElementById('chartBar');
+        const currentStreakEl = document.getElementById('currentStreak');
+        const bestTimeEl = document.getElementById('bestTime');
+        const interruptionRateEl = document.getElementById('interruptionRate');
+        
+        // Initialize the app
+        function initApp() {
+            updateStatsDisplay();
+            generateChart();
+            updateInsights();
+            
+            // Set up event listeners for controls
+            startBtn.addEventListener('click', startTracking);
+            pauseBtn.addEventListener('click', pauseTracking);
+            resetBtn.addEventListener('click', resetTracking);
+            
+            // Set up event listeners for user interaction detection
+            document.addEventListener('mousemove', handleUserInteraction);
+            document.addEventListener('keydown', handleUserInteraction);
+            document.addEventListener('click', handleUserInteraction);
+        }
+        
+        // Start tracking focus time
+        function startTracking() {
+            if (isTracking) return;
+            
+            isTracking = true;
+            isPaused = false;
+            lastInteractionTime = Date.now();
+            
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            statusDot.className = 'status-dot active';
+            statusText.textContent = 'Focusing';
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            
+            // Add a new session to stats
+            stats.sessions.push({
+                start: Date.now(),
+                end: null,
+                duration: 0
+            });
+        }
+        
+        // Pause tracking
+        function pauseTracking() {
+            if (!isTracking || isPaused) return;
+            
+            isPaused = true;
+            clearInterval(timerInterval);
+            
+            statusDot.className = 'status-dot inactive';
+            statusText.textContent = 'Paused';
+            pauseBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
+        }
+        
+        // Resume tracking (if paused)
+        function resumeTracking() {
+            if (!isTracking || !isPaused) return;
+            
+            isPaused = false;
+            lastInteractionTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            statusDot.className = 'status-dot active';
+            statusText.textContent = 'Focusing';
+            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+        }
+        
+        // Reset tracking
+        function resetTracking() {
+            clearInterval(timerInterval);
+            isTracking = false;
+            isPaused = false;
+            focusTimer = 0;
+            
+            updateTimerDisplay();
+            
+            statusDot.className = 'status-dot inactive';
+            statusText.textContent = 'Not Tracking';
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+        }
+        
+        // Update the timer every second
+        function updateTimer() {
+            const currentTime = Date.now();
+            const timeDiff = Math.floor((currentTime - lastInteractionTime) / 1000);
+            
+            // If user has interacted recently, reset the timer
+            if (timeDiff < 1) {
+                focusTimer = 0;
+                stats.interruptions++;
+                updateStatsDisplay();
+            } else {
+                focusTimer = timeDiff;
+                
+                // Update the current session duration
+                if (stats.sessions.length > 0) {
+                    const currentSession = stats.sessions[stats.sessions.length - 1];
+                    currentSession.duration = focusTimer;
+                    
+                    // Update longest session if needed
+                    if (focusTimer > stats.longestSession) {
+                        stats.longestSession = focusTimer;
+                    }
+                }
+            }
+            
+            updateTimerDisplay();
+            updateInsights();
+        }
+        
+        // Handle user interaction (mouse move, key press, click)
+        function handleUserInteraction() {
+            lastInteractionTime = Date.now();
+            
+            // If tracking and not paused, log an interruption
+            if (isTracking && !isPaused) {
+                stats.interruptions++;
+                interruptionsEl.textContent = stats.interruptions;
+            }
+            
+            // If paused and user interacts, resume tracking
+            if (isPaused) {
+                resumeTracking();
+            }
+        }
+        
+        // Format seconds to HH:MM:SS
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // Update timer display
+        function updateTimerDisplay() {
+            timerDisplay.textContent = formatTime(focusTimer);
+        }
+        
+        // Update statistics display
+        function updateStatsDisplay() {
+            todayTimeEl.textContent = formatTime(stats.todayTime + focusTimer);
+            longestSessionEl.textContent = formatTime(stats.longestSession);
+            interruptionsEl.textContent = stats.interruptions;
+            avgFocusEl.textContent = formatTime(stats.avgFocus);
+        }
+        
+        // Generate chart for focus pattern
+        function generateChart() {
+            chartBar.innerHTML = '';
+            
+            // Generate sample data for the chart (in a real app, this would come from actual tracking)
+            const hours = ['9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM'];
+            const focusData = [30, 45, 20, 15, 40, 55, 35, 25]; // in minutes
+            
+            const maxFocus = Math.max(...focusData);
+            
+            hours.forEach((hour, index) => {
+                const column = document.createElement('div');
+                const height = (focusData[index] / maxFocus) * 100;
+                
+                column.className = 'chart-column';
+                column.style.height = `${height}%`;
+                column.title = `${focusData[index]} minutes focused`;
+                
+                const label = document.createElement('div');
+                label.className = 'chart-label';
+                label.textContent = hour;
+                
+                column.appendChild(label);
+                chartBar.appendChild(column);
+            });
+        }
+        
+        // Update insights based on current data
+        function updateInsights() {
+            // Current streak in minutes
+            const currentStreakMinutes = Math.floor(focusTimer / 60);
+            currentStreakEl.textContent = currentStreakMinutes === 1 ? '1 minute' : `${currentStreakMinutes} minutes`;
+            
+            // Best time in minutes
+            const bestTimeMinutes = Math.floor(stats.longestSession / 60);
+            bestTimeEl.textContent = bestTimeMinutes === 1 ? '1 minute' : `${bestTimeMinutes} minutes`;
+            
+            // Interruption rate (average minutes between interruptions)
+            const avgFocusMinutes = Math.floor(stats.avgFocus / 60);
+            interruptionRateEl.textContent = avgFocusMinutes === 1 ? '1 minute' : `${avgFocusMinutes} minutes`;
+        }
+        
+        // Initialize the app when the page loads
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

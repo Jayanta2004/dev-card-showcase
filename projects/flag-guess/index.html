@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌍 Flag Guess · World Quiz</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0b3b5c 0%, #1b4f6e 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .game-container {
+      max-width: 800px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 48px;
+      padding: 2rem 2rem 2.4rem;
+      box-shadow: 0 30px 40px -15px rgba(0, 0, 0, 0.5);
+      color: white;
+    }
+
+    .game-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 2.1rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .score-card {
+      background: rgba(255, 215, 100, 0.15);
+      border: 1px solid rgba(255, 220, 120, 0.4);
+      padding: 0.5rem 1.5rem;
+      border-radius: 60px;
+      font-size: 1.4rem;
+      font-weight: 600;
+      backdrop-filter: blur(6px);
+    }
+
+    /* flag display area */
+    .flag-stage {
+      background: rgba(10, 30, 45, 0.5);
+      border-radius: 32px;
+      padding: 2rem;
+      margin: 1.2rem 0 1.8rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 200, 0.2);
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    .flag-emoji {
+      font-size: 10rem;
+      line-height: 1.2;
+      text-shadow: 0 8px 12px rgba(0,0,0,0.4);
+      margin-bottom: 0.5rem;
+      filter: drop-shadow(0 10px 8px #00000033);
+      letter-spacing: 8px;
+    }
+
+    .flag-fallback {
+      font-size: 1.2rem;
+      color: #bedae6;
+      margin-top: 0.2rem;
+      font-style: italic;
+    }
+
+    /* options grid */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin: 1.8rem 0 1.5rem;
+    }
+
+    .country-option {
+      background: rgba(50, 80, 100, 0.4);
+      border: 2px solid rgba(255, 255, 240, 0.2);
+      border-radius: 60px;
+      padding: 1rem 0.8rem;
+      font-size: 1.35rem;
+      font-weight: 500;
+      color: #f5ffed;
+      backdrop-filter: blur(8px);
+      transition: all 0.1s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-shadow: 0 2px 4px black;
+    }
+
+    .country-option:hover:not(:disabled) {
+      background: rgba(100, 160, 180, 0.6);
+      border-color: #ffecaf;
+      transform: scale(1.02);
+    }
+
+    .country-option.correct {
+      background: #1f7a5c;
+      border-color: #b8ffd0;
+      color: white;
+    }
+
+    .country-option.wrong {
+      background: #a1433a;
+      border-color: #ffb0a5;
+      color: #ffeae5;
+      opacity: 0.9;
+    }
+
+    .country-option:disabled {
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+
+    /* feedback & next */
+    .feedback-area {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+      margin-bottom: 0.8rem;
+      min-height: 60px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 40px;
+      padding: 0.6rem 1.5rem;
+    }
+
+    .message {
+      font-size: 1.2rem;
+      font-weight: 450;
+    }
+
+    .next-btn {
+      background: #ffbf5e;
+      border: none;
+      color: #0a2f44;
+      padding: 0.7rem 2rem;
+      border-radius: 50px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      border: 1px solid #ffe8bc;
+      transition: 0.1s;
+    }
+
+    .next-btn:active {
+      transform: scale(0.96);
+    }
+
+    .next-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+      transform: none;
+    }
+
+    .restart-btn {
+      background: transparent;
+      border: 1px solid #aad0d9;
+      color: #dbf2ff;
+      padding: 0.4rem 1.5rem;
+      border-radius: 40px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+
+    .restart-btn:hover {
+      background: rgba(200, 230, 240, 0.2);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: #c8e2ea;
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 500px) {
+      .options-grid { grid-template-columns: 1fr; }
+      .flag-emoji { font-size: 7rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <!-- header with score & title -->
+    <div class="game-header">
+      <h1>🏁 Flag Guess</h1>
+      <div class="score-card">⭐ <span id="scoreValue">0</span></div>
+    </div>
+
+    <!-- flag display (emojis) -->
+    <div class="flag-stage">
+      <div id="flagEmoji" class="flag-emoji">🇯🇵</div>
+      <div id="flagHint" class="flag-fallback">🌍 which country?</div>
+    </div>
+
+    <!-- answer options (grid) -->
+    <div id="optionsContainer" class="options-grid">
+      <!-- js will inject 4 buttons -->
+    </div>
+
+    <!-- feedback and next / restart -->
+    <div class="feedback-area">
+      <span id="feedbackMessage" class="message">🔍 Choose a country</span>
+      <button id="nextFlagBtn" class="next-btn" disabled>➡ Next flag</button>
+    </div>
+
+    <!-- bottom controls -->
+    <div style="display: flex; justify-content: flex-end;">
+      <button id="restartBtn" class="restart-btn">⟲ New game</button>
+    </div>
+    <footer>🎌 guess the flag · emoji edition</footer>
+  </div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      // ---------- FLAG DATASET (country -> flag emoji) ----------
+      const flagsDB = [
+        { country: "Japan", emoji: "🇯🇵" },
+        { country: "Brazil", emoji: "🇧🇷" },
+        { country: "France", emoji: "🇫🇷" },
+        { country: "Germany", emoji: "🇩🇪" },
+        { country: "Italy", emoji: "🇮🇹" },
+        { country: "Spain", emoji: "🇪🇸" },
+        { country: "India", emoji: "🇮🇳" },
+        { country: "Australia", emoji: "🇦🇺" },
+        { country: "Canada", emoji: "🇨🇦" },
+        { country: "Mexico", emoji: "🇲🇽" },
+        { country: "South Korea", emoji: "🇰🇷" },
+        { country: "Netherlands", emoji: "🇳🇱" },
+        { country: "Sweden", emoji: "🇸🇪" },
+        { country: "Argentina", emoji: "🇦🇷" },
+        { country: "South Africa", emoji: "🇿🇦" },
+        { country: "Egypt", emoji: "🇪🇬" },
+        { country: "China", emoji: "🇨🇳" },
+        { country: "USA", emoji: "🇺🇸" },
+        { country: "UK", emoji: "🇬🇧" },
+        { country: "Russia", emoji: "🇷🇺" }
+      ];
+
+      // ---------- GAME STATE ----------
+      let currentFlagIndex = 0;           // index of correct flag from flagsDB
+      let currentOptions = [];           // array of 4 country names (strings)
+      let correctCountry = "";
+      let score = 0;
+      let isAnswered = false;           // true after user picks an option
+      let optionsDisabled = false;
+
+      // DOM elements
+      const flagEmojiEl = document.getElementById('flagEmoji');
+      const flagHintEl = document.getElementById('flagHint');
+      const optionsDiv = document.getElementById('optionsContainer');
+      const feedbackEl = document.getElementById('feedbackMessage');
+      const nextBtn = document.getElementById('nextFlagBtn');
+      const scoreEl = document.getElementById('scoreValue');
+      const restartBtn = document.getElementById('restartBtn');
+
+      // ---------- HELPER: shuffle array (Fisher–Yates) ----------
+      function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      // ---------- pick a random distinct flags for options ----------
+      function generateOptions(correctIdx) {
+        // correct country name
+        const correct = flagsDB[correctIdx].country;
+        
+        // create pool of other countries (all except correct)
+        const otherCountries = flagsDB
+          .map((item, idx) => idx !== correctIdx ? item.country : null)
+          .filter(Boolean);
+        
+        // shuffle other countries
+        const shuffledOthers = shuffleArray([...otherCountries]);
+        
+        // take first 3 distinct wrong options
+        const wrongOptions = shuffledOthers.slice(0, 3);
+        
+        // combine correct + 3 wrong
+        let options = [correct, ...wrongOptions];
+        
+        // final shuffle so correct is not always first
+        options = shuffleArray(options);
+        
+        return options;
+      }
+
+      // ---------- load a new random flag ----------
+      function loadRandomFlag() {
+        // pick random flag from DB
+        const randomIndex = Math.floor(Math.random() * flagsDB.length);
+        currentFlagIndex = randomIndex;
+        correctCountry = flagsDB[currentFlagIndex].country;
+        
+        // set emoji display
+        flagEmojiEl.textContent = flagsDB[currentFlagIndex].emoji;
+        flagHintEl.textContent = `🌍 ${flagsDB[currentFlagIndex].country.length} letters`;
+        
+        // generate 4 options
+        currentOptions = generateOptions(currentFlagIndex);
+        
+        // reset answer state
+        isAnswered = false;
+        optionsDisabled = false;
+        nextBtn.disabled = true;
+        
+        // render option buttons
+        renderOptions();
+        
+        // clear any feedback / reset styles
+        feedbackEl.textContent = "🔍 Choose a country";
+      }
+
+      // ---------- render option buttons from currentOptions ----------
+      function renderOptions() {
+        optionsDiv.innerHTML = ''; // clear
+        
+        currentOptions.forEach(countryName => {
+          const btn = document.createElement('button');
+          btn.className = 'country-option';
+          btn.textContent = countryName;
+          
+          // add flag emoji as decoration (tiny)
+          const countryData = flagsDB.find(f => f.country === countryName);
+          if (countryData) {
+            btn.innerHTML = `${countryData.emoji} ${countryName}`;
+          } else {
+            btn.textContent = countryName; // fallback
+          }
+          
+          btn.addEventListener('click', (e) => handleGuess(btn, countryName));
+          
+          if (optionsDisabled || isAnswered) {
+            btn.disabled = true;
+          }
+          
+          optionsDiv.appendChild(btn);
+        });
+      }
+
+      // ---------- handle guess click ----------
+      function handleGuess(btn, selectedCountry) {
+        // prevent multiple answers
+        if (isAnswered) return;
+        if (optionsDisabled) return;
+        
+        // lock further answers
+        isAnswered = true;
+        optionsDisabled = true;
+        disableAllOptions();
+        
+        const isCorrect = (selectedCountry === correctCountry);
+        
+        // highlight correct / wrong
+        highlightAnswers(selectedCountry);
+        
+        // update score
+        if (isCorrect) {
+          score += 1;
+          feedbackEl.textContent = `✅ Correct! It's ${correctCountry}`;
+        } else {
+          feedbackEl.textContent = `❌ Nope, it's ${correctCountry}`;
+        }
+        
+        // update score display
+        scoreEl.textContent = score;
+        
+        // enable next button
+        nextBtn.disabled = false;
+      }
+
+      // ---------- disable all option buttons ----------
+      function disableAllOptions() {
+        const allBtns = document.querySelectorAll('.country-option');
+        allBtns.forEach(btn => {
+          btn.disabled = true;
+        });
+      }
+
+      // ---------- apply correct/wrong classes ----------
+      function highlightAnswers(selectedCountry) {
+        const allBtns = document.querySelectorAll('.country-option');
+        
+        allBtns.forEach(btn => {
+          // get country name (remove emoji if present)
+          let btnCountry = btn.textContent.trim();
+          // strip flag emoji if exists (simple: remove any non-word char flag? but we stored in innerHTML)
+          // we can compare using .textContent because flag emoji is at start
+          // e.g. "🇯🇵 Japan" – we can extract after space
+          const parts = btnCountry.split(' ');
+          let countryFromBtn = parts.length > 1 ? parts.slice(1).join(' ') : parts[0];
+          
+          // also handle plain text fallback
+          if (countryFromBtn.startsWith('🇯') || countryFromBtn.startsWith('🇧') || countryFromBtn.startsWith('🇫') || 
+              countryFromBtn.startsWith('🇩') || countryFromBtn.startsWith('🇮') || countryFromBtn.startsWith('🇪') ||
+              countryFromBtn.startsWith('🇮') || countryFromBtn.startsWith('🇦') || countryFromBtn.startsWith('🇨') ||
+              countryFromBtn.startsWith('🇲') || countryFromBtn.startsWith('🇰') || countryFromBtn.startsWith('🇳') ||
+              countryFromBtn.startsWith('🇸') || countryFromBtn.startsWith('🇦') || countryFromBtn.startsWith('🇿') ||
+              countryFromBtn.startsWith('🇪') || countryFromBtn.startsWith('🇨') || countryFromBtn.startsWith('🇺') ||
+              countryFromBtn.startsWith('🇬') || countryFromBtn.startsWith('🇷')) {
+            // remove first emoji (which is 2 chars) and trim
+            countryFromBtn = btn.textContent.slice(2).trim();
+          }
+          
+          // correct answer: always mark green
+          if (countryFromBtn === correctCountry) {
+            btn.classList.add('correct');
+          }
+          
+          // if this button is the one user selected AND it's wrong → mark red
+          if (countryFromBtn === selectedCountry && selectedCountry !== correctCountry) {
+            btn.classList.add('wrong');
+          }
+          
+          // if user selected correct, it will be both correct and selected – correct class overrides with green.
+          if (countryFromBtn === selectedCountry && selectedCountry === correctCountry) {
+            btn.classList.add('correct');  // already added, but fine
+          }
+        });
+      }
+
+      // ---------- restart game (reset score, new flag) ----------
+      function restartGame() {
+        score = 0;
+        scoreEl.textContent = '0';
+        loadRandomFlag();
+        feedbackEl.textContent = "🔄 New game! Guess the flag";
+        // enable next btn disabled via loadRandomFlag already
+      }
+
+      // ---------- next flag handler ----------
+      function nextFlag() {
+        if (!nextBtn.disabled) {
+          loadRandomFlag();
+        }
+      }
+
+      // ---------- initial setup & event listeners ----------
+      function initGame() {
+        // load first random flag
+        loadRandomFlag();
+        
+        // next button
+        nextBtn.addEventListener('click', nextFlag);
+        
+        // restart button
+        restartBtn.addEventListener('click', function() {
+          restartGame();
+        });
+        
+        // disable context menu on flags? not necessary
+      }
+
+      initGame();
+    })();
+  </script>
+</body>
+</html>

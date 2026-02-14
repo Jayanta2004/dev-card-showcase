@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Body Temperature Log 🌡️</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-thermometer-half"></i> Body Temperature Log</h1>
+            <p class="subtitle">Monitor your body temperature and track health trends</p>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Temperature Input -->
+            <div class="input-card">
+                <h3><i class="fas fa-plus-circle"></i> Log Temperature</h3>
+                <form id="temperature-form">
+                    <div class="form-group">
+                        <label for="temperature">Temperature (°C)</label>
+                        <input type="number" id="temperature" step="0.1" min="30" max="45" required>
+                        <div class="unit-toggle">
+                            <button type="button" id="celsius-btn" class="unit-btn active">°C</button>
+                            <button type="button" id="fahrenheit-btn" class="unit-btn">°F</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="measurement-time">Time of Measurement</label>
+                        <input type="datetime-local" id="measurement-time" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes (optional)</label>
+                        <textarea id="notes" rows="2" placeholder="How are you feeling? Any symptoms?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="measurement-method">Measurement Method</label>
+                        <select id="measurement-method">
+                            <option value="oral">Oral</option>
+                            <option value="axillary">Axillary (Armpit)</option>
+                            <option value="rectal">Rectal</option>
+                            <option value="tympanic">Tympanic (Ear)</option>
+                            <option value="temporal">Temporal (Forehead)</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Log Temperature
+                    </button>
+                </form>
+            </div>
+
+            <!-- Current Status -->
+            <div class="status-card">
+                <h3><i class="fas fa-info-circle"></i> Current Status</h3>
+                <div id="current-status" class="status-display">
+                    <div class="no-data">
+                        <i class="fas fa-thermometer-empty"></i>
+                        <p>No temperature readings yet</p>
+                        <small>Log your first temperature above</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Temperature Chart -->
+            <div class="chart-card">
+                <h3><i class="fas fa-chart-line"></i> Temperature Trends</h3>
+                <div class="chart-controls">
+                    <select id="chart-period">
+                        <option value="7">Last 7 Days</option>
+                        <option value="14">Last 14 Days</option>
+                        <option value="30" selected>Last 30 Days</option>
+                        <option value="90">Last 3 Months</option>
+                    </select>
+                </div>
+                <canvas id="temperatureChart"></canvas>
+            </div>
+
+            <!-- Recent Readings -->
+            <div class="readings-card">
+                <h3><i class="fas fa-history"></i> Recent Readings</h3>
+                <div id="recent-readings" class="readings-list">
+                    <div class="empty-state">
+                        <i class="fas fa-thermometer-empty"></i>
+                        <p>No readings to display</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Insights -->
+            <div class="insights-card">
+                <h3><i class="fas fa-stethoscope"></i> Health Insights</h3>
+                <div id="health-insights" class="insights-content">
+                    <div class="insight-item">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong>Normal Range</strong>
+                            <p>36.1°C - 37.2°C (96.9°F - 99.0°F) for adults</p>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <strong>Fever Alert</strong>
+                            <p>> 38.0°C (100.4°F) may indicate fever</p>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <i class="fas fa-thermometer-quarter"></i>
+                        <div>
+                            <strong>Low Temperature</strong>
+                            <p>< 35.0°C (95.0°F) may need medical attention</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-card">
+                <h3><i class="fas fa-chart-bar"></i> Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value" id="avg-temp">0.0°C</span>
+                        <span class="stat-label">Average</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="min-temp">0.0°C</span>
+                        <span class="stat-label">Lowest</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="max-temp">0.0°C</span>
+                        <span class="stat-label">Highest</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="readings-count">0</span>
+                        <span class="stat-label">Total Readings</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div id="alerts-section" class="alerts-section hidden">
+            <div class="alert-card">
+                <h3><i class="fas fa-exclamation-triangle"></i> Health Alerts</h3>
+                <div id="alerts-list" class="alerts-list">
+                    <!-- Alerts will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="export-section">
+            <button id="export-btn" class="btn-secondary">
+                <i class="fas fa-download"></i> Export Data
+            </button>
+            <button id="clear-data-btn" class="btn-secondary">
+                <i class="fas fa-trash"></i> Clear All Data
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

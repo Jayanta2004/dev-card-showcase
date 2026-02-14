@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Management Simulator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461 0%, #1e3799 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #4cd137 0%, #00a8ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a0a0c0;
+            margin-bottom: 10px;
+        }
+        
+        .game-area {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 1200px) {
+            .game-area {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+        }
+        
+        /* Left Panel - Resources & Stats */
+        .resources-panel {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            color: #00a8ff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 168, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .resource {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .resource:hover {
+            background-color: rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .resource-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+        
+        .resource-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .positive {
+            color: #4cd137;
+        }
+        
+        .negative {
+            color: #e84118;
+        }
+        
+        .neutral {
+            color: #fbc531;
+        }
+        
+        .stats-container {
+            margin-top: 25px;
+        }
+        
+        .stat-bar {
+            margin-bottom: 15px;
+        }
+        
+        .stat-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .stat-bar-outer {
+            height: 10px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .stat-bar-inner {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        
+        .population-bar {
+            background: linear-gradient(90deg, #8c7ae6, #9c88ff);
+        }
+        
+        .happiness-bar {
+            background: linear-gradient(90deg, #fbc531, #e1b12c);
+        }
+        
+        .environment-bar {
+            background: linear-gradient(90deg, #4cd137, #44bd32);
+        }
+        
+        /* Center Panel - City Map */
+        .city-panel {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .city-map {
+            flex-grow: 1;
+            background-color: rgba(30, 55, 153, 0.3);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            min-height: 500px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            padding: 15px;
+            gap: 15px;
+        }
+        
+        .city-tile {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        
+        .city-tile:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tile-empty {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+        
+        .tile-residential {
+            background: linear-gradient(135deg, #487eb0, #40739e);
+        }
+        
+        .tile-commercial {
+            background: linear-gradient(135deg, #fbc531, #e1b12c);
+        }
+        
+        .tile-industrial {
+            background: linear-gradient(135deg, #718093, #596275);
+        }
+        
+        .tile-park {
+            background: linear-gradient(135deg, #44bd32, #4cd137);
+        }
+        
+        .tile-power {
+            background: linear-gradient(135deg, #e84118, #c23616);
+        }
+        
+        .tile-water {
+            background: linear-gradient(135deg, #00a8ff, #0097e6);
+        }
+        
+        .tile-police {
+            background: linear-gradient(135deg, #273c75, #192a56);
+        }
+        
+        .tile-hospital {
+            background: linear-gradient(135deg, #c23616, #e84118);
+        }
+        
+        .tile-school {
+            background: linear-gradient(135deg, #8c7ae6, #9c88ff);
+        }
+        
+        .tile-level {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 0.8rem;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        /* Right Panel - Buildings & Events */
+        .actions-panel {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .buildings-container {
+            margin-bottom: 30px;
+        }
+        
+        .buildings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .building-card {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .building-card:hover {
+            background-color: rgba(0, 0, 0, 0.4);
+            transform: translateY(-3px);
+            border-color: rgba(0, 168, 255, 0.5);
+        }
+        
+        .building-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .building-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .building-cost {
+            font-size: 0.9rem;
+            color: #fbc531;
+            margin-bottom: 5px;
+        }
+        
+        .building-effect {
+            font-size: 0.8rem;
+            color: #a0a0c0;
+        }
+        
+        .events-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+        
+        .event-card {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid #fbc531;
+        }
+        
+        .event-card.urgent {
+            border-left-color: #e84118;
+            animation: pulse 2s infinite;
+        }
+        
+        .event-card.positive {
+            border-left-color: #4cd137;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(232, 65, 24, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(232, 65, 24, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(232, 65, 24, 0); }
+        }
+        
+        .event-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .event-description {
+            font-size: 0.9rem;
+            color: #a0a0c0;
+            margin-bottom: 10px;
+        }
+        
+        .event-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .event-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .event-btn.accept {
+            background-color: #4cd137;
+            color: white;
+        }
+        
+        .event-btn.reject {
+            background-color: #e84118;
+            color: white;
+        }
+        
+        .event-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Bottom Panel - Game Controls */
+        .controls-panel {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .time-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .time-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00a8ff;
+            min-width: 120px;
+        }
+        
+        .control-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            background-color: rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+        
+        .control-btn:hover {
+            background-color: rgba(0, 168, 255, 0.5);
+            transform: translateY(-3px);
+        }
+        
+        .control-btn:active {
+            transform: translateY(0);
+        }
+        
+        .game-speed {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .speed-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background-color: rgba(0, 0, 0, 0.2);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .speed-btn.active {
+            background-color: #00a8ff;
+        }
+        
+        .speed-btn:hover:not(.active) {
+            background-color: rgba(0, 168, 255, 0.3);
+        }
+        
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #8a8ac4;
+            font-size: 0.9rem;
+            padding: 20px;
+            width: 100%;
+        }
+        
+        /* Modal for building info */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: #1e3799;
+            padding: 30px;
+            border-radius: 15px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid #00a8ff;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.8rem;
+            color: #00a8ff;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .modal-stat {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .build-btn {
+            background-color: #4cd137;
+            color: white;
+        }
+        
+        .upgrade-btn {
+            background-color: #fbc531;
+            color: #333;
+        }
+        
+        .demolish-btn {
+            background-color: #e84118;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .city-tile {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .buildings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls-panel {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-city"></i> City Management Simulator</h1>
+            <p class="subtitle">Build and manage your city. Balance resources, keep citizens happy, and respond to events!</p>
+        </header>
+        
+        <div class="game-area">
+            <!-- Left Panel: Resources & Stats -->
+            <div class="resources-panel">
+                <h2 class="panel-title"><i class="fas fa-chart-line"></i> City Resources</h2>
+                
+                <div class="resource">
+                    <div class="resource-name">
+                        <i class="fas fa-money-bill-wave"></i> Funds
+                    </div>
+                    <div class="resource-value positive" id="funds">$10,000</div>
+                </div>
+                
+                <div class="resource">
+                    <div class="resource-name">
+                        <i class="fas fa-users"></i> Population
+                    </div>
+                    <div class="resource-value neutral" id="population">500</div>
+                </div>
+                
+                <div class="resource">
+                    <div class="resource-name">
+                        <i class="fas fa-bolt"></i> Energy
+                    </div>
+                    <div class="resource-value positive" id="energy">1,200/1,000</div>
+                </div>
+                
+                <div class="resource">
+                    <div class="resource-name">
+                        <i class="fas fa-tint"></i> Water
+                    </div>
+                    <div class="resource-value positive" id="water">900/800</div>
+                </div>
+                
+                <div class="resource">
+                    <div class="resource-name">
+                        <i class="fas fa-bread-slice"></i> Food
+                    </div>
+                    <div class="resource-value positive" id="food">800/600</div>
+                </div>
+                
+                <div class="resource">
+                    <div class="resource-name">
+                        <i class="fas fa-hard-hat"></i> Jobs
+                    </div>
+                    <div class="resource-value positive" id="jobs">420/500</div>
+                </div>
+                
+                <div class="stats-container">
+                    <h2 class="panel-title"><i class="fas fa-chart-bar"></i> City Statistics</h2>
+                    
+                    <div class="stat-bar">
+                        <div class="stat-label">
+                            <span>Population Growth</span>
+                            <span id="popGrowth">+5%</span>
+                        </div>
+                        <div class="stat-bar-outer">
+                            <div class="stat-bar-inner population-bar" id="popGrowthBar" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-bar">
+                        <div class="stat-label">
+                            <span>Citizen Happiness</span>
+                            <span id="happiness">72%</span>
+                        </div>
+                        <div class="stat-bar-outer">
+                            <div class="stat-bar-inner happiness-bar" id="happinessBar" style="width: 72%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-bar">
+                        <div class="stat-label">
+                            <span>Environment</span>
+                            <span id="environment">85%</span>
+                        </div>
+                        <div class="stat-bar-outer">
+                            <div class="stat-bar-inner environment-bar" id="environmentBar" style="width: 85%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center Panel: City Map -->
+            <div class="city-panel">
+                <h2 class="panel-title"><i class="fas fa-map"></i> City Map</h2>
+                <div class="city-map" id="cityMap">
+                    <!-- City tiles will be generated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Right Panel: Buildings & Events -->
+            <div class="actions-panel">
+                <div class="buildings-container">
+                    <h2 class="panel-title"><i class="fas fa-building"></i> Available Buildings</h2>
+                    <div class="buildings-grid" id="buildingsGrid">
+                        <!-- Building cards will be generated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="events-container">
+                    <h2 class="panel-title"><i class="fas fa-exclamation-circle"></i> City Events</h2>
+                    <div id="eventsContainer">
+                        <!-- Event cards will be generated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottom Panel: Game Controls -->
+        <div class="controls-panel">
+            <div class="time-controls">
+                <div class="time-display" id="timeDisplay">Year 1, Month 1</div>
+                <button class="control-btn" id="pauseBtn">
+                    <i class="fas fa-pause"></i> Pause
+                </button>
+                <button class="control-btn" id="playBtn">
+                    <i class="fas fa-play"></i> Play
+                </button>
+            </div>
+            
+            <div class="game-speed">
+                <button class="speed-btn active" data-speed="1">1x</button>
+                <button class="speed-btn" data-speed="2">2x</button>
+                <button class="speed-btn" data-speed="4">4x</button>
+            </div>
+            
+            <button class="control-btn" id="saveBtn">
+                <i class="fas fa-save"></i> Save City
+            </button>
+            
+            <button class="control-btn" id="loadBtn">
+                <i class="fas fa-folder-open"></i> Load City
+            </button>
+            
+            <button class="control-btn" id="helpBtn">
+                <i class="fas fa-question-circle"></i> Help
+            </button>
+        </div>
+        
+        <footer>
+            <p>City Management Simulator | Balance resources, manage services, and grow your city | Made for educational purposes</p>
+        </footer>
+    </div>
+    
+    <!-- Modal for building info -->
+    <div class="modal" id="buildingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Building Information</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modalDescription">Building description will appear here.</div>
+                
+                <div class="modal-stats">
+                    <div class="modal-stat">
+                        <div>Cost: <span id="modalCost">$0</span></div>
+                    </div>
+                    <div class="modal-stat">
+                        <div>Upkeep: <span id="modalUpkeep">$0/month</span></div>
+                    </div>
+                    <div class="modal-stat">
+                        <div>Energy: <span id="modalEnergy">0</span></div>
+                    </div>
+                    <div class="modal-stat">
+                        <div>Water: <span id="modalWater">0</span></div>
+                    </div>
+                </div>
+                
+                <div id="modalEffects">Effects will appear here.</div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn build-btn" id="modalBuildBtn">
+                    <i class="fas fa-hammer"></i> Build
+                </button>
+                <button class="modal-btn upgrade-btn" id="modalUpgradeBtn">
+                    <i class="fas fa-arrow-up"></i> Upgrade
+                </button>
+                <button class="modal-btn demolish-btn" id="modalDemolishBtn">
+                    <i class="fas fa-trash"></i> Demolish
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Game State
+        const gameState = {
+            funds: 10000,
+            population: 500,
+            energy: 1200,
+            water: 900,
+            food: 800,
+            jobs: 420,
+            
+            // Stats
+            happiness: 72,
+            environment: 85,
+            populationGrowth: 5,
+            
+            // Time
+            year: 1,
+            month: 1,
+            isPaused: false,
+            gameSpeed: 1,
+            
+            // City grid (5x5 for simplicity)
+            cityGrid: [],
+            gridSize: 5,
+            
+            // Selected tile
+            selectedTile: null,
+            
+            // Events
+            events: [],
+            
+            // Building costs
+            buildingCosts: {
+                residential: 1000,
+                commercial: 1500,
+                industrial: 2000,
+                park: 500,
+                power: 2500,
+                waterplant: 3000,
+                police: 1200,
+                hospital: 1800,
+                school: 1000
+            }
+        };
+        
+        // Building data
+        const buildingData = {
+            residential: {
+                name: "Residential Zone",
+                icon: "fas fa-home",
+                cost: 1000,
+                upkeep: 50,
+                energy: 20,
+                water: 30,
+                effects: "+100 Population, +5 Happiness",
+                description: "Houses for your citizens. Increases population and happiness.",
+                produces: { population: 100 }
+            },
+            commercial: {
+                name: "Commercial Zone",
+                icon: "fas fa-store",
+                cost: 1500,
+                upkeep: 75,
+                energy: 40,
+                water: 20,
+                effects: "+50 Jobs, +$200 Income, +3 Happiness",
+                description: "Shops and businesses. Provides jobs and generates income.",
+                produces: { jobs: 50, income: 200 }
+            },
+            industrial: {
+                name: "Industrial Zone",
+                icon: "fas fa-industry",
+                cost: 2000,
+                upkeep: 100,
+                energy: 100,
+                water: 50,
+                effects: "+100 Jobs, +$300 Income, -5 Environment",
+                description: "Factories and production facilities. Provides many jobs but pollutes the environment.",
+                produces: { jobs: 100, income: 300 },
+                negatives: { environment: -5 }
+            },
+            park: {
+                name: "City Park",
+                icon: "fas fa-tree",
+                cost: 500,
+                upkeep: 25,
+                energy: 5,
+                water: 40,
+                effects: "+15 Happiness, +10 Environment",
+                description: "Green space for recreation. Increases happiness and improves environment.",
+                produces: { happiness: 15, environment: 10 }
+            },
+            power: {
+                name: "Power Plant",
+                icon: "fas fa-bolt",
+                cost: 2500,
+                upkeep: 150,
+                energy: -500, // Negative because it produces energy
+                water: 100,
+                effects: "+500 Energy, -10 Environment",
+                description: "Produces electricity for the city. Essential but polluting.",
+                produces: { energy: 500 },
+                negatives: { environment: -10 }
+            },
+            waterplant: {
+                name: "Water Plant",
+                icon: "fas fa-tint",
+                cost: 3000,
+                upkeep: 125,
+                energy: 80,
+                water: -400, // Negative because it produces water
+                effects: "+400 Water, -5 Environment",
+                description: "Provides clean water to the city. Essential but has environmental impact.",
+                produces: { water: 400 },
+                negatives: { environment: -5 }
+            },
+            police: {
+                name: "Police Station",
+                icon: "fas fa-shield-alt",
+                cost: 1200,
+                upkeep: 80,
+                energy: 30,
+                water: 20,
+                effects: "+10 Happiness, Reduces Crime",
+                description: "Keeps the city safe. Increases happiness by reducing crime.",
+                produces: { happiness: 10 }
+            },
+            hospital: {
+                name: "Hospital",
+                icon: "fas fa-hospital",
+                cost: 1800,
+                upkeep: 120,
+                energy: 60,
+                water: 40,
+                effects: "+15 Happiness, +5 Population Growth",
+                description: "Provides healthcare. Increases happiness and population growth.",
+                produces: { happiness: 15, populationGrowth: 5 }
+            },
+            school: {
+                name: "School",
+                icon: "fas fa-graduation-cap",
+                cost: 1000,
+                upkeep: 70,
+                energy: 25,
+                water: 20,
+                effects: "+10 Happiness, +5 Population Growth",
+                description: "Educates citizens. Increases happiness and population growth.",
+                produces: { happiness: 10, populationGrowth: 5 }
+            }
+        };
+        
+        // Available building types
+        const availableBuildings = [
+            'residential', 'commercial', 'industrial', 'park',
+            'power', 'waterplant', 'police', 'hospital', 'school'
+        ];
+        
+        // Event data
+        const eventData = [
+            {
+                title: "Population Boom",
+                description: "A sudden influx of new residents is looking for housing!",
+                type: "positive",
+                choices: [
+                    { text: "Build residential zones", action: "boostPopulation", effect: "+200 Population, -$1000" },
+                    { text: "Ignore for now", action: "none", effect: "-5 Happiness" }
+                ]
+            },
+            {
+                title: "Energy Shortage",
+                description: "The city is experiencing rolling blackouts due to high demand!",
+                type: "urgent",
+                choices: [
+                    { text: "Build a power plant", action: "buildPower", effect: "+500 Energy, -$2500" },
+                    { text: "Implement conservation", action: "conserveEnergy", effect: "-10 Happiness, -20% Energy Use" }
+                ]
+            },
+            {
+                title: "Festival Proposal",
+                description: "Citizens are asking to host a city-wide festival.",
+                type: "positive",
+                choices: [
+                    { text: "Fund the festival", action: "fundFestival", effect: "+15 Happiness, -$800" },
+                    { text: "Decline due to costs", action: "declineFestival", effect: "-5 Happiness" }
+                ]
+            },
+            {
+                title: "Environmental Protest",
+                description: "Activists are protesting industrial pollution in the city.",
+                type: "urgent",
+                choices: [
+                    { text: "Invest in green tech", action: "greenTech", effect: "+10 Environment, -$1200" },
+                    { text: "Ignore protests", action: "ignoreProtests", effect: "-10 Happiness, -5 Environment" }
+                ]
+            },
+            {
+                title: "Business Investment",
+                description: "A corporation wants to build a new headquarters in your city.",
+                type: "positive",
+                choices: [
+                    { text: "Welcome them", action: "welcomeBusiness", effect: "+$2000, +100 Jobs" },
+                    { text: "Reject due to concerns", action: "rejectBusiness", effect: "No effect" }
+                ]
+            }
+        ];
+        
+        // DOM Elements
+        const cityMap = document.getElementById('cityMap');
+        const buildingsGrid = document.getElementById('buildingsGrid');
+        const eventsContainer = document.getElementById('eventsContainer');
+        
+        // Resource displays
+        const fundsElement = document.getElementById('funds');
+        const populationElement = document.getElementById('population');
+        const energyElement = document.getElementById('energy');
+        const waterElement = document.getElementById('water');
+        const foodElement = document.getElementById('food');
+        const jobsElement = document.getElementById('jobs');
+        
+        // Stat displays
+        const popGrowthElement = document.getElementById('popGrowth');
+        const happinessElement = document.getElementById('happiness');
+        const environmentElement = document.getElementById('environment');
+        const popGrowthBar = document.getElementById('popGrowthBar');
+        const happinessBar = document.getElementById('happinessBar');
+        const environmentBar = document.getElementById('environmentBar');
+        
+        // Time display
+        const timeDisplay = document.getElementById('timeDisplay');
+        
+        // Control buttons
+        const pauseBtn = document.getElementById('pauseBtn');
+        const playBtn = document.getElementById('playBtn');
+        const speedButtons = document.querySelectorAll('.speed-btn');
+        const saveBtn = document.getElementById('saveBtn');
+        const loadBtn = document.getElementById('loadBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        
+        // Modal elements
+        const buildingModal = document.getElementById('buildingModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDescription = document.getElementById('modalDescription');
+        const modalCost = document.getElementById('modalCost');
+        const modalUpkeep = document.getElementById('modalUpkeep');
+        const modalEnergy = document.getElementById('modalEnergy');
+        const modalWater = document.getElementById('modalWater');
+        const modalEffects = document.getElementById('modalEffects');
+        const modalBuildBtn = document.getElementById('modalBuildBtn');
+        const modalUpgradeBtn = document.getElementById('modalUpgradeBtn');
+        const modalDemolishBtn = document.getElementById('modalDemolishBtn');
+        const closeModal = document.getElementById('closeModal');
+        
+        // Initialize the game
+        function initGame() {
+            // Initialize city grid
+            initializeCityGrid();
+            
+            // Create building cards
+            createBuildingCards();
+            
+            // Update all displays
+            updateResourceDisplays();
+            updateStatDisplays();
+            updateTimeDisplay();
+            
+            // Start game timer
+            setInterval(gameTick, 1000);
+            
+            // Generate initial events
+            generateEvent();
+            setTimeout(() => generateEvent(), 10000);
+            
+            // Add event listeners
+            setupEventListeners();
+        }
+        
+        // Initialize the city grid
+        function initializeCityGrid() {
+            cityMap.innerHTML = '';
+            gameState.cityGrid = [];
+            
+            for (let y = 0; y < gameState.gridSize; y++) {
+                gameState.cityGrid[y] = [];
+                
+                for (let x = 0; x < gameState.gridSize; x++) {
+                    // Create a tile object
+                    const tile = {
+                        x: x,
+                        y: y,
+                        building: null,
+                        level: 0
+                    };
+                    
+                    gameState.cityGrid[y][x] = tile;
+                    
+                    // Create tile element
+                    const tileElement = document.createElement('div');
+                    tileElement.className = 'city-tile tile-empty';
+                    tileElement.dataset.x = x;
+                    tileElement.dataset.y = y;
+                    tileElement.innerHTML = '<i class="fas fa-plus"></i>';
+                    
+                    // Add click event
+                    tileElement.addEventListener('click', () => selectTile(x, y));
+                    
+                    cityMap.appendChild(tileElement);
+                }
+            }
+            
+            // Add some initial buildings for a starting city
+            placeInitialBuildings();
+        }
+        
+        // Place initial buildings
+        function placeInitialBuildings() {
+            // Place a few residential zones
+            buildAt(1, 1, 'residential');
+            buildAt(3, 1, 'residential');
+            
+            // Place a commercial zone
+            buildAt(2, 2, 'commercial');
+            
+            // Place a power plant
+            buildAt(4, 0, 'power');
+            
+            // Place a water plant
+            buildAt(0, 4, 'waterplant');
+            
+            // Place a park
+            buildAt(2, 4, 'park');
+        }
+        
+        // Create building cards for the UI
+        function createBuildingCards() {
+            buildingsGrid.innerHTML = '';
+            
+            availableBuildings.forEach(buildingType => {
+                const building = buildingData[buildingType];
+                
+                const card = document.createElement('div');
+                card.className = 'building-card';
+                card.dataset.type = buildingType;
+                
+                card.innerHTML = `
+                    <div class="building-icon">
+                        <i class="${building.icon}"></i>
+                    </div>
+                    <div class="building-name">${building.name}</div>
+                    <div class="building-cost">$${building.cost}</div>
+                    <div class="building-effect">${building.effects}</div>
+                `;
+                
+                card.addEventListener('click', () => showBuildingModal(buildingType));
+                
+                buildingsGrid.appendChild(card);
+            });
+        }
+        
+        // Select a tile on the city map
+        function selectTile(x, y) {
+            // Deselect previous tile
+            const previousSelected = document.querySelector('.city-tile.selected');
+            if (previousSelected) {
+                previousSelected.classList.remove('selected');
+            }
+            
+            // Select new tile
+            const tileElement = document.querySelector(`.city-tile[data-x="${x}"][data-y="${y}"]`);
+            tileElement.classList.add('selected');
+            
+            // Update game state
+            gameState.selectedTile = { x, y };
+            
+            // Show building modal if there's a building
+            const tile = gameState.cityGrid[y][x];
+            if (tile.building) {
+                showBuildingModal(tile.building, tile.level);
+            } else {
+                showBuildingModal();
+            }
+        }
+        
+        // Show building modal
+        function showBuildingModal(buildingType = null, level = 0) {
+            if (buildingType) {
+                const building = buildingData[buildingType];
+                const tile = gameState.selectedTile ? 
+                    gameState.cityGrid[gameState.selectedTile.y][gameState.selectedTile.x] : null;
+                
+                modalTitle.textContent = building.name + (level > 0 ? ` (Level ${level})` : '');
+                modalDescription.textContent = building.description;
+                modalCost.textContent = `$${building.cost * (level + 1)}`;
+                modalUpkeep.textContent = `$${building.upkeep * (level + 1)}/month`;
+                modalEnergy.textContent = building.energy * (level + 1);
+                modalWater.textContent = building.water * (level + 1);
+                modalEffects.textContent = building.effects;
+                
+                // Show/hide buttons based on whether there's already a building
+                if (tile && tile.building) {
+                    modalBuildBtn.style.display = 'none';
+                    modalUpgradeBtn.style.display = 'block';
+                    modalDemolishBtn.style.display = 'block';
+                    
+                    // Update upgrade cost
+                    modalUpgradeBtn.innerHTML = `<i class="fas fa-arrow-up"></i> Upgrade ($${building.cost * (level + 1)})`;
+                } else {
+                    modalBuildBtn.style.display = 'block';
+                    modalUpgradeBtn.style.display = 'none';
+                    modalDemolishBtn.style.display = 'none';
+                }
+                
+                // Set up modal button actions
+                modalBuildBtn.onclick = () => {
+                    if (gameState.selectedTile) {
+                        buildAt(gameState.selectedTile.x, gameState.selectedTile.y, buildingType);
+                        buildingModal.style.display = 'none';
+                    }
+                };
+                
+                modalUpgradeBtn.onclick = () => {
+                    if (gameState.selectedTile && tile) {
+                        upgradeAt(gameState.selectedTile.x, gameState.selectedTile.y);
+                        buildingModal.style.display = 'none';
+                    }
+                };
+                
+                modalDemolishBtn.onclick = () => {
+                    if (gameState.selectedTile && tile) {
+                        demolishAt(gameState.selectedTile.x, gameState.selectedTile.y);
+                        buildingModal.style.display = 'none';
+                    }
+                };
+            } else {
+                // No building selected - show generic modal
+                modalTitle.textContent = "Empty Lot";
+                modalDescription.textContent = "This is an empty lot. You can build a new structure here.";
+                modalCost.textContent = "Varies";
+                modalUpkeep.textContent = "Varies";
+                modalEnergy.textContent = "Varies";
+                modalWater.textContent = "Varies";
+                modalEffects.textContent = "Depends on building type";
+                
+                modalBuildBtn.style.display = 'block';
+                modalUpgradeBtn.style.display = 'none';
+                modalDemolishBtn.style.display = 'none';
+                
+                modalBuildBtn.textContent = "Select a Building Type";
+                modalBuildBtn.onclick = () => {
+                    buildingModal.style.display = 'none';
+                };
+            }
+            
+            buildingModal.style.display = 'flex';
+        }
+        
+        // Build at a specific tile
+        function buildAt(x, y, buildingType) {
+            const tile = gameState.cityGrid[y][x];
+            const building = buildingData[buildingType];
+            
+            // Check if we have enough funds
+            if (gameState.funds < building.cost) {
+                alert(`Not enough funds! Need $${building.cost}, have $${gameState.funds}`);
+                return false;
+            }
+            
+            // Check if tile is empty
+            if (tile.building) {
+                alert("This tile already has a building!");
+                return false;
+            }
+            
+            // Deduct cost
+            gameState.funds -= building.cost;
+            
+            // Update tile
+            tile.building = buildingType;
+            tile.level = 1;
+            
+            // Update tile appearance
+            const tileElement = document.querySelector(`.city-tile[data-x="${x}"][data-y="${y}"]`);
+            tileElement.className = `city-tile tile-${buildingType}`;
+            tileElement.innerHTML = `<i class="${building.icon}"></i><div class="tile-level">Lvl 1</div>`;
+            
+            // Apply building effects
+            applyBuildingEffects(buildingType, 1);
+            
+            // Update displays
+            updateResourceDisplays();
+            updateStatDisplays();
+            
+            return true;
+        }
+        
+        // Upgrade a building
+        function upgradeAt(x, y) {
+            const tile = gameState.cityGrid[y][x];
+            const buildingType = tile.building;
+            const building = buildingData[buildingType];
+            const upgradeCost = building.cost * (tile.level + 1);
+            
+            // Check if we have enough funds
+            if (gameState.funds < upgradeCost) {
+                alert(`Not enough funds! Need $${upgradeCost}, have $${gameState.funds}`);
+                return false;
+            }
+            
+            // Deduct cost
+            gameState.funds -= upgradeCost;
+            
+            // Remove old effects
+            removeBuildingEffects(buildingType, tile.level);
+            
+            // Upgrade
+            tile.level += 1;
+            
+            // Apply new effects
+            applyBuildingEffects(buildingType, tile.level);
+            
+            // Update tile appearance
+            const tileElement = document.querySelector(`.city-tile[data-x="${x}"][data-y="${y}"]`);
+            tileElement.innerHTML = `<i class="${building.icon}"></i><div class="tile-level">Lvl ${tile.level}</div>`;
+            
+            // Update displays
+            updateResourceDisplays();
+            updateStatDisplays();
+            
+            return true;
+        }
+        
+        // Demolish a building
+        function demolishAt(x, y) {
+            const tile = gameState.cityGrid[y][x];
+            const buildingType = tile.building;
+            
+            if (!buildingType) return false;
+            
+            // Remove effects
+            removeBuildingEffects(buildingType, tile.level);
+            
+            // Refund some of the cost (50%)
+            const building = buildingData[buildingType];
+            const refund = Math.floor(building.cost * tile.level * 0.5);
+            gameState.funds += refund;
+            
+            // Reset tile
+            tile.building = null;
+            tile.level = 0;
+            
+            // Update tile appearance
+            const tileElement = document.querySelector(`.city-tile[data-x="${x}"][data-y="${y}"]`);
+            tileElement.className = 'city-tile tile-empty';
+            tileElement.innerHTML = '<i class="fas fa-plus"></i>';
+            
+            // Update displays
+            updateResourceDisplays();
+            updateStatDisplays();
+            
+            return true;
+        }
+        
+        // Apply building effects to game state
+        function applyBuildingEffects(buildingType, level) {
+            const building = buildingData[buildingType];
+            
+            // Apply positive effects
+            if (building.produces) {
+                Object.keys(building.produces).forEach(effect => {
+                    const value = building.produces[effect] * level;
+                    
+                    switch(effect) {
+                        case 'population':
+                            gameState.population += value;
+                            break;
+                        case 'jobs':
+                            gameState.jobs += value;
+                            break;
+                        case 'income':
+                            // Income is handled monthly in gameTick
+                            break;
+                        case 'happiness':
+                            gameState.happiness += value;
+                            break;
+                        case 'environment':
+                            gameState.environment += value;
+                            break;
+                        case 'energy':
+                            gameState.energy += value;
+                            break;
+                        case 'water':
+                            gameState.energy += value;
+                            break;
+                        case 'populationGrowth':
+                            gameState.populationGrowth += value;
+                            break;
+                    }
+                });
+            }
+            
+            // Apply negative effects
+            if (building.negatives) {
+                Object.keys(building.negatives).forEach(effect => {
+                    const value = building.negatives[effect] * level;
+                    
+                    switch(effect) {
+                        case 'environment':
+                            gameState.environment += value; // Negative value, so it decreases
+                            break;
+                    }
+                });
+            }
+            
+            // Apply resource usage
+            if (building.energy > 0) {
+                gameState.energy -= building.energy * level;
+            } else if (building.energy < 0) {
+                gameState.energy += Math.abs(building.energy) * level;
+            }
+            
+            if (building.water > 0) {
+                gameState.water -= building.water * level;
+            } else if (building.water < 0) {
+                gameState.water += Math.abs(building.water) * level;
+            }
+        }
+        
+        // Remove building effects from game state
+        function removeBuildingEffects(buildingType, level) {
+            const building = buildingData[buildingType];
+            
+            // Remove positive effects
+            if (building.produces) {
+                Object.keys(building.produces).forEach(effect => {
+                    const value = building.produces[effect] * level;
+                    
+                    switch(effect) {
+                        case 'population':
+                            gameState.population -= value;
+                            break;
+                        case 'jobs':
+                            gameState.jobs -= value;
+                            break;
+                        case 'income':
+                            // Income is handled monthly in gameTick
+                            break;
+                        case 'happiness':
+                            gameState.happiness -= value;
+                            break;
+                        case 'environment':
+                            gameState.environment -= value;
+                            break;
+                        case 'energy':
+                            gameState.energy -= value;
+                            break;
+                        case 'water':
+                            gameState.energy -= value;
+                            break;
+                        case 'populationGrowth':
+                            gameState.populationGrowth -= value;
+                            break;
+                    }
+                });
+            }
+            
+            // Remove negative effects
+            if (building.negatives) {
+                Object.keys(building.negatives).forEach(effect => {
+                    const value = building.negatives[effect] * level;
+                    
+                    switch(effect) {
+                        case 'environment':
+                            gameState.environment -= value; // Negative value, so it increases
+                            break;
+                    }
+                });
+            }
+            
+            // Remove resource usage
+            if (building.energy > 0) {
+                gameState.energy += building.energy * level;
+            } else if (building.energy < 0) {
+                gameState.energy -= Math.abs(building.energy) * level;
+            }
+            
+            if (building.water > 0) {
+                gameState.water += building.water * level;
+            } else if (building.water < 0) {
+                gameState.water -= Math.abs(building.water) * level;
+            }
+        }
+        
+        // Generate a random event
+        function generateEvent() {
+            if (gameState.events.length >= 3) return; // Max 3 events at once
+            
+            const randomEvent = eventData[Math.floor(Math.random() * eventData.length)];
+            const eventId = Date.now(); // Simple ID
+            
+            gameState.events.push({
+                id: eventId,
+                ...randomEvent
+            });
+            
+            displayEvents();
+        }
+        
+        // Display all active events
+        function displayEvents() {
+            eventsContainer.innerHTML = '';
+            
+            gameState.events.forEach(event => {
+                const eventCard = document.createElement('div');
+                eventCard.className = `event-card ${event.type}`;
+                eventCard.dataset.id = event.id;
+                
+                let choicesHTML = '';
+                event.choices.forEach((choice, index) => {
+                    choicesHTML += `
+                        <button class="event-btn ${index === 0 ? 'accept' : 'reject'}" data-action="${choice.action}">
+                            ${choice.text} <br><small>${choice.effect}</small>
+                        </button>
+                    `;
+                });
+                
+                eventCard.innerHTML = `
+                    <div class="event-title">
+                        <span>${event.title}</span>
+                        <i class="fas fa-${event.type === 'urgent' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                    </div>
+                    <div class="event-description">${event.description}</div>
+                    <div class="event-actions">
+                        ${choicesHTML}
+                    </div>
+                `;
+                
+                // Add event listeners to choice buttons
+                eventCard.querySelectorAll('.event-btn').forEach(btn => {
+                    btn.addEventListener('click', () => handleEventChoice(event.id, btn.dataset.action));
+                });
+                
+                eventsContainer.appendChild(eventCard);
+            });
+        }
+        
+        // Handle event choice
+        function handleEventChoice(eventId, action) {
+            // Find the event
+            const eventIndex = gameState.events.findIndex(e => e.id === eventId);
+            if (eventIndex === -1) return;
+            
+            // Remove the event
+            gameState.events.splice(eventIndex, 1);
+            
+            // Handle the action
+            switch(action) {
+                case 'boostPopulation':
+                    gameState.population += 200;
+                    gameState.funds -= 1000;
+                    break;
+                case 'buildPower':
+                    // Find an empty tile for power plant
+                    let placed = false;
+                    for (let y = 0; y < gameState.gridSize && !placed; y++) {
+                        for (let x = 0; x < gameState.gridSize && !placed; x++) {
+                            if (!gameState.cityGrid[y][x].building) {
+                                placed = buildAt(x, y, 'power');
+                            }
+                        }
+                    }
+                    if (!placed) {
+                        alert("No space for a new power plant!");
+                        gameState.happiness -= 10;
+                    }
+                    break;
+                case 'conserveEnergy':
+                    gameState.happiness -= 10;
+                    // Energy reduction would be applied in gameTick
+                    break;
+                case 'fundFestival':
+                    gameState.happiness += 15;
+                    gameState.funds -= 800;
+                    break;
+                case 'declineFestival':
+                    gameState.happiness -= 5;
+                    break;
+                case 'greenTech':
+                    gameState.environment += 10;
+                    gameState.funds -= 1200;
+                    break;
+                case 'ignoreProtests':
+                    gameState.happiness -= 10;
+                    gameState.environment -= 5;
+                    break;
+                case 'welcomeBusiness':
+                    gameState.funds += 2000;
+                    gameState.jobs += 100;
+                    break;
+                case 'rejectBusiness':
+                    // No effect
+                    break;
+            }
+            
+            // Update displays
+            updateResourceDisplays();
+            updateStatDisplays();
+            displayEvents();
+        }
+        
+        // Game tick - runs every second
+        function gameTick() {
+            if (gameState.isPaused) return;
+            
+            // Calculate time based on game speed
+            for (let i = 0; i < gameState.gameSpeed; i++) {
+                processMonth();
+            }
+        }
+        
+        // Process a month of game time
+        function processMonth() {
+            // Advance time
+            gameState.month++;
+            if (gameState.month > 12) {
+                gameState.month = 1;
+                gameState.year++;
+                
+                // Generate a new event each year
+                generateEvent();
+            }
+            
+            // Update time display
+            updateTimeDisplay();
+            
+            // Calculate monthly income from buildings
+            let monthlyIncome = 0;
+            for (let y = 0; y < gameState.gridSize; y++) {
+                for (let x = 0; x < gameState.gridSize; x++) {
+                    const tile = gameState.cityGrid[y][x];
+                    if (tile.building) {
+                        const building = buildingData[tile.building];
+                        
+                        // Add income from commercial and industrial zones
+                        if (building.produces && building.produces.income) {
+                            monthlyIncome += building.produces.income * tile.level;
+                        }
+                        
+                        // Deduct upkeep costs
+                        gameState.funds -= building.upkeep * tile.level;
+                    }
+                }
+            }
+            
+            // Add monthly income
+            gameState.funds += monthlyIncome;
+            
+            // Calculate population growth
+            const growthFactor = gameState.populationGrowth / 100;
+            const newResidents = Math.floor(gameState.population * growthFactor / 12); // Monthly growth
+            gameState.population += newResidents;
+            
+            // Calculate happiness changes based on services
+            let happinessChange = 0;
+            
+            // Check if jobs are sufficient
+            const employmentRate = gameState.jobs / gameState.population;
+            if (employmentRate < 0.9) {
+                happinessChange -= Math.floor((0.9 - employmentRate) * 20);
+            } else if (employmentRate > 1.1) {
+                happinessChange += 5;
+            }
+            
+            // Check if energy is sufficient
+            if (gameState.energy < gameState.population * 0.5) {
+                happinessChange -= 10;
+            }
+            
+            // Check if water is sufficient
+            if (gameState.water < gameState.population * 0.4) {
+                happinessChange -= 10;
+            }
+            
+            // Apply happiness change (capped)
+            gameState.happiness += happinessChange;
+            gameState.happiness = Math.max(0, Math.min(100, gameState.happiness));
+            
+            // Update environment (slow recovery)
+            if (gameState.environment < 100) {
+                gameState.environment += 1;
+            }
+            
+            // Random event chance (5% per month)
+            if (Math.random() < 0.05) {
+                generateEvent();
+            }
+            
+            // Update displays
+            updateResourceDisplays();
+            updateStatDisplays();
+        }
+        
+        // Update resource displays
+        function updateResourceDisplays() {
+            fundsElement.textContent = `$${gameState.funds.toLocaleString()}`;
+            populationElement.textContent = gameState.population.toLocaleString();
+            energyElement.textContent = `${gameState.energy.toLocaleString()}/1,000`;
+            waterElement.textContent = `${gameState.water.toLocaleString()}/800`;
+            foodElement.textContent = `${gameState.food.toLocaleString()}/600`;
+            jobsElement.textContent = `${gameState.jobs.toLocaleString()}/${gameState.population}`;
+            
+            // Color code based on status
+            fundsElement.className = `resource-value ${gameState.funds >= 0 ? 'positive' : 'negative'}`;
+            energyElement.className = `resource-value ${gameState.energy >= 1000 ? 'positive' : gameState.energy >= 500 ? 'neutral' : 'negative'}`;
+            waterElement.className = `resource-value ${gameState.water >= 800 ? 'positive' : gameState.water >= 400 ? 'neutral' : 'negative'}`;
+        }
+        
+        // Update stat displays
+        function updateStatDisplays() {
+            popGrowthElement.textContent = `${gameState.populationGrowth > 0 ? '+' : ''}${gameState.populationGrowth}%`;
+            happinessElement.textContent = `${Math.round(gameState.happiness)}%`;
+            environmentElement.textContent = `${Math.round(gameState.environment)}%`;
+            
+            // Update bars
+            popGrowthBar.style.width = `${65 + gameState.populationGrowth}%`;
+            happinessBar.style.width = `${gameState.happiness}%`;
+            environmentBar.style.width = `${gameState.environment}%`;
+            
+            // Color code happiness
+            if (gameState.happiness >= 70) {
+                happinessElement.className = 'positive';
+            } else if (gameState.happiness >= 40) {
+                happinessElement.className = 'neutral';
+            } else {
+                happinessElement.className = 'negative';
+            }
+        }
+        
+        // Update time display
+        function updateTimeDisplay() {
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                               "July", "August", "September", "October", "November", "December"];
+            
+            timeDisplay.textContent = `Year ${gameState.year}, ${monthNames[gameState.month - 1]}`;
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Game control buttons
+            pauseBtn.addEventListener('click', () => {
+                gameState.isPaused = true;
+                pauseBtn.disabled = true;
+                playBtn.disabled = false;
+            });
+            
+            playBtn.addEventListener('click', () => {
+                gameState.isPaused = false;
+                pauseBtn.disabled = false;
+                playBtn.disabled = true;
+            });
+            
+            // Speed buttons
+            speedButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    speedButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    gameState.gameSpeed = parseInt(btn.dataset.speed);
+                });
+            });
+            
+            // Save/Load buttons (simplified)
+            saveBtn.addEventListener('click', () => {
+                localStorage.setItem('cityManagementSave', JSON.stringify(gameState));
+                alert('City saved successfully!');
+            });
+            
+            loadBtn.addEventListener('click', () => {
+                const saved = localStorage.getItem('cityManagementSave');
+                if (saved) {
+                    const savedState = JSON.parse(saved);
+                    Object.assign(gameState, savedState);
+                    initializeCityGrid(); // Recreate the grid with saved state
+                    updateResourceDisplays();
+                    updateStatDisplays();
+                    updateTimeDisplay();
+                    displayEvents();
+                    alert('City loaded successfully!');
+                } else {
+                    alert('No saved city found!');
+                }
+            });
+            
+            // Help button
+            helpBtn.addEventListener('click', () => {
+                alert(`City Management Simulator Guide:
+                
+                1. BUILD: Click an empty tile, then select a building type
+                2. MANAGE: Click on existing buildings to upgrade or demolish them
+                3. BALANCE: Keep resources (energy, water) positive
+                4. MONITOR: Watch population, happiness, and environment stats
+                5. EVENTS: Respond to city events that appear
+                6. TIME: Use pause/play and speed controls
+                
+                Goal: Grow your city while maintaining happy citizens and balanced resources!
+                `);
+            });
+            
+            // Modal close button
+            closeModal.addEventListener('click', () => {
+                buildingModal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === buildingModal) {
+                    buildingModal.style.display = 'none';
+                }
+            });
+        }
+        
+        // Start the game when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

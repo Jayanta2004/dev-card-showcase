@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plantar Fascia Pain Monitor - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/plantar-fascia-pain-monitor.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="footprints"></i> Plantar Fascia Pain Monitor</h1>
+            <p>Track heel and foot arch pain patterns to identify walking or training patterns causing plantar pain. Monitor step count and footwear correlations for better foot health.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Pain Logger -->
+            <section class="tracker-section pain-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Daily Pain</h2>
+                <form id="painForm" class="pain-form">
+                    <div class="form-group">
+                        <label for="logDate">Date</label>
+                        <input type="date" id="logDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="heelPain">Heel Pain Level (1-10)</label>
+                        <div class="pain-input">
+                            <input type="range" id="heelPain" min="0" max="10" value="0">
+                            <div class="pain-display">
+                                <span class="pain-value" id="heelPainValue">0</span>
+                                <span class="pain-text" id="heelPainText">No pain</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="archPain">Arch Pain Level (1-10)</label>
+                        <div class="pain-input">
+                            <input type="range" id="archPain" min="0" max="10" value="0">
+                            <div class="pain-display">
+                                <span class="pain-value" id="archPainValue">0</span>
+                                <span class="pain-text" id="archPainText">No pain</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="stepCount">Step Count</label>
+                        <input type="number" id="stepCount" min="0" placeholder="Enter steps taken" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="footwear">Footwear Type</label>
+                        <select id="footwear" required>
+                            <option value="">Select footwear</option>
+                            <option value="running">Running Shoes</option>
+                            <option value="walking">Walking Shoes</option>
+                            <option value="sneakers">Sneakers</option>
+                            <option value="boots">Boots</option>
+                            <option value="sandals">Sandals</option>
+                            <option value="barefoot">Barefoot</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="activity">Activity Type</label>
+                        <select id="activity" required>
+                            <option value="">Select activity</option>
+                            <option value="running">Running</option>
+                            <option value="walking">Walking</option>
+                            <option value="standing">Standing (work)</option>
+                            <option value="training">Training/Exercise</option>
+                            <option value="daily">Daily Activities</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="painNotes">Notes (optional)</label>
+                        <textarea id="painNotes" placeholder="Any additional notes about pain, triggers, or relief methods"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Log Pain
+                    </button>
+                </form>
+            </section>
+
+            <!-- Pain Dashboard -->
+            <section class="tracker-section pain-dashboard">
+                <h2><i data-lucide="bar-chart-3"></i> Foot Health Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgHeelPain">--</div>
+                        <div class="metric-label">Avg Heel Pain</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgArchPain">--</div>
+                        <div class="metric-label">Avg Arch Pain</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="totalDays">0</div>
+                        <div class="metric-label">Days Logged</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="painFreeDays">--</div>
+                        <div class="metric-label">Pain-Free Days</div>
+                    </div>
+                </div>
+                <div class="pain-indicator">
+                    <h3>Current Pain Status</h3>
+                    <div id="painStatus" class="pain-status">
+                        <div class="pain-bar">
+                            <div class="pain-fill" id="painFill"></div>
+                        </div>
+                        <div class="pain-label" id="painLabel">No data available</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pain Trends -->
+            <section class="tracker-section pain-trends">
+                <h2><i data-lucide="trending-up"></i> Pain Trends</h2>
+                <div class="chart-controls">
+                    <select id="timeRange">
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="all">All Time</option>
+                    </select>
+                    <button id="refreshChart" class="btn-secondary">
+                        <i data-lucide="refresh-cw"></i> Refresh
+                    </button>
+                </div>
+                <div class="trends-chart">
+                    <canvas id="painChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Correlation Analysis -->
+            <section class="tracker-section correlation-analysis">
+                <h2><i data-lucide="link"></i> Pain Correlations</h2>
+                <div class="correlation-charts">
+                    <div class="correlation-item">
+                        <h3>Pain vs Step Count</h3>
+                        <canvas id="stepsCorrelationChart"></canvas>
+                    </div>
+                    <div class="correlation-item">
+                        <h3>Pain by Footwear</h3>
+                        <canvas id="footwearCorrelationChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pain History -->
+            <section class="tracker-section pain-history">
+                <h2><i data-lucide="calendar"></i> Pain History</h2>
+                <div class="history-controls">
+                    <button id="viewRecent" class="btn-secondary active">Recent</button>
+                    <button id="viewAll" class="btn-secondary">All Time</button>
+                </div>
+                <div class="history-list" id="painHistory">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+
+            <!-- Foot Health Insights -->
+            <section class="tracker-section foot-insights">
+                <h2><i data-lucide="lightbulb"></i> Foot Health Insights</h2>
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <h3>Pain Patterns</h3>
+                        <div class="insight-content" id="painPatterns">
+                            <p>Analysis of your pain trends and triggers.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Footwear Impact</h3>
+                        <div class="insight-content" id="footwearImpact">
+                            <p>How different footwear affects your pain levels.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Activity Recommendations</h3>
+                        <div class="insight-content" id="activityRecommendations">
+                            <p>Suggestions for activities and precautions.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tips-list" id="tips">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Foot Health Benchmarks -->
+        <section class="foot-benchmarks">
+            <h2><i data-lucide="target"></i> Foot Health Benchmarks</h2>
+            <div class="benchmarks-grid" id="benchmarks">
+                <!-- Dynamic content -->
+            </div>
+        </section>
+    </div>
+
+    <script src="../js/plantar-fascia-pain-monitor.js"></script>
+</body>
+</html>

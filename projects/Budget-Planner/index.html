@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Planner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: pink;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            min-width: 90px;
+            max-width: 120px;
+            text-align: center;
+        }
+        .add-btn { background: #28a745; color: white; }
+        .display-btn, .download-btn, .back-btn, .delete-btn { background: #007BFF; color: white; display: none; }
+        .delete-btn { background: red; }
+        .cards-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .card {
+            width: 90%;
+            margin: 10px auto;
+            display: flex;
+            border-radius: 10px;
+            overflow: hidden;
+            color: white;
+            font-weight: bold;
+        }
+        .card-left {
+            background: #002D62;
+            width: 50%;
+            padding: 10px;
+        }
+        .card-right {
+            background: #FFD700;
+            width: 50%;
+            padding: 10px;
+            color: black;
+        }
+        /* Conteneur des boutons en haut */
+.button-container {
+    display: flex;
+    justify-content: center; /* Centre les boutons */
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Style des cartes */
+.card {
+    width: 90%; /* Adapté au téléphone */
+    max-width: 300px;
+    background: linear-gradient(to right, navy 50%, yellow 50%);
+    color: white;
+    font-weight: bold;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+/* Conteneur des boutons en bas */
+.button-container:last-child {
+    margin-top: 20px;
+}
+
+/* Style des boutons */
+button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    min-width: 90px;
+    max-width: 100px;
+    text-align: center;
+}
+
+/* Boutons spécifiques */
+.delete-btn { background: darkred; color: white; }
+.return-btn { background: red; color: white; }
+.download-btn { background: orange; color: white; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container" id="form-container">
+        <h2>Budget Planner</h2>
+        <div class="input-group">
+            <label>Date :</label>
+            <input type="date" id="date">
+        </div>
+        <div class="input-group">
+            <label>Name :</label>
+            <input type="text" id="expense" placeholder="Name of the expense">
+        </div>
+        <div class="input-group">
+            <label>Amount ($) :</label>
+            <input type="number" id="amount" placeholder="$">
+        </div>
+        <div class="input-group">
+            <label>Category :</label>
+            <input type="text" id="category" placeholder="Catégorie">
+        </div>
+
+        <div class="button-container">
+            <button class="add-btn" onclick="addEntry()">add</button>
+            <button class="display-btn" onclick="displayCards()">Afficher</button>
+        </div>
+    </div>
+
+    <div class="cards-container" id="cards-container"></div>
+
+    <div class="button-container">
+        <button class="delete-btn" onclick="clearEntries()">Supprimer</button>
+        <button class="back-btn" onclick="backToForm()">Retour</button>
+        <button class="download-btn" onclick="downloadPDF()">Télécharger PDF</button>
+    </div>
+
+    <script>
+        let entries = [];
+
+        function addEntry() {
+            let date = document.getElementById("date").value;
+            let expense = document.getElementById("expense").value;
+            let amount = document.getElementById("amount").value;
+            let category = document.getElementById("category").value;
+
+            if (date && expense && amount && category) {
+                entries.push({ date, expense, amount, category });
+
+                document.getElementById("date").value = "";
+                document.getElementById("expense").value = "";
+                document.getElementById("amount").value = "";
+                document.getElementById("category").value = "";
+
+                document.querySelector(".display-btn").style.display = "inline-block";
+            } else {
+                alert("Veuillez remplir tous les champs !");
+            }
+        }
+
+        function displayCards() {
+            let container = document.getElementById("cards-container");
+            container.innerHTML = "";
+
+            entries.forEach(entry => {
+                let card = document.createElement("div");
+                card.classList.add("card");
+                card.innerHTML = `
+                    <div class="card-left">
+                        <p>${entry.date}</p>
+                        <p>${entry.expense}</p>
+                    </div>
+                    <div class="card-right">
+                        <p>${entry.amount} €</p>
+                        <p>${entry.category}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById("form-container").style.display = "none";
+            container.style.display = "block";
+            document.querySelector(".back-btn").style.display = "inline-block";
+            document.querySelector(".download-btn").style.display = "inline-block";
+            document.querySelector(".delete-btn").style.display = "inline-block";
+            document.querySelector(".display-btn").style.display = "none";
+        }
+
+        function clearEntries() {
+            entries = [];
+            document.getElementById("cards-container").innerHTML = "";
+            alert("Toutes les entrées ont été supprimées.");
+        }
+
+        function backToForm() {
+            document.getElementById("form-container").style.display = "block";
+            document.getElementById("cards-container").style.display = "none";
+            document.querySelector(".back-btn").style.display = "none";
+            document.querySelector(".download-btn").style.display = "none";
+            document.querySelector(".delete-btn").style.display = "none";
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF();
+            doc.text("Budget Planner", 10, 10);
+
+            let rows = entries.map(entry => [entry.date, entry.expense, entry.amount + " €", entry.category]);
+
+            doc.autoTable({
+                head: [["Date", "Dépense", "Montant (€)", "Catégorie"]],
+                body: rows
+            });
+
+            doc.save("Budget_Planner.pdf");
+        }
+    </script>
+
+</body>
+</html>

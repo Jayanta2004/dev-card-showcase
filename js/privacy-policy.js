@@ -165,3 +165,143 @@ function scrollToTop() {
       }
     });
   
+
+    // Theme Toggle Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const themeToggle = document.getElementById('themeToggle');
+      const htmlElement = document.documentElement;
+      
+      // Check for saved theme preference or use light as default
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      
+      // Set initial theme
+      htmlElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+      
+      // Toggle theme on button click
+      themeToggle.addEventListener('click', function() {
+        const currentTheme = htmlElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        htmlElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+      });
+      
+      // Update theme icon
+      function updateThemeIcon(theme) {
+        themeToggle.textContent = theme === 'light' ? '🌙' : '☀️';
+      }
+    });
+
+    // Hamburger menu toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const hamburger = document.getElementById('hamburger');
+      const navLinks = document.getElementById('navLinks');
+      
+      if (hamburger && navLinks) {
+        hamburger.addEventListener('click', function() {
+          navLinks.classList.toggle('active');
+          hamburger.classList.toggle('active');
+        });
+      }
+    });
+
+    // Scroll to top functionality
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Enhanced Reading Progress & TOC Tracking
+    document.addEventListener("DOMContentLoaded", function () {
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      const progressCircle = document.getElementById('progressCircle');
+      const tocLinks = document.querySelectorAll('#tocList a');
+      const sections = document.querySelectorAll('h2[id]');
+      
+      // Reading progress tracking
+      function updateProgress() {
+        const scrollTop = window.pageYOffset;
+        const docHeight = document.body.scrollHeight - window.innerHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
+        
+        if (progressBar) progressBar.style.width = scrollPercent + '%';
+        if (progressText) progressText.textContent = Math.round(scrollPercent) + '%';
+        
+        // Update circular progress
+        if (progressCircle) {
+          const circumference = 2 * Math.PI * 18;
+          const offset = circumference - (scrollPercent / 100) * circumference;
+          progressCircle.style.strokeDashoffset = offset;
+        }
+      }
+      
+      // Active section tracking
+      function updateActiveSection() {
+        let current = '';
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          if (window.pageYOffset >= sectionTop - 200) {
+            current = section.getAttribute('id');
+          }
+        });
+        
+        tocLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('data-section') === current) {
+            link.classList.add('active');
+          }
+        });
+      }
+      
+      // Smooth scroll for TOC links
+      tocLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetId = this.getAttribute('href').substring(1);
+          const targetElement = document.getElementById(targetId);
+          if (targetElement) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        });
+      });
+      
+      // Scroll event listeners
+      window.addEventListener('scroll', function() {
+        updateProgress();
+        updateActiveSection();
+      });
+      
+      // Initial calls
+      updateProgress();
+      updateActiveSection();
+    });
+
+    // Enhanced animations on scroll
+    document.addEventListener('DOMContentLoaded', function() {
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+      
+      const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, observerOptions);
+      
+      // Observe all sections
+      document.querySelectorAll('h2, .privacy-content > p, .privacy-content > ul').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(el);
+      });
+    });
