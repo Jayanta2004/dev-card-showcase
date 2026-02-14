@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice Generator · Lite</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: #f3f6fb;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .invoice-wrap {
+      max-width: 1100px;
+      width: 100%;
+      background: white;
+      border-radius: 32px;
+      box-shadow: 0 20px 40px -12px rgba(0,20,40,0.12);
+      padding: 2rem 2rem 2.2rem;
+    }
+
+    /* header area */
+    .inv-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo-area h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #0a2c3d;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge {
+      background: #e3f0ee;
+      padding: 0.2rem 1rem;
+      border-radius: 60px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1a5252;
+    }
+
+    /* company & client card */
+    .info-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      background: #fafcff;
+      padding: 1.5rem 1.8rem;
+      border-radius: 20px;
+      border: 1px solid #e6edf2;
+      margin-bottom: 2rem;
+    }
+
+    .company-details, .client-details {
+      flex: 1 1 200px;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #527a7a;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .editable-input {
+      background: transparent;
+      border: 1px solid #dae6ea;
+      border-radius: 12px;
+      padding: 0.6rem 1rem;
+      font-size: 0.95rem;
+      width: 100%;
+      margin-bottom: 0.5rem;
+      transition: 0.1s;
+    }
+
+    .editable-input:focus {
+      border-color: #2f8f7a;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(47,143,122,0.1);
+      background: white;
+    }
+
+    /* invoice meta row */
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .invoice-num, .invoice-date {
+      background: #f2f8f6;
+      padding: 0.5rem 1.4rem;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-size: 0.95rem;
+    }
+
+    .invoice-num span, .invoice-date span {
+      color: #2a5c5c;
+      font-weight: 600;
+    }
+
+    /* table – items */
+    .items-title {
+      font-size: 1.2rem;
+      font-weight: 550;
+      color: #0e3838;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      margin-bottom: 1.8rem;
+      border-radius: 16px;
+      border: 1px solid #dfebeb;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th {
+      background: #eaf3f1;
+      color: #1d4949;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 1rem 0.8rem;
+      text-align: left;
+      border-bottom: 1px solid #cbd8d8;
+    }
+
+    td {
+      padding: 0.9rem 0.8rem;
+      border-bottom: 1px solid #eef3f3;
+      vertical-align: middle;
+    }
+
+    .item-input {
+      width: 100%;
+      border: 1px solid transparent;
+      background: #f9fdfd;
+      padding: 0.5rem 0.7rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      transition: 0.1s;
+    }
+
+    .item-input:focus {
+      border-color: #248277;
+      background: white;
+      outline: none;
+    }
+
+    .remove-btn {
+      background: #ffece5;
+      border: none;
+      color: #b1381e;
+      font-size: 1.1rem;
+      font-weight: 600;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+
+    .remove-btn:hover {
+      background: #ffd9cc;
+      color: #a02416;
+    }
+
+    .add-item-btn {
+      background: #ecf6f2;
+      border: 1px dashed #3c8570;
+      color: #1e6553;
+      padding: 0.7rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      margin-bottom: 1.6rem;
+      transition: 0.15s;
+    }
+
+    .add-item-btn:hover {
+      background: #dcf0ea;
+      border-style: solid;
+    }
+
+    /* summary & total */
+    .summary-section {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .total-box {
+      background: #f4faf9;
+      border-radius: 24px;
+      padding: 1.3rem 2.2rem;
+      border: 1px solid #cbe0db;
+      min-width: 260px;
+    }
+
+    .total-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #14403b;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtotal-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      color: #3d6363;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px dashed #bcd0d0;
+      margin-bottom: 0.7rem;
+    }
+
+    .tax-note {
+      font-size: 0.8rem;
+      color: #487070;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    /* action buttons */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      padding: 0.85rem 2rem;
+      border-radius: 40px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: 0.1s;
+      background: white;
+      border: 1px solid #c2d6d2;
+      color: #1a4d4a;
+    }
+
+    .btn-primary {
+      background: #166b5b;
+      border: 1px solid #0e5346;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0f5a4c;
+    }
+
+    .btn:hover {
+      box-shadow: 0 6px 14px rgba(0,60,50,0.1);
+      transform: translateY(-2px);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: #648787;
+      font-size: 0.8rem;
+    }
+
+    /* small tweaks */
+    .amount-display {
+      font-weight: 550;
+      color: #1f4e4e;
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-wrap" id="invoiceApp">
+    <!-- HEADER with title -->
+    <div class="inv-header">
+      <div class="logo-area">
+        <h1>📄 Invoice Generator</h1>
+        <span class="badge">lite · instant</span>
+      </div>
+    </div>
+
+    <!-- COMPANY & CLIENT (editable fields) -->
+    <div class="info-grid">
+      <div class="company-details">
+        <div class="info-label">🏢 FROM / COMPANY</div>
+        <input type="text" id="companyName" class="editable-input" placeholder="Your company" value="Design Studio Co.">
+        <input type="text" id="companyEmail" class="editable-input" placeholder="Email" value="hello@design.co">
+        <input type="text" id="companyAddress" class="editable-input" placeholder="Address" value="99 Greenway, NYC">
+      </div>
+      <div class="client-details">
+        <div class="info-label">🧑‍💼 BILL TO / CLIENT</div>
+        <input type="text" id="clientName" class="editable-input" placeholder="Client name" value="EcoVibes Ltd.">
+        <input type="text" id="clientEmail" class="editable-input" placeholder="Client email" value="billing@ecovibes.io">
+        <input type="text" id="clientAddress" class="editable-input" placeholder="Project / address" value="Berlin, DE">
+      </div>
+    </div>
+
+    <!-- INVOICE META: number & date (auto) -->
+    <div class="meta-row">
+      <div class="invoice-num">
+        <span>📋 INV-</span><span id="invoiceNumberDisplay">2026-001</span>
+      </div>
+      <div class="invoice-date">
+        <span>📅</span> <span id="invoiceDateDisplay">2026-02-11</span>
+      </div>
+    </div>
+
+    <!-- ITEMS TABLE section -->
+    <div class="items-title">📦 Line items</div>
+    <div class="table-responsive">
+      <table id="invoiceTable">
+        <thead>
+          <tr>
+            <th style="width: 40%">Description</th>
+            <th style="width: 15%">Qty</th>
+            <th style="width: 20%">Unit price</th>
+            <th style="width: 20%">Amount</th>
+            <th style="width: 5%"></th>
+          </tr>
+        </thead>
+        <tbody id="invoiceRows">
+          <!-- dynamic rows injected via js -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ADD NEW ITEM BUTTON -->
+    <button id="addRowBtn" class="add-item-btn">➕ Add new line</button>
+
+    <!-- TOTALS -->
+    <div class="summary-section">
+      <div class="total-box">
+        <div class="subtotal-line">
+          <span>Subtotal</span>
+          <span id="subtotalDisplay">$0.00</span>
+        </div>
+        <div class="tax-note">
+          <span>Tax (0% estimated)</span>
+          <span>$0.00</span>
+        </div>
+        <div class="total-line">
+          <span>Total</span>
+          <span id="totalDisplay">$0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTION BUTTONS: download PDF-like, reset, print preview -->
+    <div class="actions">
+      <button id="resetInvoiceBtn" class="btn">⟲ Reset</button>
+      <button id="previewBtn" class="btn">📄 Preview summary</button>
+      <button id="downloadInvoiceBtn" class="btn btn-primary">⬇ Download as HTML</button>
+    </div>
+    <footer>— fill details, edit items, instant calculation —</footer>
+  </div>
+
+  <script>
+    (function(){
+      'use strict';
+
+      // ---------- STATE & GLOBAL VARIABLES ----------
+      let rowCounter = 2;  // for unique row ids, initial rows count
+
+      // default rows data (description, quantity, price)
+      const defaultRows = [
+        { desc: 'UI/UX Design – homepage', qty: 12, price: 85 },
+        { desc: 'Brand style guide', qty: 1, price: 590 }
+      ];
+
+      // ---------- HELPER: format currency (USD) ----------
+      const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+      });
+
+      function formatMoney(value) {
+        return formatter.format(value);
+      }
+
+      // ---------- RENDER TABLE BODY ----------
+      function renderRows() {
+        const tbody = document.getElementById('invoiceRows');
+        if (!tbody) return;
+        
+        // rebuild HTML from current rows array (stored in data attributes or we maintain an array)
+        // We'll store row data in a JS array for consistency – but we can also read from DOM
+        // but to keep it reliable, we manage via dataset and sync.
+        // For simplicity: we'll generate from DOM, but totals read from inputs.
+        // We'll just generate structure and fill from stored default or previous DOM?
+        // Actually we keep rows via dynamic add/remove and compute totals from live DOM values.
+        // So renderRows rebuilds from scratch based on a maintained rowData array?
+        // Better: we keep a central `items` array and sync to dom, then recalc totals.
+        // Let's create items array to keep truth.
+        // We'll initialize, then update array on add/remove/input.
+        window.itemsArray = window.itemsArray || defaultRows.map(r => ({ ...r }));
+
+        tbody.innerHTML = ''; // clear
+        
+        window.itemsArray.forEach((item, index) => {
+          const row = document.createElement('tr');
+          row.dataset.rowId = index;
+          
+          // description cell
+          const descCell = document.createElement('td');
+          const descInput = document.createElement('input');
+          descInput.type = 'text';
+          descInput.className = 'item-input';
+          descInput.placeholder = 'Item description';
+          descInput.value = item.desc || '';
+          descInput.addEventListener('input', function(e) {
+            // update array and recalc
+            window.itemsArray[index].desc = e.target.value;
+            calculateTotals();
+          });
+          descCell.appendChild(descInput);
+          
+          // quantity cell
+          const qtyCell = document.createElement('td');
+          const qtyInput = document.createElement('input');
+          qtyInput.type = 'number';
+          qtyInput.className = 'item-input';
+          qtyInput.placeholder = '0';
+          qtyInput.min = '0';
+          qtyInput.step = '1';
+          qtyInput.value = item.qty !== undefined ? item.qty : 1;
+          qtyInput.addEventListener('input', function(e) {
+            let val = parseFloat(e.target.value) || 0;
+            if (val < 0) val = 0;
+            window.itemsArray[index].qty = val;
+            // update same row amount display
+            updateRowAmount(index);
+            calculateTotals();
+          });
+          qtyCell.appendChild(qtyInput);
+          
+          // price cell
+          const priceCell = document.createElement('td');
+          const priceInput = document.createElement('input');
+          priceInput.type = 'number';
+          priceInput.className = 'item-input';
+          priceInput.placeholder = '0.00';
+          priceInput.min = '0';
+          priceInput.step = '0.01';
+          priceInput.value = item.price !== undefined ? item.price : 0;
+          priceInput.addEventListener('input', function(e) {
+            let val = parseFloat(e.target.value) || 0;
+            if (val < 0) val = 0;
+            window.itemsArray[index].price = val;
+            updateRowAmount(index);
+            calculateTotals();
+          });
+          priceCell.appendChild(priceInput);
+          
+          // amount cell
+          const amountCell = document.createElement('td');
+          amountCell.className = 'amount-display';
+          const amountSpan = document.createElement('span');
+          const qtyVal = item.qty || 0;
+          const priceVal = item.price || 0;
+          amountSpan.textContent = formatMoney(qtyVal * priceVal);
+          amountCell.appendChild(amountSpan);
+          
+          // remove button cell
+          const removeCell = document.createElement('td');
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'remove-btn';
+          removeBtn.innerHTML = '✕';
+          removeBtn.setAttribute('aria-label', 'remove');
+          removeBtn.addEventListener('click', function() {
+            removeRow(index);
+          });
+          removeCell.appendChild(removeBtn);
+          
+          row.appendChild(descCell);
+          row.appendChild(qtyCell);
+          row.appendChild(priceCell);
+          row.appendChild(amountCell);
+          row.appendChild(removeCell);
+          
+          tbody.appendChild(row);
+        });
+        
+        // refresh all amount displays
+        updateAllAmounts();
+        calculateTotals();
+      }
+
+      // helper: update single row amount based on current array
+      function updateRowAmount(index) {
+        const tbody = document.getElementById('invoiceRows');
+        if (!tbody) return;
+        const rows = tbody.querySelectorAll('tr');
+        if (rows[index]) {
+          const amountCell = rows[index].querySelector('td:nth-child(4) span');
+          if (amountCell) {
+            const item = window.itemsArray[index];
+            const total = (item.qty || 0) * (item.price || 0);
+            amountCell.textContent = formatMoney(total);
+          }
+        }
+      }
+
+      function updateAllAmounts() {
+        if (!window.itemsArray) return;
+        window.itemsArray.forEach((_, idx) => updateRowAmount(idx));
+      }
+
+      // ---------- REMOVE ROW ----------
+      function removeRow(index) {
+        if (window.itemsArray.length <= 1) {
+          alert("At least one item is required. Add a new one if you'd like to remove.");
+          return;
+        }
+        window.itemsArray.splice(index, 1);
+        renderRows(); // re-render table
+        calculateTotals();
+      }
+
+      // ---------- ADD NEW ROW ----------
+      function addNewRow() {
+        window.itemsArray.push({ desc: 'New service', qty: 1, price: 0 });
+        renderRows();
+      }
+
+      // ---------- CALCULATE SUBTOTAL & TOTAL ----------
+      function calculateTotals() {
+        let subtotal = 0;
+        if (window.itemsArray) {
+          window.itemsArray.forEach(item => {
+            subtotal += (item.qty || 0) * (item.price || 0);
+          });
+        }
+        const subtotalEl = document.getElementById('subtotalDisplay');
+        const totalEl = document.getElementById('totalDisplay');
+        subtotalEl.textContent = formatMoney(subtotal);
+        totalEl.textContent = formatMoney(subtotal); // no tax
+      }
+
+      // ---------- RESET TO DEFAULT INVOICE ----------
+      function resetToDefault() {
+        window.itemsArray = defaultRows.map(r => ({ desc: r.desc, qty: r.qty, price: r.price }));
+        // reset company/client fields to defaults
+        document.getElementById('companyName').value = 'Design Studio Co.';
+        document.getElementById('companyEmail').value = 'hello@design.co';
+        document.getElementById('companyAddress').value = '99 Greenway, NYC';
+        document.getElementById('clientName').value = 'EcoVibes Ltd.';
+        document.getElementById('clientEmail').value = 'billing@ecovibes.io';
+        document.getElementById('clientAddress').value = 'Berlin, DE';
+        
+        // reset invoice number (we can keep static but refresh)
+        document.getElementById('invoiceNumberDisplay').innerText = '2026-001';
+        renderRows();
+        calculateTotals();
+      }
+
+      // ---------- GENERATE SUMMARY / PREVIEW (alert with total) ----------
+      function showPreview() {
+        const client = document.getElementById('clientName').value || 'client';
+        const total = document.getElementById('totalDisplay').innerText;
+        alert(`🧾 Invoice preview\nBill to: ${client}\nTotal: ${total}\n${window.itemsArray.length} item(s).\n(use download to save HTML)`);
+      }
+
+      // ---------- DOWNLOAD INVOICE AS HTML (static snapshot) ----------
+      function downloadInvoice() {
+        const companyName = document.getElementById('companyName').value;
+        const companyEmail = document.getElementById('companyEmail').value;
+        const companyAddr = document.getElementById('companyAddress').value;
+        const clientName = document.getElementById('clientName').value;
+        const clientEmail = document.getElementById('clientEmail').value;
+        const clientAddr = document.getElementById('clientAddress').value;
+        const invNumber = document.getElementById('invoiceNumberDisplay').innerText;
+        const invDate = document.getElementById('invoiceDateDisplay').innerText;
+        
+        // Build table rows from current itemsArray
+        let rowsHtml = '';
+        window.itemsArray.forEach(item => {
+          const amt = (item.qty || 0) * (item.price || 0);
+          rowsHtml += `<tr>
+            <td style="padding: 8px; border-bottom:1px solid #ddd;">${item.desc || ''}</td>
+            <td style="padding: 8px; border-bottom:1px solid #ddd;">${item.qty || 0}</td>
+            <td style="padding: 8px; border-bottom:1px solid #ddd;">${formatMoney(item.price || 0)}</td>
+            <td style="padding: 8px; border-bottom:1px solid #ddd;">${formatMoney(amt)}</td>
+          </tr>`;
+        });
+
+        const subtotal = document.getElementById('subtotalDisplay').innerText;
+        const total = document.getElementById('totalDisplay').innerText;
+
+        const htmlContent = `<!DOCTYPE html>
+<html>
+<head><title>Invoice ${invNumber}</title><style>
+body { font-family: 'Inter', sans-serif; padding: 2rem; max-width: 900px; margin:0 auto; }
+h2 { color: #0a2c3d; } .info { background: #f4f9f9; padding: 1.2rem; border-radius: 16px; margin-bottom: 1.5rem; }
+table { width:100%; border-collapse: collapse; margin-top:1rem; }
+th { background: #e6f0ef; text-align: left; padding: 10px; } 
+.total { margin-top: 1.5rem; font-size: 1.3rem; font-weight: 600; color:#1e5f5b; }
+.footer { margin-top: 2rem; color: #4f7373; }
+</style></head>
+<body>
+<h2>📄 INVOICE ${invNumber}</h2>
+<div class="info">
+  <div><strong>FROM:</strong> ${companyName} — ${companyEmail}, ${companyAddr}</div>
+  <div style="margin-top:0.6rem;"><strong>TO:</strong> ${clientName} · ${clientEmail} · ${clientAddr}</div>
+  <div style="margin-top:0.8rem;">📅 ${invDate}</div>
+</div>
+<table>
+  <tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr>
+  ${rowsHtml}
+</table>
+<div style="margin-top:1.8rem; text-align:right;">
+  <div style="font-size:1.1rem;">Subtotal: ${subtotal}</div>
+  <div class="total">Total: ${total}</div>
+</div>
+<div class="footer">— generated with Invoice Generator Lite —</div>
+</body>
+</html>`;
+
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `invoice-${invNumber}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      // ---------- INITIAL SETUP, EVENT LISTENERS ----------
+      function initApp() {
+        // set default date and invoice number
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2,'0');
+        const day = String(today.getDate()).padStart(2,'0');
+        document.getElementById('invoiceDateDisplay').innerText = `${year}-${month}-${day}`;
+        
+        // invoice number (static + timestamp)
+        document.getElementById('invoiceNumberDisplay').innerText = `2026-${String(month).padStart(2,'0')}${String(day).padStart(2,'0')}`;
+        
+        // init items array
+        window.itemsArray = defaultRows.map(r => ({ desc: r.desc, qty: r.qty, price: r.price }));
+        
+        // first render
+        renderRows();
+
+        // add row button
+        document.getElementById('addRowBtn').addEventListener('click', addNewRow);
+
+        // reset button
+        document.getElementById('resetInvoiceBtn').addEventListener('click', resetToDefault);
+
+        // preview button
+        document.getElementById('previewBtn').addEventListener('click', showPreview);
+
+        // download button
+        document.getElementById('downloadInvoiceBtn').addEventListener('click', downloadInvoice);
+        
+        // also recalc if any company fields change (not needed for totals)
+        // but we could leave as is
+      }
+
+      initApp();
+    })();
+  </script>
+</body>
+</html>

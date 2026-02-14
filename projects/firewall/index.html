@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firewall Rule Simulator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-shield-alt"></i> Firewall Rule Simulator</h1>
+            <p class="subtitle">Create and test firewall rules in a safe, simulated environment</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="panel">
+                <h2 class="panel-title"><i class="fas fa-plus-circle"></i> Create Firewall Rule</h2>
+                <form class="rule-form" id="ruleForm">
+                    <div class="form-group">
+                        <label for="ruleName">Rule Name</label>
+                        <input type="text" id="ruleName" placeholder="e.g., Allow Web Traffic" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="action">Action</label>
+                        <select id="action" required>
+                            <option value="allow">Allow</option>
+                            <option value="deny">Deny</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="protocol">Protocol</label>
+                        <select id="protocol" required>
+                            <option value="tcp">TCP</option>
+                            <option value="udp">UDP</option>
+                            <option value="icmp">ICMP</option>
+                            <option value="http">HTTP</option>
+                            <option value="https">HTTPS</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="source">Source IP/Network</label>
+                        <input type="text" id="source" placeholder="e.g., 192.168.1.0/24 or any" value="any">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="destination">Destination IP/Port</label>
+                        <input type="text" id="destination" placeholder="e.g., 10.0.0.1:80" required>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="submit" class="primary-btn"><i class="fas fa-save"></i> Add Rule</button>
+                        <button type="button" class="secondary-btn" id="resetRules"><i class="fas fa-trash"></i> Clear All Rules</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="panel">
+                <h2 class="panel-title"><i class="fas fa-list"></i> Active Rules</h2>
+                <div class="rules-list" id="rulesList">
+                    <!-- Rules will be dynamically added here -->
+                    <div class="empty-state" id="emptyRules">
+                        <i class="fas fa-filter"></i>
+                        <h3>No Rules Defined</h3>
+                        <p>Create your first firewall rule using the form on the left.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel traffic-simulator">
+                <h2 class="panel-title"><i class="fas fa-traffic-light"></i> Traffic Simulation</h2>
+                <div class="traffic-controls">
+                    <button class="primary-btn traffic-btn" id="testWeb"><i class="fas fa-globe"></i> Test Web Traffic</button>
+                    <button class="primary-btn traffic-btn" id="testSSH"><i class="fas fa-terminal"></i> Test SSH Traffic</button>
+                    <button class="primary-btn traffic-btn" id="testDNS"><i class="fas fa-server"></i> Test DNS Traffic</button>
+                    <button class="primary-btn traffic-btn" id="testCustom"><i class="fas fa-cog"></i> Custom Test</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customTraffic">Custom Traffic Parameters</label>
+                    <input type="text" id="customTraffic" placeholder="Format: protocol,source,destination e.g., tcp,192.168.1.10,10.0.0.1:443">
+                </div>
+                
+                <h3 class="panel-title"><i class="fas fa-history"></i> Traffic Log</h3>
+                <div class="traffic-log" id="trafficLog">
+                    <div class="empty-state" id="emptyLog">
+                        <i class="fas fa-exchange-alt"></i>
+                        <p>No traffic simulated yet. Use the buttons above to test your firewall rules.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel visualization">
+                <h2 class="panel-title"><i class="fas fa-project-diagram"></i> Traffic Flow Visualization</h2>
+                <div class="traffic-flow">
+                    <div class="source">
+                        <i class="fas fa-laptop fa-2x"></i>
+                        <span>Source</span>
+                    </div>
+                    
+                    <div class="firewall">
+                        <i class="fas fa-shield-alt fa-2x"></i>
+                        <span>FIREWALL</span>
+                    </div>
+                    
+                    <div class="destination">
+                        <i class="fas fa-server fa-2x"></i>
+                        <span>Destination</span>
+                    </div>
+                    
+                    <div class="traffic-path"></div>
+                    <div class="packet" id="packet">📦</div>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-box">
+                        <h3>Allowed Traffic</h3>
+                        <div class="stat-value stat-allowed" id="allowedCount">0</div>
+                        <p>Packets passed through</p>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <h3>Blocked Traffic</h3>
+                        <div class="stat-value stat-blocked" id="blockedCount">0</div>
+                        <p>Packets stopped by firewall</p>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <h3>Total Rules</h3>
+                        <div class="stat-value stat-total" id="totalRules">0</div>
+                        <p>Active firewall rules</p>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <h3>Test Coverage</h3>
+                        <div class="stat-value stat-total" id="testCoverage">0%</div>
+                        <p>Rules tested with traffic</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Firewall Rule Simulator • Educational Tool • All traffic simulation is local and secure</p>
+            <p>No blue shades were used in the making of this interface</p>
+        </footer>
+    </div>
+
+    <script src="script.js">
+
+    </script>
+</body>
+</html>

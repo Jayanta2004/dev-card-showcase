@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RefManager · clean reference keeper</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #f4f7fb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 20px;
+        }
+        .manager {
+            max-width: 1100px;
+            width: 100%;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 20px 40px -12px rgba(0,20,40,0.25);
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .header {
+            background: #1a2e3f;
+            color: white;
+            padding: 1.6rem 2rem;
+        }
+        .header h1 {
+            font-weight: 500;
+            font-size: 1.9rem;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header h1 span {
+            background: #2f4b6e;
+            font-size: 0.9rem;
+            font-weight: 400;
+            padding: 0.2rem 0.9rem;
+            border-radius: 30px;
+            margin-left: 12px;
+        }
+        .main-panel {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        .input-section {
+            flex: 1.2;
+            min-width: 290px;
+            background: #f9fcff;
+            padding: 2rem 1.8rem;
+            border-right: 1px solid #dde7f0;
+        }
+        .list-section {
+            flex: 2;
+            min-width: 360px;
+            background: white;
+            padding: 2rem 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            color: #2b4b6f;
+            display: block;
+            margin-bottom: 0.4rem;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1.5px solid #d4e0ea;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            background: white;
+            transition: 0.15s;
+            outline: none;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #1e4b6e;
+            box-shadow: 0 0 0 3px rgba(26,46,63,0.1);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .btn {
+            background: white;
+            border: 1.5px solid #cbdae8;
+            padding: 0.8rem 1.4rem;
+            border-radius: 40px;
+            font-weight: 550;
+            font-size: 0.9rem;
+            color: #1f3a4f;
+            cursor: pointer;
+            transition: 0.1s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .btn-primary {
+            background: #1f3f5c;
+            border: 1.5px solid #1f3f5c;
+            color: white;
+            box-shadow: 0 6px 12px rgba(26,46,63,0.18);
+        }
+        .btn-primary:hover {
+            background: #143040;
+            border-color: #143040;
+            transform: scale(0.98);
+        }
+        .btn-sm {
+            padding: 0.4rem 1rem;
+            font-size: 0.8rem;
+            border-radius: 30px;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid #b7ccde;
+        }
+        .btn-outline:hover {
+            background: #eaf1f9;
+            border-color: #8fabca;
+        }
+        .action-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        .ref-counter {
+            font-size: 0.9rem;
+            background: #e9f0f8;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            display: inline-block;
+            color: #1e3b4f;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+        .ref-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-height: 460px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+        .ref-item {
+            background: #f6faff;
+            border: 1px solid #deecf9;
+            border-radius: 22px;
+            padding: 1rem 1.3rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 12px;
+            box-shadow: 0 3px 8px rgba(0,20,30,0.05);
+            transition: 0.1s;
+        }
+        .ref-item:hover {
+            background: #f0f7ff;
+            border-color: #b4cfec;
+        }
+        .ref-content {
+            flex: 3;
+            min-width: 200px;
+        }
+        .ref-title {
+            font-weight: 650;
+            font-size: 1.02rem;
+            color: #103247;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .ref-type-badge {
+            background: #bcd3e9;
+            color: #112f44;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .ref-author {
+            font-size: 0.85rem;
+            color: #2d577b;
+            margin: 6px 0 3px;
+        }
+        .ref-year {
+            font-size: 0.75rem;
+            background: #ffffffca;
+            padding: 0.15rem 0.6rem;
+            border-radius: 30px;
+            display: inline-block;
+            border: 1px solid #d7e3f0;
+            color: #203e59;
+        }
+        .ref-extra {
+            font-size: 0.8rem;
+            color: #3d5e7a;
+            margin-top: 6px;
+            word-break: break-word;
+        }
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-left: auto;
+        }
+        .btn-icon {
+            background: none;
+            border: 1px solid transparent;
+            font-size: 1.1rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 40px;
+            color: #2f5579;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .btn-icon:hover {
+            background: white;
+            border-color: #a7c2df;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03));
+        }
+        .empty-message {
+            text-align: center;
+            color: #7999b9;
+            padding: 3rem 1rem;
+            font-style: italic;
+            border: 2px dashed #c4d7ed;
+            border-radius: 38px;
+        }
+        .footer-tip {
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: #7a9cc0;
+            background: #ecf5fd;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            text-align: center;
+        }
+    </style>
+    <!-- font fallback (inter via system) -->
+</head>
+<body>
+<div class="manager">
+    <div class="header">
+        <h1>📚 RefManager <span>pure css · js</span></h1>
+    </div>
+    <div class="main-panel">
+        <!-- INPUT / EDIT PANEL -->
+        <div class="input-section">
+            <h3 style="font-weight: 400; margin-top: 0; margin-bottom: 1.8rem; color: #203f59;">✏️ entry form</h3>
+            <div class="form-group">
+                <label>reference type</label>
+                <select id="refType">
+                    <option value="book">📖 book</option>
+                    <option value="article" selected>📄 article</option>
+                    <option value="conference">🎤 conference</option>
+                    <option value="web">🌐 website</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>title / citation</label>
+                <input type="text" id="titleInput" placeholder="e.g., Attention is all you need" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>author(s)</label>
+                <input type="text" id="authorInput" placeholder="Vaswani et al.">
+            </div>
+            <div class="form-group" style="display: flex; gap: 12px;">
+                <div style="flex:1">
+                    <label>year</label>
+                    <input type="number" id="yearInput" placeholder="2023" value="2025">
+                </div>
+                <div style="flex:1">
+                    <label>tags / doi</label>
+                    <input type="text" id="tagInput" placeholder="AI, transformer">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>note / extra</label>
+                <textarea id="noteInput" placeholder="Short description or DOI..."></textarea>
+            </div>
+
+            <div class="action-group">
+                <button class="btn btn-primary" id="addBtn">➕ add reference</button>
+                <button class="btn btn-outline" id="resetFieldsBtn">clear form</button>
+            </div>
+            <div style="margin-top: 1rem; font-size:0.8rem; color: #38658f; background: #e4effa; padding: 0.4rem 1rem; border-radius: 30px;">
+                ⚡ click on any reference to edit
+            </div>
+        </div>
+
+        <!-- LIST SECTION -->
+        <div class="list-section">
+            <div class="ref-counter" id="counterDisplay">📌 0 references stored</div>
+            <ul class="ref-list" id="refListContainer">
+                <!-- dynamic items appear here -->
+                <li class="empty-message">✨ your library is empty — add your first reference</li>
+            </ul>
+            <div class="footer-tip">
+                💾 persistent in browser memory (localStorage)
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // --- state & localStorage
+        let references = [];
+        let editIndex = null;          // index of item being edited (null = new)
+        
+        const STORAGE_KEY = 'refmanager_v1';
+
+        // --- DOM elements
+        const refType = document.getElementById('refType');
+        const titleInput = document.getElementById('titleInput');
+        const authorInput = document.getElementById('authorInput');
+        const yearInput = document.getElementById('yearInput');
+        const tagInput = document.getElementById('tagInput');
+        const noteInput = document.getElementById('noteInput');
+        const addBtn = document.getElementById('addBtn');
+        const resetBtn = document.getElementById('resetFieldsBtn');
+        const refListContainer = document.getElementById('refListContainer');
+        const counterDisplay = document.getElementById('counterDisplay');
+
+        // --- helpers
+        function loadFromStorage() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try { references = JSON.parse(stored); } catch(e){ references = []; }
+            } else {
+                references = [];   // start empty
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(references));
+        }
+
+        // reset form fields to default (and clear edit mode)
+        function resetForm() {
+            refType.value = 'article';
+            titleInput.value = '';
+            authorInput.value = '';
+            yearInput.value = '2025';
+            tagInput.value = '';
+            noteInput.value = '';
+            editIndex = null;
+            addBtn.innerText = '➕ add reference';
+        }
+
+        // fill form with reference data (for editing)
+        function loadRefToForm(index) {
+            const ref = references[index];
+            if (!ref) return;
+            refType.value = ref.type || 'article';
+            titleInput.value = ref.title || '';
+            authorInput.value = ref.author || '';
+            yearInput.value = ref.year || '2025';
+            tagInput.value = ref.tags || '';
+            noteInput.value = ref.note || '';
+            editIndex = index;
+            addBtn.innerText = '✏️ update reference';
+        }
+
+        // delete reference by index
+        function deleteRef(index) {
+            if (index >= 0 && index < references.length) {
+                references.splice(index, 1);
+                // if we were editing that item, reset form
+                if (editIndex === index) {
+                    resetForm();
+                } else if (editIndex !== null && editIndex > index) {
+                    // shift editIndex if it's after the deleted one
+                    editIndex--;
+                }
+                saveToStorage();
+                renderList();
+            }
+        }
+
+        // render the whole list + counter
+        function renderList() {
+            if (references.length === 0) {
+                refListContainer.innerHTML = '<li class="empty-message">📭 your library is empty — add your first reference</li>';
+                counterDisplay.innerText = '📌 0 references stored';
+                return;
+            }
+
+            let html = '';
+            references.forEach((ref, idx) => {
+                const type = ref.type || 'article';
+                const typeIcon = { 'book':'📘', 'article':'📄', 'conference':'🎤', 'web':'🌐' }[type] || '🔖';
+                const typeLabel = { 'book':'book', 'article':'article', 'conference':'conf', 'web':'site' }[type] || type;
+                
+                // safe fields
+                const title = ref.title || 'untitled';
+                const author = ref.author || 'unknown author';
+                const year = ref.year ? (''+ref.year) : '–';
+                const tags = ref.tags || '';
+                const note = ref.note || '';
+
+                html += `<li class="ref-item" data-index="${idx}">`;
+                html += `<div class="ref-content">`;
+                html += `<div class="ref-title">`;
+                html += `<span>${typeIcon} ${title}</span>`;
+                html += `<span class="ref-type-badge">${typeLabel}</span>`;
+                html += `</div>`;
+                html += `<div class="ref-author">${author} · <span class="ref-year">${year}</span></div>`;
+                if (tags || note) {
+                    html += `<div class="ref-extra">${tags ? '🏷️ ' + tags : ''} ${note ? '📝 ' + note : ''}</div>`;
+                }
+                html += `</div>`; // .ref-content
+
+                // action buttons
+                html += `<div class="item-actions">`;
+                html += `<button class="btn-icon edit-btn" data-index="${idx}" title="edit reference">✎</button>`;
+                html += `<button class="btn-icon delete-btn" data-index="${idx}" title="delete reference">🗑️</button>`;
+                html += `</div>`;
+                html += `</li>`;
+            });
+
+            refListContainer.innerHTML = html;
+            counterDisplay.innerText = `📌 ${references.length} reference${references.length !== 1 ? 's' : ''} stored`;
+
+            // attach event listeners to edit/delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = btn.dataset.index;
+                    if (index !== undefined) loadRefToForm(parseInt(index, 10));
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = btn.dataset.index;
+                    if (index !== undefined && confirm('Delete this reference?')) {
+                        deleteRef(parseInt(index, 10));
+                    }
+                });
+            });
+
+            // optional: click on item (outside buttons) -> edit as well? we can, but careful.
+            // for better UX, the line below would also work but might be annoying. we use explicit edit.
+            // we'll just rely on edit buttons.
+        }
+
+        // --- add or update reference
+        function addOrUpdateReference() {
+            const type = refType.value;
+            const title = titleInput.value.trim();
+            const author = authorInput.value.trim();
+            const year = yearInput.value.trim();
+            const tags = tagInput.value.trim();
+            const note = noteInput.value.trim();
+
+            if (!title) {
+                alert('❗ please enter a title');
+                return;
+            }
+
+            const newRef = {
+                type,
+                title: title || 'untitled',
+                author: author || 'unknown',
+                year: year || 'n.d.',
+                tags: tags || '',
+                note: note || ''
+            };
+
+            if (editIndex !== null && editIndex >= 0 && editIndex < references.length) {
+                // update existing
+                references[editIndex] = newRef;
+                resetForm();        // back to 'add' mode
+            } else {
+                // add new
+                references.push(newRef);
+                resetForm();        // clears fields but keeps editIndex = null
+            }
+
+            saveToStorage();
+            renderList();
+        }
+
+        // --- event listeners
+        addBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            addOrUpdateReference();
+        });
+
+        resetBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            resetForm();
+        });
+
+        // initial load and render
+        loadFromStorage();
+        renderList();
+
+        // if some stored references, editIndex remains null, form empty by default.
+        // but we also want to be able to cancel edit via reset.
+
+        // bonus: double-click on ref-item to edit (like a lil shortcut)
+        refListContainer.addEventListener('dblclick', (e) => {
+            const item = e.target.closest('.ref-item');
+            if (!item) return;
+            const idx = item.dataset.index;
+            if (idx !== undefined) loadRefToForm(parseInt(idx, 10));
+        });
+
+        // optional: clear edit if user clicks reset manually.
+        // also enable 'enter' to add quickly (but no confusion)
+        const formInputs = [titleInput, authorInput, yearInput, tagInput, noteInput];
+        formInputs.forEach(inp => inp.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();  // avoid accidental form anything
+                addOrUpdateReference();
+            }
+        }));
+
+        // ensure year field accept only reasonable numbers (simple)
+        yearInput.addEventListener('change', () => {
+            let val = parseInt(yearInput.value, 10);
+            if (isNaN(val)) yearInput.value = '';
+            else if (val < 1000) yearInput.value = 1900 + val;  // tolerate short year?
+        });
+
+        // load default example if storage empty (nice for demonstration)
+        if (references.length === 0) {
+            // prepopulate with two sample references
+            references = [
+                { type: 'article', title: 'Attention is all you need', author: 'Vaswani et al.', year: '2017', tags: 'transformer, NLP', note: 'NeurIPS' },
+                { type: 'book', title: 'The Pragmatic Programmer', author: 'David Thomas', year: '1999', tags: 'software engineering', note: '20th anniv.' },
+                { type: 'web', title: 'MDN Web Docs', author: 'Mozilla', year: '2025', tags: 'reference, CSS', note: 'https://developer.mozilla.org' }
+            ];
+            saveToStorage();
+            renderList();
+        }
+    })();
+</script>
+</body>
+</html>

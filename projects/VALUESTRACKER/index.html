@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Values Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .panel {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .panel h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel h2 i {
+            color: #6a11cb;
+        }
+        
+        .values-list {
+            min-height: 500px;
+        }
+        
+        .value-item {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            cursor: move;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        
+        .value-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .value-item.dragging {
+            opacity: 0.7;
+            transform: rotate(2deg);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .rank-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .value-content h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .value-content p {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .ranked-values .value-item {
+            background-color: #e8f4fc;
+            border-left: 4px solid #2575fc;
+        }
+        
+        .ranked-values .rank-number {
+            background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+        }
+        
+        .instructions {
+            background-color: #f0f8ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 4px solid #2575fc;
+        }
+        
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a0cb9 0%, #1c68f0 100%);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e9ecef;
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .panel {
+                padding: 20px 15px;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Personal Values Tracker</h1>
+            <p class="subtitle">Rank what matters most in your life by dragging values from the left panel to the right panel. Your top values will be saved automatically.</p>
+        </header>
+        
+        <div class="app-container">
+            <div class="panel">
+                <h2><i class="fas fa-list"></i> All Values</h2>
+                <div class="values-list" id="all-values">
+                    <!-- Values will be populated by JavaScript -->
+                </div>
+                <div class="stats">
+                    <div class="total-values">Total Values: <span id="total-count">12</span></div>
+                    <div class="remaining">Remaining: <span id="remaining-count">12</span></div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2><i class="fas fa-trophy"></i> Your Ranked Values</h2>
+                <div class="values-list ranked-values" id="ranked-values">
+                    <div class="empty-message">Drag values here to rank them by importance</div>
+                </div>
+                <div class="stats">
+                    <div class="ranked-count">Ranked: <span id="ranked-count">0</span></div>
+                    <div class="top-value">Top Value: <span id="top-value">None yet</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>How to use this tracker:</h3>
+            <ol>
+                <li>Drag values from the "All Values" panel to the "Your Ranked Values" panel</li>
+                <li>Reorder your ranked values by dragging them within the right panel</li>
+                <li>Your top value will be shown at the top of the ranked list</li>
+                <li>Click "Save Ranking" to save your values to your browser's local storage</li>
+                <li>Click "Reset" to clear your ranking and start over</li>
+            </ol>
+        </div>
+        
+        <div class="controls">
+            <button class="btn-primary" id="save-btn">
+                <i class="fas fa-save"></i> Save Ranking
+            </button>
+            <button class="btn-secondary" id="reset-btn">
+                <i class="fas fa-redo"></i> Reset
+            </button>
+            <button class="btn-secondary" id="add-value-btn">
+                <i class="fas fa-plus"></i> Add Custom Value
+            </button>
+        </div>
+        
+        <div class="footer">
+            <p>Your values are saved locally in your browser. They will remain until you clear your browser data.</p>
+        </div>
+    </div>
+
+    <script>
+        // Initial values list
+        const initialValues = [
+            {
+                id: 1,
+                title: "Family",
+                description: "Close relationships with family members"
+            },
+            {
+                id: 2,
+                title: "Health",
+                description: "Physical and mental well-being"
+            },
+            {
+                id: 3,
+                title: "Friendship",
+                description: "Meaningful connections with friends"
+            },
+            {
+                id: 4,
+                title: "Career Success",
+                description: "Achievement and growth in professional life"
+            },
+            {
+                id: 5,
+                title: "Personal Growth",
+                description: "Continuous learning and self-improvement"
+            },
+            {
+                id: 6,
+                title: "Financial Security",
+                description: "Stability and freedom from money worries"
+            },
+            {
+                id: 7,
+                title: "Creativity",
+                description: "Expression through art, ideas, or innovation"
+            },
+            {
+                id: 8,
+                title: "Adventure",
+                description: "New experiences, travel, and exploration"
+            },
+            {
+                id: 9,
+                title: "Community",
+                description: "Contributing to and being part of a community"
+            },
+            {
+                id: 10,
+                title: "Spirituality",
+                description: "Connection to something greater than oneself"
+            },
+            {
+                id: 11,
+                title: "Freedom",
+                description: "Independence and autonomy in life choices"
+            },
+            {
+                id: 12,
+                title: "Legacy",
+                description: "Making a lasting impact on the world"
+            }
+        ];
+
+        // DOM Elements
+        const allValuesContainer = document.getElementById('all-values');
+        const rankedValuesContainer = document.getElementById('ranked-values');
+        const saveButton = document.getElementById('save-btn');
+        const resetButton = document.getElementById('reset-btn');
+        const addValueButton = document.getElementById('add-value-btn');
+        const totalCountElement = document.getElementById('total-count');
+        const remainingCountElement = document.getElementById('remaining-count');
+        const rankedCountElement = document.getElementById('ranked-count');
+        const topValueElement = document.getElementById('top-value');
+
+        // State
+        let allValues = [];
+        let rankedValues = [];
+        let nextId = 13; // For custom values
+
+        // Initialize the app
+        function init() {
+            // Load saved values from localStorage
+            const savedRanked = localStorage.getItem('personalValuesRanked');
+            
+            if (savedRanked) {
+                rankedValues = JSON.parse(savedRanked);
+                // Filter out any values that might have been saved but aren't in initial values
+                rankedValues = rankedValues.filter(rankedValue => 
+                    initialValues.some(initialValue => initialValue.id === rankedValue.id) ||
+                    (rankedValue.id >= 13) // Keep custom values
+                );
+            }
+            
+            // Add initial values that aren't already ranked
+            allValues = initialValues.filter(initialValue => 
+                !rankedValues.some(rankedValue => rankedValue.id === initialValue.id)
+            );
+            
+            // Add any custom values that aren't ranked (shouldn't happen but just in case)
+            const savedCustom = localStorage.getItem('personalValuesCustom');
+            if (savedCustom) {
+                const customValues = JSON.parse(savedCustom);
+                customValues.forEach(customValue => {
+                    if (!rankedValues.some(rankedValue => rankedValue.id === customValue.id)) {
+                        allValues.push(customValue);
+                    }
+                });
+                nextId = Math.max(nextId, ...customValues.map(v => v.id)) + 1;
+            }
+            
+            renderAllValues();
+            renderRankedValues();
+            updateStats();
+        }
+
+        // Render all available values
+        function renderAllValues() {
+            allValuesContainer.innerHTML = '';
+            
+            if (allValues.length === 0) {
+                allValuesContainer.innerHTML = '<div class="empty-message">All values have been ranked!</div>';
+                return;
+            }
+            
+            allValues.forEach(value => {
+                const valueElement = createValueElement(value, false);
+                allValuesContainer.appendChild(valueElement);
+            });
+        }
+
+        // Render ranked values
+        function renderRankedValues() {
+            rankedValuesContainer.innerHTML = '';
+            
+            if (rankedValues.length === 0) {
+                rankedValuesContainer.innerHTML = '<div class="empty-message">Drag values here to rank them by importance</div>';
+                topValueElement.textContent = 'None yet';
+                return;
+            }
+            
+            rankedValues.forEach((value, index) => {
+                const valueElement = createValueElement(value, true, index + 1);
+                rankedValuesContainer.appendChild(valueElement);
+            });
+            
+            // Update top value display
+            topValueElement.textContent = rankedValues[0].title;
+        }
+
+        // Create a value element
+        function createValueElement(value, isRanked, rank = null) {
+            const div = document.createElement('div');
+            div.className = 'value-item';
+            div.setAttribute('data-id', value.id);
+            div.draggable = true;
+            
+            const rankNumber = rank ? `<div class="rank-number">${rank}</div>` : '<div class="rank-number"><i class="fas fa-arrows-alt"></i></div>';
+            
+            div.innerHTML = `
+                ${rankNumber}
+                <div class="value-content">
+                    <h3>${value.title}</h3>
+                    <p>${value.description}</p>
+                </div>
+            `;
+            
+            // Add drag event listeners
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragend', handleDragEnd);
+            
+            // Make the container accept drop
+            if (!isRanked) {
+                div.addEventListener('dragover', handleDragOver);
+                div.addEventListener('drop', handleDropToAll);
+            } else {
+                div.addEventListener('dragover', handleDragOver);
+                div.addEventListener('drop', handleDropToRanked);
+            }
+            
+            return div;
+        }
+
+        // Update statistics
+        function updateStats() {
+            totalCountElement.textContent = allValues.length + rankedValues.length;
+            remainingCountElement.textContent = allValues.length;
+            rankedCountElement.textContent = rankedValues.length;
+        }
+
+        // Drag and Drop Handlers
+        let draggedElement = null;
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', this.getAttribute('data-id'));
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            draggedElement = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDropToAll(e) {
+            e.preventDefault();
+            const id = parseInt(e.dataTransfer.getData('text/plain'));
+            
+            // Find the value in rankedValues
+            const valueIndex = rankedValues.findIndex(v => v.id === id);
+            if (valueIndex !== -1) {
+                // Remove from rankedValues and add to allValues
+                const [value] = rankedValues.splice(valueIndex, 1);
+                allValues.push(value);
+                
+                renderAllValues();
+                renderRankedValues();
+                updateStats();
+                saveToLocalStorage();
+            }
+        }
+
+        function handleDropToRanked(e) {
+            e.preventDefault();
+            const id = parseInt(e.dataTransfer.getData('text/plain'));
+            
+            // Check if we're moving within ranked values
+            const rankedIndex = rankedValues.findIndex(v => v.id === id);
+            
+            if (rankedIndex !== -1) {
+                // Reordering within ranked values
+                const [value] = rankedValues.splice(rankedIndex, 1);
+                
+                // Find drop position
+                const afterElement = getDragAfterElement(rankedValuesContainer, e.clientY);
+                
+                if (afterElement == null) {
+                    rankedValues.push(value);
+                } else {
+                    const insertIndex = rankedValues.findIndex(v => v.id === parseInt(afterElement.getAttribute('data-id')));
+                    rankedValues.splice(insertIndex, 0, value);
+                }
+            } else {
+                // Moving from all values to ranked values
+                const allIndex = allValues.findIndex(v => v.id === id);
+                if (allIndex !== -1) {
+                    const [value] = allValues.splice(allIndex, 1);
+                    
+                    // Find drop position
+                    const afterElement = getDragAfterElement(rankedValuesContainer, e.clientY);
+                    
+                    if (afterElement == null) {
+                        rankedValues.push(value);
+                    } else {
+                        const insertIndex = rankedValues.findIndex(v => v.id === parseInt(afterElement.getAttribute('data-id')));
+                        rankedValues.splice(insertIndex, 0, value);
+                    }
+                }
+            }
+            
+            renderAllValues();
+            renderRankedValues();
+            updateStats();
+            saveToLocalStorage();
+        }
+
+        // Helper function to determine where to insert dragged element
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.value-item:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // Save to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('personalValuesRanked', JSON.stringify(rankedValues));
+            
+            // Save custom values separately
+            const customValues = [...allValues, ...rankedValues].filter(value => value.id >= 13);
+            localStorage.setItem('personalValuesCustom', JSON.stringify(customValues));
+            
+            // Show success message
+            const originalText = saveButton.innerHTML;
+            saveButton.innerHTML = '<i class="fas fa-check"></i> Saved!';
+            saveButton.style.background = 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)';
+            
+            setTimeout(() => {
+                saveButton.innerHTML = originalText;
+                saveButton.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+            }, 1500);
+        }
+
+        // Reset all values
+        function resetValues() {
+            if (rankedValues.length === 0 && allValues.length === initialValues.length) return;
+            
+            if (confirm("Are you sure you want to reset your ranking? This will move all values back to the available list.")) {
+                // Keep custom values
+                const customValues = [...allValues, ...rankedValues].filter(value => value.id >= 13);
+                
+                allValues = [...initialValues, ...customValues];
+                rankedValues = [];
+                
+                renderAllValues();
+                renderRankedValues();
+                updateStats();
+                
+                // Clear localStorage
+                localStorage.removeItem('personalValuesRanked');
+                
+                // Show reset message
+                const originalText = resetButton.innerHTML;
+                resetButton.innerHTML = '<i class="fas fa-check"></i> Reset Complete!';
+                resetButton.style.background = '#2ecc71';
+                resetButton.style.color = 'white';
+                
+                setTimeout(() => {
+                    resetButton.innerHTML = originalText;
+                    resetButton.style.background = '';
+                    resetButton.style.color = '';
+                }, 1500);
+            }
+        }
+
+        // Add a custom value
+        function addCustomValue() {
+            const title = prompt("Enter the name of your personal value:");
+            if (!title || title.trim() === '') return;
+            
+            const description = prompt("Enter a brief description of this value:");
+            
+            const newValue = {
+                id: nextId++,
+                title: title.trim(),
+                description: description ? description.trim() : "A personal value that matters to you"
+            };
+            
+            allValues.push(newValue);
+            renderAllValues();
+            updateStats();
+            saveToLocalStorage();
+        }
+
+        // Event Listeners
+        saveButton.addEventListener('click', saveToLocalStorage);
+        resetButton.addEventListener('click', resetValues);
+        addValueButton.addEventListener('click', addCustomValue);
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

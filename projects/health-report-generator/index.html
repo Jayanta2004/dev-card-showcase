@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Report Generator 🧾</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-file-medical-alt"></i> Health Report Generator</h1>
+            <p class="subtitle">Generate comprehensive health reports for consultations and personal tracking</p>
+        </header>
+
+        <div class="report-generator">
+            <!-- Report Configuration -->
+            <div class="config-card">
+                <h3><i class="fas fa-cogs"></i> Report Configuration</h3>
+                <form id="report-form">
+                    <div class="form-section">
+                        <h4>Date Range</h4>
+                        <div class="date-inputs">
+                            <div class="form-group">
+                                <label for="start-date">Start Date</label>
+                                <input type="date" id="start-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="end-date">End Date</label>
+                                <input type="date" id="end-date" required>
+                            </div>
+                        </div>
+                        <div class="quick-dates">
+                            <button type="button" class="quick-date-btn" data-days="7">Last 7 Days</button>
+                            <button type="button" class="quick-date-btn" data-days="30">Last 30 Days</button>
+                            <button type="button" class="quick-date-btn" data-days="90">Last 3 Months</button>
+                            <button type="button" class="quick-date-btn" data-days="365">Last Year</button>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Health Metrics to Include</h4>
+                        <div class="metrics-grid">
+                            <label class="metric-checkbox">
+                                <input type="checkbox" name="metrics" value="meditation" checked>
+                                <span class="checkmark"></span>
+                                Meditation Sessions
+                            </label>
+                            <label class="metric-checkbox">
+                                <input type="checkbox" name="metrics" value="calories" checked>
+                                <span class="checkmark"></span>
+                                Calorie Burn Activities
+                            </label>
+                            <label class="metric-checkbox">
+                                <input type="checkbox" name="metrics" value="activities" checked>
+                                <span class="checkmark"></span>
+                                General Activities
+                            </label>
+                            <label class="metric-checkbox">
+                                <input type="checkbox" name="metrics" value="weight">
+                                <span class="checkmark"></span>
+                                Weight Progress
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Report Options</h4>
+                        <div class="options-grid">
+                            <label class="option-checkbox">
+                                <input type="checkbox" name="options" value="summary" checked>
+                                <span class="checkmark"></span>
+                                Executive Summary
+                            </label>
+                            <label class="option-checkbox">
+                                <input type="checkbox" name="options" value="charts" checked>
+                                <span class="checkmark"></span>
+                                Charts & Graphs
+                            </label>
+                            <label class="option-checkbox">
+                                <input type="checkbox" name="options" value="trends" checked>
+                                <span class="checkmark"></span>
+                                Trend Analysis
+                            </label>
+                            <label class="option-checkbox">
+                                <input type="checkbox" name="options" value="recommendations" checked>
+                                <span class="checkmark"></span>
+                                Health Recommendations
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-chart-line"></i> Generate Report
+                        </button>
+                        <button type="button" id="clear-data-btn" class="btn-secondary">
+                            <i class="fas fa-trash"></i> Clear All Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Report Display -->
+            <div id="report-container" class="report-container hidden">
+                <div class="report-header">
+                    <div class="report-title">
+                        <h2>Health Report</h2>
+                        <span id="report-date-range" class="date-range"></span>
+                    </div>
+                    <div class="report-actions">
+                        <button id="print-btn" class="btn-secondary">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                        <button id="pdf-btn" class="btn-secondary">
+                            <i class="fas fa-download"></i> Download PDF
+                        </button>
+                        <button id="share-btn" class="btn-secondary">
+                            <i class="fas fa-share"></i> Share
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Executive Summary -->
+                <div id="executive-summary" class="report-section">
+                    <h3><i class="fas fa-star"></i> Executive Summary</h3>
+                    <div id="summary-content" class="summary-content">
+                        <!-- Summary will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Key Metrics -->
+                <div id="key-metrics" class="report-section">
+                    <h3><i class="fas fa-chart-bar"></i> Key Health Metrics</h3>
+                    <div class="metrics-overview">
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h4>Meditation</h4>
+                                <div class="metric-value" id="meditation-total">0 sessions</div>
+                                <div class="metric-trend" id="meditation-trend"></div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h4>Calories Burned</h4>
+                                <div class="metric-value" id="calories-total">0 kcal</div>
+                                <div class="metric-trend" id="calories-trend"></div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h4>Activity Time</h4>
+                                <div class="metric-value" id="activity-total">0 hours</div>
+                                <div class="metric-trend" id="activity-trend"></div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-weight"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h4>Weight Change</h4>
+                                <div class="metric-value" id="weight-change">0 kg</div>
+                                <div class="metric-trend" id="weight-trend"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div id="charts-section" class="report-section">
+                    <h3><i class="fas fa-chart-line"></i> Health Trends</h3>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4>Activity Overview</h4>
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Meditation Progress</h4>
+                            <canvas id="meditationChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Calorie Burn Trends</h4>
+                            <canvas id="caloriesChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Weight Progress</h4>
+                            <canvas id="weightChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Analysis -->
+                <div id="detailed-analysis" class="report-section">
+                    <h3><i class="fas fa-search"></i> Detailed Analysis</h3>
+                    <div class="analysis-content">
+                        <div class="analysis-item">
+                            <h4>Activity Patterns</h4>
+                            <div id="activity-patterns" class="analysis-text"></div>
+                        </div>
+                        <div class="analysis-item">
+                            <h4>Consistency Analysis</h4>
+                            <div id="consistency-analysis" class="analysis-text"></div>
+                        </div>
+                        <div class="analysis-item">
+                            <h4>Health Score Trends</h4>
+                            <div id="health-score-trends" class="analysis-text"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div id="recommendations" class="report-section">
+                    <h3><i class="fas fa-lightbulb"></i> Health Recommendations</h3>
+                    <div id="recommendations-content" class="recommendations-list">
+                        <!-- Recommendations will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Report Footer -->
+                <div class="report-footer">
+                    <p>Report generated on <span id="generation-date"></span></p>
+                    <p>This report is for informational purposes and should not replace professional medical advice.</p>
+                </div>
+            </div>
+
+            <!-- No Data Message -->
+            <div id="no-data-message" class="no-data-message hidden">
+                <div class="empty-state">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>No Health Data Found</h3>
+                    <p>We couldn't find any health tracking data for the selected date range.</p>
+                    <div class="suggestions">
+                        <p><strong>Suggestions:</strong></p>
+                        <ul>
+                            <li>Check if you've been using our health tracking apps</li>
+                            <li>Try a different date range</li>
+                            <li>Start logging activities in our health apps</li>
+                        </ul>
+                    </div>
+                    <div class="app-links">
+                        <a href="../meditation-tracker/" class="app-link">
+                            <i class="fas fa-brain"></i> Meditation Tracker
+                        </a>
+                        <a href="../calorie-burn-tracker/" class="app-link">
+                            <i class="fas fa-fire"></i> Calorie Burn Tracker
+                        </a>
+                        <a href="../activity-summary-dashboard/" class="app-link">
+                            <i class="fas fa-chart-line"></i> Activity Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

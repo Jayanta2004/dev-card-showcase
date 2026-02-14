@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>poll system · live canvas</title>
+    <!-- Poppins & clean base -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+    <style>
+        /* minimal, modern, responsive */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e7eef4 0%, #f2f6fa 100%);
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+            margin: 0;
+            color: #1e293b;
+        }
+
+        .poll-container {
+            max-width: 720px;
+            width: 100%;
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 20px 35px -8px rgba(0,20,30,0.15), 0 2px 4px rgba(0,0,0,0.02);
+            padding: 2rem 2rem 2.2rem;
+            transition: all 0.2s ease;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #0f2a3f;
+            margin-bottom: 0.1rem;
+        }
+
+        h1 span {
+            background: #1e3b5c;
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 0.2rem 0.7rem;
+            border-radius: 100px;
+            line-height: 1.4;
+            margin-left: 0.25rem;
+        }
+
+        .poll-question {
+            font-size: 1.35rem;
+            font-weight: 500;
+            margin-top: 0.75rem;
+            margin-bottom: 1.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px dashed #b7cddf;
+            color: #0a2c3b;
+        }
+
+        /* options list – clean cards */
+        .poll-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .option-item {
+            background: white;
+            border-radius: 24px;
+            padding: 0.1rem 0.1rem 0.1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            border: 1px solid #e2edf2;
+            box-shadow: 0 4px 10px -4px rgba(0,0,0,0.02);
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            backdrop-filter: blur(4px);
+        }
+
+        .option-item:hover {
+            border-color: #90b8cf;
+            background: #fafeff;
+            box-shadow: 0 8px 16px -8px #1e3b5c20;
+        }
+
+        /* hidden radio – but we handle with js & visual feedback */
+        .option-radio {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+        }
+
+        .option-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0.9rem 1.2rem 0.9rem 0.2rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+            font-size: 1.05rem;
+        }
+
+        .custom-radio {
+            width: 1.3rem;
+            height: 1.3rem;
+            border: 2px solid #b1cbd8;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            background: white;
+            transition: 0.1s;
+        }
+
+        .option-item.selected .custom-radio {
+            border-color: #1e5b7c;
+            background: #1e5b7c;
+            box-shadow: inset 0 0 0 4px white, 0 0 0 1px #1e5b7c;
+        }
+
+        .vote-percent {
+            font-weight: 600;
+            color: #1e4e62;
+            background: #e3f0f5;
+            padding: 0.3rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+        }
+
+        .vote-count {
+            font-weight: 400;
+            color: #3b5c6f;
+            font-size: 0.8rem;
+            margin-left: 0.2rem;
+        }
+
+        /* progress bar – subtle, smooth */
+        .progress-bg {
+            width: 100%;
+            background: #e9f0f4;
+            border-radius: 100px;
+            margin-top: 0.5rem;
+            height: 0.5rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4287a5, #1e5b7c);
+            border-radius: 100px;
+            transition: width 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+        }
+
+        /* action panel */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1.2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .vote-btn {
+            background: #1e3b5c;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 100px;
+            font-size: 1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            border: 1px solid #ffffff30;
+            box-shadow: 0 8px 16px -8px #0a1c2e;
+        }
+
+        .vote-btn:hover {
+            background: #254f6e;
+        }
+
+        .vote-btn:active {
+            transform: scale(0.97);
+        }
+
+        .reset-btn {
+            background: transparent;
+            border: 1.5px solid #b0cad9;
+            color: #1e3b5c;
+            padding: 0.8rem 1.8rem;
+            border-radius: 100px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            backdrop-filter: blur(5px);
+        }
+
+        .reset-btn:hover {
+            background: #d9e6f0;
+            border-color: #6b93a8;
+        }
+
+        .total-votes {
+            color: #436977;
+            font-size: 0.9rem;
+            background: #eef6fa;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-weight: 500;
+        }
+
+        .toast-message {
+            text-align: center;
+            margin-top: 1.2rem;
+            font-size: 0.9rem;
+            color: #326478;
+            min-height: 1.6rem;
+            font-weight: 450;
+            transition: opacity 0.2s;
+            background: #d9e6f0d0;
+            padding: 0.5rem;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+            display: none;
+        }
+
+        .toast-message.show {
+            display: block;
+        }
+
+        /* mobile fine-tuning */
+        @media (max-width: 480px) {
+            .poll-container { padding: 1.5rem; }
+            h1 { font-size: 1.6rem; }
+            .option-content { flex-direction: column; align-items: flex-start; }
+            .vote-percent { align-self: flex-end; }
+        }
+
+        /* utility */
+        .text-accent { color: #1a516b; }
+        .icon { font-size: 1.2rem; line-height: 1; }
+    </style>
+</head>
+<body>
+    <div class="poll-container">
+        <h1>
+            📊 pulse poll
+            <span>live</span>
+        </h1>
+        <div class="poll-question">
+            ❓ Which frontend tool do you prefer ?
+        </div>
+
+        <!-- polling options will be injected/controlled via JS -->
+        <div id="pollOptionsContainer" class="poll-options">
+            <!-- js will populate -->
+        </div>
+
+        <!-- total votes & actions -->
+        <div class="action-bar">
+            <button class="vote-btn" id="castVoteBtn">
+                <span class="icon">🗳️</span> cast vote
+            </button>
+            <button class="reset-btn" id="resetPollBtn">
+                <span class="icon">🔄</span> reset
+            </button>
+            <div class="total-votes" id="totalVotesDisplay">
+                👥 <span id="totalVotesCount">0</span> votes
+            </div>
+        </div>
+        <!-- subtle toast / feedback -->
+        <div id="toast" class="toast-message"></div>
+    </div>
+
+    <script>
+        (function(){
+            "use strict";
+
+            // --- POLL DATA (initial seed) ---
+            const pollOptions = [
+                { id: 0, label: "⚛️ React", votes: 36 },
+                { id: 1, label: "🟢 Vue", votes: 22 },
+                { id: 2, label: "🎭 Svelte", votes: 15 },
+                { id: 3, label: "📘 Angular", votes: 10 }
+            ];
+
+            // state: selected option id (null = nothing selected)
+            let selectedOptionId = null;
+
+            // ----- DOM references -----
+            const containerEl = document.getElementById('pollOptionsContainer');
+            const totalVotesSpan = document.getElementById('totalVotesCount');
+            const castBtn = document.getElementById('castVoteBtn');
+            const resetBtn = document.getElementById('resetPollBtn');
+            const toastEl = document.getElementById('toast');
+
+            // ----- helper: total votes accumulator -----
+            function computeTotalVotes() {
+                return pollOptions.reduce((acc, curr) => acc + curr.votes, 0);
+            }
+
+            // ----- show temporary toast message -----
+            function showToast(msg, isSuccess = true) {
+                toastEl.textContent = msg;
+                toastEl.style.background = isSuccess ? '#d1e6f0e0' : '#ffe1d6e0';
+                toastEl.style.color = isSuccess ? '#1a4b61' : '#814532';
+                toastEl.classList.add('show');
+                setTimeout(() => {
+                    toastEl.classList.remove('show');
+                }, 2000);
+            }
+
+            // ----- render the entire poll UI from pollOptions & selected state -----
+            function renderPoll() {
+                const totalVotes = computeTotalVotes();
+                totalVotesSpan.textContent = totalVotes;
+
+                let html = '';
+                for (let opt of pollOptions) {
+                    const percentage = totalVotes === 0 ? 0 : Math.round((opt.votes / totalVotes) * 100);
+                    const isSelected = (selectedOptionId === opt.id);
+                    const selectedClass = isSelected ? 'selected' : '';
+
+                    // progress width
+                    const progressWidth = totalVotes === 0 ? 0 : percentage;
+
+                    html += `<div class="option-item ${selectedClass}" data-option-id="${opt.id}">
+                        <input type="radio" name="pollOption" id="opt_${opt.id}" value="${opt.id}" class="option-radio" ${isSelected ? 'checked' : ''}>
+                        <div class="option-content">
+                            <span class="option-label">
+                                <span class="custom-radio"></span>
+                                <span>${opt.label}</span>
+                            </span>
+                            <span class="vote-percent">
+                                ${percentage}% 
+                                <span class="vote-count">(${opt.votes})</span>
+                            </span>
+                        </div>
+                        <div class="progress-bg">
+                            <div class="progress-fill" style="width: ${progressWidth}%;"></div>
+                        </div>
+                    </div>`;
+                }
+
+                containerEl.innerHTML = html;
+
+                // attach click listeners to each option-item for selection (visual + store)
+                attachOptionClickHandlers();
+            }
+
+            // ----- attach click on whole option card to select it -----
+            function attachOptionClickHandlers() {
+                const optionElements = document.querySelectorAll('.option-item');
+                optionElements.forEach(el => {
+                    // remove any previous listener and attach fresh
+                    el.removeEventListener('click', handleOptionClick);
+                    el.addEventListener('click', handleOptionClick);
+                });
+            }
+
+            // ----- handler: option card click -----
+            function handleOptionClick(e) {
+                // find the option-id from data attribute
+                const optionDiv = e.currentTarget.closest('.option-item');
+                if (!optionDiv) return;
+                const id = parseInt(optionDiv.dataset.optionId, 10);
+                // update selected id
+                selectedOptionId = id;
+                // re-render to reflect selected state & progress (no vote change)
+                renderPoll();
+            }
+
+            // ----- VOTE casting -----
+            function castVote() {
+                if (selectedOptionId === null) {
+                    showToast('✨ select an option first', false);
+                    return;
+                }
+
+                // find the option and increment votes
+                const option = pollOptions.find(opt => opt.id === selectedOptionId);
+                if (option) {
+                    option.votes += 1;
+                    showToast(`✔ vote recorded for ${option.label}`, true);
+                    // keep same selected option (remains selected)
+                    renderPoll();
+                } else {
+                    // fallback: reset selection
+                    selectedOptionId = null;
+                    renderPoll();
+                }
+            }
+
+            // ----- RESET poll to initial counts, clear selection -----
+            function resetPoll() {
+                // revert votes to initial seed
+                const initialVotes = [36, 22, 15, 10];
+                pollOptions.forEach((opt, idx) => {
+                    opt.votes = initialVotes[idx];
+                });
+                selectedOptionId = null;   // clear selection
+                renderPoll();
+                showToast('↺ poll has been reset', true);
+            }
+
+            // ----- additional: event listeners for buttons -----
+            function bindUI() {
+                castBtn.addEventListener('click', castVote);
+                resetBtn.addEventListener('click', resetPoll);
+            }
+
+            // initial render and bindings
+            renderPoll();
+            bindUI();
+
+            // (optional) keyboard / accessibility — space on selected card triggers vote
+            // we'll attach a small listener to window for demonstration (press 'v' to vote)
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'v' || e.key === 'V') {
+                    e.preventDefault();
+                    castVote();
+                }
+                if (e.key === 'r' || e.key === 'R') {
+                    e.preventDefault();
+                    resetPoll();
+                }
+            });
+
+            // expose for console fun :) 
+            window.__pollState = { pollOptions, selectedOptionId, castVote, resetPoll };
+        })();
+    </script>
+
+    <!-- subtle note: fully functional, no external deps -->
+    <div style="position: fixed; bottom: 12px; right: 20px; opacity: 0.35; font-size: 0.75rem; color: #2c4e62; background: rgba(255,255,240,0.5); padding: 5px 14px; border-radius: 60px; backdrop-filter: blur(3px);">
+        ⚡ click option → cast vote
+    </div>
+</body>
+</html>

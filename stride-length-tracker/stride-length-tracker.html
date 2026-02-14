@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stride Length Tracker - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/stride-length-tracker.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="activity"></i> Stride Length Tracker</h1>
+            <p>Monitor your running stride length improvements and correlate with pace for optimal performance.</p>
+        </header>
+
+        <!-- Current Stats Dashboard -->
+        <div class="stats-dashboard">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i data-lucide="footprints"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="currentStride">0.0 m</div>
+                    <div class="stat-label">Current Stride Length</div>
+                    <div class="stat-change" id="strideChange">No data</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i data-lucide="clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="currentPace">0:00</div>
+                    <div class="stat-label">Current Pace (min/km)</div>
+                    <div class="stat-change" id="paceChange">No data</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i data-lucide="trending-up"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="efficiencyScore">0</div>
+                    <div class="stat-label">Efficiency Score</div>
+                    <div class="stat-change" id="efficiencyChange">No data</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i data-lucide="target"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="sessionsCount">0</div>
+                    <div class="stat-label">Total Sessions</div>
+                    <div class="stat-change" id="sessionsThisWeek">This week: 0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tracker-grid">
+            <!-- Session Logger -->
+            <section class="tracker-section">
+                <h2><i data-lucide="plus-circle"></i> Log Running Session</h2>
+                <form id="sessionForm" class="session-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sessionDate">Date</label>
+                            <input type="date" id="sessionDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sessionTime">Time</label>
+                            <input type="time" id="sessionTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="distance">Distance (km)</label>
+                            <input type="number" id="distance" step="0.01" min="0.1" max="50" placeholder="5.0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="duration">Duration (minutes)</label>
+                            <input type="number" id="duration" step="0.1" min="1" max="300" placeholder="30" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="strideLength">Stride Length (meters)</label>
+                            <input type="number" id="strideLength" step="0.01" min="0.5" max="3.0" placeholder="1.2" required>
+                            <small class="help-text">Measure from heel strike to heel strike</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="cadence">Cadence (steps/min)</label>
+                            <input type="number" id="cadence" min="120" max="220" placeholder="180" required>
+                            <small class="help-text">Steps per minute (both feet)</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="effortLevel">Effort Level</label>
+                        <select id="effortLevel" required>
+                            <option value="">Select effort level</option>
+                            <option value="1">Very Easy (1)</option>
+                            <option value="2">Easy (2)</option>
+                            <option value="3">Moderate (3)</option>
+                            <option value="4">Hard (4)</option>
+                            <option value="5">Very Hard (5)</option>
+                            <option value="6">Max Effort (6)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes (optional)</label>
+                        <textarea id="notes" rows="3" placeholder="How did the run feel? Terrain? Weather conditions?"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="save"></i> Log Session
+                    </button>
+                </form>
+            </section>
+
+            <!-- Performance Charts -->
+            <section class="tracker-section">
+                <h2><i data-lucide="bar-chart-3"></i> Performance Trends</h2>
+                <div class="chart-controls">
+                    <button id="viewWeek" class="btn btn-secondary active">7 Days</button>
+                    <button id="viewMonth" class="btn btn-secondary">30 Days</button>
+                    <button id="viewQuarter" class="btn btn-secondary">90 Days</button>
+                    <button id="viewAll" class="btn btn-secondary">All Time</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- Analysis Section -->
+        <div class="analysis-section">
+            <h2><i data-lucide="brain"></i> Performance Analysis</h2>
+            <div class="analysis-grid">
+                <div class="analysis-card">
+                    <h3>Stride Efficiency</h3>
+                    <div class="analysis-metric">
+                        <span class="metric-label">Current:</span>
+                        <span class="metric-value" id="currentEfficiency">0.0</span>
+                        <span class="metric-unit">m/step</span>
+                    </div>
+                    <div class="analysis-insight" id="efficiencyInsight">Log more sessions to see efficiency trends.</div>
+                </div>
+
+                <div class="analysis-card">
+                    <h3>Pace-Stride Correlation</h3>
+                    <div class="correlation-chart">
+                        <canvas id="correlationChart" width="200" height="150"></canvas>
+                    </div>
+                    <div class="analysis-insight" id="correlationInsight">Correlation analysis will appear here.</div>
+                </div>
+
+                <div class="analysis-card">
+                    <h3>Improvement Goals</h3>
+                    <div class="goals-list" id="goalsList">
+                        <div class="goal-item">
+                            <span class="goal-label">Target Stride Length:</span>
+                            <span class="goal-value">1.4m (based on height)</span>
+                        </div>
+                        <div class="goal-item">
+                            <span class="goal-label">Optimal Cadence:</span>
+                            <span class="goal-value">180 spm</span>
+                        </div>
+                        <div class="goal-item">
+                            <span class="goal-label">Efficiency Target:</span>
+                            <span class="goal-value">Improve by 5% monthly</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session History -->
+        <section class="tracker-section">
+            <h2><i data-lucide="history"></i> Session History</h2>
+            <div class="history-controls">
+                <button id="sortDate" class="btn btn-secondary active">Sort by Date</button>
+                <button id="sortStride" class="btn btn-secondary">Sort by Stride</button>
+                <button id="sortPace" class="btn btn-secondary">Sort by Pace</button>
+            </div>
+            <div class="history-list" id="sessionHistory">
+                <div class="history-empty">
+                    <i data-lucide="inbox"></i>
+                    <p>No running sessions logged yet. Start tracking your stride length!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips & Recommendations -->
+        <section class="tracker-section">
+            <h2><i data-lucide="lightbulb"></i> Running Tips</h2>
+            <div class="tips-grid">
+                <div class="tip-card">
+                    <div class="tip-icon">
+                        <i data-lucide="target"></i>
+                    </div>
+                    <div class="tip-content">
+                        <h4>Optimal Stride Length</h4>
+                        <p>Ideal stride length is typically 2.5-3 times your foot length. Focus on quick, light steps rather than long strides.</p>
+                    </div>
+                </div>
+
+                <div class="tip-card">
+                    <div class="tip-icon">
+                        <i data-lucide="zap"></i>
+                    </div>
+                    <div class="tip-content">
+                        <h4>Cadence Training</h4>
+                        <p>Aim for 180 steps per minute. Use a metronome app to maintain consistent rhythm and improve efficiency.</p>
+                    </div>
+                </div>
+
+                <div class="tip-card">
+                    <div class="tip-icon">
+                        <i data-lucide="activity"></i>
+                    </div>
+                    <div class="tip-content">
+                        <h4>Progressive Overload</h4>
+                        <p>Gradually increase your stride length by 1-2cm per week. Combine with strength training for sustainable improvements.</p>
+                    </div>
+                </div>
+
+                <div class="tip-card">
+                    <div class="tip-icon">
+                        <i data-lucide="thermometer"></i>
+                    </div>
+                    <div class="tip-content">
+                        <h4>Monitor Fatigue</h4>
+                        <p>Track how stride length changes with fatigue. A decrease of 5-10% may indicate overtraining or need for recovery.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="../js/stride-length-tracker.js"></script>
+</body>
+</html>

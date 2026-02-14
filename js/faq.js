@@ -119,3 +119,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   filterAndSearch("all", "");
 });
+

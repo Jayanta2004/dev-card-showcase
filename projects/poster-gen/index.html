@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>poster generator · design lab</title>
+    <!-- modern font & style -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:wght@400;700;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1c262f;
+            background: radial-gradient(circle at 20% 30%, #2a3642, #131b22);
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .generator-container {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(240, 246, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 56px;
+            box-shadow: 0 40px 60px -20px #04090e, 0 0 0 1px #2e4a5a40 inset;
+            padding: 2.2rem 2.4rem;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2.2rem;
+        }
+
+        h1 {
+            font-size: 2.6rem;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            background: linear-gradient(130deg, #f2f9ff, #b2d9ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-shadow: 0 2px 5px #00000050;
+        }
+
+        h1 span {
+            font-size: 1.2rem;
+            background: #365f78;
+            color: white;
+            padding: 0.3rem 1.2rem;
+            border-radius: 80px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .preview-hint {
+            color: #acc7dd;
+            font-size: 0.9rem;
+            border: 1px solid #3d6f8a;
+            border-radius: 100px;
+            padding: 0.4rem 1.2rem;
+            background: #1b3849a0;
+        }
+
+        /* main layout: controls + poster canvas */
+        .design-panel {
+            display: grid;
+            grid-template-columns: 1fr 1.1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 860px) {
+            .design-panel { grid-template-columns: 1fr; }
+        }
+
+        /* control section – cards */
+        .controls {
+            background: #f5faff0c;
+            backdrop-filter: blur(8px);
+            border-radius: 40px;
+            padding: 1.8rem 1.8rem 2.2rem;
+            border: 1px solid #3a5f7630;
+            box-shadow: 0 20px 30px -20px #010101;
+        }
+
+        .control-group {
+            margin-bottom: 2rem;
+        }
+
+        .control-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #cddeec;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.7rem;
+            border-left: 3px solid #638fac;
+            padding-left: 0.8rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            background: #1f3540;
+            border: 1.5px solid #355b6e;
+            border-radius: 40px;
+            padding: 0.9rem 1.2rem;
+            font-size: 0.95rem;
+            color: #f0f9ff;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: 0.15s;
+        }
+
+        textarea {
+            border-radius: 28px;
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #88c2e0;
+            box-shadow: 0 0 0 3px #184f6e;
+        }
+
+        /* color rows */
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .color-row input[type="color"] {
+            width: 70px;
+            height: 55px;
+            padding: 0.3rem;
+            border-radius: 18px;
+            background: #1f2d34;
+        }
+
+        .color-row span {
+            color: #b6d2e6;
+        }
+
+        /* radio tiles for layout */
+        .layout-tiles {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .layout-tile {
+            background: #213744;
+            border: 2px solid #385f72;
+            border-radius: 24px;
+            padding: 0.7rem 1.4rem;
+            color: #cfe2ef;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.1s;
+            flex: 1 0 auto;
+            text-align: center;
+        }
+
+        .layout-tile.selected {
+            background: #27647b;
+            border-color: #b7e2ff;
+            color: white;
+            box-shadow: 0 0 12px #0077b3;
+        }
+
+        /* poster canvas */
+        .poster-stage {
+            background: #16232e;
+            border-radius: 40px;
+            padding: 1.8rem;
+            border: 1px solid #3c627a;
+            box-shadow: 0 20px 25px -15px #010a0e;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .poster-canvas {
+            background: white;  /* dynamic via js */
+            border-radius: 28px;
+            width: 100%;
+            aspect-ratio: 1 / 1.2;  /* classic poster proportion */
+            box-shadow: 0 20px 35px -10px black;
+            transition: background 0.1s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .poster-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Playfair Display', serif; /* default */
+        }
+
+        .poster-title {
+            font-weight: 900;
+            line-height: 1.1;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .poster-subtitle {
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .poster-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .poster-footer {
+            margin-top: auto;
+            font-size: 0.9rem;
+        }
+
+        /* export button */
+        .export-btn {
+            background: #387e9b;
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 1.2rem 2rem;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            margin-top: 1.5rem;
+            transition: background 0.1s;
+            border: 1px solid #b4e4ff;
+            box-shadow: 0 8px 16px -10px #000;
+            width: 100%;
+        }
+        .export-btn:hover { background: #479bbd; }
+
+        /* font preview */
+        .font-badge {
+            background: #1e3f50;
+            border-radius: 60px;
+            padding: 0.3rem 1rem;
+            font-size: 0.7rem;
+            color: #c1def5;
+        }
+    </style>
+</head>
+<body>
+    <div class="generator-container">
+        <div class="header">
+            <h1>
+                🧷 poster generator
+                <span>studio</span>
+            </h1>
+            <div class="preview-hint" id="liveHint">⚡ live update</div>
+        </div>
+
+        <div class="design-panel">
+            <!-- left: controls -->
+            <div class="controls">
+                <div class="control-group">
+                    <div class="control-label">📰 title</div>
+                    <input type="text" id="titleInput" value="DESIGN TALKS" placeholder="poster title">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">📎 subtitle</div>
+                    <input type="text" id="subtitleInput" value="21.03.2026 · berlin" placeholder="subtitle / date">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">📃 body text</div>
+                    <textarea id="bodyInput">keynote: julia voss\nworkshop: generative spaces\npanel: future of typography</textarea>
+                </div>
+                <div class="control-group">
+                    <div class="control-label">🔤 font family</div>
+                    <select id="fontSelect">
+                        <option value="'Playfair Display', serif" selected>Playfair Display (serif)</option>
+                        <option value="'Inter', sans-serif">Inter (sans)</option>
+                        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+                        <option value="Georgia, serif">Georgia</option>
+                        <option value="'Courier New', monospace">Courier New (mono)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">🎨 colors</div>
+                    <div class="color-row">
+                        <input type="color" id="bgColor" value="#f0ead2">
+                        <span>background</span>
+                    </div>
+                    <div class="color-row" style="margin-top:0.6rem;">
+                        <input type="color" id="textColor" value="#1c3a4f">
+                        <span>text color</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">◼️ layout style</div>
+                    <div class="layout-tiles" id="layoutTiles">
+                        <div class="layout-tile selected" data-layout="classic">classic</div>
+                        <div class="layout-tile" data-layout="minimal">minimal</div>
+                        <div class="layout-tile" data-layout="bold">bold</div>
+                        <div class="layout-tile" data-layout="centered">centered</div>
+                    </div>
+                </div>
+                <div class="font-badge" style="margin-top:1rem; text-align:center;">⬇️  adjustments reflect immediately  ⬇️</div>
+            </div>
+
+            <!-- right: poster preview + export -->
+            <div class="poster-stage">
+                <div id="posterCanvas" class="poster-canvas">
+                    <div id="posterContent" class="poster-content">
+                        <!-- dynamic content injected via js -->
+                        <div id="posterTitle" class="poster-title">DESIGN TALKS</div>
+                        <div id="posterSubtitle" class="poster-subtitle">21.03.2026 · berlin</div>
+                        <div id="posterBody" class="poster-body">keynote: julia voss<br>workshop: generative spaces<br>panel: future of typography</div>
+                        <div id="posterFooter" class="poster-footer">⚡ free entry · 6pm</div>
+                    </div>
+                </div>
+                <button class="export-btn" id="exportBtn">⬇️ export as PNG</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            // ----- state & dom -----
+            const titleInput = document.getElementById('titleInput');
+            const subtitleInput = document.getElementById('subtitleInput');
+            const bodyInput = document.getElementById('bodyInput');
+            const fontSelect = document.getElementById('fontSelect');
+            const bgColorInput = document.getElementById('bgColor');
+            const textColorInput = document.getElementById('textColor');
+            const layoutTiles = document.querySelectorAll('.layout-tile');
+            const posterCanvas = document.getElementById('posterCanvas');
+            const posterTitle = document.getElementById('posterTitle');
+            const posterSubtitle = document.getElementById('posterSubtitle');
+            const posterBody = document.getElementById('posterBody');
+            const posterFooter = document.getElementById('posterFooter');
+            const posterContent = document.getElementById('posterContent');
+
+            // current layout
+            let currentLayout = 'classic'; // classic, minimal, bold, centered
+
+            // ----- helper: apply all styles based on inputs -----
+            function updatePoster() {
+                // 1. text content
+                posterTitle.innerText = titleInput.value || 'TITLE';
+                posterSubtitle.innerText = subtitleInput.value || ' ';
+                // body: replace \n with <br>
+                const bodyText = bodyInput.value.replace(/\n/g, '<br>') || '—';
+                posterBody.innerHTML = bodyText;
+
+                // 2. colors
+                posterCanvas.style.backgroundColor = bgColorInput.value;
+                posterContent.style.color = textColorInput.value;
+
+                // 3. font family
+                posterContent.style.fontFamily = fontSelect.value;
+
+                // 4. layout styles
+                // reset extra inline styles first
+                posterContent.style.textAlign = 'left';
+                posterContent.style.justifyContent = 'flex-start';
+                posterTitle.style.fontSize = '';
+                posterSubtitle.style.fontSize = '';
+                posterBody.style.fontSize = '';
+                posterFooter.style.fontSize = '';
+                posterTitle.style.fontWeight = '';
+                posterSubtitle.style.fontWeight = '';
+                posterContent.style.padding = '0';
+
+                switch (currentLayout) {
+                    case 'classic':
+                        posterContent.style.textAlign = 'left';
+                        posterTitle.style.fontSize = '3.2rem';
+                        posterTitle.style.fontWeight = '900';
+                        posterSubtitle.style.fontSize = '1.2rem';
+                        posterSubtitle.style.fontWeight = '400';
+                        posterBody.style.fontSize = '1.1rem';
+                        posterBody.style.marginTop = '1rem';
+                        posterFooter.style.fontSize = '1rem';
+                        posterFooter.style.marginTop = '1.5rem';
+                        break;
+                    case 'minimal':
+                        posterContent.style.textAlign = 'left';
+                        posterTitle.style.fontSize = '2.5rem';
+                        posterTitle.style.fontWeight = '400';
+                        posterTitle.style.letterSpacing = '2px';
+                        posterSubtitle.style.fontSize = '1rem';
+                        posterSubtitle.style.fontWeight = '300';
+                        posterBody.style.fontSize = '1rem';
+                        posterBody.style.marginTop = '1rem';
+                        posterFooter.style.fontSize = '0.8rem';
+                        posterFooter.style.marginTop = '1rem';
+                        break;
+                    case 'bold':
+                        posterContent.style.textAlign = 'center';
+                        posterTitle.style.fontSize = '3.8rem';
+                        posterTitle.style.fontWeight = '900';
+                        posterTitle.style.letterSpacing = '-0.02em';
+                        posterSubtitle.style.fontSize = '1.5rem';
+                        posterSubtitle.style.fontWeight = '700';
+                        posterBody.style.fontSize = '1.2rem';
+                        posterBody.style.marginTop = '1.8rem';
+                        posterFooter.style.fontSize = '1.2rem';
+                        posterFooter.style.marginTop = '2rem';
+                        posterFooter.style.fontWeight = '600';
+                        break;
+                    case 'centered':
+                        posterContent.style.textAlign = 'center';
+                        posterTitle.style.fontSize = '3rem';
+                        posterTitle.style.fontWeight = '700';
+                        posterSubtitle.style.fontSize = '1.2rem';
+                        posterSubtitle.style.fontWeight = '400';
+                        posterBody.style.fontSize = '1.1rem';
+                        posterBody.style.marginTop = '1.5rem';
+                        posterFooter.style.fontSize = '0.9rem';
+                        posterFooter.style.marginTop = '1.5rem';
+                        break;
+                }
+
+                // add small padding to canvas
+                posterCanvas.style.padding = currentLayout === 'minimal' ? '1rem' : '1.5rem';
+            }
+
+            // ----- layout tile click handling -----
+            layoutTiles.forEach(tile => {
+                tile.addEventListener('click', function() {
+                    layoutTiles.forEach(t => t.classList.remove('selected'));
+                    this.classList.add('selected');
+                    currentLayout = this.dataset.layout;
+                    updatePoster();
+                });
+            });
+
+            // ----- attach input events to all controllers -----
+            titleInput.addEventListener('input', updatePoster);
+            subtitleInput.addEventListener('input', updatePoster);
+            bodyInput.addEventListener('input', updatePoster);
+            fontSelect.addEventListener('change', updatePoster);
+            bgColorInput.addEventListener('input', updatePoster);
+            textColorInput.addEventListener('input', updatePoster);
+
+            // ----- export as PNG (html2canvas required) -----
+            document.getElementById('exportBtn').addEventListener('click', function() {
+                // using html2canvas library from CDN (lightweight)
+                if (typeof html2canvas !== 'undefined') {
+                    html2canvas(posterCanvas, {
+                        scale: 1.8,
+                        backgroundColor: null,
+                        allowTaint: false,
+                        useCORS: true,
+                        logging: false
+                    }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `poster-${Date.now()}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    }).catch(err => {
+                        alert('export error, but you can screenshot!');
+                    });
+                } else {
+                    // if library not loaded (fallback)
+                    alert('⚠️ html2canvas not loaded – try screenshot.\n⬇️ Right-click → save as image');
+                }
+            });
+
+            // initial call
+            updatePoster();
+
+            // inject html2canvas script dynamically (if not already present)
+            if (!window.html2canvas) {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                script.integrity = 'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==';
+                script.crossOrigin = 'anonymous';
+                script.referrerPolicy = 'no-referrer';
+                document.head.appendChild(script);
+            }
+        })();
+    </script>
+    <!-- html2canvas CDN (async) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- subtle watermark -->
+    <div style="position: fixed; bottom: 16px; left: 30px; color: #8eb2c7; background: #162e3b70; border-radius: 60px; padding: 5px 22px; font-size: 0.7rem; backdrop-filter: blur(6px);">🎨 poster studio · export PNG</div>
+</body>
+</html>

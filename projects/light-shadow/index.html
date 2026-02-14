@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Light & Shadow Playground</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b, #86a8e7, #91eae4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            color: #a8dadc;
+            margin-bottom: 15px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .playground {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+            height: 70vh;
+        }
+        
+        @media (max-width: 1100px) {
+            .playground {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+        
+        .canvas-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #lightCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+        }
+        
+        .controls-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+        }
+        
+        .controls-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .controls-section h3 {
+            color: #86a8e7;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #a8dadc;
+        }
+        
+        .control-value {
+            color: #feb47b;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #86a8e7;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(134, 168, 231, 0.5);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #86a8e7;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(134, 168, 231, 0.5);
+        }
+        
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .color-option {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.active {
+            border-color: white;
+            transform: scale(1.1);
+        }
+        
+        .light-type-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .light-type-btn {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .light-type-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .light-type-btn.active {
+            background: rgba(134, 168, 231, 0.3);
+            border: 1px solid #86a8e7;
+        }
+        
+        .object-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .object-btn {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .object-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .preset-btn {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+        }
+        
+        .action-btn.clear {
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+        }
+        
+        .action-btn.reset {
+            background: linear-gradient(to right, #86a8e7, #91eae4);
+        }
+        
+        .info-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .info-panel h3 {
+            color: #86a8e7;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .instruction-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .instruction-item h4 {
+            color: #feb47b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #86a8e7;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #a8dadc;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #a8dadc;
+            margin-top: 30px;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .playground {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .canvas-container {
+                height: 500px;
+            }
+            
+            .instructions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-sun"></i> Light & Shadow Playground</h1>
+            <p class="tagline">Experiment with dynamic lighting, cast shadows, and atmospheric effects in real-time. Create stunning visual scenes by manipulating light sources and objects.</p>
+        </header>
+        
+        <div class="playground">
+            <div class="canvas-container">
+                <canvas id="lightCanvas"></canvas>
+            </div>
+            
+            <div class="controls-panel">
+                <div class="controls-section">
+                    <h3><i class="fas fa-lightbulb"></i> Light Sources</h3>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Light Intensity</span>
+                            <span class="control-value" id="intensityValue">70%</span>
+                        </div>
+                        <input type="range" id="intensitySlider" min="10" max="100" value="70">
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Shadow Softness</span>
+                            <span class="control-value" id="softnessValue">Medium</span>
+                        </div>
+                        <input type="range" id="softnessSlider" min="1" max="20" value="10">
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Light Color</span>
+                        </div>
+                        <div class="color-picker" id="lightColorPicker">
+                            <div class="color-option active" style="background: #fffacd;" data-color="#fffacd"></div>
+                            <div class="color-option" style="background: #ff7e5f;" data-color="#ff7e5f"></div>
+                            <div class="color-option" style="background: #86a8e7;" data-color="#86a8e7"></div>
+                            <div class="color-option" style="background: #91eae4;" data-color="#91eae4"></div>
+                            <div class="color-option" style="background: #feb47b;" data-color="#feb47b"></div>
+                            <div class="color-option" style="background: #d4a5a5;" data-color="#d4a5a5"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Light Type</span>
+                        </div>
+                        <div class="light-type-buttons">
+                            <button class="light-type-btn active" data-type="point">
+                                <i class="fas fa-circle"></i>
+                                <span>Point</span>
+                            </button>
+                            <button class="light-type-btn" data-type="directional">
+                                <i class="fas fa-sun"></i>
+                                <span>Directional</span>
+                            </button>
+                            <button class="light-type-btn" data-type="spot">
+                                <i class="fas fa-cone"></i>
+                                <span>Spotlight</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls-section">
+                    <h3><i class="fas fa-shapes"></i> Objects & Shadows</h3>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Shadow Opacity</span>
+                            <span class="control-value" id="shadowOpacityValue">60%</span>
+                        </div>
+                        <input type="range" id="shadowOpacitySlider" min="10" max="90" value="60">
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Ambient Light</span>
+                            <span class="control-value" id="ambientValue">20%</span>
+                        </div>
+                        <input type="range" id="ambientSlider" min="0" max="50" value="20">
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Add Objects</span>
+                        </div>
+                        <div class="object-buttons">
+                            <button class="object-btn" data-object="cube">
+                                <i class="fas fa-cube"></i>
+                                <span>Cube</span>
+                            </button>
+                            <button class="object-btn" data-object="sphere">
+                                <i class="fas fa-circle"></i>
+                                <span>Sphere</span>
+                            </button>
+                            <button class="object-btn" data-object="pyramid">
+                                <i class="fas fa-gem"></i>
+                                <span>Pyramid</span>
+                            </button>
+                            <button class="object-btn" data-object="cylinder">
+                                <i class="fas fa-database"></i>
+                                <span>Cylinder</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls-section">
+                    <h3><i class="fas fa-magic"></i> Effects & Presets</h3>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Atmosphere Density</span>
+                            <span class="control-value" id="atmosphereValue">30%</span>
+                        </div>
+                        <input type="range" id="atmosphereSlider" min="0" max="100" value="30">
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Quick Presets</span>
+                        </div>
+                        <div class="preset-buttons">
+                            <button class="preset-btn" data-preset="sunset">
+                                <i class="fas fa-sunset"></i>
+                                <span>Sunset</span>
+                            </button>
+                            <button class="preset-btn" data-preset="moonlight">
+                                <i class="fas fa-moon"></i>
+                                <span>Moonlight</span>
+                            </button>
+                            <button class="preset-btn" data-preset="neon">
+                                <i class="fas fa-neuter"></i>
+                                <span>Neon</span>
+                            </button>
+                            <button class="preset-btn" data-preset="foggy">
+                                <i class="fas fa-cloud"></i>
+                                <span>Foggy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn clear" id="clearBtn">
+                        <i class="fas fa-trash-alt"></i>
+                        Clear All
+                    </button>
+                    <button class="action-btn reset" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        Reset Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h3><i class="fas fa-info-circle"></i> How to Use the Playground</h3>
+            <div class="instructions">
+                <div class="instruction-item">
+                    <h4><i class="fas fa-hand-pointer"></i> Add Light Sources</h4>
+                    <p>Click anywhere on the canvas to add a light source. Drag lights to reposition them.</p>
+                </div>
+                <div class="instruction-item">
+                    <h4><i class="fas fa-shapes"></i> Add Objects</h4>
+                    <p>Use the object buttons to add shapes. Objects cast shadows based on light positions.</p>
+                </div>
+                <div class="instruction-item">
+                    <h4><i class="fas fa-sliders-h"></i> Adjust Properties</h4>
+                    <p>Use sliders to change light intensity, shadow softness, color, and atmospheric effects.</p>
+                </div>
+                <div class="instruction-item">
+                    <h4><i class="fas fa-cog"></i> Try Presets</h4>
+                    <p>Apply preset configurations like "Sunset" or "Neon" for instant atmospheric scenes.</p>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="lightCount">0</div>
+                    <div class="stat-label">Active Lights</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="objectCount">0</div>
+                    <div class="stat-label">Objects</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="shadowCount">0</div>
+                    <div class="stat-label">Shadows Cast</div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Light & Shadow Playground &copy; 2026 | Interactive exploration of lighting, shadows, and visual effects</p>
+            <p>Created with HTML5 Canvas and JavaScript. Works best in modern browsers.</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const canvas = document.getElementById('lightCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Control elements
+        const intensitySlider = document.getElementById('intensitySlider');
+        const intensityValue = document.getElementById('intensityValue');
+        const softnessSlider = document.getElementById('softnessSlider');
+        const softnessValue = document.getElementById('softnessValue');
+        const shadowOpacitySlider = document.getElementById('shadowOpacitySlider');
+        const shadowOpacityValue = document.getElementById('shadowOpacityValue');
+        const ambientSlider = document.getElementById('ambientSlider');
+        const ambientValue = document.getElementById('ambientValue');
+        const atmosphereSlider = document.getElementById('atmosphereSlider');
+        const atmosphereValue = document.getElementById('atmosphereValue');
+        const lightColorPicker = document.getElementById('lightColorPicker');
+        const lightTypeButtons = document.querySelectorAll('.light-type-btn');
+        const objectButtons = document.querySelectorAll('.object-btn');
+        const presetButtons = document.querySelectorAll('.preset-btn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        // Stats elements
+        const lightCountElement = document.getElementById('lightCount');
+        const objectCountElement = document.getElementById('objectCount');
+        const shadowCountElement = document.getElementById('shadowCount');
+        
+        // Canvas setup
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Game variables
+        let lights = [];
+        let objects = [];
+        let particles = [];
+        let selectedLight = null;
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        
+        // Current settings
+        let settings = {
+            lightIntensity: 0.7,
+            shadowSoftness: 10,
+            lightColor: '#fffacd',
+            lightType: 'point',
+            shadowOpacity: 0.6,
+            ambientLight: 0.2,
+            atmosphere: 0.3,
+            showParticles: true
+        };
+        
+        // Light class
+        class Light {
+            constructor(x, y, type = 'point') {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.radius = 30;
+                this.color = settings.lightColor;
+                this.intensity = settings.lightIntensity;
+                this.direction = Math.random() * Math.PI * 2;
+                this.angle = Math.PI / 4; // For spotlights
+                this.id = Date.now() + Math.random();
+                this.isDragging = false;
+                
+                // Directional light specific
+                if (type === 'directional') {
+                    this.direction = Math.PI / 4; // 45 degrees
+                }
+            }
+            
+            draw() {
+                // Draw glow effect
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.radius * 2
+                );
+                
+                gradient.addColorStop(0, this.color);
+                gradient.addColorStop(0.7, this.color.replace(')', ', 0.3)').replace('rgb', 'rgba'));
+                gradient.addColorStop(1, 'transparent');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw light center
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw direction indicator for directional and spot lights
+                if (this.type !== 'point') {
+                    const endX = this.x + Math.cos(this.direction) * 50;
+                    const endY = this.y + Math.sin(this.direction) * 50;
+                    
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+                    
+                    // Draw arrowhead
+                    ctx.beginPath();
+                    ctx.moveTo(endX, endY);
+                    ctx.lineTo(
+                        endX - Math.cos(this.direction - Math.PI / 8) * 15,
+                        endY - Math.sin(this.direction - Math.PI / 8) * 15
+                    );
+                    ctx.lineTo(
+                        endX - Math.cos(this.direction + Math.PI / 8) * 15,
+                        endY - Math.sin(this.direction + Math.PI / 8) * 15
+                    );
+                    ctx.closePath();
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                    
+                    // For spotlights, draw cone
+                    if (this.type === 'spot') {
+                        const coneStart = 30;
+                        const coneEnd = 150;
+                        
+                        ctx.strokeStyle = this.color.replace(')', ', 0.5)').replace('rgb', 'rgba');
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        
+                        // Left side of cone
+                        ctx.moveTo(
+                            this.x + Math.cos(this.direction - this.angle) * coneStart,
+                            this.y + Math.sin(this.direction - this.angle) * coneStart
+                        );
+                        ctx.lineTo(
+                            this.x + Math.cos(this.direction - this.angle) * coneEnd,
+                            this.y + Math.sin(this.direction - this.angle) * coneEnd
+                        );
+                        
+                        // Arc at the end
+                        ctx.arc(
+                            this.x, this.y,
+                            coneEnd,
+                            this.direction - this.angle,
+                            this.direction + this.angle
+                        );
+                        
+                        // Right side of cone
+                        ctx.lineTo(
+                            this.x + Math.cos(this.direction + this.angle) * coneStart,
+                            this.y + Math.sin(this.direction + this.angle) * coneStart
+                        );
+                        
+                        ctx.closePath();
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            isPointInside(x, y) {
+                const distance = Math.sqrt((x - this.x) ** 2 + (y - this.y) ** 2);
+                return distance < this.radius;
+            }
+        }
+        
+        // Object class
+        class SceneObject {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.width = 80;
+                this.height = 80;
+                this.color = this.getRandomColor();
+                this.id = Date.now() + Math.random();
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+                
+                // Type-specific properties
+                if (type === 'sphere') {
+                    this.radius = 40;
+                } else if (type === 'cylinder') {
+                    this.width = 60;
+                    this.height = 100;
+                }
+            }
+            
+            getRandomColor() {
+                const colors = [
+                    '#3498db', '#e74c3c', '#2ecc71', '#f39c12',
+                    '#9b59b6', '#1abc9c', '#d35400', '#34495e'
+                ];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = 'rgba(0, 0, 0, 0)'; // Reset shadow for object itself
+                
+                switch(this.type) {
+                    case 'cube':
+                        this.drawCube();
+                        break;
+                    case 'sphere':
+                        this.drawSphere();
+                        break;
+                    case 'pyramid':
+                        this.drawPyramid();
+                        break;
+                    case 'cylinder':
+                        this.drawCylinder();
+                        break;
+                }
+                
+                ctx.restore();
+                
+                // Update rotation
+                this.rotation += this.rotationSpeed;
+            }
+            
+            drawCube() {
+                const halfWidth = this.width / 2;
+                const halfHeight = this.height / 2;
+                
+                // Front face
+                ctx.fillRect(-halfWidth, -halfHeight, this.width, this.height);
+                
+                // Top face
+                ctx.fillStyle = this.color.replace(')', ', 0.8)').replace('rgb', 'rgba');
+                ctx.beginPath();
+                ctx.moveTo(-halfWidth, -halfHeight);
+                ctx.lineTo(0, -halfHeight - 20);
+                ctx.lineTo(halfWidth, -halfHeight);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Side face
+                ctx.fillStyle = this.color.replace(')', ', 0.6)').replace('rgb', 'rgba');
+                ctx.beginPath();
+                ctx.moveTo(halfWidth, -halfHeight);
+                ctx.lineTo(halfWidth + 20, 0);
+                ctx.lineTo(halfWidth, halfHeight);
+                ctx.lineTo(halfWidth, -halfHeight);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            drawSphere() {
+                const gradient = ctx.createRadialGradient(
+                    0, 0, 0,
+                    0, 0, this.radius
+                );
+                
+                gradient.addColorStop(0, this.color.replace(')', ', 1)').replace('rgb', 'rgba'));
+                gradient.addColorStop(1, this.color.replace(')', ', 0.6)').replace('rgb', 'rgba'));
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            drawPyramid() {
+                const halfWidth = this.width / 2;
+                const halfHeight = this.height / 2;
+                
+                // Base
+                ctx.beginPath();
+                ctx.moveTo(-halfWidth, halfHeight);
+                ctx.lineTo(0, halfHeight - 20);
+                ctx.lineTo(halfWidth, halfHeight);
+                ctx.lineTo(0, halfHeight + 20);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Sides
+                ctx.fillStyle = this.color.replace(')', ', 0.8)').replace('rgb', 'rgba');
+                ctx.beginPath();
+                ctx.moveTo(-halfWidth, halfHeight);
+                ctx.lineTo(0, -halfHeight);
+                ctx.lineTo(0, halfHeight - 20);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = this.color.replace(')', ', 0.7)').replace('rgb', 'rgba');
+                ctx.beginPath();
+                ctx.moveTo(0, halfHeight - 20);
+                ctx.lineTo(0, -halfHeight);
+                ctx.lineTo(halfWidth, halfHeight);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            drawCylinder() {
+                const halfWidth = this.width / 2;
+                const halfHeight = this.height / 2;
+                
+                // Main body
+                ctx.fillRect(-halfWidth, -halfHeight, this.width, this.height);
+                
+                // Top ellipse
+                ctx.fillStyle = this.color.replace(')', ', 0.9)').replace('rgb', 'rgba');
+                ctx.beginPath();
+                ctx.ellipse(0, -halfHeight, halfWidth, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Bottom ellipse
+                ctx.fillStyle = this.color.replace(')', ', 0.7)').replace('rgb', 'rgba');
+                ctx.beginPath();
+                ctx.ellipse(0, halfHeight, halfWidth, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            isPointInside(x, y) {
+                const dx = x - this.x;
+                const dy = y - this.y;
+                
+                if (this.type === 'sphere') {
+                    return Math.sqrt(dx * dx + dy * dy) < this.radius;
+                } else {
+                    const halfWidth = this.width / 2;
+                    const halfHeight = this.height / 2;
+                    return Math.abs(dx) < halfWidth && Math.abs(dy) < halfHeight;
+                }
+            }
+        }
+        
+        // Particle class for atmospheric effects
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 5 + 1;
+                this.speedX = Math.random() * 3 - 1.5;
+                this.speedY = Math.random() * 3 - 1.5;
+                this.color = `rgba(255, 255, 255, ${Math.random() * 0.5})`;
+                this.life = 100;
+            }
+            
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life--;
+                
+                // Bounce off edges
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+                
+                // Apply fading
+                this.size *= 0.99;
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Initialize the playground
+        function init() {
+            // Add some initial lights and objects
+            lights.push(new Light(canvas.width * 0.3, canvas.height * 0.4, 'point'));
+            lights.push(new Light(canvas.width * 0.7, canvas.height * 0.6, 'directional'));
+            
+            objects.push(new SceneObject(canvas.width * 0.5, canvas.height * 0.5, 'cube'));
+            objects.push(new SceneObject(canvas.width * 0.3, canvas.height * 0.7, 'sphere'));
+            
+            // Update stats
+            updateStats();
+            
+            // Start animation loop
+            animate();
+        }
+        
+        // Animation loop
+        function animate() {
+            // Clear canvas with ambient light color
+            ctx.fillStyle = `rgba(10, 10, 30, ${0.05 + settings.ambientLight})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw atmospheric particles
+            if (settings.atmosphere > 0) {
+                drawAtmosphere();
+            }
+            
+            // Draw shadows first
+            drawShadows();
+            
+            // Draw objects
+            objects.forEach(obj => obj.draw());
+            
+            // Draw lights
+            lights.forEach(light => {
+                light.color = settings.lightColor;
+                light.intensity = settings.lightIntensity;
+                light.draw();
+            });
+            
+            // Draw selected light highlight
+            if (selectedLight) {
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.arc(selectedLight.x, selectedLight.y, selectedLight.radius + 5, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Draw shadows based on lights and objects
+        function drawShadows() {
+            // Calculate total shadows cast
+            let shadowCount = 0;
+            
+            lights.forEach(light => {
+                objects.forEach(obj => {
+                    // Calculate shadow based on light position and object
+                    const dx = obj.x - light.x;
+                    const dy = obj.y - light.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Only cast shadow if object is in light's direction
+                    if (distance < 400) {
+                        shadowCount++;
+                        
+                        // Calculate shadow position and size
+                        const shadowLength = 200 * (1 - distance / 400);
+                        const shadowX = obj.x + dx * 0.3;
+                        const shadowY = obj.y + dy * 0.3;
+                        
+                        // Create shadow gradient
+                        const shadowGradient = ctx.createRadialGradient(
+                            shadowX, shadowY, 0,
+                            shadowX, shadowY, shadowLength
+                        );
+                        
+                        const shadowAlpha = settings.shadowOpacity * light.intensity;
+                        shadowGradient.addColorStop(0, `rgba(0, 0, 0, ${shadowAlpha})`);
+                        shadowGradient.addColorStop(1, 'transparent');
+                        
+                        // Draw shadow with softness
+                        ctx.fillStyle = shadowGradient;
+                        ctx.beginPath();
+                        ctx.arc(shadowX, shadowY, shadowLength, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Add secondary softer shadow for depth
+                        const softShadowGradient = ctx.createRadialGradient(
+                            shadowX, shadowY, 0,
+                            shadowX, shadowY, shadowLength * 1.5
+                        );
+                        
+                        softShadowGradient.addColorStop(0, `rgba(0, 0, 0, ${shadowAlpha * 0.3})`);
+                        softShadowGradient.addColorStop(1, 'transparent');
+                        
+                        ctx.fillStyle = softShadowGradient;
+                        ctx.beginPath();
+                        ctx.arc(shadowX, shadowY, shadowLength * 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            });
+            
+            // Update shadow count
+            shadowCountElement.textContent = shadowCount;
+        }
+        
+        // Draw atmospheric particles
+        function drawAtmosphere() {
+            // Add new particles occasionally
+            if (Math.random() < settings.atmosphere / 50) {
+                particles.push(new Particle(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height
+                ));
+                
+                // Limit particles
+                if (particles.length > 200) {
+                    particles.splice(0, 50);
+                }
+            }
+            
+            // Update and draw particles
+            particles.forEach((particle, index) => {
+                particle.update();
+                particle.draw();
+                
+                // Remove dead particles
+                if (particle.life <= 0 || particle.size < 0.5) {
+                    particles.splice(index, 1);
+                }
+            });
+        }
+        
+        // Update UI stats
+        function updateStats() {
+            lightCountElement.textContent = lights.length;
+            objectCountElement.textContent = objects.length;
+        }
+        
+        // Event Listeners
+        
+        // Canvas click to add light
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check if clicked on existing light
+            for (let i = lights.length - 1; i >= 0; i--) {
+                if (lights[i].isPointInside(x, y)) {
+                    selectedLight = lights[i];
+                    return;
+                }
+            }
+            
+            // Check if clicked on object
+            for (let i = objects.length - 1; i >= 0; i--) {
+                if (objects[i].isPointInside(x, y)) {
+                    // Remove object on click
+                    objects.splice(i, 1);
+                    updateStats();
+                    return;
+                }
+            }
+            
+            // Add new light
+            lights.push(new Light(x, y, settings.lightType));
+            selectedLight = lights[lights.length - 1];
+            updateStats();
+        });
+        
+        // Canvas drag to move lights
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check if clicked on a light
+            for (let i = lights.length - 1; i >= 0; i--) {
+                if (lights[i].isPointInside(x, y)) {
+                    selectedLight = lights[i];
+                    isDragging = true;
+                    dragOffsetX = x - selectedLight.x;
+                    dragOffsetY = y - selectedLight.y;
+                    return;
+                }
+            }
+            
+            selectedLight = null;
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging || !selectedLight) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            selectedLight.x = x - dragOffsetX;
+            selectedLight.y = y - dragOffsetY;
+            
+            // Update direction for directional/spot lights based on mouse position
+            if (selectedLight.type !== 'point') {
+                const dx = x - selectedLight.x;
+                const dy = y - selectedLight.y;
+                selectedLight.direction = Math.atan2(dy, dx);
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+        
+        // Control sliders
+        intensitySlider.addEventListener('input', () => {
+            settings.lightIntensity = intensitySlider.value / 100;
+            intensityValue.textContent = `${intensitySlider.value}%`;
+        });
+        
+        softnessSlider.addEventListener('input', () => {
+            settings.shadowSoftness = softnessSlider.value;
+            const softnessText = ['Soft', 'Medium', 'Hard'];
+            const index = Math.floor((softnessSlider.value - 1) / 6);
+            softnessValue.textContent = softnessText[Math.min(index, 2)];
+        });
+        
+        shadowOpacitySlider.addEventListener('input', () => {
+            settings.shadowOpacity = shadowOpacitySlider.value / 100;
+            shadowOpacityValue.textContent = `${shadowOpacitySlider.value}%`;
+        });
+        
+        ambientSlider.addEventListener('input', () => {
+            settings.ambientLight = ambientSlider.value / 100;
+            ambientValue.textContent = `${ambientSlider.value}%`;
+        });
+        
+        atmosphereSlider.addEventListener('input', () => {
+            settings.atmosphere = atmosphereSlider.value / 100;
+            atmosphereValue.textContent = `${atmosphereSlider.value}%`;
+        });
+        
+        // Color picker
+        lightColorPicker.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove active class from all options
+                lightColorPicker.querySelectorAll('.color-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                
+                // Add active class to clicked option
+                option.classList.add('active');
+                
+                // Update light color
+                settings.lightColor = option.dataset.color;
+            });
+        });
+        
+        // Light type buttons
+        lightTypeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons
+                lightTypeButtons.forEach(b => b.classList.remove('active'));
+                
+                // Add active class to clicked button
+                btn.classList.add('active');
+                
+                // Update light type
+                settings.lightType = btn.dataset.type;
+                
+                // Update selected light if exists
+                if (selectedLight) {
+                    selectedLight.type = settings.lightType;
+                }
+            });
+        });
+        
+        // Object buttons
+        objectButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Add object at random position
+                const x = Math.random() * (canvas.width - 100) + 50;
+                const y = Math.random() * (canvas.height - 100) + 50;
+                objects.push(new SceneObject(x, y, btn.dataset.object));
+                updateStats();
+            });
+        });
+        
+        // Preset buttons
+        presetButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                applyPreset(btn.dataset.preset);
+            });
+        });
+        
+        // Apply preset configurations
+        function applyPreset(preset) {
+            switch(preset) {
+                case 'sunset':
+                    settings.lightColor = '#ff7e5f';
+                    settings.lightIntensity = 0.6;
+                    settings.ambientLight = 0.3;
+                    settings.shadowOpacity = 0.5;
+                    settings.atmosphere = 0.4;
+                    break;
+                    
+                case 'moonlight':
+                    settings.lightColor = '#91eae4';
+                    settings.lightIntensity = 0.4;
+                    settings.ambientLight = 0.1;
+                    settings.shadowOpacity = 0.7;
+                    settings.atmosphere = 0.2;
+                    break;
+                    
+                case 'neon':
+                    settings.lightColor = '#ff00ff';
+                    settings.lightIntensity = 0.9;
+                    settings.ambientLight = 0.05;
+                    settings.shadowOpacity = 0.8;
+                    settings.atmosphere = 0.1;
+                    break;
+                    
+                case 'foggy':
+                    settings.lightColor = '#d4a5a5';
+                    settings.lightIntensity = 0.5;
+                    settings.ambientLight = 0.4;
+                    settings.shadowOpacity = 0.4;
+                    settings.atmosphere = 0.8;
+                    break;
+            }
+            
+            // Update UI to match preset
+            updateUIFromSettings();
+        }
+        
+        // Update UI controls from settings
+        function updateUIFromSettings() {
+            intensitySlider.value = settings.lightIntensity * 100;
+            intensityValue.textContent = `${Math.round(settings.lightIntensity * 100)}%`;
+            
+            shadowOpacitySlider.value = settings.shadowOpacity * 100;
+            shadowOpacityValue.textContent = `${Math.round(settings.shadowOpacity * 100)}%`;
+            
+            ambientSlider.value = settings.ambientLight * 100;
+            ambientValue.textContent = `${Math.round(settings.ambientLight * 100)}%`;
+            
+            atmosphereSlider.value = settings.atmosphere * 100;
+            atmosphereValue.textContent = `${Math.round(settings.atmosphere * 100)}%`;
+            
+            // Update color picker
+            lightColorPicker.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('active');
+                if (option.dataset.color === settings.lightColor) {
+                    option.classList.add('active');
+                }
+            });
+            
+            // Update light type buttons
+            lightTypeButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.type === settings.lightType) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        // Clear all lights and objects
+        clearBtn.addEventListener('click', () => {
+            lights = [];
+            objects = [];
+            particles = [];
+            selectedLight = null;
+            updateStats();
+            shadowCountElement.textContent = '0';
+        });
+        
+        // Reset settings to defaults
+        resetBtn.addEventListener('click', () => {
+            settings = {
+                lightIntensity: 0.7,
+                shadowSoftness: 10,
+                lightColor: '#fffacd',
+                lightType: 'point',
+                shadowOpacity: 0.6,
+                ambientLight: 0.2,
+                atmosphere: 0.3,
+                showParticles: true
+            };
+            
+            updateUIFromSettings();
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // C to clear
+            if (e.key === 'c' || e.key === 'C') {
+                clearBtn.click();
+            }
+            
+            // R to reset
+            if (e.key === 'r' || e.key === 'R') {
+                resetBtn.click();
+            }
+            
+            // Number keys 1-4 for object types
+            if (e.key >= '1' && e.key <= '4') {
+                const index = parseInt(e.key) - 1;
+                if (index < objectButtons.length) {
+                    objectButtons[index].click();
+                }
+            }
+            
+            // L to add a light at center
+            if (e.key === 'l' || e.key === 'L') {
+                lights.push(new Light(canvas.width/2, canvas.height/2, settings.lightType));
+                updateStats();
+            }
+        });
+        
+        // Add instructions for keyboard shortcuts
+        document.addEventListener('DOMContentLoaded', () => {
+            const tagline = document.querySelector('.tagline');
+            tagline.innerHTML += '<br><small>Press L to add light, 1-4 to add objects, C to clear, R to reset</small>';
+        });
+        
+        // Initialize the playground
+        init();
+    </script>
+</body>
+</html>

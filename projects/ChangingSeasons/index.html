@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Window with Changing Seasons</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #f1f1f1;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #a8e6cf, #dcedc1, #ffd3b6, #ffaaa5);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #b0b7d6;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+
+        .season-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .season-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .season-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .season-btn.active {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .season-btn.spring.active {
+            background: rgba(168, 230, 207, 0.3);
+            border-color: #a8e6cf;
+        }
+
+        .season-btn.summer.active {
+            background: rgba(255, 211, 182, 0.3);
+            border-color: #ffd3b6;
+        }
+
+        .season-btn.autumn.active {
+            background: rgba(255, 170, 165, 0.3);
+            border-color: #ffaaa5;
+        }
+
+        .season-btn.winter.active {
+            background: rgba(220, 237, 193, 0.3);
+            border-color: #dcedc1;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 40px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .window-container {
+            flex: 1;
+            min-width: 300px;
+            max-width: 800px;
+            perspective: 1000px;
+        }
+
+        .window-frame {
+            background-color: #8b4513;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 
+                0 0 0 10px #a0522d,
+                0 20px 50px rgba(0, 0, 0, 0.5),
+                inset 0 0 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .window-frame:before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 3px solid #d2691e;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .window-glass {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+            box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Window grid lines */
+        .window-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .grid-line {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .vertical {
+            width: 1px;
+            height: 100%;
+            top: 0;
+        }
+
+        .horizontal {
+            width: 100%;
+            height: 1px;
+            left: 0;
+        }
+
+        .season-scene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease;
+            pointer-events: none;
+        }
+
+        .season-scene.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .info-panel {
+            flex: 1;
+            min-width: 300px;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .season-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .season-description {
+            line-height: 1.6;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            color: #e0e0ff;
+        }
+
+        .season-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #b0b7d6;
+        }
+
+        .interactive-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .sound-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .sound-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .sound-toggle.muted {
+            color: #ff6b6b;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #b0b7d6;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        /* Seasonal scene elements */
+        .tree {
+            position: absolute;
+            bottom: 0;
+            width: 120px;
+            height: 250px;
+        }
+
+        .tree-trunk {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 25px;
+            height: 100px;
+            background-color: #8b4513;
+            border-radius: 5px;
+        }
+
+        .tree-foliage {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+        }
+
+        .spring .tree-foliage {
+            background-color: #a8e6cf;
+            box-shadow: 
+                0 0 0 20px rgba(168, 230, 207, 0.7),
+                0 0 0 40px rgba(168, 230, 207, 0.4);
+        }
+
+        .summer .tree-foliage {
+            background-color: #2d5016;
+            box-shadow: 
+                0 0 0 20px rgba(45, 80, 22, 0.7),
+                0 0 0 40px rgba(45, 80, 22, 0.4);
+        }
+
+        .autumn .tree-foliage {
+            background-color: #ff6b35;
+            box-shadow: 
+                0 0 0 20px rgba(255, 107, 53, 0.7),
+                0 0 0 40px rgba(255, 107, 53, 0.4);
+        }
+
+        .winter .tree-foliage {
+            background-color: #e0e0e0;
+            box-shadow: 
+                0 0 0 20px rgba(224, 224, 224, 0.7),
+                0 0 0 40px rgba(224, 224, 224, 0.4);
+        }
+
+        .flower {
+            position: absolute;
+            width: 20px;
+            height: 30px;
+            border-radius: 50%;
+            animation: float 4s infinite ease-in-out;
+        }
+
+        .spring .flower {
+            background-color: #ff6bcb;
+            box-shadow: 0 0 10px #ff6bcb;
+        }
+
+        .sun {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #ffde59;
+            box-shadow: 0 0 40px #ffde59;
+            top: 50px;
+            right: 80px;
+            animation: pulse 4s infinite alternate;
+        }
+
+        .cloud {
+            position: absolute;
+            background-color: white;
+            border-radius: 50px;
+            animation: float 20s infinite linear;
+        }
+
+        .snowflake {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            border-radius: 50%;
+            animation: fall linear infinite;
+        }
+
+        .leaf {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background-color: #ff6b35;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            animation: fall 10s infinite linear;
+        }
+
+        .bird {
+            position: absolute;
+            width: 30px;
+            height: 20px;
+            background-color: #333;
+            clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
+            animation: fly 15s infinite linear;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 40px #ffde59;
+            }
+            100% {
+                transform: scale(1.1);
+                box-shadow: 0 0 60px #ffde59;
+            }
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+            }
+            100% {
+                transform: translateY(600px) rotate(360deg);
+            }
+        }
+
+        @keyframes fly {
+            0% {
+                left: -50px;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .main-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .window-container, .info-panel {
+                max-width: 100%;
+            }
+            
+            .window-glass {
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .season-btn {
+                padding: 10px 15px;
+                font-size: 1rem;
+            }
+            
+            .window-glass {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Window with Changing Seasons</h1>
+            <p class="subtitle">Look through this interactive window to experience the beauty of spring, summer, autumn, and winter. Click on seasonal elements to interact with them.</p>
+            
+            <div class="season-controls">
+                <button class="season-btn spring active" data-season="spring">
+                    <i class="fas fa-seedling"></i> Spring
+                </button>
+                <button class="season-btn summer" data-season="summer">
+                    <i class="fas fa-sun"></i> Summer
+                </button>
+                <button class="season-btn autumn" data-season="autumn">
+                    <i class="fas fa-leaf"></i> Autumn
+                </button>
+                <button class="season-btn winter" data-season="winter">
+                    <i class="fas fa-snowflake"></i> Winter
+                </button>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="window-container">
+                <div class="window-frame">
+                    <div class="window-glass" id="windowGlass">
+                        <!-- Grid lines -->
+                        <div class="window-grid">
+                            <div class="grid-line vertical" style="left: 25%;"></div>
+                            <div class="grid-line vertical" style="left: 50%;"></div>
+                            <div class="grid-line vertical" style="left: 75%;"></div>
+                            <div class="grid-line horizontal" style="top: 33%;"></div>
+                            <div class="grid-line horizontal" style="top: 66%;"></div>
+                        </div>
+                        
+                        <!-- Spring Scene -->
+                        <div class="season-scene spring active" id="springScene">
+                            <!-- Spring elements will be added dynamically -->
+                        </div>
+                        
+                        <!-- Summer Scene -->
+                        <div class="season-scene summer" id="summerScene">
+                            <!-- Summer elements will be added dynamically -->
+                        </div>
+                        
+                        <!-- Autumn Scene -->
+                        <div class="season-scene autumn" id="autumnScene">
+                            <!-- Autumn elements will be added dynamically -->
+                        </div>
+                        
+                        <!-- Winter Scene -->
+                        <div class="season-scene winter" id="winterScene">
+                            <!-- Winter elements will be added dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-panel" id="infoPanel">
+                <!-- Season info will be updated dynamically -->
+                <h2 class="season-title" id="seasonTitle">
+                    <i class="fas fa-seedling"></i> Spring
+                </h2>
+                <p class="season-description" id="seasonDescription">
+                    Spring is a time of renewal and growth. Flowers bloom, trees regain their leaves, and animals awaken from hibernation. The air is fresh with the scent of rain and blossoms.
+                </p>
+                
+                <div class="season-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="tempValue">15°C</div>
+                        <div class="stat-label">Average Temperature</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="daylightValue">12h</div>
+                        <div class="stat-label">Daylight Hours</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="precipValue">60mm</div>
+                        <div class="stat-label">Monthly Rainfall</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="bloomValue">High</div>
+                        <div class="stat-label">Flower Bloom</div>
+                    </div>
+                </div>
+                
+                <div class="interactive-controls">
+                    <button class="control-btn" id="weatherBtn">
+                        <i class="fas fa-cloud-sun-rain"></i> Change Weather
+                    </button>
+                    <button class="control-btn" id="timeBtn">
+                        <i class="fas fa-clock"></i> Change Time of Day
+                    </button>
+                    <button class="control-btn" id="interactBtn">
+                        <i class="fas fa-hand-pointer"></i> Interact with Scene
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <div class="sound-toggle" id="soundToggle">
+            <i class="fas fa-volume-up"></i>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Window with Changing Seasons | Experience the beauty of nature's cycles | Made with <i class="fas fa-heart" style="color:#ff6b6b;"></i></p>
+    </footer>
+
+    <!-- Audio elements for seasonal sounds -->
+    <audio id="springSound" loop>
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-chirping-1246.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="summerSound" loop>
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-crickets-and-insects-in-the-wild-ambience-39.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="autumnSound" loop>
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-strong-wind-weather-storm-005-125.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="winterSound" loop>
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-cold-wind-in-the-winter-346.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="birdsSound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-birds-chirping-46.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js">
+
+    </script>
+</body>
+</html>
