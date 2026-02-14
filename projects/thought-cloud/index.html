@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thought Cloud Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --bg-gradient-1: #0f0c29;
+            --bg-gradient-2: #302b63;
+            --bg-gradient-3: #24243e;
+            --text-primary: #f0f0ff;
+            --text-secondary: #b0b0ff;
+            --accent: #8a2be2;
+            --accent-light: #a855f7;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --danger: #ff5555;
+            --bubble-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-1), var(--bg-gradient-2), var(--bg-gradient-3));
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .logo-icon {
+            color: var(--accent-light);
+            font-size: 3rem;
+            filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.5));
+        }
+        
+        h1 {
+            font-size: 3.2rem;
+            background: linear-gradient(to right, var(--accent-light), var(--success));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto 20px;
+            line-height: 1.6;
+        }
+        
+        .controls {
+            background: rgba(30, 30, 60, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        
+        textarea, select, input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(20, 20, 40, 0.8);
+            border: 2px solid rgba(138, 43, 226, 0.3);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        textarea:focus, select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.2);
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, var(--accent), var(--accent-light));
+            color: white;
+            border: none;
+            padding: 16px 28px;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(138, 43, 226, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: rgba(40, 40, 80, 0.8);
+            color: var(--text-primary);
+            border: 2px solid rgba(138, 43, 226, 0.5);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            min-width: auto;
+        }
+        
+        .thought-cloud {
+            position: relative;
+            height: 600px;
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(10, 10, 30, 0.4);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+        }
+        
+        .thought-bubble {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+            word-break: break-word;
+            padding: 15px;
+            user-select: none;
+            box-shadow: var(--bubble-shadow);
+            z-index: 1;
+        }
+        
+        .thought-bubble:hover {
+            transform: scale(1.05);
+            z-index: 100;
+        }
+        
+        .thought-bubble.popped {
+            animation: pop 0.5s forwards;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        .bubble-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .bubble-emoji {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+        
+        .thought-stats {
+            background: rgba(30, 30, 60, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(20, 20, 40, 0.6);
+            border-radius: 12px;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-light);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        
+        .examples-section {
+            background: rgba(30, 30, 60, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .example-thought {
+            background: rgba(40, 40, 80, 0.6);
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .example-thought:hover {
+            background: rgba(60, 60, 100, 0.8);
+            border-color: var(--accent);
+            transform: translateY(-5px);
+        }
+        
+        .example-text {
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .example-mood {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+        
+        .instructions {
+            color: var(--text-secondary);
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+        
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.active {
+            border-color: white;
+            box-shadow: 0 0 10px white;
+        }
+        
+        .mood-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        /* Bubble color classes */
+        .bubble-color-1 { background: radial-gradient(circle at 30% 30%, #ff6b9d, #c44569); }
+        .bubble-color-2 { background: radial-gradient(circle at 30% 30%, #4ecdc4, #2a9d8f); }
+        .bubble-color-3 { background: radial-gradient(circle at 30% 30%, #ffd166, #f4a261); }
+        .bubble-color-4 { background: radial-gradient(circle at 30% 30%, #9d4edd, #6a1cb0); }
+        .bubble-color-5 { background: radial-gradient(circle at 30% 30%, #48cae4, #0077b6); }
+        .bubble-color-6 { background: radial-gradient(circle at 30% 30%, #ff9e6d, #e76f51); }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .thought-cloud {
+                height: 500px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                min-width: 100%;
+            }
+        }
+        
+        /* Animation for floating */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(1deg); }
+        }
+        
+        /* Background particle effect */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float-particle 20s infinite linear;
+        }
+        
+        @keyframes float-particle {
+            0% { transform: translateY(100vh) translateX(0); }
+            100% { transform: translateY(-100px) translateX(100px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background particles -->
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-cloud-moon logo-icon"></i>
+                <h1>Thought Cloud Generator</h1>
+            </div>
+            <p class="tagline">Release your thoughts into the cloud. Watch them float as beautiful, interactive bubbles.</p>
+        </header>
+        
+        <section class="controls">
+            <div class="input-group">
+                <label for="thought-input"><i class="fas fa-brain"></i> What's on your mind?</label>
+                <textarea id="thought-input" placeholder="Type your thought here... e.g., 'I should start meditating daily' or 'The sunset was breathtaking today'"></textarea>
+            </div>
+            
+            <div class="input-group">
+                <label><i class="fas fa-palette"></i> Bubble Color</label>
+                <div class="color-palette">
+                    <div class="color-option bubble-color-1 active" data-color="1"></div>
+                    <div class="color-option bubble-color-2" data-color="2"></div>
+                    <div class="color-option bubble-color-3" data-color="3"></div>
+                    <div class="color-option bubble-color-4" data-color="4"></div>
+                    <div class="color-option bubble-color-5" data-color="5"></div>
+                    <div class="color-option bubble-color-6" data-color="6"></div>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="mood-select"><i class="fas fa-smile"></i> Mood / Emotion</label>
+                <select id="mood-select">
+                    <option value="happy">😊 Happy</option>
+                    <option value="excited">😃 Excited</option>
+                    <option value="calm">😌 Calm</option>
+                    <option value="thoughtful">🤔 Thoughtful</option>
+                    <option value="creative">🎨 Creative</option>
+                    <option value="worried">😟 Worried</option>
+                    <option value="inspired">✨ Inspired</option>
+                    <option value="grateful">🙏 Grateful</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="size-slider"><i class="fas fa-expand-alt"></i> Bubble Size: <span id="size-value">Medium</span></label>
+                <input type="range" id="size-slider" min="80" max="200" value="120">
+            </div>
+            
+            <div class="button-group">
+                <button id="add-thought-btn" class="btn">
+                    <i class="fas fa-plus-circle"></i> Add Thought Bubble
+                </button>
+                
+                <button id="add-random-btn" class="btn btn-secondary">
+                    <i class="fas fa-random"></i> Add Random Thought
+                </button>
+                
+                <button id="clear-cloud-btn" class="btn btn-secondary">
+                    <i class="fas fa-trash"></i> Clear Cloud
+                </button>
+            </div>
+            
+            <p class="instructions">
+                <i class="fas fa-mouse-pointer"></i> Click on bubbles to pop them | Drag bubbles to move them around
+            </p>
+        </section>
+        
+        <div class="thought-cloud" id="thought-cloud">
+            <!-- Thought bubbles will be generated here -->
+            <div class="initial-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: rgba(255,255,255,0.5); font-size: 1.2rem;">
+                <i class="fas fa-cloud" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+                <p>Your thought cloud is empty.<br>Add thoughts to see them float here!</p>
+            </div>
+        </div>
+        
+        <section class="thought-stats">
+            <h2 style="margin-bottom: 20px; color: var(--text-primary);"><i class="fas fa-chart-bar"></i> Thought Cloud Stats</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="total-thoughts">0</div>
+                    <div class="stat-label">Total Thoughts</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-value" id="active-thoughts">0</div>
+                    <div class="stat-label">Active Bubbles</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-value" id="avg-size">0</div>
+                    <div class="stat-label">Avg. Bubble Size</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-value" id="mood-count">0</div>
+                    <div class="stat-label">Moods Expressed</div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="examples-section">
+            <h2 style="margin-bottom: 15px; color: var(--text-primary);"><i class="fas fa-lightbulb"></i> Example Thoughts</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">Click to add these thoughts to your cloud:</p>
+            
+            <div class="examples-grid">
+                <div class="example-thought" data-thought="I should drink more water today" data-mood="thoughtful">
+                    <div class="example-text">"I should drink more water today"</div>
+                    <div class="example-mood"><span class="mood-indicator" style="background-color: #4ecdc4;"></span> Thoughtful</div>
+                </div>
+                
+                <div class="example-thought" data-thought="Today is going to be a great day!" data-mood="excited">
+                    <div class="example-text">"Today is going to be a great day!"</div>
+                    <div class="example-mood"><span class="mood-indicator" style="background-color: #ffd166;"></span> Excited</div>
+                </div>
+                
+                <div class="example-thought" data-thought="I'm grateful for my friends and family" data-mood="grateful">
+                    <div class="example-text">"I'm grateful for my friends and family"</div>
+                    <div class="example-mood"><span class="mood-indicator" style="background-color: #9d4edd;"></span> Grateful</div>
+                </div>
+                
+                <div class="example-thought" data-thought="Need to finish that project by Friday" data-mood="worried">
+                    <div class="example-text">"Need to finish that project by Friday"</div>
+                    <div class="example-mood"><span class="mood-indicator" style="background-color: #ff6b9d;"></span> Worried</div>
+                </div>
+                
+                <div class="example-thought" data-thought="What if I tried painting this weekend?" data-mood="creative">
+                    <div class="example-text">"What if I tried painting this weekend?"</div>
+                    <div class="example-mood"><span class="mood-indicator" style="background-color: #48cae4;"></span> Creative</div>
+                </div>
+                
+                <div class="example-thought" data-thought="The quiet moments are the most precious" data-mood="calm">
+                    <div class="example-text">"The quiet moments are the most precious"</div>
+                    <div class="example-mood"><span class="mood-indicator" style="background-color: #ff9e6d;"></span> Calm</div>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>Thought Cloud Generator © 2026 | Visualize your mind, one bubble at a time</p>
+            <p style="margin-top: 10px; font-size: 0.8rem; color: rgba(255,255,255,0.5);">Each bubble represents a thought - observe them, interact with them, and let them go.</p>
+        </footer>
+    </div>
+
+    <script src="script.js">
+
+    </script>
+</body>
+</html>

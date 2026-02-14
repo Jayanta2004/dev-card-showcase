@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VoiceBall - A voice-controlled experimental game using Web Audio API">
+    <title>VoiceBall - Voice-Controlled Game</title>
+    <link rel="stylesheet" href="css/design-system.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+
+<body>
+    <div class="animated-background"></div>
+
+    <div class="permission-overlay" id="permissionOverlay">
+        <div class="permission-modal">
+            <div class="permission-icon">🎤</div>
+            <h1>VoiceBall</h1>
+            <p>Control the ball with your voice</p>
+            <p class="permission-description">
+                This game uses your microphone to detect sound intensity.
+                Speak, shout, or make sounds to move the ball!
+            </p>
+            <button class="btn-primary" id="requestMicBtn">Enable Microphone</button>
+            <p class="permission-note">Your audio is processed locally and never recorded or transmitted.</p>
+        </div>
+    </div>
+
+    <div class="error-overlay hidden" id="errorOverlay">
+        <div class="error-modal">
+            <div class="error-icon">⚠️</div>
+            <h2>Microphone Access Denied</h2>
+            <p id="errorMessage">Please enable microphone access to play VoiceBall.</p>
+            <button class="btn-secondary" id="retryBtn">Try Again</button>
+        </div>
+    </div>
+
+    <header class="game-header">
+        <div class="header-content">
+            <h1 class="game-title">VoiceBall</h1>
+            <div class="score-display">
+                <span class="score-label">Score:</span>
+                <span class="score-value" id="scoreValue">0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="game-container">
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+            <div class="canvas-overlay">
+                <div class="intensity-indicator" id="intensityIndicator">
+                    <div class="intensity-bar" id="intensityBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="visualizer-panel">
+            <h3 class="panel-title">Sound Visualizer</h3>
+            <canvas id="visualizerCanvas"></canvas>
+            <div class="audio-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Volume:</span>
+                    <span class="stat-value" id="volumeValue">0%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Peak:</span>
+                    <span class="stat-value" id="peakValue">0%</span>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <div class="controls-panel">
+        <div class="control-group">
+            <label for="sensitivitySlider">
+                <span class="control-label">Sensitivity</span>
+                <span class="control-value" id="sensitivityValue">50%</span>
+            </label>
+            <input type="range" id="sensitivitySlider" min="0" max="100" value="50" class="slider">
+        </div>
+
+        <div class="control-group">
+            <label for="gravitySlider">
+                <span class="control-label">Gravity</span>
+                <span class="control-value" id="gravityValue">50%</span>
+            </label>
+            <input type="range" id="gravitySlider" min="0" max="100" value="50" class="slider">
+        </div>
+
+        <div class="control-group">
+            <label for="frictionSlider">
+                <span class="control-label">Friction</span>
+                <span class="control-value" id="frictionValue">50%</span>
+            </label>
+            <input type="range" id="frictionSlider" min="0" max="100" value="50" class="slider">
+        </div>
+
+        <div class="control-buttons">
+            <button class="btn-control" id="calibrateBtn">
+                <span class="btn-icon">🎯</span>
+                <span>Calibrate</span>
+            </button>
+            <button class="btn-control" id="resetBtn">
+                <span class="btn-icon">🔄</span>
+                <span>Reset</span>
+            </button>
+            <button class="btn-control" id="pauseBtn">
+                <span class="btn-icon">⏸️</span>
+                <span>Pause</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="calibration-overlay hidden" id="calibrationModal">
+        <div class="calibration-modal">
+            <h2>Voice Calibration</h2>
+            <p class="calibration-instruction" id="calibrationInstruction">
+                Speak at your normal volume for 3 seconds...
+            </p>
+            <div class="calibration-progress">
+                <div class="progress-bar" id="calibrationProgress"></div>
+            </div>
+            <div class="calibration-visual" id="calibrationVisual"></div>
+            <button class="btn-secondary" id="skipCalibrationBtn">Skip</button>
+        </div>
+    </div>
+
+    <div class="tutorial-overlay hidden" id="tutorialOverlay">
+        <div class="tutorial-content">
+            <h2>How to Play</h2>
+            <div class="tutorial-steps">
+                <div class="tutorial-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Speak or Make Sounds</h3>
+                        <p>The louder you are, the faster the ball moves</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Sudden Shouts = Jumps</h3>
+                        <p>Quick volume spikes trigger special boosts</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Adjust Settings</h3>
+                        <p>Fine-tune sensitivity, gravity, and friction</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-primary" id="startGameBtn">Start Playing</button>
+        </div>
+    </div>
+
+    <div class="particles-container" id="particlesContainer"></div>
+
+    <script src="js/audio-engine.js"></script>
+    <script src="js/physics-engine.js"></script>
+    <script src="js/visualizer.js"></script>
+    <script src="js/game-logic.js"></script>
+</body>
+
+</html>

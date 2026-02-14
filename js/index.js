@@ -119,12 +119,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
-        const hamburger = document.getElementById("hamburger");
-        const navLinks = document.getElementById("navLinks");
+        // const hamburger = document.getElementById("hamburger");
+        // const navLinks = document.getElementById("navLinks");
 
-        hamburger.addEventListener("click", () => {
-            navLinks.classList.toggle("active");
-        });
+        // hamburger.addEventListener("click", () => {
+        //     navLinks.classList.toggle("active");
+        // });
         /* ---------- ENHANCED SEARCH & FILTER SCRIPT ---------- */
         let currentFilter = 'all';
         let currentSearch = '';
@@ -840,3 +840,87 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log('Should refresh?', shouldRefreshSpotlight());
         };
     });
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadProjects();
+});
+
+// Keyboard Shortcuts Overlay Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const shortcutsOverlay = document.getElementById('keyboardShortcutsOverlay');
+    const closeShortcutsBtn = document.getElementById('closeShortcuts');
+    
+    // Function to show shortcuts overlay
+    function showShortcutsOverlay() {
+        shortcutsOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+    
+    // Function to hide shortcuts overlay
+    function hideShortcutsOverlay() {
+        shortcutsOverlay.classList.remove('show');
+        document.body.style.overflow = 'auto'; // Restore scrolling
+    }
+    
+    // Show overlay when "?" key is pressed
+    document.addEventListener('keydown', function(e) {
+        // Only trigger if not typing in an input/textarea
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        if (e.key === '?' || e.key === '¿') {
+            e.preventDefault();
+            showShortcutsOverlay();
+        }
+        
+        // Also hide overlay with Escape key
+        if (e.key === 'Escape' && shortcutsOverlay.classList.contains('show')) {
+            hideShortcutsOverlay();
+        }
+    });
+    
+    // Close overlay when close button is clicked
+    if (closeShortcutsBtn) {
+        closeShortcutsBtn.addEventListener('click', hideShortcutsOverlay);
+    }
+    
+    // Close overlay when clicking outside the modal
+    shortcutsOverlay.addEventListener('click', function(e) {
+        if (e.target === shortcutsOverlay) {
+            hideShortcutsOverlay();
+        }
+    });
+
+    /* ===============================
+       NAVBAR DROPDOWN (More / Resources)
+       =============================== */
+    document.addEventListener("DOMContentLoaded", () => {
+        const dropdownButtons = document.querySelectorAll(".drop-btn");
+
+        dropdownButtons.forEach(btn => {
+            btn.addEventListener("click", e => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const menu = btn.nextElementSibling;
+
+                // Close other dropdowns
+                document.querySelectorAll(".dropdown-menu").forEach(m => {
+                    if (m !== menu) m.style.display = "none";
+                });
+
+                // Toggle current dropdown
+                menu.style.display =
+                    menu.style.display === "block" ? "none" : "block";
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", () => {
+            document.querySelectorAll(".dropdown-menu").forEach(menu => {
+                menu.style.display = "none";
+            });
+        });
+    });
+});

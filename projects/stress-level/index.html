@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mind calm · stress level quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f4fa 0%, #d9e2ef 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .quiz-wrapper {
+            max-width: 750px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 40px -10px rgba(0, 20, 40, 0.25),
+                        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+            padding: 2rem 2rem 2.5rem;
+            transition: all 0.2s ease;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: #1a2e3f;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0.25rem;
+        }
+
+        h1 span {
+            background: #3b5e7b;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 500;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            letter-spacing: 0.3px;
+        }
+
+        .subhead {
+            font-size: 1.1rem;
+            color: #2c4053;
+            margin-bottom: 2.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px dashed #a0b8cf;
+            font-weight: 350;
+        }
+
+        /* progress bar */
+        .progress-area {
+            margin-bottom: 2rem;
+        }
+
+        .q-meta {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            color: #1f3a4f;
+            margin-bottom: 6px;
+        }
+
+        .bar-bg {
+            height: 12px;
+            background: #cbd6e4;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.1);
+        }
+
+        .bar-fill {
+            height: 12px;
+            width: 0%;
+            background: linear-gradient(90deg, #5583a4, #2d5670);
+            border-radius: 30px;
+            transition: width 0.3s ease;
+        }
+
+        /* question card */
+        .question-container {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 2rem;
+            padding: 2rem 1.8rem;
+            box-shadow: 0 12px 28px -8px rgba(20, 40, 60, 0.15);
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,255,255,0.9);
+        }
+
+        .question-text {
+            font-size: 1.7rem;
+            font-weight: 500;
+            line-height: 1.4;
+            color: #0b2537;
+            margin-bottom: 2rem;
+            word-break: break-word;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .option {
+            background: white;
+            border-radius: 60px;
+            padding: 0.9rem 1.8rem;
+            font-size: 1.2rem;
+            font-weight: 450;
+            color: #1f3a4f;
+            box-shadow: 0 6px 12px rgba(0,20,30,0.08);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .option:hover {
+            background: #edf3fa;
+            border-color: #6a8bb0;
+            transform: scale(1.01);
+            box-shadow: 0 12px 18px -8px rgba(40,70,110,0.2);
+        }
+
+        .option.selected {
+            background: #2c4e6e;
+            border-color: #12344d;
+            color: white;
+            box-shadow: 0 12px 20px -8px #1c3b55;
+        }
+
+        .option.selected .option-letter {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-color: white;
+        }
+
+        .option-letter {
+            width: 36px;
+            height: 36px;
+            background: #e9eef3;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #1f3a4f;
+            border: 1px solid #a7bdd0;
+        }
+
+        /* navigation */
+        .nav-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            background: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 14px rgba(0,30,50,0.1);
+            transition: 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(255,255,255,0.8);
+            color: #1f3a4f;
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 6px rgba(0,30,50,0.15);
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            pointer-events: none;
+            filter: grayscale(0.6);
+        }
+
+        .btn-primary {
+            background: #1f3a4f;
+            color: white;
+            box-shadow: 0 10px 18px -6px #1f3a4f;
+            border: 1px solid #6f95b5;
+        }
+
+        .reset-btn {
+            background: transparent;
+            box-shadow: none;
+            border: 1px solid #abbecf;
+        }
+
+        .result-panel {
+            margin-top: 2rem;
+            background: #eaf1f9;
+            border-radius: 2rem;
+            padding: 1.6rem 2rem;
+            border-left: 10px solid #3f6988;
+            box-shadow: inset 0 0 0 1px #ffffffcc, 0 12px 24px -20px #152e42;
+        }
+
+        .result-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #11324b;
+            margin-bottom: 0.3rem;
+        }
+
+        .result-sub {
+            font-size: 1.1rem;
+            color: #1e445e;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+
+        .score-badge {
+            background: #264a64;
+            color: white;
+            padding: 0.25rem 1.2rem;
+            border-radius: 40px;
+            display: inline-block;
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .interpretation {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            color: #022b41;
+            background: rgba(255,255,255,0.4);
+            padding: 1.2rem;
+            border-radius: 24px;
+        }
+
+        .footnote {
+            margin-top: 1.8rem;
+            font-size: 0.95rem;
+            color: #3c5b74;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-wrapper" id="quizWrapper">
+        <h1>
+            🌿 stress lens
+            <span>quiz</span>
+        </h1>
+        <div class="subhead">answer honestly — discover your current load</div>
+
+        <!-- progress -->
+        <div class="progress-area">
+            <div class="q-meta">
+                <span id="currentQDisplay">1 / 6</span>
+                <span id="answeredCount">0 answered</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" id="progressFill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- dynamic question card -->
+        <div id="quizArea">
+            <div class="question-container" id="questionContainer">
+                <div class="question-text" id="questionText">Loading...</div>
+                <div class="options" id="optionsContainer"></div>
+            </div>
+
+            <!-- navigation + reset -->
+            <div class="nav-buttons">
+                <button id="prevBtn" disabled>◀ prev</button>
+                <button id="nextBtn" class="btn-primary">next ▶</button>
+                <button id="resetBtn" class="reset-btn">↻ new quiz</button>
+            </div>
+        </div>
+
+        <!-- result panel (hidden initially) -->
+        <div id="resultPanel" class="result-panel hidden">
+            <div class="result-title">🧠 your stress snapshot</div>
+            <div class="result-sub">based on your responses</div>
+            <div class="score-badge" id="scoreDisplay">—</div>
+            <div class="interpretation" id="interpretationText"></div>
+        </div>
+
+        <div class="footnote">
+            ⚡ each item: 1 (never) → 5 (very often)
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- QUIZ DATA ----------
+            const questions = [
+                {
+                    text: "In the last month, how often have you felt unable to control the important things in your life?",
+                    options: ["never", "almost never", "sometimes", "fairly often", "very often"]
+                },
+                {
+                    text: "How often have you felt nervous or 'stressed'?",
+                    options: ["never", "almost never", "sometimes", "fairly often", "very often"]
+                },
+                {
+                    text: "How often have you found that you could not cope with all the things you had to do?",
+                    options: ["never", "almost never", "sometimes", "fairly often", "very often"]
+                },
+                {
+                    text: "How often have you been angered because of things that were outside of your control?",
+                    options: ["never", "almost never", "sometimes", "fairly often", "very often"]
+                },
+                {
+                    text: "How often have you felt difficulties were piling up so high that you could not overcome them?",
+                    options: ["never", "almost never", "sometimes", "fairly often", "very often"]
+                },
+                {
+                    text: "How often have you felt that you were on top of things? (reverse scored)",
+                    options: ["never", "almost never", "sometimes", "fairly often", "very often"]
+                }
+            ];
+
+            // map answers to numeric 1-5 (for last question we reverse later)
+            const OPTION_VALUES = [1, 2, 3, 4, 5]; // 1=never, 5=very often
+
+            // reverse scoring for question index 5 (the 6th question, zero-based 5)
+            const REVERSE_INDEXES = [5];   // "on top of things"
+
+            // state
+            let currentIndex = 0;
+            const totalQuestions = questions.length;
+            // store answers as numbers (1-5), null = not answered
+            let answers = new Array(totalQuestions).fill(null);
+
+            // DOM elements
+            const questionText = document.getElementById('questionText');
+            const optionsContainer = document.getElementById('optionsContainer');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const currentQDisplay = document.getElementById('currentQDisplay');
+            const answeredCountSpan = document.getElementById('answeredCount');
+            const progressFill = document.getElementById('progressFill');
+            const quizArea = document.getElementById('quizArea');
+            const resultPanel = document.getElementById('resultPanel');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const interpretationText = document.getElementById('interpretationText');
+
+            // ----- helpers -----
+            function countAnswered() {
+                return answers.filter(a => a !== null).length;
+            }
+
+            function updateMetaAndProgress() {
+                // question indicator
+                currentQDisplay.textContent = `${currentIndex+1} / ${totalQuestions}`;
+                const answered = countAnswered();
+                answeredCountSpan.textContent = `${answered} answered`;
+                const percent = (answered / totalQuestions) * 100;
+                progressFill.style.width = percent + '%';
+            }
+
+            // get numeric value for option index (0-4) at given question index
+            function getScoreForOption(questionIdx, optionIdx) {
+                let val = OPTION_VALUES[optionIdx]; // 1 .. 5
+                if (REVERSE_INDEXES.includes(questionIdx)) {
+                    // reverse: 1<->5, 2<->4, 3 stays
+                    return 6 - val;   // because 1->5, 2->4, 3->3, 4->2, 5->1
+                }
+                return val;
+            }
+
+            // render current question + show selected option
+            function renderQuestion() {
+                const q = questions[currentIndex];
+                questionText.textContent = q.text;
+
+                // build options html
+                let htmlStr = '';
+                q.options.forEach((optText, idx) => {
+                    const letter = String.fromCharCode(65 + idx); // A, B, C, D, E
+                    const isSelected = answers[currentIndex] !== null && 
+                                       answers[currentIndex] === getScoreForOption(currentIndex, idx);
+                    const selectedClass = isSelected ? 'selected' : '';
+                    htmlStr += `
+                        <div class="option ${selectedClass}" data-opt-index="${idx}">
+                            <span class="option-letter">${letter}</span>
+                            <span>${optText}</span>
+                        </div>
+                    `;
+                });
+                optionsContainer.innerHTML = htmlStr;
+
+                // attach click listeners
+                document.querySelectorAll('.option').forEach(optDiv => {
+                    optDiv.addEventListener('click', (e) => {
+                        const idx = parseInt(optDiv.dataset.optIndex, 10);
+                        setAnswer(currentIndex, idx);
+                    });
+                });
+
+                // update prev/next button states
+                prevBtn.disabled = currentIndex === 0;
+                // next button enabled always (but if it's last question we change text to "finish")
+                if (currentIndex === totalQuestions - 1) {
+                    nextBtn.textContent = 'finish ✓';
+                } else {
+                    nextBtn.textContent = 'next ▶';
+                }
+
+                // special: if all questions answered, we might highlight something
+                // but keep next enabled.
+            }
+
+            // set answer for given question by option index (0-4)
+            function setAnswer(questionIdx, optionIdx) {
+                const numericVal = getScoreForOption(questionIdx, optionIdx);
+                answers[questionIdx] = numericVal;
+
+                // re-render current question to show selected style (and update progress)
+                renderQuestion();
+                updateMetaAndProgress();
+
+                // if all questions have been answered AND we are on the last question,
+                // we could auto-show result? we let user click finish. but we also enable finish
+            }
+
+            // navigation: next
+            function goNext() {
+                // if it's the last question, attempt to show result (only if current question answered? but we allow incomplete)
+                if (currentIndex === totalQuestions - 1) {
+                    // finish quiz -> compute & show result, hide quiz area?
+                    showResult();
+                } else {
+                    if (currentIndex < totalQuestions - 1) {
+                        currentIndex++;
+                        renderQuestion();
+                        updateMetaAndProgress();
+                    }
+                }
+            }
+
+            // prev
+            function goPrev() {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    renderQuestion();
+                    updateMetaAndProgress();
+                }
+            }
+
+            // compute total stress score (sum of answers 1..5 per item, after reverse)
+            function computeTotalScore() {
+                let sum = 0;
+                for (let i = 0; i < totalQuestions; i++) {
+                    if (answers[i] !== null) {
+                        sum += answers[i];
+                    }
+                    // treat null as 0? but we want to encourage full quiz. if any null, sum is partial, we'll show warning
+                }
+                return sum;
+            }
+
+            // show result panel with interpretation
+            function showResult() {
+                const answered = countAnswered();
+                let totalScore = computeTotalScore();
+                let maxPossible = totalQuestions * 5; // 30
+                let minPossible = totalQuestions * 1; // 6
+
+                let message = '';
+                let severity = '';
+
+                if (answered === 0) {
+                    message = 'No answers yet — complete some questions to see your stress level.';
+                    scoreDisplay.textContent = '?';
+                    interpretationText.textContent = message;
+                    quizArea.classList.remove('hidden');
+                    resultPanel.classList.remove('hidden'); // show it anyway with warning
+                    return;
+                }
+
+                // if some missing, we note it, but still compute based on answered.
+                let averageScore = totalScore / answered;  // range 1..5
+                let scaledPercent = (averageScore - 1) / 4 * 100; // 0% (low stress) to 100% (high stress)
+                let displayScore = Math.round(averageScore * 10) / 10; // like 2.4
+
+                const allAnswered = answered === totalQuestions;
+                if (!allAnswered) {
+                    message = `⚠️ based on ${answered} of ${totalQuestions} questions. `;
+                } else {
+                    message = '';
+                }
+
+                // interpretive categories
+                if (averageScore < 2.2) {
+                    severity = 'low stress · good balance';
+                    message += `Your average score is ${displayScore} (low). You seem to be managing well — keep nurturing your calm.`;
+                } else if (averageScore >= 2.2 && averageScore < 3.2) {
+                    severity = 'moderate stress · manageable';
+                    message += `Average stress level: ${displayScore} (moderate). Some tension but likely manageable. Consider small rest breaks.`;
+                } else if (averageScore >= 3.2 && averageScore < 4.0) {
+                    severity = 'high stress · tension rising';
+                    message += `Average score: ${displayScore} (high). You may be feeling overloaded. Try relaxation or talking to someone.`;
+                } else {
+                    severity = 'very high stress · seek support';
+                    message += `Average score: ${displayScore} (very high). Chronic stress can take a toll — consider reaching out to a professional.`;
+                }
+
+                scoreDisplay.textContent = `${displayScore} / 5  (${Math.round(scaledPercent)}% stress)`;
+                interpretationText.innerHTML = `<strong>${severity}</strong><br>${message}`;
+                
+                // hide question area, show result
+                quizArea.classList.add('hidden');
+                resultPanel.classList.remove('hidden');
+            }
+
+            // reset everything
+            function resetQuiz() {
+                answers = new Array(totalQuestions).fill(null);
+                currentIndex = 0;
+
+                // hide result if visible, show quiz
+                resultPanel.classList.add('hidden');
+                quizArea.classList.remove('hidden');
+
+                renderQuestion();
+                updateMetaAndProgress();
+            }
+
+            // ----- event listeners -----
+            prevBtn.addEventListener('click', goPrev);
+            nextBtn.addEventListener('click', goNext);
+            resetBtn.addEventListener('click', resetQuiz);
+
+            // initial render
+            renderQuestion();
+            updateMetaAndProgress();
+
+            // optional: keyboard / or any other
+            // ensure result panel hidden at start
+            resultPanel.classList.add('hidden');
+        })();
+    </script>
+</body>
+</html>

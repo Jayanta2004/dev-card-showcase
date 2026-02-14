@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReactionSkin | Reaction-Diffusion Simulation</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app">
+        <div id="canvas-container">
+            <canvas id="simulation-canvas"></canvas>
+            <div id="post-process-overlay"></div>
+        </div>
+
+        <header>
+            <div class="logo-container">
+                <h1>ReactionSkin</h1>
+                <span class="version-tag">PRO Edition v2.0</span>
+            </div>
+            <p>Biological Pattern Synthesis Engine</p>
+        </header>
+
+        <main class="ui-shell">
+            <!-- Sidebar Navigation -->
+            <nav class="side-nav">
+                <button class="nav-item active" data-target="params-panel">Parameters</button>
+                <button class="nav-item" data-target="brush-panel">Brush</button>
+                <button class="nav-item" data-target="audio-panel">Audio</button>
+                <button class="nav-item" data-target="visual-panel">Visuals</button>
+                <button class="nav-item" data-target="export-panel">Export</button>
+            </nav>
+
+            <!-- Panels -->
+            <div class="panel-container">
+                <section id="params-panel" class="control-panel active">
+                    <div class="control-group">
+                        <h3>Model Parameters</h3>
+                        <div class="control-item">
+                            <div class="label-row">
+                                <label for="feed-rate">Feed Rate (f)</label>
+                                <span class="value-display" id="feed-value">0.055</span>
+                            </div>
+                            <input type="range" id="feed-rate" min="0.01" max="0.1" step="0.0001" value="0.055">
+                        </div>
+                        <div class="control-item">
+                            <div class="label-row">
+                                <label for="kill-rate">Kill Rate (k)</label>
+                                <span class="value-display" id="kill-value">0.062</span>
+                            </div>
+                            <input type="range" id="kill-rate" min="0.01" max="0.1" step="0.0001" value="0.062">
+                        </div>
+                        <div class="control-item">
+                            <div class="label-row">
+                                <label for="diffusion-a">Diff A</label>
+                                <span class="value-display" id="diff-a-value">1.0</span>
+                            </div>
+                            <input type="range" id="diffusion-a" min="0.1" max="2.0" step="0.01" value="1.0">
+                        </div>
+                        <div class="control-item">
+                            <div class="label-row">
+                                <label for="diffusion-b">Diff B</label>
+                                <span class="value-display" id="diff-b-value">0.5</span>
+                            </div>
+                            <input type="range" id="diffusion-b" min="0.1" max="2.0" step="0.01" value="0.5">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3>Presets</h3>
+                        <div class="preset-grid" id="preset-container">
+                            <!-- Presets injected via JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <section id="brush-panel" class="control-panel">
+                    <div class="control-group">
+                        <h3>Brush Settings</h3>
+                        <div class="control-item">
+                            <label>Type</label>
+                            <div class="btn-group">
+                                <button class="toggle-btn active" data-brush="b">Chemical B</button>
+                                <button class="toggle-btn" data-brush="a">Chemical A</button>
+                            </div>
+                        </div>
+                        <div class="control-item">
+                            <div class="label-row">
+                                <label for="brush-size">Size</label>
+                                <span class="value-display" id="brush-size-val">20</span>
+                            </div>
+                            <input type="range" id="brush-size" min="1" max="100" value="20">
+                        </div>
+                        <div class="control-item">
+                            <div class="label-row">
+                                <label for="brush-flow">Flow</label>
+                                <span class="value-display" id="brush-flow-val">1.0</span>
+                            </div>
+                            <input type="range" id="brush-flow" min="0.1" max="1.0" step="0.1" value="1.0">
+                        </div>
+                    </div>
+                </section>
+
+                <section id="audio-panel" class="control-panel">
+                    <div class="control-group">
+                        <h3>Audio Engine</h3>
+                        <button id="enable-audio" class="action-btn">Enable Sound</button>
+                        <div class="control-item">
+                            <label for="master-volume">Master Volume</label>
+                            <input type="range" id="master-volume" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+                        <div class="control-item">
+                            <label>Synthesis Mode</label>
+                            <select id="audio-mode" class="custom-select">
+                                <option value="ambient">Bio-Ambient</option>
+                                <option value="granular">Granular Micro-noise</option>
+                                <option value="drone">Density Drone</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="visual-panel" class="control-panel">
+                    <div class="control-group">
+                        <h3>Post-Processing</h3>
+                        <div class="control-item">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="bloom-toggle" checked>
+                                <span class="checkmark"></span>
+                                Organic Bloom
+                            </label>
+                        </div>
+                        <div class="control-item">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="noise-toggle">
+                                <span class="checkmark"></span>
+                                Digital Noise
+                            </label>
+                        </div>
+                        <div class="control-item">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="scanline-toggle">
+                                <span class="checkmark"></span>
+                                CRT Scanlines
+                            </label>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <h3>Color Palette</h3>
+                        <div id="palette-selector" class="palette-grid">
+                            <!-- Palettes injected via JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <section id="export-panel" class="control-panel">
+                    <div class="control-group">
+                        <h3>Session Export</h3>
+                        <button id="snap-btn" class="action-btn">Capture Frame (PNG)</button>
+                        <button id="record-btn" class="action-btn">Record Video (Beta)</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Dynamic Bottom HUD -->
+        <footer class="hud">
+            <div class="hud-item main-actions">
+                <button id="reset-btn" class="hud-btn primary">Reset</button>
+                <button id="pause-btn" class="hud-btn">Pause</button>
+                <button id="clear-btn" class="hud-btn danger">Clear</button>
+            </div>
+            <div class="hud-item telemetry">
+                <div class="stat-badge">FPS: <span id="fps-counter">0</span></div>
+                <div class="stat-badge">GEN: <span id="generation-counter">0</span></div>
+                <div class="stat-badge">LOAD: <span id="load-val">0%</span></div>
+            </div>
+        </footer>
+
+        <!-- Toasts -->
+        <div id="toast-container"></div>
+    </div>
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>
