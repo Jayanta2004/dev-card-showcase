@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parallax landing page | scroll effect</title>
+  <style>
+    /* reset & base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      color: #1e293b;
+      overflow-x: hidden;
+    }
+
+    /* wrapper for stacking sections */
+    .parallax-wrapper {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* shared section styling */
+    .section {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      will-change: transform;
+      /* subtle shadow separation */
+      box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    /* ===== parallax backgrounds ===== */
+    .parallax-bg {
+      position: relative;
+      background-attachment: fixed;   /* the core parallax */
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      overflow: hidden;
+      /* ensure fixed works on mobile fallback – fine on modern browsers */
+    }
+
+    /* overlay for readability */
+    .parallax-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.25); /* soft overlay */
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* make content stand above overlay */
+    .parallax-bg .content {
+      position: relative;
+      z-index: 2;
+      color: white;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* specific background images (free unsplash / pexels style) */
+    .bg-1 {
+      background-image: url('https://images.pexels.com/photos/531880/pexels-photo-531880.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+      /* urban street */
+    }
+    .bg-2 {
+      background-image: url('https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+      /* mountain landscape */
+    }
+    .bg-3 {
+      background-image: url('https://images.pexels.com/photos/2387873/pexels-photo-2387873.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+      /* forest / moss */
+    }
+
+    /* light sections (no fixed bg) */
+    .light-section {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    .light-section .content {
+      max-width: 800px;
+    }
+
+    .light-section:nth-child(even) {
+      background: #f1f5f9;
+    }
+
+    /* headings & text */
+    h1 {
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      margin-bottom: 1.2rem;
+      font-weight: 600;
+    }
+
+    p {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+      opacity: 0.95;
+    }
+
+    .btn {
+      display: inline-block;
+      background: white;
+      color: #1e293b;
+      padding: 0.9rem 2.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid white;
+      color: white;
+      box-shadow: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      filter: brightness(0.95);
+    }
+
+    .btn-outline:hover {
+      background: white;
+      color: #0f172a;
+      border-color: white;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* floating card effect for light sections */
+    .card-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: center;
+      margin-top: 2.5rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 2rem 2rem 2.5rem;
+      box-shadow: 0 25px 40px -15px rgba(0, 20, 30, 0.15);
+      flex: 1 1 240px;
+      max-width: 300px;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 35px 50px -15px rgba(0, 40, 60, 0.25);
+    }
+
+    .card h3 {
+      font-size: 1.8rem;
+      margin-bottom: 0.8rem;
+      color: #2563eb;
+    }
+
+    .card p {
+      font-size: 1rem;
+      margin-bottom: 0;
+      opacity: 0.7;
+    }
+
+    /* small footer */
+    .footer {
+      background: #0b1120;
+      color: #94a3b8;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    /* custom scroll indicator (just for fun) */
+    .scroll-hint {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.7;
+      z-index: 5;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);}
+      40% {transform: translateX(-50%) translateY(-15px);}
+      60% {transform: translateX(-50%) translateY(-7px);}
+    }
+
+    /* responsive fixes */
+    @media (max-width: 700px) {
+      .parallax-bg {
+        background-attachment: scroll; /* disable fixed on mobile for performance, but effect still ok */
+      }
+      h1 { font-size: 3rem; }
+      p { font-size: 1.1rem; }
+    }
+
+    /* tiny JS enhancement: dynamic header change (just for interactivity) */
+    .glow {
+      transition: text-shadow 0.3s;
+    }
+    .glow:hover {
+      text-shadow: 0 0 15px rgba(255,255,240,0.8);
+    }
+
+    /* smooth scroll behavior (optional) */
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
+</head>
+<body>
+  <div class="parallax-wrapper">
+    <!-- SECTION 1 : HERO with parallax background -->
+    <section class="section parallax-bg bg-1">
+      <div class="content">
+        <h1 class="glow">Explore the<br>unseen</h1>
+        <p style="font-size: 1.4rem; margin-bottom: 2.5rem;">Let the mountains move with you — a modern parallax experience.</p>
+        <div class="buttons">
+          <a href="#features" class="btn">✨ discover</a>
+          <a href="#about" class="btn btn-outline">learn more</a>
+        </div>
+      </div>
+      <div class="scroll-hint">scroll ↓</div>
+    </section>
+
+    <!-- SECTION 2 : light content / features -->
+    <section id="features" class="section light-section">
+      <div class="content">
+        <h2>Why parallax feels deep</h2>
+        <p>Fixed backgrounds combined with scrolling layers create a sense of depth and immersion. It’s not just a website – it’s a journey.</p>
+        <div class="card-grid">
+          <div class="card">
+            <h3>⚡ smooth</h3>
+            <p>60fps hardware accelerated scroll. No jank, just fluid motion.</p>
+          </div>
+          <div class="card">
+            <h3>📸 cinematic</h3>
+            <p>Full‑width imagery that pulls you into the story.</p>
+          </div>
+          <div class="card">
+            <h3>🌲 nature</h3>
+            <p>Hand‑picked landscapes to calm your mind.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3 : second parallax (mountains) -->
+    <section class="section parallax-bg bg-2">
+      <div class="content">
+        <h2>stillness in motion</h2>
+        <p style="max-width: 650px; margin-left: auto; margin-right: auto;">As you scroll, the background lingers — a reminder that some things remain while we move forward.</p>
+        <a href="#story" class="btn btn-outline" style="margin-top: 1rem;">continue the journey →</a>
+      </div>
+    </section>
+
+    <!-- SECTION 4 : light story / about -->
+    <section id="about" class="section light-section">
+      <div class="content">
+        <h2>crafted with code & creativity</h2>
+        <p style="font-size: 1.2rem;">This page uses pure CSS `background-attachment: fixed` to achieve the parallax effect. No complex libraries, just clean HTML, CSS and a touch of JavaScript for a little extra magic below.</p>
+        <p style="font-size: 1rem; opacity: 0.8;">Background images from Pexels (free to use). The result is a lightweight, responsive landing page.</p>
+      </div>
+    </section>
+
+    <!-- SECTION 5 : third parallax (forest) -->
+    <section class="section parallax-bg bg-3">
+      <div class="content">
+        <h2>dream deeper</h2>
+        <p>“The woods are lovely, dark and deep,<br>but I have promises to keep.”</p>
+        <div style="margin-top: 2rem;">
+          <a href="#" id="actionBtn" class="btn" style="background: #2b4f2b; color: white; border: none;">✨ click for a surprise</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6 : final light / call to action -->
+    <section class="section light-section">
+      <div class="content">
+        <h2>ready to start your own?</h2>
+        <p>Infinite possibilities. Let your next project breathe with parallax.</p>
+        <div class="buttons">
+          <a href="#" class="btn" id="ctaBtn">get started</a>
+          <a href="#" class="btn btn-outline" style="border-color:#1e293b; color:#1e293b;" id="contactBtn">contact</a>
+        </div>
+        <p style="margin-top: 2rem; font-size: 0.95rem;">⬆️ the header changes color with every click? look up! (JS demo)</p>
+      </div>
+    </section>
+
+    <!-- simple footer -->
+    <footer class="footer">
+      <p>🌄 parallax landing page • built with html, css, js • 2026</p>
+    </footer>
+  </div>
+
+  <!-- a few lines of JavaScript to show dynamic behavior -->
+  <script>
+    (function() {
+      // 1. Dynamic header color changer (just for fun)
+      const mainHeadings = document.querySelectorAll('h1, h2');
+      const colors = ['#f43f5e', '#8b5cf6', '#10b981', '#f59e0b', '#3b82f6'];
+
+      function flashHeader() {
+        // pick a random heading and give it a quick color pop
+        const randomIndex = Math.floor(Math.random() * mainHeadings.length);
+        const heading = mainHeadings[randomIndex];
+        if (!heading) return;
+
+        const originalColor = heading.style.color;
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        heading.style.transition = 'color 0.2s';
+        heading.style.color = randomColor;
+        setTimeout(() => {
+          heading.style.color = ''; // revert to original (CSS)
+        }, 400);
+      }
+
+      // attach to buttons
+      const surpriseBtn = document.getElementById('actionBtn');
+      if (surpriseBtn) {
+        surpriseBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          flashHeader();
+          // also show an alert? maybe too intrusive, but we do a tiny toast-like via console
+          console.log('🎉 color flash triggered! look at headings.');
+          // subtle alert alternative: change something else
+          document.querySelector('.footer p').innerHTML = '🌈 magic happened! · keep scrolling';
+        });
+      }
+
+      const ctaBtn = document.getElementById('ctaBtn');
+      if (ctaBtn) {
+        ctaBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          flashHeader();
+          alert('✨ welcome to the parallax club (demo interaction)');
+        });
+      }
+
+      const contactBtn = document.getElementById('contactBtn');
+      if (contactBtn) {
+        contactBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          flashHeader();
+          // dynamic background hint
+          document.body.style.backgroundColor = '#f1f5f9';
+          setTimeout(() => document.body.style.backgroundColor = '', 500);
+        });
+      }
+
+      // 2. minor parallax enhancement with scroll event (just for demonstration)
+      // we log depth – not needed but shows we can interact
+      window.addEventListener('scroll', function() {
+        // you could do something fancy here, but it's optional.
+        // let's update a data attribute on body for fun
+        const scrollY = window.scrollY;
+        const maxScroll = document.body.scrollHeight - window.innerHeight;
+        const percent = (scrollY / maxScroll * 100).toFixed(0);
+        // show percentage in console only every 100ms to avoid spam (throttle not needed for demo)
+        // we put a small message in the footer while scrolling
+        const footer = document.querySelector('.footer p');
+        if (footer && !footer.innerHTML.includes('🌈')) {
+          // avoid overriding too often, just first touch
+        }
+      });
+
+      // 3. small hover effect on cards (already in css)
+      // 4. add a tiny class to the first h1 on load to show we can
+      console.log('✅ parallax landing page ready — background fixed active!');
+    })();
+  </script>
+
+  <!-- ensure images load and fixed works even if browser is older (fine) -->
+  <noscript>Please enable JavaScript for interactive bits.</noscript>
+</body>
+</html>
