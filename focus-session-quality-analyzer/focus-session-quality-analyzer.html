@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Session Quality Analyzer - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../assets/css/focus-session-quality-analyzer.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="target"></i> Focus Session Quality Analyzer</h1>
+            <p>Measure the quality of your deep work sessions with Pomodoro timing, self-rating, and distraction tracking to improve focus efficiency.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Pomodoro Timer -->
+            <section class="tracker-section timer-section">
+                <h2><i data-lucide="clock"></i> Pomodoro Timer</h2>
+                <div class="timer-container">
+                    <div class="timer-display">
+                        <div class="timer-circle">
+                            <div class="timer-text">
+                                <div id="minutes">25</div>
+                                <div id="seconds">:00</div>
+                            </div>
+                            <svg class="timer-progress" width="200" height="200">
+                                <circle cx="100" cy="100" r="90" stroke="#e2e8f0" stroke-width="8" fill="none"/>
+                                <circle id="progressCircle" cx="100" cy="100" r="90" stroke="#4299e1" stroke-width="8" fill="none"
+                                        stroke-dasharray="565.48" stroke-dashoffset="565.48" transform="rotate(-90 100 100)"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="timer-controls">
+                        <button id="startBtn" class="btn-primary">Start Focus Session</button>
+                        <button id="pauseBtn" class="btn-secondary" disabled>Pause</button>
+                        <button id="resetBtn" class="btn-secondary">Reset</button>
+                    </div>
+                    <div class="session-settings">
+                        <label for="sessionDuration">Session Duration (minutes):</label>
+                        <select id="sessionDuration">
+                            <option value="15">15</option>
+                            <option value="25" selected>25</option>
+                            <option value="30">30</option>
+                            <option value="45">45</option>
+                            <option value="60">60</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Session Quality Rating -->
+            <section class="tracker-section rating-section">
+                <h2><i data-lucide="star"></i> Session Quality Rating</h2>
+                <div id="ratingContainer" class="rating-container">
+                    <p>Complete a focus session to rate its quality.</p>
+                </div>
+                <div id="qualityForm" class="quality-form" style="display: none;">
+                    <h3>Rate Your Focus Session</h3>
+                    <div class="rating-input">
+                        <label>Focus Quality (1-10):</label>
+                        <div class="rating-scale">
+                            <span>Poor</span>
+                            <input type="range" id="qualityRating" min="1" max="10" value="7">
+                            <span>Excellent</span>
+                        </div>
+                        <div class="rating-value">
+                            <span id="ratingValue">7</span>/10
+                        </div>
+                    </div>
+                    <div class="distraction-input">
+                        <label for="distractionCount">Number of distractions:</label>
+                        <input type="number" id="distractionCount" min="0" value="0">
+                    </div>
+                    <div class="notes-input">
+                        <label for="sessionNotes">Session Notes:</label>
+                        <textarea id="sessionNotes" placeholder="What did you work on? Any challenges?"></textarea>
+                    </div>
+                    <button id="saveRatingBtn" class="btn-primary">Save Session</button>
+                </div>
+            </section>
+
+            <!-- Current Stats -->
+            <section class="tracker-section stats-section">
+                <h2><i data-lucide="bar-chart-3"></i> Focus Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="label">Today's Sessions:</span>
+                        <span id="todaySessions">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Today's Focus Time:</span>
+                        <span id="todayFocusTime">0 min</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Average Quality:</span>
+                        <span id="avgQuality">--/10</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Focus Efficiency:</span>
+                        <span id="focusEfficiency">--%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Weekly Average:</span>
+                        <span id="weeklyAverage">--/10</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Best Streak:</span>
+                        <span id="bestStreak">0 days</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quality Trends Chart -->
+            <section class="tracker-section chart-section">
+                <h2><i data-lucide="trending-up"></i> Quality Trends</h2>
+                <div class="chart-controls">
+                    <button id="viewWeek" class="chart-btn active">7 Days</button>
+                    <button id="viewMonth" class="chart-btn">30 Days</button>
+                </div>
+                <canvas id="qualityChart"></canvas>
+            </section>
+
+            <!-- Distraction Analysis -->
+            <section class="tracker-section distraction-section">
+                <h2><i data-lucide="alert-triangle"></i> Distraction Analysis</h2>
+                <canvas id="distractionChart"></canvas>
+            </section>
+
+            <!-- Session History -->
+            <section class="tracker-section history-section">
+                <h2><i data-lucide="history"></i> Session History</h2>
+                <div class="table-container">
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Duration</th>
+                                <th>Quality</th>
+                                <th>Distractions</th>
+                                <th>Efficiency</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <tr>
+                                <td colspan="6">No sessions completed yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Include footer -->
+    <div id="footer"></div>
+
+    <script src="../js/include.js"></script>
+    <script src="focus-session-quality-analyzer.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

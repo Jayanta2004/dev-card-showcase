@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📋 clipboard manager · snippet organizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(150deg, #1f2b30, #132026);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      padding: 1.8rem;
+    }
+
+    .manager-card {
+      max-width: 1300px;
+      width: 100%;
+      background: rgba(22, 38, 44, 0.8);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(200, 160, 110, 0.3);
+      border-radius: 3.2rem;
+      padding: 2.4rem 2.5rem;
+      box-shadow: 0 35px 60px -20px #000000dd, inset 0 1px 3px #c0a06440;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 500;
+      background: linear-gradient(135deg, #f7dab6, #fec382);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    h1 span {
+      background: #2b414b;
+      border: 1px solid #c79453;
+      font-size: 1.1rem;
+      font-weight: 500;
+      padding: 0.2rem 1.6rem;
+      border-radius: 60px;
+      color: #ffdfb0;
+      -webkit-text-fill-color: #ffdfb0;
+    }
+
+    .sub {
+      color: #b7c9b8;
+      margin-bottom: 2.5rem;
+      font-size: 1.1rem;
+      border-left: 4px solid #e8b067;
+      padding-left: 1.4rem;
+    }
+
+    /* top bar with actions */
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .primary-btn {
+      background: #e2a65b;
+      border: none;
+      padding: 0.8rem 1.8rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #1c2b2b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: 0.15s;
+      box-shadow: 0 8px 14px -8px #00000080;
+      border: 1px solid #f3cd9c;
+    }
+    .primary-btn:hover {
+      background: #f6b458;
+      transform: scale(1.02);
+    }
+
+    .secondary-btn {
+      background: #314e57;
+      border: 1px solid #a58555;
+      padding: 0.8rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 500;
+      color: #fbddb5;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .secondary-btn:hover {
+      background: #3d5f68;
+      border-color: #e2b067;
+    }
+
+    .search-box {
+      background: #1e3a41;
+      border: 1px solid #b6935c;
+      border-radius: 60px;
+      padding: 0.3rem 1rem;
+      display: flex;
+      align-items: center;
+      min-width: 260px;
+    }
+    .search-box span {
+      font-size: 1.2rem;
+      margin-right: 0.3rem;
+      color: #dbb179;
+    }
+    .search-box input {
+      background: transparent;
+      border: none;
+      padding: 0.7rem 0.5rem;
+      width: 100%;
+      color: #f3e1c2;
+      font-size: 1rem;
+      outline: none;
+    }
+    .search-box input::placeholder { color: #8f9e92; }
+
+    /* main grid: left snippet list / right editor */
+    .clipboard-panel {
+      display: grid;
+      grid-template-columns: 1.1fr 1.9fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    /* left — snippet library */
+    .snippet-library {
+      background: #1b3139;
+      border-radius: 2.2rem;
+      padding: 1.5rem;
+      border: 1px solid #9f8757;
+      box-shadow: inset 0 0 0 1px #4f6a6e, 0 10px 25px -12px black;
+      max-height: 460px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .library-header {
+      display: flex;
+      justify-content: space-between;
+      color: #ffdbb2;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    .badge {
+      background: #264c4c;
+      padding: 0.2rem 1rem;
+      border-radius: 60px;
+      color: #f7cf94;
+      font-size: 0.8rem;
+    }
+
+    .snippet-list {
+      list-style: none;
+      overflow-y: auto;
+      flex: 1;
+      padding-right: 4px;
+    }
+    .snippet-list li {
+      background: #203f48;
+      margin-bottom: 0.6rem;
+      padding: 0.8rem 1.2rem;
+      border-radius: 50px;
+      border: 1px solid #a79260;
+      color: #fae1bf;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: 0.1s;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .snippet-list li:hover {
+      background: #2b5360;
+      border-color: #eab669;
+      transform: translateX(4px);
+    }
+    .snippet-list li.active-snippet {
+      background: #c9984b;
+      border-color: #ffd58c;
+      color: #142a2a;
+      font-weight: 500;
+    }
+    .snippet-list li span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .snippet-list li .thumb-icon {
+      font-size: 1.2rem;
+    }
+
+    /* right — editor */
+    .editor-panel {
+      background: #1c353d;
+      border-radius: 2.2rem;
+      padding: 1.8rem;
+      border: 1px solid #b69458;
+      box-shadow: 0 15px 25px -15px black;
+    }
+
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      color: #ffe2be;
+      margin-bottom: 1.2rem;
+      align-items: center;
+    }
+    .editor-header input {
+      background: #103039;
+      border: 1px solid #cfa35e;
+      border-radius: 40px;
+      padding: 0.5rem 1.2rem;
+      font-size: 1rem;
+      color: #ffdbb5;
+      width: 60%;
+    }
+    .editor-header input::placeholder { color: #7e9b92; }
+
+    textarea {
+      width: 100%;
+      height: 180px;
+      background: #103039;
+      border: 1px solid #cb9f60;
+      border-radius: 2rem;
+      padding: 1.5rem;
+      color: #f7e5ca;
+      font-size: 1rem;
+      line-height: 1.5;
+      resize: vertical;
+      font-family: 'Inter', sans-serif;
+    }
+    textarea:focus { outline: 2px solid #e5af64; }
+
+    .editor-actions {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: flex-end;
+      margin-top: 1.2rem;
+    }
+
+    .small-btn {
+      background: #2a4d4d;
+      border: 1px solid #b18a4b;
+      color: #ffdcb5;
+      padding: 0.6rem 1.5rem;
+      border-radius: 40px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .small-btn:hover {
+      background: #386b6b;
+    }
+    .delete-btn {
+      background: #642f2f;
+      border-color: #b97767;
+      color: #ffc8b0;
+    }
+    .delete-btn:hover { background: #913b3b; }
+
+    /* footer / status */
+    .footer-bar {
+      display: flex;
+      justify-content: space-between;
+      color: #b8c6b0;
+      background: #1c353bb0;
+      padding: 0.8rem 2rem;
+      border-radius: 60px;
+      border: 1px solid #8f7f57;
+      margin-top: 1rem;
+    }
+    .copy-info {
+      color: #f1cfa2;
+    }
+
+    /* modal simulation (inline notification) */
+    .toast-msg {
+      background: #d1a357;
+      color: #162d2d;
+      padding: 0.5rem 1.8rem;
+      border-radius: 60px;
+      font-weight: 500;
+      animation: fade 2s forwards;
+    }
+    @keyframes fade { 0% { opacity:1; } 70% { opacity:1; } 100% { opacity:0; } }
+  </style>
+</head>
+<body>
+<div class="manager-card">
+  <h1>
+    📋 clipboard manager
+    <span>multi-snippet</span>
+  </h1>
+  <div class="sub">save, edit, search &amp; copy — in-memory storage</div>
+
+  <!-- action bar -->
+  <div class="action-bar">
+    <div class="btn-group">
+      <button class="primary-btn" id="newSnippetBtn">➕ new snippet</button>
+      <button class="secondary-btn" id="clearAllBtn">🗑️ clear all</button>
+    </div>
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="filter snippets..." autocomplete="off">
+    </div>
+  </div>
+
+  <!-- main area -->
+  <div class="clipboard-panel">
+    <!-- left: list of snippets -->
+    <div class="snippet-library">
+      <div class="library-header">
+        <span>📌 your snippets</span>
+        <span class="badge" id="snippetCount">3 items</span>
+      </div>
+      <ul class="snippet-list" id="snippetList">
+        <!-- dynamic -->
+      </ul>
+    </div>
+
+    <!-- right: editor -->
+    <div class="editor-panel">
+      <div class="editor-header">
+        <label>✏️ title</label>
+        <input type="text" id="snippetTitleInput" placeholder="snippet name" maxlength="40">
+      </div>
+      <textarea id="snippetContentInput" placeholder="paste or write content ..."></textarea>
+      <div class="editor-actions">
+        <button class="small-btn" id="updateSnippetBtn">💾 update</button>
+        <button class="small-btn" id="copyToClipboardBtn">📋 copy to clipboard</button>
+        <button class="small-btn delete-btn" id="deleteSnippetBtn">🗑️ delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- footer / live notification -->
+  <div class="footer-bar" id="footerStatus">
+    <span>⚡ ready · select a snippet or create new</span>
+    <span id="actionFeedback" class="copy-info"></span>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // --- in-memory data store
+    let snippets = [
+      { id: '1', title: 'Welcome note', content: 'Hello! This is your clipboard manager. You can save multiple text snippets.' },
+      { id: '2', title: 'Colors palette', content: 'Primary: #e2a65b\nSecondary: #314e57\nAccent: #f7dab6' },
+      { id: '3', title: 'Todo', content: '- design the layout\n- add search\n- implement copy' }
+    ];
+
+    let activeId = '1';      // first by default
+    let searchTerm = '';
+
+    // DOM elements
+    const snippetListEl = document.getElementById('snippetList');
+    const snippetCountEl = document.getElementById('snippetCount');
+    const titleInput = document.getElementById('snippetTitleInput');
+    const contentInput = document.getElementById('snippetContentInput');
+    const searchInput = document.getElementById('searchInput');
+    const footerStatus = document.getElementById('footerStatus');
+    const actionFeedback = document.getElementById('actionFeedback');
+
+    // Buttons
+    const newBtn = document.getElementById('newSnippetBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const updateBtn = document.getElementById('updateSnippetBtn');
+    const copyBtn = document.getElementById('copyToClipboardBtn');
+    const deleteBtn = document.getElementById('deleteSnippetBtn');
+
+    // Helper: generate short id
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,6); }
+
+    // Filter snippets based on searchTerm (title or content)
+    function getFilteredSnippets() {
+      if (!searchTerm.trim()) return snippets;
+      const term = searchTerm.trim().toLowerCase();
+      return snippets.filter(s => s.title.toLowerCase().includes(term) || s.content.toLowerCase().includes(term));
+    }
+
+    // render left list
+    function renderList() {
+      const filtered = getFilteredSnippets();
+      if (filtered.length === 0) {
+        snippetListEl.innerHTML = `<li style="opacity:0.6; justify-content:center; cursor:default;">📭 no snippets</li>`;
+        snippetCountEl.innerText = `0 items`;
+        return;
+      }
+      let html = '';
+      filtered.forEach(s => {
+        const isActive = (s.id === activeId);
+        const activeClass = isActive ? 'active-snippet' : '';
+        // simple icon based on title
+        const icon = s.title.toLowerCase().includes('todo') ? '✅' : (s.title.toLowerCase().includes('color') ? '🎨' : '📄');
+        html += `<li class="${activeClass}" data-id="${s.id}"><span class="thumb-icon">${icon}</span><span>${escapeHtml(s.title)}</span></li>`;
+      });
+      snippetListEl.innerHTML = html;
+      snippetCountEl.innerText = filtered.length + (filtered.length === 1 ? ' item' : ' items');
+
+      // attach click listeners to each li
+      document.querySelectorAll('.snippet-list li').forEach(li => {
+        li.addEventListener('click', (e) => {
+          const id = li.dataset.id;
+          if (id) setActiveSnippet(id);
+        });
+      });
+    }
+
+    // simple escape for title (prevent XSS)
+    function escapeHtml(unsafe) {
+      return unsafe.replace(/[&<>"]/g, function(m) {
+        if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; if(m === '"') return '&quot;';
+        return m;
+      });
+    }
+
+    // set active snippet and populate editor
+    function setActiveSnippet(id) {
+      const snippet = snippets.find(s => s.id === id);
+      if (!snippet) {
+        // if id not found (maybe after delete), pick first filtered or null
+        const filtered = getFilteredSnippets();
+        if (filtered.length > 0) {
+          activeId = filtered[0].id;
+        } else {
+          activeId = null;
+          titleInput.value = '';
+          contentInput.value = '';
+        }
+      } else {
+        activeId = snippet.id;
+      }
+      // populate editor from activeId
+      const activeSnippet = snippets.find(s => s.id === activeId);
+      if (activeSnippet) {
+        titleInput.value = activeSnippet.title;
+        contentInput.value = activeSnippet.content;
+      } else {
+        titleInput.value = '';
+        contentInput.value = '';
+      }
+      renderList();
+      updateFooter('📌 loaded');
+    }
+
+    // show temporary message in footer
+    function updateFooter(msg) {
+      actionFeedback.innerText = msg;
+      setTimeout(() => { actionFeedback.innerText = ''; }, 2000);
+    }
+
+    // ---- actions ----
+    // new snippet
+    function createNewSnippet() {
+      const newTitle = 'snippet ' + (snippets.length + 1);
+      const newContent = '';
+      const newId = genId();
+      snippets.push({ id: newId, title: newTitle, content: newContent });
+      activeId = newId;
+      setActiveSnippet(activeId);
+      titleInput.focus();
+      updateFooter('➕ new snippet created');
+    }
+
+    // update current snippet
+    function updateCurrentSnippet() {
+      if (!activeId) {
+        // if no active, create new? but we can fallback: pick first if exists
+        if (snippets.length === 0) {
+          createNewSnippet();
+        } else {
+          activeId = snippets[0].id;
+        }
+      }
+      const snippet = snippets.find(s => s.id === activeId);
+      if (snippet) {
+        const newTitle = titleInput.value.trim() || 'untitled';
+        snippet.title = newTitle;
+        snippet.content = contentInput.value;
+        // re-render list, keep active
+        renderList();
+        updateFooter('💾 updated');
+      } else {
+        // orphan active? create new
+        createNewSnippet();
+      }
+    }
+
+    // delete active snippet
+    function deleteActiveSnippet() {
+      if (!activeId) {
+        if (snippets.length > 0) activeId = snippets[0].id;
+        else {
+          updateFooter('nothing to delete');
+          return;
+        }
+      }
+      const index = snippets.findIndex(s => s.id === activeId);
+      if (index !== -1) {
+        snippets.splice(index, 1);
+        // choose new active: try same index, previous, or first
+        if (snippets.length > 0) {
+          const nextIndex = Math.min(index, snippets.length-1);
+          activeId = snippets[nextIndex].id;
+        } else {
+          activeId = null;
+        }
+        setActiveSnippet(activeId);
+        updateFooter('🗑️ deleted');
+      } else {
+        // activeId not found, pick first if any
+        if (snippets.length) {
+          activeId = snippets[0].id;
+          setActiveSnippet(activeId);
+        } else {
+          titleInput.value = ''; contentInput.value = '';
+          renderList();
+        }
+      }
+    }
+
+    // copy to clipboard
+    async function copyContent() {
+      if (!activeId) {
+        if (snippets.length === 0) {
+          updateFooter('no snippet to copy');
+          return;
+        } else {
+          activeId = snippets[0].id;
+          setActiveSnippet(activeId);
+        }
+      }
+      const snippet = snippets.find(s => s.id === activeId);
+      if (snippet) {
+        try {
+          await navigator.clipboard.writeText(snippet.content);
+          updateFooter('📋 copied to clipboard!');
+        } catch (err) {
+          updateFooter('❌ copy failed');
+        }
+      } else {
+        updateFooter('error: not found');
+      }
+    }
+
+    // clear all snippets (with confirmation)
+    function clearAll() {
+      if (snippets.length === 0) {
+        updateFooter('already empty');
+        return;
+      }
+      if (confirm('Delete all snippets?')) {
+        snippets = [];
+        activeId = null;
+        titleInput.value = '';
+        contentInput.value = '';
+        renderList();
+        updateFooter('🧹 all snippets cleared');
+      }
+    }
+
+    // search handler
+    function handleSearch() {
+      searchTerm = searchInput.value;
+      // preserve active if still in filtered, else set to first filtered
+      const filtered = getFilteredSnippets();
+      if (filtered.length > 0) {
+        if (!filtered.some(s => s.id === activeId)) {
+          activeId = filtered[0].id;
+        }
+      } else {
+        activeId = null;
+      }
+      setActiveSnippet(activeId); // repopulate / clear
+    }
+
+    // ---- event listeners ----
+    newBtn.addEventListener('click', createNewSnippet);
+    updateBtn.addEventListener('click', updateCurrentSnippet);
+    copyBtn.addEventListener('click', copyContent);
+    deleteBtn.addEventListener('click', deleteActiveSnippet);
+    clearAllBtn.addEventListener('click', clearAll);
+
+    searchInput.addEventListener('input', () => {
+      handleSearch();
+    });
+
+    // initial render
+    setActiveSnippet('1');  // ensures activeId=1 exists
+    renderList();
+
+    // fallback if first not present (just in case)
+    window.addEventListener('load', () => {
+      if (snippets.length && !snippets.find(s => s.id === activeId)) {
+        activeId = snippets[0].id;
+        setActiveSnippet(activeId);
+      }
+    });
+  })();
+</script>
+</body>
+</html>
