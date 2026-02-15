@@ -1,13 +1,20 @@
 # Digital Garden Visualizer
 
-A web app to build a digital garden of notes and ideas, where each note is a plant. Notes grow and connect visually as users add links, tags, and updates. Includes growth animations, seasonal themes, and export to markdown/JSON.
+A web app to design, simulate, and grow your own digital garden! Drag and drop plants, arrange your layout, and simulate plant growth over time. Save and load your gardens easily.
 
 ## Features
-- Add notes as plants
-- Visualize connections between notes
-- Growth animations for new notes
-- Seasonal theme selector
-- Export garden to Markdown or JSON
+- Drag-and-drop plant layout designer (flowers, trees, cactus, herbs)
+- Growth simulation (plants grow larger with animation)
+- Save and load garden layouts (JSON)
+- Modern, responsive UI
 
 ## Usage
-Open index.html in your browser. Add notes, select themes, and export your garden.
+1. Open `index.html` in your browser.
+2. Drag plant icons onto the garden canvas.
+3. Move plants by dragging them on the canvas.
+4. Click **Simulate Growth** to animate plant growth.
+5. Save or load your garden using the dashboard buttons.
+
+---
+
+**Made for Issue #3242**

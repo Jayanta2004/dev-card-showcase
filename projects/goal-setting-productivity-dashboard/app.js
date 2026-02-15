@@ -1,167 +1,229 @@
-// Goal Setting & Productivity Dashboard
-let goals = JSON.parse(localStorage.getItem('goals') || '[]');
-let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
-let badges = [];
+// Goal Setting & Productivity Dashboard App
+let goals = JSON.parse(localStorage.getItem('goalList') || '[]');
+let steps = JSON.parse(localStorage.getItem('goalSteps') || '[]');
+
+function saveAll() {
+  localStorage.setItem('goalList', JSON.stringify(goals));
+  localStorage.setItem('goalSteps', JSON.stringify(steps));
+}
 
 function renderGoals() {
-    const goalsDiv = document.getElementById('goals');
-    goalsDiv.innerHTML = '';
-    goals.forEach(g => {
-        const card = document.createElement('div');
-        card.className = 'goal-card';
-        card.innerHTML = `<b>${g.title}</b><br><p>${g.desc}</p>`;
-        goalsDiv.appendChild(card);
-    });
-    renderGoalSelect();
-}
-
-document.getElementById('add-goal-btn').onclick = function() {
-    const title = document.getElementById('goal-title').value.trim();
-    const desc = document.getElementById('goal-desc').value.trim();
-    if (!title || !desc) {
-        alert('Please fill all required fields.');
-        return;
-    }
-    goals.push({ title, desc });
-    localStorage.setItem('goals', JSON.stringify(goals));
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <h2 class="section-title">Goals</h2>
+    <form id="goal-form">
+      <label>Goal Name
+        <input type="text" id="goal-name" required>
+      </label>
+      <label>Description
+        <textarea id="goal-desc" rows="2"></textarea>
+      </label>
+      <button class="action" type="submit">Add Goal</button>
+    </form>
+    <ul class="goal-list">
+      ${goals.length ? goals.map((g, idx) => `
+        <li>
+          <span><strong>${g.name}</strong></span>
+          <span>${g.desc}</span>
+          <button class="action" onclick="renderSteps(${idx})">View Steps</button>
+          <button class="action" onclick="editGoal(${idx})">Edit</button>
+        </li>
+      `).join('') : '<li>No goals yet.</li>'}
+    </ul>
+  `;
+  document.getElementById('goal-form').onsubmit = function(e) {
+    e.preventDefault();
+    const name = document.getElementById('goal-name').value;
+    const desc = document.getElementById('goal-desc').value;
+    goals.push({ name, desc });
+    saveAll();
     renderGoals();
-};
-
-function renderGoalSelect() {
-    const select = document.getElementById('goal-select');
-    select.innerHTML = '';
-    goals.forEach(g => {
-        const opt = document.createElement('option');
-        opt.value = g.title;
-        opt.textContent = g.title;
-        select.appendChild(opt);
-    });
+  };
 }
 
-function renderTasks() {
-    const tasksDiv = document.getElementById('tasks');
-    tasksDiv.innerHTML = '';
-    tasks.forEach(t => {
-        const card = document.createElement('div');
-        card.className = 'task-card';
-        card.innerHTML = `<b>${t.title}</b><br><small>Goal: ${t.goal}</small><br><small>Status: ${t.status}</small>`;
-        card.innerHTML += `<button onclick="toggleTaskStatus('${t.title}')">Toggle Status</button>`;
-        tasksDiv.appendChild(card);
-    });
-    renderProgressTracking();
-    renderPlanner();
-    renderBadges();
+function editGoal(idx) {
+  const g = goals[idx];
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <h2 class="section-title">Edit Goal</h2>
+    <form id="edit-goal-form">
+      <label>Goal Name
+        <input type="text" id="edit-goal-name" value="${g.name}" required>
+      </label>
+      <label>Description
+        <textarea id="edit-goal-desc" rows="2">${g.desc}</textarea>
+      </label>
+      <button class="action" type="submit">Save</button>
+      <button class="action" type="button" onclick="renderGoals()">Cancel</button>
+    </form>
+  `;
+  document.getElementById('edit-goal-form').onsubmit = function(e) {
+    e.preventDefault();
+    g.name = document.getElementById('edit-goal-name').value;
+    g.desc = document.getElementById('edit-goal-desc').value;
+    saveAll();
+    renderGoals();
+  };
 }
 
-document.getElementById('add-task-btn').onclick = function() {
-    const title = document.getElementById('task-title').value.trim();
-    const goal = document.getElementById('goal-select').value;
-    if (!title || !goal) {
-        alert('Please fill all required fields.');
-        return;
+function renderSteps(goalIdx) {
+  const main = document.getElementById('main-content');
+  const g = goals[goalIdx];
+  const goalSteps = steps.filter(s => s.goal === g.name);
+  main.innerHTML = `
+    <h2 class="section-title">Steps for: ${g.name}</h2>
+    <form id="step-form">
+      <label>Step Name
+        <input type="text" id="step-name" required>
+      </label>
+      <label>Status
+        <select id="step-status">
+          <option value="Not Started">Not Started</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </label>
+      <button class="action" type="submit">Add Step</button>
+    </form>
+    <ul class="step-list">
+      ${goalSteps.length ? goalSteps.map((s, idx) => `
+        <li>
+          <span><strong>${s.name}</strong> - ${s.status}</span>
+          <button class="action" onclick="editStep(${steps.indexOf(s)})">Edit</button>
+        </li>
+      `).join('') : '<li>No steps yet.</li>'}
+    </ul>
+    <button class="action" onclick="renderGoals()">Back to Goals</button>
+  `;
+  document.getElementById('step-form').onsubmit = function(e) {
+    e.preventDefault();
+    const name = document.getElementById('step-name').value;
+    const status = document.getElementById('step-status').value;
+    steps.push({ goal: g.name, name, status });
+    saveAll();
+    renderSteps(goalIdx);
+  };
+}
+
+function editStep(idx) {
+  const s = steps[idx];
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <h2 class="section-title">Edit Step</h2>
+    <form id="edit-step-form">
+      <label>Step Name
+        <input type="text" id="edit-step-name" value="${s.name}" required>
+      </label>
+      <label>Status
+        <select id="edit-step-status">
+          <option value="Not Started" ${s.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+          <option value="In Progress" ${s.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+          <option value="Completed" ${s.status === 'Completed' ? 'selected' : ''}>Completed</option>
+        </select>
+      </label>
+      <button class="action" type="submit">Save</button>
+      <button class="action" type="button" onclick="renderSteps(${goals.findIndex(g => g.name === s.goal)})">Cancel</button>
+    </form>
+  `;
+  document.getElementById('edit-step-form').onsubmit = function(e) {
+    e.preventDefault();
+    s.name = document.getElementById('edit-step-name').value;
+    s.status = document.getElementById('edit-step-status').value;
+    saveAll();
+    renderSteps(goals.findIndex(g => g.name === s.goal));
+  };
+}
+
+function renderProgress() {
+  const main = document.getElementById('main-content');
+  const completed = steps.filter(s => s.status === 'Completed').length;
+  const total = steps.length;
+  const percent = total ? ((completed / total) * 100).toFixed(1) : 0;
+  main.innerHTML = `
+    <h2 class="section-title">Progress Overview</h2>
+    <div class="card">
+      <p>Steps Completed: <strong>${completed}</strong> / ${total}</p>
+      <p>Completion: <strong>${percent}%</strong></p>
+      <canvas id="progressChart"></canvas>
+    </div>
+  `;
+  setTimeout(drawProgressChart, 0);
+}
+
+function drawProgressChart() {
+  const ctx = document.getElementById('progressChart').getContext('2d');
+  const statuses = ['Not Started', 'In Progress', 'Completed'];
+  const counts = statuses.map(st => steps.filter(s => s.status === st).length);
+  if (window.progressChartInstance) window.progressChartInstance.destroy();
+  window.progressChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: statuses,
+      datasets: [{
+        label: 'Step Status',
+        data: counts,
+        backgroundColor: ['#b3e5fc', '#43cea2', '#185a9d']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        title: { display: true, text: 'Step Status Distribution' }
+      }
     }
-    tasks.push({ title, goal, status: 'pending' });
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    renderTasks();
-};
-
-function toggleTaskStatus(title) {
-    tasks = tasks.map(t => t.title === title ? { ...t, status: t.status === 'pending' ? 'done' : 'pending' } : t);
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    renderTasks();
+  });
 }
 
-function renderProgressTracking() {
-    const progressDiv = document.getElementById('progress-tracking');
-    progressDiv.innerHTML = '';
-    goals.forEach(g => {
-        const total = tasks.filter(t => t.goal === g.title).length;
-        const done = tasks.filter(t => t.goal === g.title && t.status === 'done').length;
-        const percent = total ? Math.round(100*done/total) : 0;
-        progressDiv.innerHTML += `<div><b>${g.title}</b><div class="progress-bar"><div class="progress" style="width:${percent}%"></div></div><small>${done}/${total} tasks done</small></div>`;
-    });
+function renderTrends() {
+  const main = document.getElementById('main-content');
+  const dates = steps.map((s, idx) => `Day ${idx+1}`);
+  const completed = steps.map(s => s.status === 'Completed' ? 1 : 0);
+  if (!steps.length) {
+    main.innerHTML = `<h2 class="section-title">Productivity Trends</h2><p>No steps tracked yet.</p>`;
+    return;
+  }
+  main.innerHTML = `
+    <h2 class="section-title">Productivity Trends</h2>
+    <div class="card">
+      <canvas id="trendsChart"></canvas>
+    </div>
+  `;
+  setTimeout(() => drawTrendsChart(dates, completed), 0);
 }
 
-function renderProductivityChart() {
-    const canvas = document.getElementById('productivity-chart');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0,600,300);
-    let daily = {};
-    tasks.forEach(t => {
-        const d = new Date();
-        const day = d.toISOString().split('T')[0];
-        daily[day] = (daily[day] || 0) + (t.status === 'done' ? 1 : 0);
-    });
-    const days = Object.keys(daily);
-    ctx.fillStyle = '#43c6ac';
-    days.forEach((day, idx) => {
-        ctx.fillRect(idx*60+40, 300-daily[day]*40, 40, daily[day]*40);
-        ctx.font = 'bold 14px Segoe UI';
-        ctx.fillStyle = '#333';
-        ctx.fillText(day, idx*60+40, 290);
-    });
-}
-
-function renderBadges() {
-    const badgesDiv = document.getElementById('badges');
-    badgesDiv.innerHTML = '';
-    const totalDone = tasks.filter(t => t.status === 'done').length;
-    if (totalDone >= 10) badgesDiv.innerHTML += '<div class="badge-card">🏅 10 Tasks Done</div>';
-    if (totalDone >= 50) badgesDiv.innerHTML += '<div class="badge-card">🥈 50 Tasks Done</div>';
-    if (totalDone >= 100) badgesDiv.innerHTML += '<div class="badge-card">🏆 100 Tasks Done</div>';
-}
-
-function renderPlanner() {
-    const plannerDiv = document.getElementById('planner');
-    plannerDiv.innerHTML = '';
-    tasks.forEach(t => {
-        plannerDiv.innerHTML += `<div class="planner-card"><b>${t.title}</b><br><small>${t.goal}</small><br><small>Status: ${t.status}</small></div>`;
-    });
-}
-
-document.getElementById('add-reminder-btn').onclick = function() {
-    const task = document.getElementById('reminder-task').value.trim();
-    const date = document.getElementById('reminder-date').value;
-    if (!task || !date) {
-        alert('Please fill all required fields.');
-        return;
+function drawTrendsChart(dates, completed) {
+  const ctx = document.getElementById('trendsChart').getContext('2d');
+  if (window.trendsChartInstance) window.trendsChartInstance.destroy();
+  window.trendsChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'Steps Completed',
+        data: completed,
+        borderColor: '#185a9d',
+        backgroundColor: '#43cea2',
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        title: { display: true, text: 'Productivity Over Time' }
+      }
     }
-    reminders.push({ task, date });
-    localStorage.setItem('reminders', JSON.stringify(reminders));
-    renderReminders();
-};
-
-function renderReminders() {
-    const remindersDiv = document.getElementById('reminders-list');
-    remindersDiv.innerHTML = '';
-    reminders.forEach(r => {
-        remindersDiv.innerHTML += `<div class="reminder-card"><b>${r.task}</b><br><small>${r.date}</small></div>`;
-    });
+  });
 }
 
-document.getElementById('export-csv-btn').onclick = function() {
-    let csv = 'Goal,Task,Status\n';
-    tasks.forEach(t => {
-        csv += `${t.goal},${t.title},${t.status}\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'productivity-dashboard.csv';
-    link.click();
+document.getElementById('nav-goals').onclick = renderGoals;
+document.getElementById('nav-steps').onclick = function() {
+  if (goals.length) renderSteps(0);
+  else renderGoals();
 };
+document.getElementById('nav-progress').onclick = renderProgress;
+document.getElementById('nav-trends').onclick = renderTrends;
 
-document.getElementById('export-json-btn').onclick = function() {
-    const json = JSON.stringify({ goals, tasks, reminders }, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'productivity-dashboard.json';
-    link.click();
-};
-
+// Initial load
 renderGoals();
-renderTasks();
-renderProductivityChart();
-renderReminders();

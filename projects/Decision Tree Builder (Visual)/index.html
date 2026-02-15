@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description"
+        content="A powerful visual decision tree builder with interactive drag-and-drop interface.">
+    <meta name="author" content="Decision Tree Visualizer Team">
+    <title>Decision Tree Builder | Advanced Visualizer</title>
+
+    <!-- External Fonts and Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="theme-dark">
+
+    <!-- Application Container -->
+    <div class="app-container">
+
+        <!-- Header / Toolbar -->
+        <header class="app-header">
+            <div class="brand">
+                <i class="ri-git-merge-line logo-icon"></i>
+                <div class="brand-text">
+                    <h1>TreeBuilder</h1>
+                    <span class="version">v2.0.0</span>
+                </div>
+            </div>
+
+            <!-- Main Actions Toolbar -->
+            <div class="toolbar-actions">
+                <div class="action-group">
+                    <button id="undo-btn" class="btn icon-btn" title="Undo (Ctrl+Z)" disabled>
+                        <i class="ri-arrow-go-back-line"></i>
+                    </button>
+                    <button id="redo-btn" class="btn icon-btn" title="Redo (Ctrl+Shift+Z)" disabled>
+                        <i class="ri-arrow-go-forward-line"></i>
+                    </button>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="action-group">
+                    <button id="zoom-out-btn" class="btn icon-btn" title="Zoom Out (-)">
+                        <i class="ri-subtract-line"></i>
+                    </button>
+                    <span id="zoom-level">100%</span>
+                    <button id="zoom-in-btn" class="btn icon-btn" title="Zoom In (+)">
+                        <i class="ri-add-line"></i>
+                    </button>
+                    <button id="fit-view-btn" class="btn icon-btn" title="Fit to Screen">
+                        <i class="ri-aspect-ratio-line"></i>
+                    </button>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="action-group">
+                    <button id="auto-layout-btn" class="btn secondary" title="Auto Layout Tree">
+                        <i class="ri-layout-2-line"></i> Layout
+                    </button>
+                    <button id="reset-btn" class="btn secondary" title="Clear Canvas">
+                        <i class="ri-delete-bin-line"></i> Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Controls -->
+            <div class="header-controls">
+                <button id="theme-toggle" class="btn icon-btn" title="Toggle Theme">
+                    <i class="ri-sun-line"></i>
+                </button>
+                <button id="help-btn" class="btn icon-btn" title="Help & Shortcuts">
+                    <i class="ri-question-line"></i>
+                </button>
+                <button id="export-btn" class="btn primary glow-effect">
+                    <i class="ri-download-cloud-line"></i> Export
+                </button>
+                <button id="import-btn" class="btn secondary">
+                    <i class="ri-upload-cloud-line"></i> Import
+                </button>
+                <input type="file" id="file-input" accept=".json" style="display: none;">
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <div class="workspace">
+
+            <!-- Left Sidebar: Node Palette -->
+            <aside class="sidebar-left tool-palette">
+                <div class="sidebar-header">
+                    <h3>Node Types</h3>
+                    <i class="ri-menu-add-line"></i>
+                </div>
+                <div class="node-templates">
+                    <div class="draggable-node template-start" draggable="true" data-type="start">
+                        <div class="node-icon"><i class="ri-play-circle-line"></i></div>
+                        <span>Start</span>
+                    </div>
+                    <div class="draggable-node template-decision" draggable="true" data-type="decision">
+                        <div class="node-icon"><i class="ri-question-line"></i></div>
+                        <span>Decision</span>
+                    </div>
+                    <div class="draggable-node template-process" draggable="true" data-type="process">
+                        <div class="node-icon"><i class="ri-settings-3-line"></i></div>
+                        <span>Action</span>
+                    </div>
+                    <div class="draggable-node template-outcome" draggable="true" data-type="outcome">
+                        <div class="node-icon"><i class="ri-flag-line"></i></div>
+                        <span>Outcome</span>
+                    </div>
+                    <div class="draggable-node template-note" draggable="true" data-type="note">
+                        <div class="node-icon"><i class="ri-sticky-note-line"></i></div>
+                        <span>Note</span>
+                    </div>
+                </div>
+
+                <div class="sidebar-footer">
+                    <div class="tip-box">
+                        <i class="ri-lightbulb-line"></i>
+                        <p>Drag nodes to canvas to add.</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Canvas Area -->
+            <main id="canvas-wrapper" class="canvas-wrapper">
+                <div id="canvas-grid" class="canvas-grid"></div>
+                <div id="pan-container" class="pan-container">
+                    <svg id="connections-layer" class="connections-layer"></svg>
+                    <div id="nodes-layer" class="nodes-layer">
+                        <!-- Nodes injected dynamically -->
+                    </div>
+                    <div id="drag-line-container">
+                        <!-- Temporary drag lines -->
+                    </div>
+                </div>
+
+                <!-- Minimap -->
+                <div id="minimap-container" class="minimap-container">
+                    <canvas id="minimap-canvas"></canvas>
+                    <div id="minimap-viewport"></div>
+                </div>
+
+                <!-- Context Menu -->
+                <div id="context-menu" class="context-menu hidden">
+                    <ul>
+                        <li id="ctx-add-child"><i class="ri-node-tree"></i> Add Child</li>
+                        <li id="ctx-delete"><i class="ri-delete-bin-line"></i> Delete Node</li>
+                        <li id="ctx-duplicate"><i class="ri-file-copy-line"></i> Duplicate</li>
+                        <hr>
+                        <li id="ctx-center"><i class="ri-focus-3-line"></i> Center View</li>
+                    </ul>
+                </div>
+            </main>
+
+            <!-- Right Sidebar: Properties Panel -->
+            <aside class="sidebar-right properties-panel hidden" id="properties-panel">
+                <div class="sidebar-header">
+                    <h3>Properties</h3>
+                    <button class="close-sidebar-btn" id="close-props"><i class="ri-close-line"></i></button>
+                </div>
+
+                <div class="properties-content" id="props-content">
+                    <div class="prop-group">
+                        <label>ID</label>
+                        <input type="text" id="prop-id" readonly class="input-readonly">
+                    </div>
+
+                    <div class="prop-group">
+                        <label>Type</label>
+                        <select id="prop-type" class="input-select">
+                            <option value="start">Start</option>
+                            <option value="decision">Decision</option>
+                            <option value="process">Action</option>
+                            <option value="outcome">Outcome</option>
+                            <option value="note">Note</option>
+                        </select>
+                    </div>
+
+                    <div class="prop-group">
+                        <label>Label</label>
+                        <input type="text" id="prop-label" class="input-text" placeholder="Node Title">
+                    </div>
+
+                    <div class="prop-group">
+                        <label>Description</label>
+                        <textarea id="prop-desc" class="input-textarea" rows="4"
+                            placeholder="Detailed description..."></textarea>
+                    </div>
+
+                    <div class="prop-group">
+                        <label>Color Theme</label>
+                        <div class="color-picker-grid" id="prop-colors">
+                            <div class="color-swatch" data-color="default" style="background: var(--node-bg-default)">
+                            </div>
+                            <div class="color-swatch" data-color="blue" style="background: var(--node-bg-blue)"></div>
+                            <div class="color-swatch" data-color="green" style="background: var(--node-bg-green)"></div>
+                            <div class="color-swatch" data-color="red" style="background: var(--node-bg-red)"></div>
+                            <div class="color-swatch" data-color="yellow" style="background: var(--node-bg-yellow)">
+                            </div>
+                            <div class="color-swatch" data-color="purple" style="background: var(--node-bg-purple)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prop-group toggle-group">
+                        <label>Is Critical Path</label>
+                        <label class="switch">
+                            <input type="checkbox" id="prop-critical">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <div class="prop-actions">
+                        <button id="delete-selected-btn" class="btn danger full-width">
+                            <i class="ri-delete-bin-2-line"></i> Delete Node
+                        </button>
+                    </div>
+                </div>
+
+                <div class="empty-state" id="props-empty-state">
+                    <i class="ri-mouse-line"></i>
+                    <p>Select a node to view properties</p>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Bottom Status Bar -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span id="status-text">Ready</span>
+            </div>
+            <div class="status-right">
+                <span id="node-count">0 Nodes</span>
+                <span class="separator">|</span>
+                <span id="cursor-pos">0, 0</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="help-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Keyboard Shortcuts & Help</h2>
+                <button class="close-modal-btn"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item">
+                        <kbd>Del</kbd> <span>Delete Selected Node</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>Z</kbd> <span>Undo</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> <span>Redo</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Space</kbd> + <kbd>Drag</kbd> <span>Pan Canvas</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Scroll</kbd> <span>Zoom In/Out</span>
+                    </div>
+                </div>
+                <h3>Interaction Guide</h3>
+                <ul>
+                    <li><strong>Create Node:</strong> Drag from sidebar or drag handle from existing node.</li>
+                    <li><strong>Connect:</strong> Drag from bottom handle (●) to another node.</li>
+                    <li><strong>Edit:</strong> Double-click text or use properties panel.</li>
+                    <li><strong>Move:</strong> Drag nodes freely. Lines update automatically.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+
+</html>
