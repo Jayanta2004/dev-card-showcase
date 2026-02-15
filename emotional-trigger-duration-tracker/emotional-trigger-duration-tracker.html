@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotional Trigger Duration Tracker - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/emotional-trigger-duration-tracker.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="zap"></i> Emotional Trigger Duration Tracker</h1>
+            <p>Track how long emotional triggers affect your mood with start/end time logging and duration analysis to improve emotional regulation.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Trigger Logger -->
+            <section class="tracker-section trigger-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Emotional Trigger</h2>
+                <form id="triggerForm" class="trigger-form">
+                    <div class="form-group">
+                        <label for="triggerDate">Trigger Date</label>
+                        <input type="date" id="triggerDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="triggerStartTime">Trigger Start Time</label>
+                        <input type="time" id="triggerStartTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="triggerEndTime">Trigger End Time (when mood returned to normal)</label>
+                        <input type="datetime-local" id="triggerEndTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="triggerType">Trigger Type</label>
+                        <select id="triggerType" required>
+                            <option value="">Select type</option>
+                            <option value="anger">Anger</option>
+                            <option value="anxiety">Anxiety</option>
+                            <option value="sadness">Sadness</option>
+                            <option value="frustration">Frustration</option>
+                            <option value="jealousy">Jealousy</option>
+                            <option value="fear">Fear</option>
+                            <option value="guilt">Guilt</option>
+                            <option value="shame">Shame</option>
+                            <option value="excitement">Excitement</option>
+                            <option value="joy">Joy</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="intensityLevel">Emotional Intensity (1-10)</label>
+                        <div class="intensity-input">
+                            <input type="range" id="intensityLevel" min="1" max="10" value="5">
+                            <div class="intensity-display">
+                                <span class="intensity-value" id="intensityValue">5</span>
+                                <span class="intensity-text" id="intensityText">Moderate</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="triggerDescription">Trigger Description</label>
+                        <textarea id="triggerDescription" placeholder="What triggered this emotional response?" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="copingStrategies">Coping Strategies Used (optional)</label>
+                        <textarea id="copingStrategies" placeholder="What helped you manage or overcome this trigger?"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Log Trigger
+                    </button>
+                </form>
+            </section>
+
+            <!-- Duration Dashboard -->
+            <section class="tracker-section duration-dashboard">
+                <h2><i data-lucide="bar-chart-3"></i> Emotional Duration Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgDuration">--</div>
+                        <div class="metric-label">Avg Duration</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="longestTrigger">--</div>
+                        <div class="metric-label">Longest Trigger</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="totalTriggers">0</div>
+                        <div class="metric-label">Total Triggers</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="regulationScore">--</div>
+                        <div class="metric-label">Regulation Score</div>
+                    </div>
+                </div>
+                <div class="regulation-indicator">
+                    <h3>Current Emotional Regulation Level</h3>
+                    <div id="regulationLevel" class="regulation-level">
+                        <div class="regulation-bar">
+                            <div class="regulation-fill" id="regulationFill"></div>
+                        </div>
+                        <div class="regulation-label" id="regulationLabel">No data available</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Duration Trends -->
+            <section class="tracker-section duration-trends">
+                <h2><i data-lucide="trending-up"></i> Trigger Duration Trends</h2>
+                <div class="chart-controls">
+                    <select id="timeRange">
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="all">All Time</option>
+                    </select>
+                    <button id="refreshChart" class="btn-secondary">
+                        <i data-lucide="refresh-cw"></i> Refresh
+                    </button>
+                </div>
+                <div class="trends-chart">
+                    <canvas id="durationChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Trigger History -->
+            <section class="tracker-section trigger-history">
+                <h2><i data-lucide="calendar"></i> Trigger History</h2>
+                <div class="history-controls">
+                    <button id="viewRecent" class="btn-secondary active">Recent</button>
+                    <button id="viewAll" class="btn-secondary">All Time</button>
+                </div>
+                <div class="history-list" id="triggerHistory">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+
+            <!-- Emotional Insights -->
+            <section class="tracker-section emotional-insights">
+                <h2><i data-lucide="lightbulb"></i> Emotional Regulation Insights</h2>
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <h3>Duration Patterns</h3>
+                        <div class="insight-content" id="durationPatterns">
+                            <p>Analysis of your emotional trigger durations.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Common Triggers</h3>
+                        <div class="insight-content" id="commonTriggers">
+                            <p>Emotional triggers that affect you most frequently.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Regulation Progress</h3>
+                        <div class="insight-content" id="regulationProgress">
+                            <p>Trends in your emotional regulation over time.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tips-list" id="tips">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Regulation Benchmarks -->
+        <section class="regulation-benchmarks">
+            <h2><i data-lucide="target"></i> Emotional Regulation Benchmarks</h2>
+            <div class="benchmarks-grid" id="benchmarks">
+                <!-- Dynamic content -->
+            </div>
+        </section>
+    </div>
+
+    <script src="../js/emotional-trigger-duration-tracker.js"></script>
+    <script>
+        // Load navbar
+        fetch('../navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+                // Re-initialize Lucide icons after navbar is loaded
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            })
+            .catch(error => console.error('Error loading navbar:', error));
+    </script>
+</body>
+</html>
