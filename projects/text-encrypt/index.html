@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cipher · text encryptor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(45deg, #101f2e, #1c3648);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .encryptor-card {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(20, 35, 45, 0.7);
+            backdrop-filter: blur(18px) saturate(200%);
+            -webkit-backdrop-filter: blur(18px) saturate(200%);
+            border: 1px solid rgba(140, 200, 240, 0.25);
+            border-radius: 48px;
+            box-shadow: 0 30px 50px -10px #00000080, inset 0 1px 2px #b0e0ff60;
+            padding: 2.5rem 2rem;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .lock-icon {
+            font-size: 2.8rem;
+            filter: drop-shadow(0 4px 4px black);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #ecf9ff;
+            text-shadow: 0 2px 8px #005b8f;
+            letter-spacing: -0.5px;
+        }
+
+        .badge {
+            background: #183c4e;
+            border: 1px solid #57b5e0;
+            border-radius: 60px;
+            padding: 0.4rem 1.3rem;
+            color: #c2edff;
+            font-weight: 500;
+            font-size: 0.95rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 1.8rem 0;
+        }
+
+        @media (max-width: 700px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+
+        .panel {
+            background: rgba(8, 25, 35, 0.6);
+            border-radius: 32px;
+            border: 1px solid #347e9b70;
+            backdrop-filter: blur(6px);
+            padding: 1.6rem 1.5rem 1.8rem;
+            box-shadow: inset 0 0 20px #00000050, 0 12px 18px -8px black;
+        }
+
+        .panel h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #c1e3f5;
+            font-weight: 400;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px dashed #3e799b;
+            padding-bottom: 0.6rem;
+        }
+
+        textarea {
+            width: 100%;
+            background: #10222e;
+            border: 2px solid #2a627c;
+            border-radius: 24px;
+            padding: 1.2rem;
+            color: #f0f9ff;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            resize: vertical;
+            min-height: 200px;
+            outline: none;
+            transition: 0.15s;
+            box-shadow: inset 0 5px 10px #00000055;
+        }
+
+        textarea:focus {
+            border-color: #79c6f0;
+            box-shadow: 0 0 15px #2793cf66, inset 0 2px 8px black;
+        }
+
+        textarea::placeholder {
+            color: #779bb0;
+            font-style: italic;
+        }
+
+        .key-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0 18px;
+            flex-wrap: wrap;
+        }
+
+        .key-input-group {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            color: #b3d6ea;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            background: #0b1f2b;
+            border: 2px solid #2a607a;
+            border-radius: 40px;
+            padding: 0.9rem 1.3rem;
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+            outline: none;
+            transition: 0.1s;
+        }
+
+        input:focus, select:focus {
+            border-color: #68b9e6;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 20px 0 10px;
+        }
+
+        .btn {
+            background: #1e3f52;
+            border: none;
+            border-radius: 60px;
+            padding: 0.9rem 2rem;
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: #f0fdff;
+            border: 1px solid #469ac9;
+            box-shadow: 0 6px 0 #0d2a38;
+            cursor: pointer;
+            transition: 0.07s linear;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1 1 auto;
+            justify-content: center;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #0d2a38;
+        }
+
+        .btn-primary {
+            background: #1f6485;
+            border-color: #a2dcff;
+            box-shadow: 0 6px 0 #124257;
+        }
+
+        .copy-btn {
+            background: #244c5e;
+            border-color: #5fa3c9;
+            padding: 0.7rem 1.5rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            color: #97c9e7;
+            font-size: 0.95rem;
+            background: #08222e60;
+            border-radius: 30px;
+            padding: 0.6rem 1.2rem;
+            border: 1px solid #2e7797;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: #78aac7;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            border-top: 1px solid #28688560;
+            padding-top: 1.4rem;
+        }
+
+        .rotate-icon {
+            font-size: 2rem;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        /* strength indicator */
+        .strength {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 10px;
+            background: #51cb70;
+            margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="encryptor-card">
+        <div class="header">
+            <span class="lock-icon">🔐</span>
+            <h1>text encryptor</h1>
+            <span class="badge">AES-256-GCM · client-side</span>
+        </div>
+
+        <!-- main grid: input | output -->
+        <div class="grid-2">
+            <!-- left panel: plaintext -->
+            <div class="panel">
+                <h2><span>📝 plaintext</span> <span style="font-size: 0.9rem; font-weight: 300;">(input)</span></h2>
+                <textarea id="plaintext" placeholder="type your secret message here...">Hello, this is a secret.</textarea>
+                <div class="stats">
+                    <span id="plaintext-length">characters: 23</span>
+                    <span>🔤</span>
+                </div>
+            </div>
+
+            <!-- right panel: ciphertext -->
+            <div class="panel">
+                <h2><span>🔒 ciphertext</span> <span style="font-size: 0.9rem; font-weight: 300;">(base64 + iv)</span></h2>
+                <textarea id="ciphertext" placeholder="encrypted output will appear here..." readonly></textarea>
+                <div class="stats">
+                    <span id="ciphertext-length">length: 0</span>
+                    <button class="copy-btn" id="copyCipherBtn" style="padding: 0.2rem 1.2rem; font-size:0.85rem;">📋 copy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- key & options -->
+        <div class="key-area">
+            <div class="key-input-group" style="flex: 3;">
+                <label>🔑 secret key (password) <span class="strength" id="keyStrength"></span></label>
+                <input type="text" id="keyInput" value="my-secret-key-123" placeholder="encryption key">
+            </div>
+            <div style="min-width: 150px; flex: 1;">
+                <label>⚙️ mode</label>
+                <select id="modeSelect">
+                    <option value="encrypt" selected>🔒 encrypt →</option>
+                    <option value="decrypt">🔓 decrypt ←</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- action buttons -->
+        <div class="btn-group">
+            <button class="btn btn-primary" id="processBtn">▶ run encryption / decryption</button>
+            <button class="btn" id="swapBtn">🔄 swap sides</button>
+            <button class="btn" id="randomKeyBtn">🎲 random key</button>
+        </div>
+
+        <!-- extra utilities -->
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin: 0.8rem 0;">
+            <button class="btn copy-btn" id="copyPlainBtn" style="flex: 0 1 auto;">📋 copy plaintext</button>
+            <button class="btn copy-btn" id="clearBtn" style="flex: 0 1 auto;">🗑️ clear all</button>
+        </div>
+
+        <div class="footer-note">
+            ✦ authenticated encryption (AES-256-GCM) · initialization vector & auth tag included ✦
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- DOM elements ----------
+            const plaintextEl = document.getElementById('plaintext');
+            const ciphertextEl = document.getElementById('ciphertext');
+            const keyInput = document.getElementById('keyInput');
+            const modeSelect = document.getElementById('modeSelect');
+            const processBtn = document.getElementById('processBtn');
+            const swapBtn = document.getElementById('swapBtn');
+            const randomKeyBtn = document.getElementById('randomKeyBtn');
+            const copyPlainBtn = document.getElementById('copyPlainBtn');
+            const copyCipherBtn = document.getElementById('copyCipherBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const plaintextLength = document.getElementById('plaintext-length');
+            const ciphertextLength = document.getElementById('ciphertext-length');
+            const keyStrength = document.getElementById('keyStrength');
+
+            // ---------- helper: update length indicators ----------
+            function updateLengths() {
+                plaintextLength.innerText = `characters: ${plaintextEl.value.length}`;
+                ciphertextLength.innerText = `length: ${ciphertextEl.value.length}`;
+            }
+
+            // key strength visual (simple)
+            function updateKeyStrength() {
+                const key = keyInput.value;
+                const strength = key.length;
+                if (strength === 0) {
+                    keyStrength.style.background = '#d44';
+                } else if (strength < 8) {
+                    keyStrength.style.background = '#f09b43';
+                } else if (strength < 16) {
+                    keyStrength.style.background = '#f0d050';
+                } else {
+                    keyStrength.style.background = '#51cb70';
+                }
+            }
+
+            // ---------- core cryptographic functions (AES-GCM) ----------
+            // Convert password to key (using PBKDF2) - in a real app you'd want salt, but for demo we derive directly
+            async function getKeyFromPassword(password, salt) {
+                const enc = new TextEncoder();
+                const keyMaterial = await crypto.subtle.importKey(
+                    'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']
+                );
+                return crypto.subtle.deriveKey(
+                    {
+                        name: 'PBKDF2',
+                        salt: salt,
+                        iterations: 100000,
+                        hash: 'SHA-256'
+                    },
+                    keyMaterial,
+                    { name: 'AES-GCM', length: 256 },
+                    false,
+                    ['encrypt', 'decrypt']
+                );
+            }
+
+            // encrypt plaintext -> base64 string (iv + ciphertext + authTag)
+            async function encrypt(plaintext, password) {
+                const enc = new TextEncoder();
+                const salt = crypto.getRandomValues(new Uint8Array(16)); // random salt for key derivation
+                const iv = crypto.getRandomValues(new Uint8Array(12));   // 96-bit IV for GCM
+
+                const key = await getKeyFromPassword(password, salt);
+                const cipherBuffer = await crypto.subtle.encrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    key,
+                    enc.encode(plaintext)
+                );
+
+                // combine salt + iv + ciphertext (auth tag is appended by default)
+                const result = new Uint8Array(salt.length + iv.length + cipherBuffer.byteLength);
+                result.set(salt, 0);
+                result.set(iv, salt.length);
+                result.set(new Uint8Array(cipherBuffer), salt.length + iv.length);
+
+                return btoa(String.fromCharCode(...result));
+            }
+
+            // decrypt base64 string -> plaintext
+            async function decrypt(ciphertextBase64, password) {
+                try {
+                    const data = Uint8Array.from(atob(ciphertextBase64), c => c.charCodeAt(0));
+                    if (data.length < 28) throw new Error('data too short'); // salt(16)+iv(12) = 28
+
+                    const salt = data.slice(0, 16);
+                    const iv = data.slice(16, 28);
+                    const cipherBuffer = data.slice(28);
+
+                    const key = await getKeyFromPassword(password, salt);
+                    const decrypted = await crypto.subtle.decrypt(
+                        { name: 'AES-GCM', iv: iv },
+                        key,
+                        cipherBuffer
+                    );
+
+                    return new TextDecoder().decode(decrypted);
+                } catch (e) {
+                    throw new Error('decryption failed: wrong key or corrupted data');
+                }
+            }
+
+            // ---------- process action (depending on mode) ----------
+            async function processText() {
+                const mode = modeSelect.value;
+                const key = keyInput.value;
+                if (!key) {
+                    alert('please enter a key');
+                    return;
+                }
+
+                if (mode === 'encrypt') {
+                    const plain = plaintextEl.value;
+                    if (!plain) {
+                        ciphertextEl.value = '';
+                        alert('nothing to encrypt');
+                        return;
+                    }
+                    try {
+                        const encrypted = await encrypt(plain, key);
+                        ciphertextEl.value = encrypted;
+                    } catch (err) {
+                        alert('encryption error: ' + err.message);
+                    }
+                } else { // decrypt
+                    const cipher = ciphertextEl.value.trim();
+                    if (!cipher) {
+                        alert('no ciphertext to decrypt');
+                        return;
+                    }
+                    try {
+                        const decrypted = await decrypt(cipher, key);
+                        plaintextEl.value = decrypted;
+                    } catch (err) {
+                        alert('decryption error: ' + err.message);
+                    }
+                }
+                updateLengths();
+                updateKeyStrength();
+            }
+
+            // ---------- UI event binding ----------
+            processBtn.addEventListener('click', processText);
+
+            // swap: plain <-> cipher, and set mode accordingly (best guess)
+            swapBtn.addEventListener('click', () => {
+                const plain = plaintextEl.value;
+                const cipher = ciphertextEl.value;
+                plaintextEl.value = cipher;
+                ciphertextEl.value = plain;
+
+                // toggle mode sensibly: if after swap plain looks like base64? set mode to decrypt? but just toggle
+                modeSelect.value = modeSelect.value === 'encrypt' ? 'decrypt' : 'encrypt';
+                updateLengths();
+            });
+
+            randomKeyBtn.addEventListener('click', () => {
+                const randomBytes = new Uint8Array(16);
+                crypto.getRandomValues(randomBytes);
+                const key = btoa(String.fromCharCode(...randomBytes)).slice(0, 20); // readable
+                keyInput.value = key;  // example: random base64-ish
+                updateKeyStrength();
+            });
+
+            copyPlainBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(plaintextEl.value).then(() => {
+                    alert('plaintext copied');
+                }).catch(() => alert('copy failed'));
+            });
+
+            copyCipherBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(ciphertextEl.value).then(() => {
+                    alert('ciphertext copied');
+                }).catch(() => alert('copy failed'));
+            });
+
+            clearBtn.addEventListener('click', () => {
+                plaintextEl.value = '';
+                ciphertextEl.value = '';
+                updateLengths();
+            });
+
+            // live key strength update
+            keyInput.addEventListener('input', updateKeyStrength);
+
+            // plaintext change updates length
+            plaintextEl.addEventListener('input', updateLengths);
+            ciphertextEl.addEventListener('input', updateLengths);
+
+            // initial update
+            updateLengths();
+            updateKeyStrength();
+
+            // optional: pre-run demo to show encryption (on page load, encrypt default)
+            (async () => {
+                try {
+                    if (plaintextEl.value && keyInput.value) {
+                        const encrypted = await encrypt(plaintextEl.value, keyInput.value);
+                        ciphertextEl.value = encrypted;
+                        updateLengths();
+                    }
+                } catch (e) {
+                    // ignore, just demo
+                }
+            })();
+
+        })();
+    </script>
+</body>
+</html>

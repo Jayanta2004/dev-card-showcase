@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🪙 coin flip · 3D toss with sound & history</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #201e1c, #2a2a28);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      padding: 1.5rem;
+    }
+
+    .coin-app {
+      max-width: 700px;
+      width: 100%;
+      background: rgba(30, 35, 38, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(220, 185, 120, 0.3);
+      border-radius: 3.5rem;
+      padding: 2.8rem 2.2rem;
+      box-shadow: 0 35px 60px -15px #000000dd, inset 0 1px 4px #dbb47a60;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #f5d7b0, #f5bc7a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    h1 span {
+      background: #3b4a4a;
+      font-size: 1.1rem;
+      font-weight: 500;
+      padding: 0.2rem 1.6rem;
+      border-radius: 60px;
+      color: #ffdbb6;
+      -webkit-text-fill-color: #ffdbb6;
+      border: 1px solid #b78d53;
+    }
+
+    .sub {
+      color: #b6bb9d;
+      margin-bottom: 2.5rem;
+      font-size: 1.1rem;
+      border-left: 4px solid #f0b87b;
+      padding-left: 1.5rem;
+    }
+
+    /* coin display */
+    .coin-stage {
+      background: #1e3338;
+      border-radius: 4rem;
+      padding: 2rem 2rem 2.5rem;
+      border: 1px solid #ae8d58;
+      box-shadow: inset 0 4px 12px #0c1a1f, 0 20px 30px -10px black;
+      margin-bottom: 2.5rem;
+    }
+
+    .coin-wrapper {
+      display: flex;
+      justify-content: center;
+      perspective: 800px;
+      margin: 0.5rem 0 2rem;
+    }
+
+    .coin {
+      width: 200px;
+      height: 200px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.01s linear; /* will be overridden by js animation */
+      cursor: pointer;
+    }
+
+    .coin-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.2rem;
+      font-weight: 700;
+      backface-visibility: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 4px solid #f7d99e;
+      text-shadow: 2px 2px 0px #00000050;
+    }
+
+    .heads {
+      background: radial-gradient(circle at 30% 30%, #f7eac6, #cfb27c);
+      color: #422a13;
+      transform: rotateY(0deg);
+    }
+    .tails {
+      background: radial-gradient(circle at 30% 30%, #b9b9b6, #6e6e6c);
+      color: #1d2a2a;
+      transform: rotateY(180deg);
+    }
+
+    .result-badge {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 600;
+      background: #1d3d44;
+      padding: 0.6rem 1.8rem;
+      border-radius: 80px;
+      display: inline-block;
+      margin: 0 auto 1rem;
+      color: #ffe2b0;
+      border: 2px solid #e9b56c;
+      letter-spacing: 1px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.2rem;
+      margin-bottom: 2.2rem;
+    }
+
+    .primary-btn {
+      background: #e6aa5f;
+      border: none;
+      padding: 1rem 3rem;
+      border-radius: 60px;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #1f3030;
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      transition: 0.15s;
+      box-shadow: 0 12px 20px -10px black;
+      border: 1px solid #ffd7a0;
+    }
+    .primary-btn:hover {
+      background: #f8bc6a;
+      transform: scale(1.04);
+    }
+    .primary-btn:disabled {
+      opacity: 0.45;
+      transform: none;
+      pointer-events: none;
+    }
+
+    .secondary-btn {
+      background: #33575b;
+      border: 1px solid #cb9f60;
+      padding: 0.8rem 2rem;
+      border-radius: 60px;
+      font-size: 1.2rem;
+      color: #fad6a0;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .secondary-btn:hover {
+      background: #447074;
+    }
+
+    /* history panel */
+    .history-panel {
+      background: #17323b;
+      border-radius: 2.5rem;
+      padding: 1.6rem 1.8rem;
+      border: 1px solid #b28f51;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      color: #f0cfaa;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .badge {
+      background: #2d5353;
+      padding: 0.3rem 1.3rem;
+      border-radius: 60px;
+      color: #f3cca3;
+    }
+    .history-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      min-height: 3rem;
+      align-items: center;
+    }
+    .history-item {
+      background: #275159;
+      border: 1px solid #cea56a;
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #ffdbb5;
+      box-shadow: 0 4px 6px #00000040;
+    }
+    .history-item.heads-item { background: #b08953; color: #2b1f0f; border-color: #fad38f; }
+    .history-item.tails-item { background: #5d7074; color: #f5e0be; }
+
+    .clear-history {
+      background: transparent;
+      border: 1px solid #b7945a;
+      color: #ecc18d;
+      padding: 0.4rem 1.5rem;
+      border-radius: 40px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="coin-app">
+    <h1>🪙 coin toss <span>3D + SFX</span></h1>
+    <div class="sub">tap coin or button · realistic flip with sound</div>
+
+    <div class="coin-stage">
+      <div style="text-align: center;" id="resultLabel" class="result-badge">HEADS</div>
+
+      <div class="coin-wrapper">
+        <div class="coin" id="coin3D">
+          <div class="coin-face heads">🪙 H</div>
+          <div class="coin-face tails">🌙 T</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="primary-btn" id="tossBtn"><span>🎲</span> TOSS COIN</button>
+        <button class="secondary-btn" id="resetHistoryBtn">reset history</button>
+      </div>
+    </div>
+
+    <!-- history log -->
+    <div class="history-panel">
+      <div class="history-header">
+        <span>📋 flip history</span>
+        <span class="badge" id="historyCount">0</span>
+        <button class="clear-history" id="clearHistoryBtn">🗑️ clear</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <!-- dynamic items -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // --- DOM elements
+      const coin = document.getElementById('coin3D');
+      const tossBtn = document.getElementById('tossBtn');
+      const resetHistoryBtn = document.getElementById('resetHistoryBtn');
+      const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+      const resultLabel = document.getElementById('resultLabel');
+      const historyList = document.getElementById('historyList');
+      const historyCountSpan = document.getElementById('historyCount');
+
+      // --- state
+      let currentSide = 'heads';        // 'heads' or 'tails' (0deg or 180deg)
+      let history = [];                 // array of 'heads'/'tails'
+      let isFlipping = false;
+      let flipSound = null;             // Web Audio oscillator
+
+      // --- audio context (initialized on first user interaction)
+      let audioCtx = null;
+
+      function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      // play click / thud sound (short, metallic)
+      function playCoinSound() {
+        if (!audioCtx) {
+          initAudio();
+          if (!audioCtx) return;
+        }
+        // resume if suspended (autoplay policy)
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume().then(() => playCoinSound()).catch(() => {});
+          return;
+        }
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 380; // base metallic "ding"
+        gainNode.gain.setValueAtTime(0.25, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.connect(gainNode).connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.16);
+
+        // add a second short noise for flip "shuffle"
+        const noiseCtx = audioCtx; // use same
+        const osc2 = noiseCtx.createOscillator();
+        const gain2 = noiseCtx.createGain();
+        osc2.type = 'triangle';
+        osc2.frequency.value = 720;
+        gain2.gain.setValueAtTime(0.08, now);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc2.connect(gain2).connect(noiseCtx.destination);
+        osc2.start(now);
+        osc2.stop(now + 0.12);
+      }
+
+      // play landing "thud"
+      function playLandSound() {
+        if (!audioCtx) {
+          initAudio();
+          if (!audioCtx) return;
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume().then(() => playLandSound()).catch(() => {});
+          return;
+        }
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 220;
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      }
+
+      // random between min and max
+      function randomRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      // update result label & coin rotation (without transition)
+      function setSide(side, instant = false) {
+        currentSide = side;
+        const rotation = (side === 'heads') ? 0 : 180;
+        coin.style.transition = instant ? 'none' : 'transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.2)';
+        coin.style.transform = `rotateY(${rotation}deg)`;
+        resultLabel.innerText = side === 'heads' ? 'HEADS' : 'TAILS';
+      }
+
+      // add history item
+      function addHistory(side) {
+        history.push(side);
+        if (history.length > 12) history.shift(); // keep last 12
+        renderHistory();
+      }
+
+      function renderHistory() {
+        let html = '';
+        history.forEach((item, idx) => {
+          const cls = item === 'heads' ? 'heads-item' : 'tails-item';
+          html += `<span class="history-item ${cls}">${item === 'heads' ? '🪙 H' : '🌙 T'}</span>`;
+        });
+        historyList.innerHTML = html || '<span style="color:#9aa79a;">no tosses yet</span>';
+        historyCountSpan.innerText = history.length;
+      }
+
+      // clear history
+      function clearHistory() {
+        history = [];
+        renderHistory();
+      }
+
+      // core flip animation
+      function performFlip() {
+        if (isFlipping) return;
+        isFlipping = true;
+        tossBtn.disabled = true;
+
+        // enable audio on user gesture (button)
+        initAudio();
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+
+        // play flip whoosh sound (multiple fast pips)
+        for (let i = 0; i < 4; i++) {
+          setTimeout(() => { playCoinSound(); }, i * 45);
+        }
+
+        // random number of half rotations (at least 8, up to 22)
+        const rotations = 8 + Math.floor(Math.random() * 10); // total half-turns (each 180°)
+        // we want final side random: heads (even number of 180° flips) or tails (odd)
+        const finalParity = Math.random() > 0.5 ? 0 : 1; // 0 = heads (even), 1 = tails (odd)
+        // adjust rotations to match parity: if (rotations %2 != finalParity) add one
+        let totalHalfTurns = rotations;
+        if (totalHalfTurns % 2 !== finalParity) totalHalfTurns++; // ensure parity
+
+        const finalSide = (totalHalfTurns % 2 === 0) ? 'heads' : 'tails';
+        const totalDeg = totalHalfTurns * 180; // total rotation in degrees
+
+        // decide direction: positive or negative for more realism (mix)
+        const direction = Math.random() > 0.5 ? 1 : -1;
+        const finalAngle = direction * totalDeg;
+
+        // animate using keyframes? simpler: set transform step by step with setTimeout
+        // we'll use a rough simulation with incremental steps, but better: use transition and set final rotation.
+        // we set a very long transition then update midway? more reliable: set transition 0.8s, start rotation, then after 0.8s set side.
+        coin.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        coin.style.transform = `rotateY(${finalAngle}deg)`;
+
+        // play landing sound near end
+        setTimeout(() => {
+          playLandSound();
+        }, 700);
+
+        // after animation, set correct face (without transition jump)
+        setTimeout(() => {
+          // set final side with instant rotation (reset to 0 or 180)
+          coin.style.transition = 'none';
+          const resetDeg = finalSide === 'heads' ? 0 : 180;
+          coin.style.transform = `rotateY(${resetDeg}deg)`;
+          currentSide = finalSide;
+          resultLabel.innerText = finalSide === 'heads' ? 'HEADS' : 'TAILS';
+
+          // add to history
+          addHistory(finalSide);
+
+          isFlipping = false;
+          tossBtn.disabled = false;
+        }, 820); // slightly after transition
+      }
+
+      // toss button
+      tossBtn.addEventListener('click', () => {
+        performFlip();
+      });
+
+      // click on coin also toss
+      coin.addEventListener('click', (e) => {
+        e.stopPropagation();
+        performFlip();
+      });
+
+      // reset/clear history
+      function resetAllHistory() {
+        clearHistory();
+      }
+      resetHistoryBtn.addEventListener('click', resetAllHistory);
+      clearHistoryBtn.addEventListener('click', resetAllHistory);
+
+      // initialise: set heads, empty history
+      setSide('heads', true);
+      renderHistory();
+
+      // ensure audio resumes on first click (if needed, but we already call in flip)
+      // also pre-init audio context on first hover/touch? we'll init inside flip.
+    })();
+  </script>
+</body>
+</html>
