@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vitamin K Intake Tracker - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/vitamin-k-intake-tracker.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="leaf"></i> Vitamin K Intake Tracker</h1>
+            <p>Monitor your Vitamin K consumption through food logging with progress tracking and bone health insights.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Food Logger -->
+            <section class="tracker-section food-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Vitamin K Food</h2>
+                <form id="vitaminKForm" class="vitamin-k-form">
+                    <div class="form-group">
+                        <label for="foodDate">Date</label>
+                        <input type="date" id="foodDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="foodName">Food Item</label>
+                        <select id="foodName" required>
+                            <option value="">Select food</option>
+                            <option value="kale">Kale (1 cup cooked)</option>
+                            <option value="spinach">Spinach (1 cup cooked)</option>
+                            <option value="broccoli">Broccoli (1 cup cooked)</option>
+                            <option value="brussels_sprouts">Brussels Sprouts (1 cup cooked)</option>
+                            <option value="parsley">Parsley (1/4 cup fresh)</option>
+                            <option value="green_beans">Green Beans (1 cup cooked)</option>
+                            <option value="asparagus">Asparagus (1 cup cooked)</option>
+                            <option value="lettuce">Lettuce (1 cup raw)</option>
+                            <option value="cabbage">Cabbage (1 cup cooked)</option>
+                            <option value="prunes">Prunes (5 medium)</option>
+                            <option value="kiwi">Kiwi (1 medium)</option>
+                            <option value="avocado">Avocado (1/2 medium)</option>
+                            <option value="blueberries">Blueberries (1 cup)</option>
+                            <option value="pomegranate">Pomegranate (1/2 medium)</option>
+                            <option value="custom">Custom Amount</option>
+                        </select>
+                    </div>
+                    <div class="form-group custom-amount" id="customAmountGroup" style="display: none;">
+                        <label for="customVitaminK">Vitamin K Amount (mcg)</label>
+                        <input type="number" id="customVitaminK" min="0" step="0.1" placeholder="Enter mcg amount">
+                    </div>
+                    <div class="form-group">
+                        <label for="servingSize">Serving Size</label>
+                        <input type="number" id="servingSize" min="0.1" step="0.1" value="1" required>
+                        <span class="serving-unit" id="servingUnit">serving</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="mealType">Meal Type</label>
+                        <select id="mealType">
+                            <option value="breakfast">Breakfast</option>
+                            <option value="lunch">Lunch</option>
+                            <option value="dinner">Dinner</option>
+                            <option value="snack">Snack</option>
+                            <option value="supplement">Supplement</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Log Food
+                    </button>
+                </form>
+            </section>
+
+            <!-- Intake Dashboard -->
+            <section class="tracker-section intake-dashboard">
+                <h2><i data-lucide="bar-chart-3"></i> Vitamin K Intake Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="dailyIntake">--</div>
+                        <div class="metric-label">Today's Intake</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="weeklyAverage">--</div>
+                        <div class="metric-label">7-Day Average</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="totalLogged">0</div>
+                        <div class="metric-label">Total Entries</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="intakeScore">--</div>
+                        <div class="metric-label">Intake Score</div>
+                    </div>
+                </div>
+                <div class="progress-section">
+                    <h3>Daily Progress (RDA: 90-120 mcg)</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="dailyProgressFill"></div>
+                    </div>
+                    <div class="progress-labels">
+                        <span>0 mcg</span>
+                        <span id="currentProgress">0 mcg</span>
+                        <span>120 mcg</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Intake Trends -->
+            <section class="tracker-section intake-trends">
+                <h2><i data-lucide="trending-up"></i> Intake Trends</h2>
+                <div class="chart-controls">
+                    <select id="timeRange">
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="all">All Time</option>
+                    </select>
+                    <button id="refreshChart" class="btn-secondary">
+                        <i data-lucide="refresh-cw"></i> Refresh
+                    </button>
+                </div>
+                <div class="trends-chart">
+                    <canvas id="intakeChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Food History -->
+            <section class="tracker-section food-history">
+                <h2><i data-lucide="calendar"></i> Food History</h2>
+                <div class="history-controls">
+                    <button id="viewRecent" class="btn-secondary active">Recent</button>
+                    <button id="viewAll" class="btn-secondary">All Time</button>
+                </div>
+                <div class="history-list" id="foodHistory">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+
+            <!-- Vitamin K Insights -->
+            <section class="tracker-section vitamin-k-insights">
+                <h2><i data-lucide="lightbulb"></i> Vitamin K Insights</h2>
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <h3>Intake Patterns</h3>
+                        <div class="insight-content" id="intakePatterns">
+                            <p>Analysis of your Vitamin K consumption patterns.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Food Sources</h3>
+                        <div class="insight-content" id="foodSources">
+                            <p>Your primary sources of Vitamin K.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Bone Health Status</h3>
+                        <div class="insight-content" id="boneHealthStatus">
+                            <p>Assessment based on your intake levels.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tips-list" id="tips">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Vitamin K Information -->
+        <section class="vitamin-k-info">
+            <h2><i data-lucide="info"></i> About Vitamin K</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>Functions</h3>
+                    <ul>
+                        <li>Blood clotting</li>
+                        <li>Bone metabolism</li>
+                        <li>Cardiovascular health</li>
+                        <li>Calcium regulation</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h3>Recommended Daily Allowance</h3>
+                    <ul>
+                        <li>Adults: 90-120 mcg/day</li>
+                        <li>Pregnant women: 90 mcg/day</li>
+                        <li>Infants: 2-2.5 mcg/day</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h3>Rich Food Sources</h3>
+                    <ul>
+                        <li>Leafy greens (kale, spinach)</li>
+                        <li>Cruciferous vegetables</li>
+                        <li>Fermented foods</li>
+                        <li>Some fruits (kiwi, avocado)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="../js/vitamin-k-intake-tracker.js"></script>
+    <script>
+        // Load navbar
+        fetch('../navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+                // Re-initialize Lucide icons after navbar is loaded
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            })
+            .catch(error => console.error('Error loading navbar:', error));
+    </script>
+</body>
+</html>
