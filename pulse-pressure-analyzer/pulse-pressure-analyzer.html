@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse Pressure Analyzer - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="pulse-pressure-analyzer.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="heart"></i> Pulse Pressure Analyzer</h1>
+            <p>Monitor cardiovascular health by tracking pulse pressure trends (SBP-DBP) and receive alerts for optimal heart health management.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Blood Pressure Input Section -->
+            <section class="tracker-section input-section">
+                <h2><i data-lucide="activity"></i> Blood Pressure Input</h2>
+                <form id="bpForm">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="systolic">Systolic (SBP)</label>
+                            <input type="number" id="systolic" min="80" max="250" placeholder="120" required>
+                            <span class="unit">mmHg</span>
+                        </div>
+                        <div class="input-group">
+                            <label for="diastolic">Diastolic (DBP)</label>
+                            <input type="number" id="diastolic" min="40" max="150" placeholder="80" required>
+                            <span class="unit">mmHg</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="measurementTime">Measurement Time</label>
+                        <input type="datetime-local" id="measurementTime" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="position">Body Position</label>
+                        <select id="position" required>
+                            <option value="">Select position...</option>
+                            <option value="sitting">Sitting</option>
+                            <option value="standing">Standing</option>
+                            <option value="lying">Lying Down</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="arm">Arm Used</label>
+                        <select id="arm" required>
+                            <option value="">Select arm...</option>
+                            <option value="left">Left Arm</option>
+                            <option value="right">Right Arm</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" placeholder="Any symptoms, medications, stress levels, or other relevant information..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Calculate Pulse Pressure</button>
+                </form>
+            </section>
+
+            <!-- Pulse Pressure Results -->
+            <section class="tracker-section results-section">
+                <h2><i data-lucide="zap"></i> Pulse Pressure Analysis</h2>
+                <div id="resultsDisplay" class="results-display">
+                    <p>Enter blood pressure values to calculate pulse pressure.</p>
+                </div>
+                <div id="resultsContent" class="results-content" style="display: none;">
+                    <div class="pulse-pressure-card">
+                        <div class="pp-value">
+                            <span id="pulsePressure">0</span>
+                            <span class="unit">mmHg</span>
+                        </div>
+                        <div class="pp-label">Pulse Pressure</div>
+                        <div class="pp-category" id="ppCategory">Normal</div>
+                    </div>
+                    <div class="health-insights">
+                        <h3>Health Insights</h3>
+                        <div class="insight-item">
+                            <span class="label">Cardiovascular Risk:</span>
+                            <span id="cvRisk">Low</span>
+                        </div>
+                        <div class="insight-item">
+                            <span class="label">Arterial Stiffness:</span>
+                            <span id="arterialStiffness">Normal</span>
+                        </div>
+                        <div class="insight-item">
+                            <span class="label">Age-Adjusted Range:</span>
+                            <span id="ageRange">40-60 mmHg</span>
+                        </div>
+                    </div>
+                    <div class="alerts-section" id="alertsSection" style="display: none;">
+                        <h3>⚠️ Health Alerts</h3>
+                        <div id="alertsList"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trend Analysis -->
+            <section class="tracker-section trends-section">
+                <h2><i data-lucide="trending-up"></i> Pulse Pressure Trends</h2>
+                <div class="chart-controls">
+                    <button id="viewWeek" class="chart-btn active">7 Days</button>
+                    <button id="viewMonth" class="chart-btn">30 Days</button>
+                    <button id="viewQuarter" class="chart-btn">90 Days</button>
+                </div>
+                <canvas id="trendsChart"></canvas>
+                <div class="trend-stats">
+                    <div class="stat-item">
+                        <span class="label">Average PP:</span>
+                        <span id="avgPP">-- mmHg</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">PP Range:</span>
+                        <span id="ppRange">-- mmHg</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Trend:</span>
+                        <span id="ppTrend">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Consistency:</span>
+                        <span id="ppConsistency">--%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Health Recommendations -->
+            <section class="tracker-section recommendations-section">
+                <h2><i data-lucide="shield"></i> Health Recommendations</h2>
+                <div id="recommendations" class="recommendations">
+                    <div class="recommendation-card">
+                        <h4>Lifestyle Factors</h4>
+                        <p id="lifestyleAdvice">Track more readings to get personalized recommendations.</p>
+                    </div>
+                    <div class="recommendation-card">
+                        <h4>Monitoring Frequency</h4>
+                        <p id="monitoringAdvice">Regular monitoring recommended for cardiovascular health.</p>
+                    </div>
+                    <div class="recommendation-card">
+                        <h4>When to Seek Medical Advice</h4>
+                        <p id="medicalAdvice">Consult healthcare provider for persistent abnormal readings.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Session Statistics -->
+            <section class="tracker-section stats-section">
+                <h2><i data-lucide="bar-chart-3"></i> Session Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="label">Total Readings:</span>
+                        <span id="totalReadings">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">This Week:</span>
+                        <span id="weeklyReadings">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Normal Range:</span>
+                        <span id="normalRange">--%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">High Risk:</span>
+                        <span id="highRisk">--%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BP History -->
+            <section class="tracker-section history-section">
+                <h2><i data-lucide="history"></i> Blood Pressure History</h2>
+                <div class="table-container">
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>SBP/DBP</th>
+                                <th>Pulse Pressure</th>
+                                <th>Category</th>
+                                <th>Position</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <tr>
+                                <td colspan="6">No blood pressure readings logged yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Include footer -->
+    <div id="footer"></div>
+
+    <script src="../js/include.js"></script>
+    <script src="pulse-pressure-analyzer.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
