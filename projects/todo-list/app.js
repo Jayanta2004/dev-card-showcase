@@ -1,190 +1,144 @@
-const addBtn = document.querySelector("#add-btn");
-      const newTaskInput = document.querySelector("#wrapper input");
-      const tasksContainer = document.querySelector("#tasks");
-      const error = document.getElementById("error");
-      const countValue = document.querySelector(".count-value");
-      let taskCount = 0;
+let tasks = JSON.parse(localStorage.getItem("dashboardTasks")) || [];
+const addBtn = document.getElementById("addTask");
+const taskText = document.getElementById("taskText");
+const taskDate = document.getElementById("taskDate");
+const voiceBtn = document.getElementById("voiceBtn");
 
-      // Drag and Drop variables
-      let draggedElement = null;
-      let placeholder = null;
+function saveTasks(){
+  localStorage.setItem("dashboardTasks",JSON.stringify(tasks));
+}
 
-      const displayCount = (taskCount) => {
-        countValue.innerText = taskCount;
-      };
+function renderTasks(){
+  document.querySelectorAll(".task-list").forEach(list=>list.innerHTML="");
 
-      // Create placeholder element for drag feedback
-      const createPlaceholder = () => {
-        const placeholder = document.createElement('div');
-        placeholder.className = 'placeholder';
-        placeholder.innerHTML = 'Drop task here';
-        return placeholder;
-      };
+  tasks.forEach((task,index)=>{
+    const card=document.createElement("div");
+    card.className="task-card";
+    card.draggable=true;
+    card.innerHTML=`
+      ${task.text}
+      <small>${task.date || "No Date"}</small>
+    `;
 
-      // Drag and Drop event handlers
-      const handleDragStart = (e) => {
-        draggedElement = e.target;
-        e.target.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/html', e.target.outerHTML);
+    card.ondragstart=e=>{
+      e.dataTransfer.setData("index",index);
+    };
 
-        // Create and insert placeholder
-        placeholder = createPlaceholder();
-        e.target.parentNode.insertBefore(placeholder, e.target.nextSibling);
-      };
+    document.querySelector(`[data-status="${task.status}"] .task-list`)
+      .appendChild(card);
+  });
 
-      const handleDragEnd = (e) => {
-        e.target.classList.remove('dragging');
+  renderCalendar();
+}
 
-        // Remove placeholder if it exists
-        if (placeholder && placeholder.parentNode) {
-          placeholder.parentNode.removeChild(placeholder);
-        }
+addBtn.onclick=()=>{
+  if(taskText.value.trim()==="") return;
 
-        draggedElement = null;
-        placeholder = null;
-      };
+  tasks.push({
+    text:taskText.value,
+    date:taskDate.value,
+    status:"todo"
+  });
 
-      const handleDragOver = (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
+  taskText.value="";
+  taskDate.value="";
+  saveTasks();
+  renderTasks();
+  notify("New task added!");
+};
 
-        const target = e.target.closest('.task');
-        if (!target || target === draggedElement) return;
+document.querySelectorAll(".column").forEach(column=>{
+  column.ondragover=e=>e.preventDefault();
 
-        const rect = target.getBoundingClientRect();
-        const midpoint = rect.top + rect.height / 2;
+  column.ondrop=e=>{
+    const index=e.dataTransfer.getData("index");
+    tasks[index].status=column.dataset.status;
+    saveTasks();
+    renderTasks();
+  };
+});
 
-        if (placeholder && placeholder.parentNode) {
-          placeholder.parentNode.removeChild(placeholder);
-        }
+/* CALENDAR */
+function renderCalendar(){
+  const calendar=document.getElementById("calendar");
+  calendar.innerHTML="";
+  const days=30;
 
-        if (e.clientY < midpoint) {
-          // Insert before target
-          target.parentNode.insertBefore(placeholder, target);
-        } else {
-          // Insert after target
-          target.parentNode.insertBefore(placeholder, target.nextSibling);
-        }
-      };
+  for(let i=1;i<=days;i++){
+    const day=document.createElement("div");
+    day.className="day";
+    day.innerText=i;
 
-      const handleDragEnter = (e) => {
-        e.preventDefault();
-        const target = e.target.closest('.task');
-        if (target && target !== draggedElement) {
-          target.classList.add('drag-over');
-        }
-      };
+    const hasTask=tasks.some(t=>{
+      if(!t.date) return false;
+      return new Date(t.date).getDate()===i;
+    });
 
-      const handleDragLeave = (e) => {
-        const target = e.target.closest('.task');
-        if (target) {
-          target.classList.remove('drag-over');
-        }
-      };
+    if(hasTask) day.classList.add("has-task");
+    calendar.appendChild(day);
+  }
+}
 
-      const handleDrop = (e) => {
-        e.preventDefault();
+/* POMODORO */
+let time=1500;
+let interval=null;
+const timerDisplay=document.getElementById("timer");
 
-        const target = e.target.closest('.task');
-        if (!target || target === draggedElement) return;
+function updateTimer(){
+  const minutes=Math.floor(time/60);
+  const seconds=time%60;
+  timerDisplay.innerText=
+    `${minutes.toString().padStart(2,"0")}:${seconds.toString().padStart(2,"0")}`;
+}
 
-        // Remove drag-over class
-        target.classList.remove('drag-over');
+document.getElementById("startPomodoro").onclick=()=>{
+  if(interval) return;
 
-        // Remove placeholder and insert dragged element
-        if (placeholder && placeholder.parentNode) {
-          placeholder.parentNode.replaceChild(draggedElement, placeholder);
-        }
+  interval=setInterval(()=>{
+    time--;
+    updateTimer();
+    if(time<=0){
+      clearInterval(interval);
+      interval=null;
+      notify("Pomodoro Completed!");
+    }
+  },1000);
+};
 
-        // Update task count display (no change in count, just reordering)
-        displayCount(taskCount);
-      };
+document.getElementById("resetPomodoro").onclick=()=>{
+  clearInterval(interval);
+  interval=null;
+  time=1500;
+  updateTimer();
+};
 
-      // Function to make tasks draggable
-      const makeTasksDraggable = () => {
-        const tasks = document.querySelectorAll('.task');
-        tasks.forEach(task => {
-          if (!task.hasAttribute('draggable')) {
-            task.setAttribute('draggable', 'true');
-            task.addEventListener('dragstart', handleDragStart);
-            task.addEventListener('dragend', handleDragEnd);
-            task.addEventListener('dragover', handleDragOver);
-            task.addEventListener('dragenter', handleDragEnter);
-            task.addEventListener('dragleave', handleDragLeave);
-            task.addEventListener('drop', handleDrop);
-          }
-        });
-      };
+updateTimer();
 
-      const addTask = () => {
-        const taskName = newTaskInput.value.trim();
-        error.style.display = "none";
+/* NOTIFICATIONS */
+function notify(message){
+  if(Notification.permission==="granted"){
+    new Notification(message);
+  }else if(Notification.permission!=="denied"){
+    Notification.requestPermission();
+  }
+}
 
-        if (!taskName) {
-          setTimeout(() => {
-            error.style.display = "block";
-          }, 200);
-          return;
-        }
+/* VOICE ADD */
+voiceBtn.onclick=()=>{
+  const SpeechRecognition=
+    window.SpeechRecognition||window.webkitSpeechRecognition;
 
-        const task = `
-<div class="task">
-<input type="checkbox" class="task-check">
-<span class="taskname">${taskName}</span>
-<button class="edit"><i class="fas fa-edit"></i></button>
-<button class="delete"><i class="far fa-trash-alt"></i></button>
-</div>
-`;
+  if(!SpeechRecognition){
+    alert("Voice not supported in this browser");
+    return;
+  }
 
-        tasksContainer.insertAdjacentHTML("beforeend", task);
+  const recognition=new SpeechRecognition();
+  recognition.start();
 
-        const deleteButtons = document.querySelectorAll(".delete");
-        deleteButtons.forEach((button) => {
-          button.onclick = () => {
-            button.parentNode.remove();
-            taskCount -= 1;
-            displayCount(taskCount);
-          };
-        });
-        const editButtons = document.querySelectorAll(".edit");
-        editButtons.forEach((editBtn) => {
-          editBtn.onclick = (e) => {
-            let targetElement = e.target;
-            if (!(e.target.className == "edit")) {
-              targetElement = e.target.parentElement;
-            }
-            newTaskInput.value =
-              targetElement.previousElementSibling?.innerText;
-            targetElement.parentNode.remove();
-            taskCount -= 1;
-            displayCount(taskCount);
-          };
-        });
-        const tasksCheck = document.querySelectorAll(".task-check");
-        tasksCheck.forEach((checkBox) => {
-          checkBox.onchange = () => {
-            checkBox.nextElementSibling.classList.toggle("completed");
-            if (checkBox.checked) {
-              taskCount -= 1;
-              console.log("checked");
-            } else {
-              taskCount += 1;
-            }
-            displayCount(taskCount);
-          };
-        });
-        taskCount += 1;
-        displayCount(taskCount);
-        newTaskInput.value = "";
+  recognition.onresult=function(event){
+    taskText.value=event.results[0][0].transcript;
+  };
+};
 
-        // Make the new task draggable
-        makeTasksDraggable();
-      };
-
-      addBtn.addEventListener("click", addTask);
-      window.onload = () => {
-        taskCount = 0;
-        displayCount(taskCount);
-        newTaskInput.value = "";
-      };
+renderTasks();
