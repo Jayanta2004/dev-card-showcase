@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Gradient Pattern Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold gradient-text mb-3">🌈 Gradient Pattern Lab</h1>
+            <p class="text-gray-300 text-lg">Create stunning gradient patterns with multiple layers & effects</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Preview Section -->
+            <div class="space-y-6">
+                <div class="glass-effect rounded-2xl p-6">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <i class="fas fa-palette"></i> Live Preview
+                    </h2>
+                    <div id="gradientPreview" class="gradient-preview rounded-xl h-96 w-full relative overflow-hidden">
+                        <!-- Pattern overlay -->
+                        <div id="patternOverlay" class="absolute inset-0 pattern-layer"></div>
+                        
+                        <!-- Gradient info display -->
+                        <div class="absolute bottom-4 left-4 glass-effect rounded-lg p-3">
+                            <div id="cssOutput" class="text-sm font-mono"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="toggleAnimation()" id="animateBtn" class="bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2">
+                            <i class="fas fa-play"></i> Animate Gradient
+                        </button>
+                        <button onclick="randomizeAll()" class="bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2">
+                            <i class="fas fa-random"></i> Randomize All
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Export Section -->
+                <div class="glass-effect rounded-2xl p-6">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <i class="fas fa-download"></i> Export
+                    </h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button onclick="exportAsCSS()" class="bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2">
+                            <i class="fas fa-code"></i> CSS Code
+                        </button>
+                        <button onclick="exportAsSVG()" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2">
+                            <i class="fas fa-vector-square"></i> SVG
+                        </button>
+                        <button onclick="shareGradient()" class="bg-pink-600 hover:bg-pink-700 px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2">
+                            <i class="fas fa-share-alt"></i> Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="space-y-6">
+                <!-- Gradient Type -->
+                <div class="glass-effect rounded-2xl p-6">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <i class="fas fa-sliders-h"></i> Gradient Settings
+                    </h2>
+                    
+                    <div class="mb-6">
+                        <label class="block mb-2 font-medium">Gradient Type</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button onclick="setGradientType('linear')" class="bg-gray-800 hover:bg-gray-700 py-3 rounded-lg gradient-type-btn active">Linear</button>
+                            <button onclick="setGradientType('radial')" class="bg-gray-800 hover:bg-gray-700 py-3 rounded-lg gradient-type-btn">Radial</button>
+                            <button onclick="setGradientType('conic')" class="bg-gray-800 hover:bg-gray-700 py-3 rounded-lg gradient-type-btn">Conic</button>
+                            <button onclick="setGradientType('mesh')" class="bg-gray-800 hover:bg-gray-700 py-3 rounded-lg gradient-type-btn">Mesh</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Angle/Position Controls -->
+                    <div class="mb-6">
+                        <div class="flex justify-between mb-2">
+                            <label class="font-medium" id="angleLabel">Angle: <span id="angleValue">45°</span></label>
+                        </div>
+                        <input type="range" min="0" max="360" value="45" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" id="gradientAngle" oninput="updateGradient()">
+                    </div>
+                </div>
+
+                <!-- Color Stops -->
+                <div class="glass-effect rounded-2xl p-6">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <i class="fas fa-fill-drip"></i> Color Stops
+                    </h2>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-medium">Colors</span>
+                            <button onclick="addColorStop()" class="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded">
+                                <i class="fas fa-plus mr-1"></i> Add Color
+                            </button>
+                        </div>
+                        <div id="colorStopsContainer" class="space-y-4">
+                            <!-- Color stops will be added here dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pattern Overlay -->
+                <div class="glass-effect rounded-2xl p-6">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <i class="fas fa-layer-group"></i> Pattern Overlay
+                    </h2>
+                    
+                    <div class="mb-4">
+                        <label class="block mb-2 font-medium">Pattern Type</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setPatternType('dots')" class="bg-gray-800 hover:bg-gray-700 py-2 rounded pattern-type-btn active">
+                                Dots
+                            </button>
+                            <button onclick="setPatternType('lines')" class="bg-gray-800 hover:bg-gray-700 py-2 rounded pattern-type-btn">
+                                Lines
+                            </button>
+                            <button onclick="setPatternType('grid')" class="bg-gray-800 hover:bg-gray-700 py-2 rounded pattern-type-btn">
+                                Grid
+                            </button>
+                            <button onclick="setPatternType('hex')" class="bg-gray-800 hover:bg-gray-700 py-2 rounded pattern-type-btn">
+                                Hex
+                            </button>
+                            <button onclick="setPatternType('none')" class="bg-gray-800 hover:bg-gray-700 py-2 rounded pattern-type-btn">
+                                None
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between mb-2">
+                            <label class="font-medium">Pattern Size: <span id="patternSizeValue">50px</span></label>
+                        </div>
+                        <input type="range" min="10" max="200" value="50" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" id="patternSize" oninput="updatePattern()">
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="font-medium">Pattern Opacity: <span id="patternOpacityValue">0.3</span></label>
+                        </div>
+                        <input type="range" min="0" max="100" value="30" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" id="patternOpacity" oninput="updatePattern()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Presets -->
+        <div class="mt-10 glass-effect rounded-2xl p-6">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-star"></i> Gradient Presets
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <button onclick="applyPreset('sunset')" class="h-20 rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 hover:scale-105 transition transform"></button>
+                <button onclick="applyPreset('ocean')" class="h-20 rounded-lg bg-gradient-to-r from-blue-400 to-teal-300 hover:scale-105 transition transform"></button>
+                <button onclick="applyPreset('neon')" class="h-20 rounded-lg bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:scale-105 transition transform"></button>
+                <button onclick="applyPreset('forest')" class="h-20 rounded-lg bg-gradient-to-r from-green-400 to-emerald-600 hover:scale-105 transition transform"></button>
+                <button onclick="applyPreset('fire')" class="h-20 rounded-lg bg-gradient-to-r from-red-500 to-yellow-500 hover:scale-105 transition transform"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="glass-effect rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto export-modal">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold">Export Gradient</h3>
+                <button onclick="closeExportModal()" class="text-2xl hover:text-gray-300">&times;</button>
+            </div>
+            <div id="exportContent" class="font-mono text-sm bg-gray-800 p-4 rounded-lg overflow-x-auto"></div>
+            <div class="mt-4 flex justify-end gap-3">
+                <button onclick="copyToClipboard()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg">
+                    Copy to Clipboard
+                </button>
+                <button onclick="closeExportModal()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

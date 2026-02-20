@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosaic Image Builder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ed 100%);
+            color: #333;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0 40px;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            display: inline-block;
+        }
+
+        h1:after {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(to right, #e74c3c, #3498db);
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .builder-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+
+        @media (max-width: 1024px) {
+            .builder-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .upload-section, .preview-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e6ed;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f3f8;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title i {
+            color: #3498db;
+        }
+
+        .upload-area {
+            border: 3px dashed #bdc3c7;
+            border-radius: 15px;
+            padding: 50px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+            background: #f8fafc;
+        }
+
+        .upload-area:hover {
+            border-color: #3498db;
+            background: #f0f7ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #2ecc71;
+            background: #f0fff4;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.3rem;
+            color: #34495e;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .mosaic-preview {
+            width: 100%;
+            height: 400px;
+            border-radius: 15px;
+            background: #f8fafc;
+            border: 2px dashed #bdc3c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #mosaicCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+        }
+
+        .placeholder-text {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 30px;
+        }
+
+        .placeholder-text i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #bdc3c7;
+        }
+
+        .controls {
+            margin-top: 30px;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 12px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-label i {
+            color: #3498db;
+        }
+
+        .slider-container {
+            margin-bottom: 20px;
+        }
+
+        .slider-with-value {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 10px;
+            border-radius: 5px;
+            background: #ecf0f1;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+        }
+
+        .slider-value {
+            min-width: 60px;
+            text-align: center;
+            background: #ecf0f1;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .mosaic-types {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .mosaic-type {
+            padding: 20px 15px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 2px solid #e0e6ed;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .mosaic-type:hover {
+            transform: translateY(-5px);
+            border-color: #3498db;
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.1);
+        }
+
+        .mosaic-type.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .mosaic-type i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .color-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.active {
+            border-color: #2c3e50;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 18px 25px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, #e74c3c, #e67e22);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 20px 25px;
+            border-radius: 12px;
+            background: white;
+            border-left: 5px solid #2ecc71;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transform: translateX(150%);
+            transition: transform 0.5s ease;
+            z-index: 1000;
+            max-width: 350px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .notification-message {
+            color: #7f8c8d;
+        }
+
+        .examples-section {
+            margin-top: 60px;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e6ed;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .example-item {
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .example-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .example-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .example-label {
+            padding: 15px;
+            background: #f8fafc;
+            text-align: center;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px 0;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid #e0e6ed;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .mosaic-types {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .examples-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .upload-section, .preview-section, .examples-section {
+                padding: 20px;
+            }
+            
+            .mosaic-types {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-th-large"></i> Mosaic Image Builder</h1>
+            <p class="tagline">Transform your photos into beautiful mosaic artworks. Upload an image, customize the mosaic style, and create stunning visual patterns.</p>
+        </header>
+
+        <div class="builder-container">
+            <div class="upload-section">
+                <h2 class="section-title"><i class="fas fa-upload"></i> Upload Image</h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-text">Drag & Drop Your Image Here</div>
+                    <div class="upload-subtext">or click to browse files (JPG, PNG, GIF up to 5MB)</div>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+                
+                <div class="image-preview" id="imagePreview">
+                    <img id="previewImage" alt="Preview">
+                </div>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <div class="control-label"><i class="fas fa-th-large"></i> Mosaic Type</div>
+                        <div class="mosaic-types" id="mosaicTypes">
+                            <div class="mosaic-type active" data-type="square">
+                                <i class="fas fa-square"></i>
+                                <div>Square Tiles</div>
+                            </div>
+                            <div class="mosaic-type" data-type="hexagon">
+                                <i class="fas fa-hexagon"></i>
+                                <div>Hexagonal</div>
+                            </div>
+                            <div class="mosaic-type" data-type="triangle">
+                                <i class="fas fa-play"></i>
+                                <div>Triangular</div>
+                            </div>
+                            <div class="mosaic-type" data-type="circle">
+                                <i class="fas fa-circle"></i>
+                                <div>Circular</div>
+                            </div>
+                            <div class="mosaic-type" data-type="diamond">
+                                <i class="fas fa-gem"></i>
+                                <div>Diamond</div>
+                            </div>
+                            <div class="mosaic-type" data-type="pixel">
+                                <i class="fas fa-border-all"></i>
+                                <div>Pixel Art</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label"><i class="fas fa-ruler"></i> Tile Size</div>
+                        <div class="slider-container">
+                            <div class="slider-with-value">
+                                <input type="range" id="tileSizeSlider" min="5" max="50" value="20">
+                                <div class="slider-value" id="tileSizeValue">20px</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label"><i class="fas fa-palette"></i> Color Palette</div>
+                        <div class="color-palette" id="colorPalette">
+                            <!-- Color options will be generated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label"><i class="fas fa-border-style"></i> Tile Spacing</div>
+                        <div class="slider-container">
+                            <div class="slider-with-value">
+                                <input type="range" id="spacingSlider" min="0" max="10" value="2">
+                                <div class="slider-value" id="spacingValue">2px</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label"><i class="fas fa-adjust"></i> Color Intensity</div>
+                        <div class="slider-container">
+                            <div class="slider-with-value">
+                                <input type="range" id="intensitySlider" min="1" max="10" value="5">
+                                <div class="slider-value" id="intensityValue">5</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview-section">
+                <h2 class="section-title"><i class="fas fa-eye"></i> Mosaic Preview</h2>
+                
+                <div class="mosaic-preview">
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <div>Creating your mosaic...</div>
+                    </div>
+                    
+                    <div class="placeholder-text" id="placeholderText">
+                        <i class="fas fa-image"></i>
+                        <div>Your mosaic will appear here</div>
+                        <div>Upload an image and adjust settings to generate a mosaic</div>
+                    </div>
+                    
+                    <canvas id="mosaicCanvas"></canvas>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="generateBtn" disabled>
+                        <i class="fas fa-magic"></i> Generate Mosaic
+                    </button>
+                    <button class="btn btn-secondary" id="downloadBtn" disabled>
+                        <i class="fas fa-download"></i> Download Image
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="examples-section">
+            <h2 class="section-title"><i class="fas fa-images"></i> Mosaic Examples</h2>
+            <p>Click on any example to apply its mosaic style to your image</p>
+            
+            <div class="examples-grid" id="examplesGrid">
+                <!-- Example items will be added by JavaScript -->
+            </div>
+        </div>
+        
+        <footer>
+            <p>Mosaic Image Builder &copy; 2023 | All image processing happens in your browser. No data is uploaded to any server.</p>
+            <p>Built with HTML5 Canvas and JavaScript</p>
+        </footer>
+    </div>
+
+    <div class="notification" id="notification">
+        <div class="notification-title" id="notificationTitle">Success!</div>
+        <div class="notification-message" id="notificationMessage">Your mosaic has been generated.</div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImage = document.getElementById('previewImage');
+        const mosaicTypes = document.getElementById('mosaicTypes');
+        const tileSizeSlider = document.getElementById('tileSizeSlider');
+        const tileSizeValue = document.getElementById('tileSizeValue');
+        const spacingSlider = document.getElementById('spacingSlider');
+        const spacingValue = document.getElementById('spacingValue');
+        const intensitySlider = document.getElementById('intensitySlider');
+        const intensityValue = document.getElementById('intensityValue');
+        const colorPalette = document.getElementById('colorPalette');
+        const mosaicCanvas = document.getElementById('mosaicCanvas');
+        const canvasCtx = mosaicCanvas.getContext('2d');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const loading = document.getElementById('loading');
+        const placeholderText = document.getElementById('placeholderText');
+        const notification = document.getElementById('notification');
+        const notificationTitle = document.getElementById('notificationTitle');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const examplesGrid = document.getElementById('examplesGrid');
+
+        // Application state
+        let currentImage = null;
+        let currentMosaicType = 'square';
+        let tileSize = 20;
+        let spacing = 2;
+        let intensity = 5;
+        let selectedColorPalette = 'vibrant';
+        let isGenerating = false;
+
+        // Color palettes
+        const colorPalettes = {
+            vibrant: ['#FF5252', '#FF4081', '#E040FB', '#7C4DFF', '#536DFE', '#448AFF', '#40C4FF', '#18FFFF', '#64FFDA', '#69F0AE', '#B2FF59', '#EEFF41', '#FFFF00', '#FFD740', '#FFAB40', '#FF6E40'],
+            pastel: ['#FFCDD2', '#F8BBD0', '#E1BEE7', '#D1C4E9', '#C5CAE9', '#BBDEFB', '#B3E5FC', '#B2EBF2', '#B2DFDB', '#C8E6C9', '#DCEDC8', '#F0F4C3', '#FFF9C4', '#FFECB3', '#FFE0B2', '#FFCCBC'],
+            earth: ['#795548', '#5D4037', '#4E342E', '#3E2723', '#8D6E63', '#A1887F', '#BCAAA4', '#D7CCC8', '#6D4C41', '#5D4037', '#4E342E', '#3E2723'],
+            jewel: ['#D32F2F', '#C2185B', '#7B1FA2', '#512DA8', '#303F9F', '#1976D2', '#0288D1', '#0097A7', '#00796B', '#388E3C', '#689F38', '#AFB42B', '#FBC02D', '#FFA000', '#F57C00', '#E64A19'],
+            monochrome: ['#000000', '#212121', '#424242', '#616161', '#757575', '#9E9E9E', '#BDBDBD', '#E0E0E0', '#F5F5F5', '#FAFAFA', '#FFFFFF']
+        };
+
+        // Example configurations
+        const examples = [
+            { type: 'square', tileSize: 15, spacing: 1, intensity: 7, palette: 'vibrant', label: 'Colorful Squares', img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop' },
+            { type: 'hexagon', tileSize: 25, spacing: 0, intensity: 6, palette: 'earth', label: 'Earth Tone Hexagons', img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=300&fit=crop' },
+            { type: 'triangle', tileSize: 20, spacing: 2, intensity: 8, palette: 'jewel', label: 'Jewel Triangles', img: 'https://images.unsplash.com/photo-1506260408121-e353d10b87c7?w-400&h=300&fit=crop' },
+            { type: 'circle', tileSize: 18, spacing: 3, intensity: 4, palette: 'pastel', label: 'Pastel Circles', img: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=300&fit=crop' },
+            { type: 'diamond', tileSize: 22, spacing: 1, intensity: 5, palette: 'vibrant', label: 'Vibrant Diamonds', img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=300&fit=crop' },
+            { type: 'pixel', tileSize: 10, spacing: 0, intensity: 10, palette: 'monochrome', label: 'Pixel Art', img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop' }
+        ];
+
+        // Initialize the application
+        function initApp() {
+            // Set up color palette options
+            createColorPaletteOptions();
+            
+            // Set up example grid
+            createExampleGrid();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Update slider displays
+            updateSliderValues();
+        }
+
+        // Create color palette options
+        function createColorPaletteOptions() {
+            colorPalette.innerHTML = '';
+            
+            Object.keys(colorPalettes).forEach(paletteName => {
+                const colorOption = document.createElement('div');
+                colorOption.className = 'color-option';
+                colorOption.dataset.palette = paletteName;
+                
+                // Create gradient for preview
+                const paletteColors = colorPalettes[paletteName];
+                if (paletteColors.length > 1) {
+                    const gradientColors = paletteColors.slice(0, 3);
+                    colorOption.style.background = `linear-gradient(135deg, ${gradientColors.join(', ')})`;
+                } else {
+                    colorOption.style.background = paletteColors[0];
+                }
+                
+                // Set first palette as active
+                if (paletteName === 'vibrant') {
+                    colorOption.classList.add('active');
+                }
+                
+                colorOption.addEventListener('click', () => {
+                    // Remove active class from all color options
+                    document.querySelectorAll('.color-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked option
+                    colorOption.classList.add('active');
+                    
+                    // Update selected palette
+                    selectedColorPalette = paletteName;
+                    
+                    // Show notification
+                    showNotification('Palette Changed', `Switched to ${paletteName} color palette`);
+                });
+                
+                colorPalette.appendChild(colorOption);
+            });
+        }
+
+        // Create example grid
+        function createExampleGrid() {
+            examplesGrid.innerHTML = '';
+            
+            examples.forEach((example, index) => {
+                const exampleItem = document.createElement('div');
+                exampleItem.className = 'example-item';
+                exampleItem.dataset.index = index;
+                
+                exampleItem.innerHTML = `
+                    <img src="${example.img}" alt="${example.label}" class="example-image">
+                    <div class="example-label">${example.label}</div>
+                `;
+                
+                exampleItem.addEventListener('click', () => {
+                    applyExampleSettings(example);
+                });
+                
+                examplesGrid.appendChild(exampleItem);
+            });
+        }
+
+        // Apply example settings
+        function applyExampleSettings(example) {
+            // Update mosaic type
+            document.querySelectorAll('.mosaic-type').forEach(type => {
+                type.classList.remove('active');
+                if (type.dataset.type === example.type) {
+                    type.classList.add('active');
+                }
+            });
+            currentMosaicType = example.type;
+            
+            // Update sliders
+            tileSizeSlider.value = example.tileSize;
+            spacingSlider.value = example.spacing;
+            intensitySlider.value = example.intensity;
+            
+            // Update color palette
+            selectedColorPalette = example.palette;
+            document.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.remove('active');
+                if (opt.dataset.palette === example.palette) {
+                    opt.classList.add('active');
+                }
+            });
+            
+            // Update slider displays
+            updateSliderValues();
+            
+            // Update tile size and other values
+            tileSize = example.tileSize;
+            spacing = example.spacing;
+            intensity = example.intensity;
+            
+            // If an image is loaded, generate mosaic with new settings
+            if (currentImage) {
+                generateMosaic();
+            }
+            
+            // Show notification
+            showNotification('Example Applied', `Applied ${example.label} settings`);
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // File upload area click
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // File input change
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop events
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    handleFileSelect({ target: { files: e.dataTransfer.files } });
+                }
+            });
+            
+            // Mosaic type selection
+            mosaicTypes.querySelectorAll('.mosaic-type').forEach(type => {
+                type.addEventListener('click', () => {
+                    // Remove active class from all types
+                    mosaicTypes.querySelectorAll('.mosaic-type').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked type
+                    type.classList.add('active');
+                    
+                    // Update current mosaic type
+                    currentMosaicType = type.dataset.type;
+                    
+                    // If an image is loaded, generate mosaic with new type
+                    if (currentImage) {
+                        generateMosaic();
+                    }
+                    
+                    // Show notification
+                    showNotification('Mosaic Type Changed', `Switched to ${type.dataset.type} mosaic`);
+                });
+            });
+            
+            // Slider events
+            tileSizeSlider.addEventListener('input', () => {
+                updateSliderValues();
+                tileSize = parseInt(tileSizeSlider.value);
+            });
+            
+            spacingSlider.addEventListener('input', () => {
+                updateSliderValues();
+                spacing = parseInt(spacingSlider.value);
+            });
+            
+            intensitySlider.addEventListener('input', () => {
+                updateSliderValues();
+                intensity = parseInt(intensitySlider.value);
+            });
+            
+            // Generate button
+            generateBtn.addEventListener('click', generateMosaic);
+            
+            // Download button
+            downloadBtn.addEventListener('click', downloadMosaic);
+        }
+
+        // Handle file selection
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Check if file is an image
+            if (!file.type.match('image.*')) {
+                showNotification('Error', 'Please select an image file (JPG, PNG, GIF)');
+                return;
+            }
+            
+            // Check file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('Error', 'Image size should be less than 5MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                // Create image element
+                const img = new Image();
+                img.onload = function() {
+                    // Store the image
+                    currentImage = img;
+                    
+                    // Show preview
+                    previewImage.src = event.target.result;
+                    imagePreview.style.display = 'block';
+                    
+                    // Enable generate button
+                    generateBtn.disabled = false;
+                    
+                    // Show notification
+                    showNotification('Image Loaded', 'Your image has been successfully loaded');
+                    
+                    // Auto-generate mosaic
+                    setTimeout(() => {
+                        generateMosaic();
+                    }, 500);
+                };
+                img.src = event.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // Update slider value displays
+        function updateSliderValues() {
+            tileSizeValue.textContent = `${tileSizeSlider.value}px`;
+            spacingValue.textContent = `${spacingSlider.value}px`;
+            intensityValue.textContent = intensitySlider.value;
+        }
+
+        // Generate the mosaic
+        function generateMosaic() {
+            if (!currentImage || isGenerating) return;
+            
+            isGenerating = true;
+            loading.style.display = 'flex';
+            placeholderText.style.display = 'none';
+            
+            // Set canvas dimensions
+            const maxWidth = 800;
+            const maxHeight = 500;
+            
+            let canvasWidth = currentImage.width;
+            let canvasHeight = currentImage.height;
+            
+            // Scale down if image is too large
+            if (canvasWidth > maxWidth || canvasHeight > maxHeight) {
+                const scale = Math.min(maxWidth / canvasWidth, maxHeight / canvasHeight);
+                canvasWidth = Math.floor(canvasWidth * scale);
+                canvasHeight = Math.floor(canvasHeight * scale);
+            }
+            
+            mosaicCanvas.width = canvasWidth;
+            mosaicCanvas.height = canvasHeight;
+            
+            // Clear canvas
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Draw image to canvas (scaled)
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = canvasWidth;
+            tempCanvas.height = canvasHeight;
+            tempCtx.drawImage(currentImage, 0, 0, canvasWidth, canvasHeight);
+            
+            // Get image data
+            const imageData = tempCtx.getImageData(0, 0, canvasWidth, canvasHeight);
+            const data = imageData.data;
+            
+            // Generate mosaic based on type
+            switch(currentMosaicType) {
+                case 'square':
+                    drawSquareMosaic(data, canvasWidth, canvasHeight);
+                    break;
+                case 'hexagon':
+                    drawHexagonMosaic(data, canvasWidth, canvasHeight);
+                    break;
+                case 'triangle':
+                    drawTriangleMosaic(data, canvasWidth, canvasHeight);
+                    break;
+                case 'circle':
+                    drawCircleMosaic(data, canvasWidth, canvasHeight);
+                    break;
+                case 'diamond':
+                    drawDiamondMosaic(data, canvasWidth, canvasHeight);
+                    break;
+                case 'pixel':
+                    drawPixelMosaic(data, canvasWidth, canvasHeight);
+                    break;
+            }
+            
+            // Show canvas
+            mosaicCanvas.style.display = 'block';
+            
+            // Enable download button
+            downloadBtn.disabled = false;
+            
+            // Hide loading
+            setTimeout(() => {
+                loading.style.display = 'none';
+                isGenerating = false;
+                
+                // Show notification
+                showNotification('Mosaic Created', 'Your mosaic artwork has been generated');
+            }, 500);
+        }
+
+        // Draw square mosaic
+        function drawSquareMosaic(data, width, height) {
+            const effectiveTileSize = tileSize + spacing;
+            const palette = colorPalettes[selectedColorPalette];
+            
+            for (let y = 0; y < height; y += effectiveTileSize) {
+                for (let x = 0; x < width; x += effectiveTileSize) {
+                    // Get average color in this tile area
+                    const avgColor = getAverageColor(data, width, x, y, tileSize, tileSize);
+                    
+                    // Apply intensity
+                    const intensifiedColor = intensifyColor(avgColor, intensity);
+                    
+                    // Find closest color in palette
+                    const paletteColor = findClosestPaletteColor(intensifiedColor, palette);
+                    
+                    // Draw square
+                    canvasCtx.fillStyle = paletteColor;
+                    canvasCtx.fillRect(x, y, tileSize, tileSize);
+                }
+            }
+        }
+
+        // Draw hexagon mosaic
+        function drawHexagonMosaic(data, width, height) {
+            const hexSize = tileSize;
+            const hexWidth = Math.sqrt(3) * hexSize;
+            const hexHeight = 2 * hexSize;
+            const horizontalSpacing = hexWidth;
+            const verticalSpacing = hexHeight * 0.75;
+            
+            const palette = colorPalettes[selectedColorPalette];
+            
+            for (let row = 0; row < height / verticalSpacing + 1; row++) {
+                for (let col = 0; col < width / horizontalSpacing + 1; col++) {
+                    const x = col * horizontalSpacing + (row % 2 === 0 ? 0 : hexWidth / 2);
+                    const y = row * verticalSpacing;
+                    
+                    // Get average color at hex center
+                    const avgColor = getAverageColor(data, width, x, y, hexSize, hexSize);
+                    const intensifiedColor = intensifyColor(avgColor, intensity);
+                    const paletteColor = findClosestPaletteColor(intensifiedColor, palette);
+                    
+                    // Draw hexagon
+                    drawHexagon(x, y, hexSize, paletteColor);
+                }
+            }
+        }
+
+        // Helper to draw a hexagon
+        function drawHexagon(centerX, centerY, size, color) {
+            canvasCtx.fillStyle = color;
+            canvasCtx.beginPath();
+            
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i;
+                const x = centerX + size * Math.cos(angle);
+                const y = centerY + size * Math.sin(angle);
+                
+                if (i === 0) {
+                    canvasCtx.moveTo(x, y);
+                } else {
+                    canvasCtx.lineTo(x, y);
+                }
+            }
+            
+            canvasCtx.closePath();
+            canvasCtx.fill();
+        }
+
+        // Draw triangle mosaic
+        function drawTriangleMosaic(data, width, height) {
+            const triangleSize = tileSize * 2;
+            const palette = colorPalettes[selectedColorPalette];
+            
+            for (let y = 0; y < height; y += triangleSize) {
+                for (let x = 0; x < width; x += triangleSize) {
+                    // Get average color in triangle area
+                    const avgColor = getAverageColor(data, width, x, y, triangleSize, triangleSize);
+                    const intensifiedColor = intensifyColor(avgColor, intensity);
+                    const paletteColor = findClosestPaletteColor(intensifiedColor, palette);
+                    
+                    // Draw two triangles (up and down)
+                    canvasCtx.fillStyle = paletteColor;
+                    
+                    // Upward triangle
+                    canvasCtx.beginPath();
+                    canvasCtx.moveTo(x, y + triangleSize);
+                    canvasCtx.lineTo(x + triangleSize / 2, y);
+                    canvasCtx.lineTo(x + triangleSize, y + triangleSize);
+                    canvasCtx.closePath();
+                    canvasCtx.fill();
+                    
+                    // Downward triangle (offset)
+                    const downColor = getAverageColor(data, width, x + triangleSize / 2, y + triangleSize / 2, triangleSize, triangleSize);
+                    const downIntensified = intensifyColor(downColor, intensity);
+                    const downPaletteColor = findClosestPaletteColor(downIntensified, palette);
+                    
+                    canvasCtx.fillStyle = downPaletteColor;
+                    canvasCtx.beginPath();
+                    canvasCtx.moveTo(x + triangleSize / 2, y);
+                    canvasCtx.lineTo(x + triangleSize, y + triangleSize);
+                    canvasCtx.lineTo(x + triangleSize * 1.5, y);
+                    canvasCtx.closePath();
+                    canvasCtx.fill();
+                }
+            }
+        }
+
+        // Draw circle mosaic
+        function drawCircleMosaic(data, width, height) {
+            const circleSize = tileSize;
+            const effectiveSize = circleSize + spacing;
+            const palette = colorPalettes[selectedColorPalette];
+            
+            for (let y = 0; y < height; y += effectiveSize) {
+                for (let x = 0; x < width; x += effectiveSize) {
+                    // Get average color in circle area
+                    const avgColor = getAverageColor(data, width, x, y, circleSize, circleSize);
+                    const intensifiedColor = intensifyColor(avgColor, intensity);
+                    const paletteColor = findClosestPaletteColor(intensifiedColor, palette);
+                    
+                    // Draw circle
+                    canvasCtx.fillStyle = paletteColor;
+                    canvasCtx.beginPath();
+                    canvasCtx.arc(x + circleSize / 2, y + circleSize / 2, circleSize / 2, 0, Math.PI * 2);
+                    canvasCtx.fill();
+                }
+            }
+        }
+
+        // Draw diamond mosaic
+        function drawDiamondMosaic(data, width, height) {
+            const diamondSize = tileSize * 2;
+            const palette = colorPalettes[selectedColorPalette];
+            
+            for (let y = 0; y < height; y += diamondSize / 2) {
+                for (let x = 0; x < width; x += diamondSize / 2) {
+                    // Only draw on alternating grid positions
+                    if ((x / (diamondSize / 2) + y / (diamondSize / 2)) % 2 === 0) continue;
+                    
+                    // Get average color in diamond area
+                    const avgColor = getAverageColor(data, width, x - diamondSize / 4, y - diamondSize / 4, diamondSize / 2, diamondSize / 2);
+                    const intensifiedColor = intensifyColor(avgColor, intensity);
+                    const paletteColor = findClosestPaletteColor(intensifiedColor, palette);
+                    
+                    // Draw diamond
+                    canvasCtx.fillStyle = paletteColor;
+                    canvasCtx.beginPath();
+                    canvasCtx.moveTo(x, y - diamondSize / 4);
+                    canvasCtx.lineTo(x + diamondSize / 4, y);
+                    canvasCtx.lineTo(x, y + diamondSize / 4);
+                    canvasCtx.lineTo(x - diamondSize / 4, y);
+                    canvasCtx.closePath();
+                    canvasCtx.fill();
+                }
+            }
+        }
+
+        // Draw pixel art mosaic
+        function drawPixelMosaic(data, width, height) {
+            const pixelSize = tileSize;
+            const palette = colorPalettes[selectedColorPalette];
+            
+            // For pixel art, we want to reduce color palette significantly
+            const limitedPalette = palette.slice(0, Math.min(8, palette.length));
+            
+            for (let y = 0; y < height; y += pixelSize) {
+                for (let x = 0; x < width; x += pixelSize) {
+                    // Get color at pixel
+                    const color = getColorAt(data, width, x, y);
+                    const intensifiedColor = intensifyColor(color, intensity * 2); // More intensity for pixel art
+                    const paletteColor = findClosestPaletteColor(intensifiedColor, limitedPalette);
+                    
+                    // Draw pixel
+                    canvasCtx.fillStyle = paletteColor;
+                    canvasCtx.fillRect(x, y, pixelSize, pixelSize);
+                }
+            }
+        }
+
+        // Get average color in an area
+        function getAverageColor(data, width, startX, startY, areaWidth, areaHeight) {
+            let r = 0, g = 0, b = 0, count = 0;
+            
+            const endX = Math.min(width, startX + areaWidth);
+            const endY = Math.min(data.height || (data.length / (width * 4)), startY + areaHeight);
+            
+            for (let y = Math.max(0, startY); y < endY; y += 2) {
+                for (let x = Math.max(0, startX); x < endX; x += 2) {
+                    const index = (y * width + x) * 4;
+                    r += data[index];
+                    g += data[index + 1];
+                    b += data[index + 2];
+                    count++;
+                }
+            }
+            
+            if (count === 0) return { r: 0, g: 0, b: 0 };
+            
+            return {
+                r: Math.floor(r / count),
+                g: Math.floor(g / count),
+                b: Math.floor(b / count)
+            };
+        }
+
+        // Get color at specific pixel
+        function getColorAt(data, width, x, y) {
+            const index = (Math.floor(y) * width + Math.floor(x)) * 4;
+            
+            if (index >= 0 && index < data.length - 3) {
+                return {
+                    r: data[index],
+                    g: data[index + 1],
+                    b: data[index + 2]
+                };
+            }
+            
+            return { r: 0, g: 0, b: 0 };
+        }
+
+        // Intensify a color
+        function intensifyColor(color, intensity) {
+            const factor = intensity / 5; // Normalize intensity to 0-2 range
+            
+            // Convert to HSV for better intensity control
+            const hsv = rgbToHsv(color.r, color.g, color.b);
+            
+            // Increase saturation
+            hsv.s = Math.min(1, hsv.s * factor);
+            
+            // Adjust value
+            hsv.v = Math.min(1, hsv.v * factor);
+            
+            // Convert back to RGB
+            const rgb = hsvToRgb(hsv.h, hsv.s, hsv.v);
+            
+            return {
+                r: Math.min(255, Math.max(0, Math.floor(rgb.r * 255))),
+                g: Math.min(255, Math.max(0, Math.floor(rgb.g * 255))),
+                b: Math.min(255, Math.max(0, Math.floor(rgb.b * 255)))
+            };
+        }
+
+        // RGB to HSV conversion
+        function rgbToHsv(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+            
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, v = max;
+            
+            const d = max - min;
+            s = max === 0 ? 0 : d / max;
+            
+            if (max === min) {
+                h = 0; // achromatic
+            } else {
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            
+            return { h, s, v };
+        }
+
+        // HSV to RGB conversion
+        function hsvToRgb(h, s, v) {
+            let r, g, b;
+            
+            const i = Math.floor(h * 6);
+            const f = h * 6 - i;
+            const p = v * (1 - s);
+            const q = v * (1 - f * s);
+            const t = v * (1 - (1 - f) * s);
+            
+            switch (i % 6) {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                case 5: r = v; g = p; b = q; break;
+            }
+            
+            return { r, g, b };
+        }
+
+        // Find closest color in palette
+        function findClosestPaletteColor(color, palette) {
+            let closestColor = palette[0];
+            let minDistance = Number.MAX_VALUE;
+            
+            palette.forEach(paletteColor => {
+                const distance = colorDistance(color, hexToRgb(paletteColor));
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestColor = paletteColor;
+                }
+            });
+            
+            return closestColor;
+        }
+
+        // Calculate color distance
+        function colorDistance(color1, color2) {
+            const dr = color1.r - color2.r;
+            const dg = color1.g - color2.g;
+            const db = color1.b - color2.b;
+            
+            return dr * dr + dg * dg + db * db;
+        }
+
+        // Convert hex to RGB
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+
+        // Download mosaic as image
+        function downloadMosaic() {
+            if (!mosaicCanvas.style.display || mosaicCanvas.style.display === 'none') {
+                showNotification('Error', 'No mosaic to download. Please generate a mosaic first.');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.download = `mosaic-${currentMosaicType}-${Date.now()}.png`;
+            link.href = mosaicCanvas.toDataURL('image/png');
+            link.click();
+            
+            showNotification('Download Started', 'Your mosaic is being downloaded as PNG');
+        }
+
+        // Show notification
+        function showNotification(title, message) {
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            notification.classList.add('show');
+            
+            // Auto-hide after 4 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Initialize the app
+        window.addEventListener('load', initApp);
+    </script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+:root {
+  --bg: #030305;
+  --grid-bg: #0a0a10;
+  --wall: #1f2235;
+  --wall-glow: #161929;
+  --path: #0e0e14;
+  --player: #00ffcc;
+  --player-glow: rgba(0, 255, 204, 0.4);
+  --start: #3b82f6;
+  --exit: #d946ef;
+  --exit-glow: rgba(217, 70, 239, 0.5);
+  --text: #f8fafc;
+  --accent: #6366f1;
+  --overlay: rgba(3, 3, 5, 0.95);
+  --cell-size: 40px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  background: radial-gradient(circle at center, #13131f 0%, var(--bg) 100%);
+  color: var(--text);
+  font-family: 'Outfit', 'Inter', sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#ui-header {
+  position: absolute;
+  top: 2rem;
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+  z-index: 100;
+}
+
+h1 {
+  font-size: 4rem;
+  font-weight: 900;
+  letter-spacing: -3px;
+  background: linear-gradient(to bottom, #fff, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+  opacity: 0.9;
+}
+
+.sub {
+  font-size: 1rem;
+  opacity: 0.6;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+#game-container {
+  position: relative;
+  background: var(--grid-bg);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: transform 0.1s;
+  will-change: transform;
+}
+
+#maze-grid {
+  display: grid;
+  gap: 3px;
+  position: relative;
+}
+
+.cell {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+.cell.wall {
+  background: var(--wall);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+/*.cell.wall::after {
+    content: ''; position: absolute; top:50%; left:50%; width: 4px; height: 4px; 
+    background: #2a2d3e; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0.3;
+}*/
+
+.cell.path {
+  background: var(--path);
+}
+
+.cell.start {
+  background: var(--start);
+  opacity: 0.2;
+  border-radius: 50%;
+  transform: scale(0.6);
+}
+
+.cell.key {
+  background: none;
+  position: relative;
+}
+
+.cell.key::after {
+  content: '🗝️';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  animation: float 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 5px gold);
+}
+
+.cell.door {
+  background: #334155;
+  box-shadow: inset 0 0 10px #000;
+  position: relative;
+}
+
+.cell.door::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 2px solid #94a3b8;
+  background: repeating-linear-gradient(45deg, #475569, #475569 5px, #334155 5px, #334155 10px);
+}
+
+.cell.hazard {
+  background: #450a0a;
+  position: relative;
+  overflow: hidden;
+}
+
+.cell.hazard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, #ef4444 20%, transparent 20%);
+  background-size: 10px 10px;
+  opacity: 0.5;
+  animation: pulse 0.5s infinite alternate;
+}
+
+/* Teleporter */
+.cell.teleport {
+  background: radial-gradient(circle, var(--accent) 20%, transparent 60%);
+  border-radius: 50%;
+  box-shadow: 0 0 15px var(--accent);
+  animation: spinPortal 3s linear infinite;
+}
+
+.cell.teleport::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 2px dashed #fff;
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+/* Ice */
+.cell.ice {
+  background: rgba(147, 197, 253, 0.2);
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(147, 197, 253, 0.1);
+}
+
+.cell.ice::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent 40%, rgba(255, 255, 255, 0.4) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: iceGlint 3s infinite;
+}
+
+@keyframes spinPortal {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes iceGlint {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+#hud {
+  position: absolute;
+  top: 1rem;
+  right: 2rem;
+  display: flex;
+  gap: 1.5rem;
+  font-family: 'Outfit', monospace;
+  font-size: 1.2rem;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 0.8rem 1.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  z-index: 150;
+  transform: skewX(-10deg);
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transform: skewX(10deg);
+}
+
+.hud-label {
+  opacity: 0.7;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.hud-value {
+  font-weight: bold;
+  color: var(--player);
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Fog / Spotlight */
+#game-container.fog-active {
+  mask-image: radial-gradient(circle 120px at var(--x) var(--y), black 20%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle 120px at var(--x) var(--y), black 20%, transparent 100%);
+}
+
+/* Enemies */
+.cell.enemy {
+  position: absolute;
+  /* They overlay */
+  z-index: 5;
+  background: none;
+}
+
+.cell.enemy::after {
+  content: '👾';
+  /* Or robot icon */
+  font-size: 1.2rem;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 5px #ef4444);
+  animation: float 1s infinite alternate;
+}
+
+/* Switch & Gate */
+.cell.switch {
+  background: #1e1b4b;
+  border-radius: 50%;
+  transform: scale(0.6);
+  box-shadow: 0 0 0 2px #4338ca;
+}
+
+.cell.switch.active {
+  background: #4ade80;
+  box-shadow: 0 0 10px #4ade80;
+}
+
+.cell.gate {
+  background: repeating-linear-gradient(90deg, #f59e0b, #f59e0b 5px, #000 5px, #000 10px);
+  box-shadow: inset 0 0 5px #000;
+}
+
+.cell.gate.open {
+  background: none;
+  border: 1px dashed #444;
+}
+
+/* CRT Overlay */
+body::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 999;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 0.97;
+  }
+
+  5%,
+  10% {
+    opacity: 0.9;
+  }
+
+  15% {
+    opacity: 0.98;
+  }
+
+  50% {
+    opacity: 0.95;
+  }
+
+  100% {
+    opacity: 0.98;
+  }
+}
+
+#game-container {
+  animation: flicker 0.15s infinite;
+}
+
+/* Update player look */
+#player {
+  position: absolute;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  background: linear-gradient(135deg, var(--player), #0ea5e9);
+  border-radius: 8px;
+  box-shadow: 0 0 25px var(--player-glow), inset 0 0 10px rgba(255, 255, 255, 0.5);
+  transform: translate(0, 0);
+  transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 10;
+}
+
+#player::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  z-index: 20;
+  backdrop-filter: blur(5px);
+}
+
+.overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.overlay h2 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--player);
+}
+
+.overlay p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  opacity: 0.8;
+}
+
+.key-hint {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: bold;
+  font-family: monospace;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+
+#particles {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+.particle {
+  position: absolute;
+  background: var(--player);
+  border-radius: 50%;
+  animation: fadeOut 0.5s forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: scale(0);
+  }
+}

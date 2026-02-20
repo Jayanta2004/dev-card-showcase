@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📈 math problem visualizer · function grapher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f5fa 0%, #dce6f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .visualizer-card {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 3rem;
+            box-shadow: 0 30px 45px -25px #2f4f6e, 0 0 0 1px #ffffffcc inset;
+            padding: 2rem 2rem 2.5rem;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.8rem;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 2.3rem;
+            font-weight: 600;
+            color: #1b4c6e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background: #2679b3;
+            color: white;
+            padding: 0.4rem 1.5rem;
+            border-radius: 60px;
+            font-size: 1.1rem;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        /* canvas panel */
+        .graph-panel {
+            background: #ffffffd9;
+            border-radius: 2.5rem;
+            padding: 1.5rem;
+            border: 1px solid #c4defa;
+            box-shadow: 0 10px 18px -12px #2f5e83;
+        }
+
+        .canvas-container {
+            background: #fcfcfc;
+            border-radius: 2rem;
+            padding: 0.5rem;
+            border: 2px solid #b7d6f5;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: white;
+            border-radius: 1.5rem;
+            cursor: crosshair;
+        }
+
+        .axis-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.6rem;
+            color: #2b577a;
+            font-size: 0.9rem;
+        }
+
+        /* controls */
+        .control-panel {
+            background: #edf6fd;
+            border-radius: 2rem;
+            padding: 1.8rem 1.5rem;
+            border: 1px solid #b7d6f5;
+        }
+
+        .function-input-area {
+            background: #d9e9ff;
+            border-radius: 2rem;
+            padding: 1.2rem;
+            margin-bottom: 1.8rem;
+        }
+
+        .function-label {
+            font-weight: 600;
+            color: #154258;
+            margin-bottom: 0.6rem;
+            font-size: 1.2rem;
+        }
+
+        .function-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 60px;
+            border: 2px solid #a0c4e8;
+        }
+
+        .function-row span {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1b4c6e;
+        }
+
+        .function-row input {
+            flex: 1;
+            border: none;
+            padding: 0.5rem 0.2rem;
+            font-size: 1.2rem;
+            outline: none;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+        }
+
+        .presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 1.2rem 0;
+        }
+
+        .preset-btn {
+            background: #e1effa;
+            border: 2px solid #80b5e0;
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #103a58;
+            cursor: pointer;
+            transition: 0.07s;
+            box-shadow: 0 3px 0 #96b9d6;
+        }
+
+        .preset-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #96b9d6;
+        }
+
+        .slider-group {
+            margin: 1.5rem 0 1rem;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            color: #1b5275;
+        }
+
+        input[type=range] {
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+
+        .coord-display {
+            background: #c1dcf7;
+            border-radius: 2rem;
+            padding: 1rem 1.5rem;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            font-size: 1.1rem;
+        }
+
+        .coord-item {
+            background: #f4faff;
+            border-radius: 40px;
+            padding: 0.4rem 1.2rem;
+            font-weight: 600;
+            color: #00447c;
+        }
+
+        .reset-btn {
+            background: #2679b3;
+            border: none;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #a3d0ff;
+            box-shadow: 0 5px 0 #0f3a57;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="visualizer-card">
+    <div class="header">
+        <h1>📊 math problem visualizer <span class="badge">f(x) = ?</span></h1>
+        <div>⚡ interactive graphing</div>
+    </div>
+
+    <!-- main grid -->
+    <div class="grid-2col">
+        <!-- left: graph -->
+        <div class="graph-panel">
+            <div class="canvas-container">
+                <canvas id="functionCanvas" width="500" height="400"></canvas>
+            </div>
+            <div class="axis-info">
+                <span>🔹 x: from -6 to 6</span>
+                <span>🔹 y: auto-scale</span>
+            </div>
+        </div>
+
+        <!-- right: controls -->
+        <div class="control-panel">
+            <div class="function-input-area">
+                <div class="function-label">✏️ enter function f(x) =</div>
+                <div class="function-row">
+                    <span>f(x) =</span>
+                    <input type="text" id="functionInput" value="Math.sin(x)" placeholder="e.g. x*x, Math.sin(x)">
+                </div>
+            </div>
+
+            <div class="presets">
+                <button class="preset-btn" data-fn="x">x (linear)</button>
+                <button class="preset-btn" data-fn="x*x">x² (parabola)</button>
+                <button class="preset-btn" data-fn="Math.sin(x)">sin(x)</button>
+                <button class="preset-btn" data-fn="Math.cos(x)">cos(x)</button>
+                <button class="preset-btn" data-fn="Math.sqrt(Math.abs(x))">√|x|</button>
+                <button class="preset-btn" data-fn="1/x">1/x</button>
+            </div>
+
+            <!-- range slider for x‑axis (visual zoom) -->
+            <div class="slider-group">
+                <div class="slider-label">
+                    <span>🌐 x‑range</span>
+                    <span id="rangeValue">±6.0</span>
+                </div>
+                <input type="range" id="rangeSlider" min="2" max="12" value="6" step="0.5">
+            </div>
+
+            <!-- live coordinate -->
+            <div class="coord-display" id="coordDisplay">
+                <div class="coord-item">🖱️ x: 0.00</div>
+                <div class="coord-item">📌 f(x): 0.00</div>
+            </div>
+
+            <button class="reset-btn" id="resetViewBtn">⟲ reset view & function</button>
+        </div>
+    </div>
+
+    <!-- simple explanation -->
+    <div style="text-align: center; margin-top: 1.5rem; color: #26648b; font-size:0.95rem;">
+        <span>⚡ hover over canvas to see coordinates · use presets or type any JavaScript expression (x variable) · range adjustable</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // canvas & context
+        const canvas = document.getElementById('functionCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // DOM elements
+        const functionInput = document.getElementById('functionInput');
+        const rangeSlider = document.getElementById('rangeSlider');
+        const rangeSpan = document.getElementById('rangeValue');
+        const coordDisplay = document.getElementById('coordDisplay');
+        const resetBtn = document.getElementById('resetViewBtn');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+
+        // current settings
+        let xMin = -6, xMax = 6;
+        let yMin = -4, yMax = 4;   // dynamic, but we'll auto-scale y based on function
+
+        // mouse tracking
+        let mouseX = 0, mouseY = 0;
+        let showCoord = false;
+
+        // function to evaluate
+        let currentFn = (x) => Math.sin(x); // default
+
+        // update function from input string
+        function updateFunctionFromInput() {
+            const expr = functionInput.value.trim();
+            try {
+                // create a new function with 'x' as parameter
+                const fnBody = expr.startsWith('return') ? expr : 'return ' + expr;
+                const fn = new Function('x', fnBody);
+                // test evaluation
+                fn(1);
+                currentFn = fn;
+                drawGridAndCurve();
+            } catch (e) {
+                alert('Invalid function expression. Use x as variable, e.g. x*x, Math.sin(x)');
+            }
+        }
+
+        // auto-scale y based on visible x range and function values
+        function computeYRange() {
+            const samples = 200;
+            let minY = Infinity, maxY = -Infinity;
+            for (let i = 0; i <= samples; i++) {
+                const t = i / samples;
+                const x = xMin + t * (xMax - xMin);
+                try {
+                    const y = currentFn(x);
+                    if (isFinite(y)) {
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                } catch (e) {
+                    // ignore undefined points
+                }
+            }
+            // add some padding
+            if (minY === Infinity) minY = -1;
+            if (maxY === -Infinity) maxY = 1;
+            const padding = Math.max(0.2, (maxY - minY) * 0.1);
+            yMin = minY - padding;
+            yMax = maxY + padding;
+            if (Math.abs(yMax - yMin) < 0.001) { // flat line
+                yMin = -1;
+                yMax = 1;
+            }
+        }
+
+        // map x to canvas coordinate
+        function mapX(x) {
+            return ((x - xMin) / (xMax - xMin)) * width;
+        }
+
+        // map y to canvas coordinate (inverted)
+        function mapY(y) {
+            return height - ((y - yMin) / (yMax - yMin)) * height;
+        }
+
+        // draw grid, axes, and curve
+        function drawGridAndCurve() {
+            ctx.clearRect(0, 0, width, height);
+
+            // compute y range based on current function and x-range
+            computeYRange();
+
+            // draw light grid
+            ctx.strokeStyle = "#d9e2ec";
+            ctx.lineWidth = 0.6;
+            // vertical lines
+            const stepX = (xMax - xMin) / 10;
+            for (let x = xMin; x <= xMax; x += stepX) {
+                const canvasX = mapX(x);
+                ctx.beginPath();
+                ctx.moveTo(canvasX, 0);
+                ctx.lineTo(canvasX, height);
+                ctx.strokeStyle = "#d0deed";
+                ctx.stroke();
+            }
+            // horizontal lines
+            const stepY = (yMax - yMin) / 8;
+            for (let y = yMin; y <= yMax; y += stepY) {
+                const canvasY = mapY(y);
+                ctx.beginPath();
+                ctx.moveTo(0, canvasY);
+                ctx.lineTo(width, canvasY);
+                ctx.strokeStyle = "#d0deed";
+                ctx.stroke();
+            }
+
+            // draw axes
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#3a6d9c";
+            // x-axis
+            const yZero = mapY(0);
+            if (yZero >= 0 && yZero <= height) {
+                ctx.beginPath();
+                ctx.moveTo(0, yZero);
+                ctx.lineTo(width, yZero);
+                ctx.strokeStyle = "#3a6d9c";
+                ctx.stroke();
+            }
+            // y-axis
+            const xZero = mapX(0);
+            if (xZero >= 0 && xZero <= width) {
+                ctx.beginPath();
+                ctx.moveTo(xZero, 0);
+                ctx.lineTo(xZero, height);
+                ctx.stroke();
+            }
+
+            // draw function curve
+            ctx.beginPath();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#c2592b";
+            ctx.shadowColor = '#ffb27f';
+            ctx.shadowBlur = 8;
+
+            const steps = 500;
+            let first = true;
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const x = xMin + t * (xMax - xMin);
+                let y;
+                try {
+                    y = currentFn(x);
+                } catch (e) {
+                    first = true;
+                    continue;
+                }
+                if (!isFinite(y)) {
+                    first = true;
+                    continue;
+                }
+                const canvasX = mapX(x);
+                const canvasY = mapY(y);
+                if (canvasY < 0 || canvasY > height) {
+                    first = true;
+                    continue; // skip out-of-range
+                }
+                if (first) {
+                    ctx.moveTo(canvasX, canvasY);
+                    first = false;
+                } else {
+                    ctx.lineTo(canvasX, canvasY);
+                }
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // if mouse inside, draw crosshair and coordinates
+            if (showCoord) {
+                const xVal = xMin + (mouseX / width) * (xMax - xMin);
+                let yVal;
+                try {
+                    yVal = currentFn(xVal);
+                } catch (e) {
+                    yVal = NaN;
+                }
+                if (isFinite(yVal)) {
+                    const canvasY = mapY(yVal);
+                    // draw cross
+                    ctx.beginPath();
+                    ctx.strokeStyle = "#1d3f5c";
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([5, 3]);
+                    ctx.moveTo(0, canvasY);
+                    ctx.lineTo(width, canvasY);
+                    ctx.stroke();
+                    ctx.moveTo(mouseX, 0);
+                    ctx.lineTo(mouseX, height);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // update display
+                    coordDisplay.innerHTML = `
+                        <div class="coord-item">🖱️ x: ${xVal.toFixed(3)}</div>
+                        <div class="coord-item">📌 f(x): ${yVal.toFixed(3)}</div>
+                    `;
+                } else {
+                    coordDisplay.innerHTML = `
+                        <div class="coord-item">🖱️ x: ${xVal.toFixed(3)}</div>
+                        <div class="coord-item">📌 f(x): undefined</div>
+                    `;
+                }
+            } else {
+                coordDisplay.innerHTML = `
+                    <div class="coord-item">🖱️ x: —</div>
+                    <div class="coord-item">📌 f(x): —</div>
+                `;
+            }
+        }
+
+        // mouse tracking
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            mouseX = (e.clientX - rect.left) * scaleX;
+            mouseY = (e.clientY - rect.top) * scaleY;
+            if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
+                showCoord = true;
+            } else {
+                showCoord = false;
+            }
+            drawGridAndCurve();
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            showCoord = false;
+            drawGridAndCurve();
+        });
+
+        // range slider
+        rangeSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            rangeSpan.textContent = `±${val.toFixed(1)}`;
+            xMin = -val;
+            xMax = val;
+            drawGridAndCurve();
+        });
+
+        // preset buttons
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const fnStr = btn.dataset.fn;
+                functionInput.value = fnStr;
+                updateFunctionFromInput();
+            });
+        });
+
+        // reset view
+        resetBtn.addEventListener('click', () => {
+            functionInput.value = 'Math.sin(x)';
+            rangeSlider.value = 6;
+            rangeSpan.textContent = '±6.0';
+            xMin = -6;
+            xMax = 6;
+            updateFunctionFromInput();
+        });
+
+        // input change
+        functionInput.addEventListener('change', updateFunctionFromInput);
+        functionInput.addEventListener('input', updateFunctionFromInput); // realtime
+
+        // initial draw
+        updateFunctionFromInput();
+
+        // also handle window resize? canvas fixed size, ignore.
+        // optional: allow dragging to update? no need.
+
+        // after each update, draw
+        // override updateFunctionFromInput to call draw
+        const originalUpdate = updateFunctionFromInput;
+        updateFunctionFromInput = function() {
+            originalUpdate();
+            drawGridAndCurve();
+        };
+        updateFunctionFromInput();
+
+        // fix reference
+        window.updateFunctionFromInput = updateFunctionFromInput;
+    })();
+</script>
+</body>
+</html>

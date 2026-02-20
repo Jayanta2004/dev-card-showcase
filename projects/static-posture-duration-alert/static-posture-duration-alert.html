@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Posture Duration Alert - Workplace Wellness Tracker</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="static-posture-duration-alert.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+    <!-- Navbar -->
+    <div w3-include-html="../../navbar.html"></div>
+
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-chair"></i> Static Posture Duration Alert</h1>
+            <p>Monitor continuous sitting or standing time to prevent musculoskeletal strain</p>
+        </header>
+
+        <!-- Setup Section -->
+        <section class="setup-section">
+            <h2><i class="fas fa-cog"></i> Setup</h2>
+            <div class="setup-grid">
+                <div class="setup-item">
+                    <label for="postureType">Current Posture:</label>
+                    <select id="postureType">
+                        <option value="sitting">Sitting</option>
+                        <option value="standing">Standing</option>
+                    </select>
+                </div>
+                <div class="setup-item">
+                    <label for="alertThreshold">Alert Threshold (minutes):</label>
+                    <input type="number" id="alertThreshold" min="5" max="120" value="30">
+                </div>
+                <div class="setup-item">
+                    <label for="reminderInterval">Reminder Interval (minutes):</label>
+                    <input type="number" id="reminderInterval" min="1" max="30" value="5">
+                </div>
+                <div class="setup-item">
+                    <label for="breakDuration">Recommended Break (minutes):</label>
+                    <input type="number" id="breakDuration" min="1" max="15" value="2">
+                </div>
+            </div>
+        </section>
+
+        <!-- Current Session -->
+        <section class="current-session">
+            <h2><i class="fas fa-clock"></i> Current Session</h2>
+            <div class="session-display">
+                <div class="timer-container">
+                    <div class="timer-circle">
+                        <div class="timer-text">
+                            <div id="currentTimer">00:00:00</div>
+                            <div id="currentPosture">Sitting</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="session-controls">
+                    <button id="startSession" class="btn-primary">
+                        <i class="fas fa-play"></i> Start Tracking
+                    </button>
+                    <button id="pauseSession" class="btn-secondary" disabled>
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button id="endSession" class="btn-danger" disabled>
+                        <i class="fas fa-stop"></i> End Session
+                    </button>
+                </div>
+                <div class="alert-status">
+                    <div id="alertIndicator" class="alert-indicator">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Within safe limits</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Movement Reminders -->
+        <section class="reminders-section">
+            <h2><i class="fas fa-bell"></i> Movement Reminders</h2>
+            <div id="remindersList" class="reminders-list">
+                <div class="reminder-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Configure your posture settings above and start tracking to receive movement reminders.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistics -->
+        <section class="stats-section">
+            <h2><i class="fas fa-chart-bar"></i> Today's Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalSittingTime">0 min</div>
+                        <div class="stat-label">Total Sitting Time</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-walking"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalStandingTime">0 min</div>
+                        <div class="stat-label">Total Standing Time</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="alertsTriggered">0</div>
+                        <div class="stat-label">Alerts Triggered</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="breaksTaken">0</div>
+                        <div class="stat-label">Breaks Taken</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts -->
+        <section class="charts-section">
+            <h2><i class="fas fa-chart-line"></i> Posture Patterns</h2>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Daily Posture Distribution</h3>
+                    <canvas id="dailyPostureChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Session Duration Trends</h3>
+                    <canvas id="sessionTrendsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Insights -->
+        <section class="insights-section">
+            <h2><i class="fas fa-lightbulb"></i> Wellness Insights</h2>
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <h3>Posture Balance</h3>
+                    <p id="postureBalance">No data available yet. Start tracking to see your posture balance insights.</p>
+                </div>
+                <div class="insight-card">
+                    <h3>Risk Assessment</h3>
+                    <p id="riskAssessment">Track your sessions to receive personalized risk assessments.</p>
+                </div>
+                <div class="insight-card">
+                    <h3>Improvement Tips</h3>
+                    <p id="improvementTips">Movement reminders will help you maintain better posture habits.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- History -->
+        <section class="history-section">
+            <h2><i class="fas fa-history"></i> Session History</h2>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All Sessions</button>
+                <button class="filter-btn" data-filter="today">Today</button>
+                <button class="filter-btn" data-filter="week">This Week</button>
+            </div>
+            <div id="sessionHistory" class="history-list">
+                <div class="history-placeholder">
+                    <i class="fas fa-inbox"></i>
+                    <p>No sessions recorded yet. Start tracking to build your history.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <div w3-include-html="../../footer.html"></div>
+
+    <script src="static-posture-duration-alert.js"></script>
+    <script src="../../script.js"></script>
+</body>
+</html>

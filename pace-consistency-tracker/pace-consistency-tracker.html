@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pace Consistency Tracker - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/pace-consistency-tracker.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="activity"></i> Pace Consistency Tracker</h1>
+            <p>Measure pace stability during runs to evaluate pacing strategy efficiency and enhance race preparation.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Run Logger -->
+            <section class="tracker-section run-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Run Splits</h2>
+                <form id="paceForm" class="pace-form">
+                    <div class="form-group">
+                        <label for="runDate">Run Date</label>
+                        <input type="date" id="runDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="runType">Run Type</label>
+                        <select id="runType" required>
+                            <option value="">Select run type</option>
+                            <option value="easy">Easy Run</option>
+                            <option value="tempo">Tempo Run</option>
+                            <option value="interval">Interval Training</option>
+                            <option value="race">Race</option>
+                            <option value="long">Long Run</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="totalDistance">Total Distance (km)</label>
+                        <input type="number" id="totalDistance" step="0.1" min="0.1" placeholder="e.g., 10.0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="splitDistance">Split Distance (km)</label>
+                        <select id="splitDistance" required>
+                            <option value="">Select split distance</option>
+                            <option value="1">1 km splits</option>
+                            <option value="0.5">0.5 km splits</option>
+                            <option value="0.25">0.25 km splits</option>
+                            <option value="0.2">200m splits</option>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic splits section -->
+                    <div id="splitsSection" class="splits-section">
+                        <h3>Split Times</h3>
+                        <div id="splitsContainer" class="splits-container">
+                            <!-- Split inputs will be generated here -->
+                        </div>
+                        <button type="button" id="addSplit" class="add-split-btn">
+                            <i data-lucide="plus"></i> Add Split
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes (optional)</label>
+                        <textarea id="notes" rows="3" placeholder="Weather conditions, how you felt, terrain, etc."></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        <i data-lucide="save"></i> Log Run
+                    </button>
+                </form>
+            </section>
+
+            <!-- Current Status Dashboard -->
+            <section class="tracker-section status-dashboard">
+                <h2><i data-lucide="bar-chart-3"></i> Pace Analysis</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-icon">
+                            <i data-lucide="target"></i>
+                        </div>
+                        <div class="status-content">
+                            <div class="status-value" id="avgPace">--</div>
+                            <div class="status-label">Average Pace</div>
+                            <div class="status-unit">min/km</div>
+                        </div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-icon">
+                            <i data-lucide="trending-up"></i>
+                        </div>
+                        <div class="status-content">
+                            <div class="status-value" id="paceVariance">--</div>
+                            <div class="status-label">Pace Variance</div>
+                            <div class="status-unit">seconds</div>
+                        </div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-icon">
+                            <i data-lucide="zap"></i>
+                        </div>
+                        <div class="status-content">
+                            <div class="status-value" id="consistencyScore">--</div>
+                            <div class="status-label">Consistency Score</div>
+                            <div class="status-unit">/100</div>
+                        </div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-icon">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div class="status-content">
+                            <div class="status-value" id="bestSplit">--</div>
+                            <div class="status-label">Best Split Pace</div>
+                            <div class="status-unit">min/km</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pace Variance Visualization -->
+            <section class="tracker-section variance-visualization">
+                <h2><i data-lucide="bar-chart-2"></i> Pace Variance Analysis</h2>
+                <div class="variance-overview">
+                    <div class="variance-indicator">
+                        <div class="variance-bar">
+                            <div class="variance-fill" id="varianceFill"></div>
+                            <div class="variance-markers">
+                                <div class="variance-marker" data-level="excellent">
+                                    <span>Excellent</span>
+                                </div>
+                                <div class="variance-marker" data-level="good">
+                                    <span>Good</span>
+                                </div>
+                                <div class="variance-marker" data-level="moderate">
+                                    <span>Moderate</span>
+                                </div>
+                                <div class="variance-marker" data-level="poor">
+                                    <span>Poor</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="variance-legend">
+                            <div class="legend-item">
+                                <div class="legend-color excellent"></div>
+                                <span>&lt; 10s: Excellent consistency</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color good"></div>
+                                <span>10-20s: Good consistency</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color moderate"></div>
+                                <span>20-40s: Moderate consistency</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color poor"></div>
+                                <span>&gt; 40s: Poor consistency</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pace Trend Chart -->
+            <section class="tracker-section trend-chart">
+                <h2><i data-lucide="line-chart"></i> Pace Trends</h2>
+                <div class="chart-controls">
+                    <select id="chartTimeRange">
+                        <option value="7">Last 7 Runs</option>
+                        <option value="30">Last 30 Days</option>
+                        <option value="90">Last 3 Months</option>
+                        <option value="all">All Time</option>
+                    </select>
+                    <select id="chartMetric">
+                        <option value="pace">Average Pace</option>
+                        <option value="variance">Pace Variance</option>
+                        <option value="consistency">Consistency Score</option>
+                    </select>
+                    <button id="refreshChart" class="refresh-btn">
+                        <i data-lucide="refresh-cw"></i> Refresh
+                    </button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="paceChart"></canvas>
+                </div>
+            </section>
+
+            <!-- History View -->
+            <section class="tracker-section history-view">
+                <h2><i data-lucide="history"></i> Run History</h2>
+                <div class="history-controls">
+                    <input type="text" id="historySearch" placeholder="Search notes or run type...">
+                    <select id="historySort">
+                        <option value="date-desc">Newest First</option>
+                        <option value="date-asc">Oldest First</option>
+                        <option value="pace-asc">Fastest Pace</option>
+                        <option value="pace-desc">Slowest Pace</option>
+                        <option value="consistency-desc">Most Consistent</option>
+                        <option value="consistency-asc">Least Consistent</option>
+                    </select>
+                </div>
+                <div id="historyList" class="history-list">
+                    <!-- History items will be populated here -->
+                </div>
+            </section>
+
+            <!-- Insights & Recommendations -->
+            <section class="tracker-section insights-section">
+                <h2><i data-lucide="lightbulb"></i> Pacing Insights</h2>
+                <div id="insightsContainer" class="insights-container">
+                    <!-- Insights will be populated here -->
+                </div>
+            </section>
+
+            <!-- Running Benchmarks -->
+            <section class="tracker-section benchmarks-section">
+                <h2><i data-lucide="target"></i> Pacing Benchmarks</h2>
+                <div class="benchmarks-grid">
+                    <div class="benchmark-card">
+                        <h3>Consistency Levels</h3>
+                        <div class="benchmark-item">
+                            <div class="benchmark-label">Excellent</div>
+                            <div class="benchmark-value">&lt; 10s variance</div>
+                            <div class="benchmark-desc">Elite-level pace control</div>
+                        </div>
+                    </div>
+                    <div class="benchmark-card">
+                        <h3>Race Preparation</h3>
+                        <div class="benchmark-item">
+                            <div class="benchmark-label">Race Ready</div>
+                            <div class="benchmark-value">&lt; 20s variance</div>
+                            <div class="benchmark-desc">Good for competitive racing</div>
+                        </div>
+                    </div>
+                    <div class="benchmark-card">
+                        <h3>Training Focus</h3>
+                        <div class="benchmark-item">
+                            <div class="benchmark-label">Improvement Area</div>
+                            <div class="benchmark-value">&gt; 40s variance</div>
+                            <div class="benchmark-desc">Focus on tempo runs</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Include footer -->
+    <div id="footer-container"></div>
+
+    <script src="../js/include.js"></script>
+    <script src="../js/pace-consistency-tracker.js"></script>
+</body>
+</html></content>
+<parameter name="filePath">c:\Users\Gupta\Downloads\dev-card-showcase\pace-consistency-tracker\pace-consistency-tracker.html

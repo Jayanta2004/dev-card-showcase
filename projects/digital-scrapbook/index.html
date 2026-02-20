@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📸 Digital Scrapbook · memory keeper</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Kalam', 'Caveat', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', cursive, sans-serif;
+    }
+
+    body {
+      background: #faeedf;
+      background-image: radial-gradient(circle at 20% 30%, #f6e3cb 2px, transparent 2px), 
+                        radial-gradient(circle at 80% 70%, #ecdcc0 2px, transparent 2px);
+      background-size: 40px 40px;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .scrapbook-container {
+      max-width: 1200px;
+      width: 100%;
+      background: #fffcf3;
+      border-radius: 48px 48px 32px 32px;
+      box-shadow: 0 20px 35px rgba(100, 70, 40, 0.2), 0 6px 12px rgba(0,0,0,0.1);
+      padding: 2.5rem 2rem;
+      border: 2px solid #ffeac1;
+      position: relative;
+    }
+
+    /* torn paper effect */
+    .scrapbook-container::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      width: 100px;
+      height: 30px;
+      background: rgba(255,235,200,0.3);
+      transform: rotate(-3deg);
+      filter: blur(4px);
+      pointer-events: none;
+    }
+
+    h1 {
+      font-size: 3.2rem;
+      font-weight: 600;
+      color: #5e3c28;
+      letter-spacing: 2px;
+      text-shadow: 4px 4px 0 #ffe6c6;
+      margin-bottom: 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Caveat', 'Kalam', cursive;
+    }
+
+    .subhead {
+      font-size: 1.2rem;
+      color: #7a5a4a;
+      border-bottom: 3px dashed #dbb88c;
+      padding-bottom: 0.7rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    /* memory grid — polaroid style */
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 2rem 1.5rem;
+      margin: 2.2rem 0 2.5rem;
+    }
+
+    .memory-card {
+      background: white;
+      border-radius: 20px 20px 16px 16px;
+      box-shadow: 8px 8px 0 #c9ad93, 0 10px 25px rgba(70, 40, 20, 0.15);
+      padding: 1.2rem 1rem 1.5rem;
+      transform: rotate(0.5deg);
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #f5e5d5;
+      position: relative;
+    }
+
+    .memory-card:hover {
+      transform: rotate(0deg) scale(1.02);
+      box-shadow: 12px 12px 0 #b68f72, 0 15px 30px rgba(100, 60, 20, 0.2);
+    }
+
+    /* washi tape effect */
+    .memory-card::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: 30%;
+      width: 40%;
+      height: 18px;
+      background: rgba(255, 220, 150, 0.5);
+      border-radius: 10px;
+      transform: rotate(-2deg);
+      filter: blur(3px);
+      opacity: 0.7;
+    }
+
+    .memory-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 4px solid #fff2e0;
+      box-shadow: inset 0 0 0 2px #eedcc8, 0 6px 12px rgba(0,0,0,0.1);
+      background: #e8ddd0;
+      transition: 0.1s;
+    }
+
+    .memory-title {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #4d3425;
+      margin: 0.7rem 0 0.2rem;
+      font-family: 'Caveat', cursive;
+      border-bottom: 2px dotted #dcb48b;
+      padding-bottom: 5px;
+    }
+
+    .memory-desc {
+      font-size: 1rem;
+      color: #4e3e32;
+      line-height: 1.4;
+      margin-bottom: 0.8rem;
+      font-family: 'Kalam', 'Inter', cursive;
+    }
+
+    .memory-date {
+      font-size: 0.8rem;
+      color: #9f7e66;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 0.4rem;
+      font-style: italic;
+    }
+
+    .card-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 0.6rem;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 30px;
+      transition: 0.1s;
+      color: #6a4c3a;
+    }
+
+    .icon-btn:hover {
+      background: #f1dbcb;
+      transform: scale(1.1);
+    }
+
+    /* add memory form — like a sticky note */
+    .add-memory-section {
+      background: #fff7e7;
+      border-radius: 32px;
+      padding: 1.8rem 2rem;
+      margin-top: 1rem;
+      border: 2px solid #ffdbb5;
+      box-shadow: 5px 5px 0 #c9a787;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 1.4rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 180px;
+    }
+
+    .form-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #604434;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .form-input {
+      background: white;
+      border: 2px solid #ebd5c0;
+      border-radius: 40px;
+      padding: 0.7rem 1.2rem;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.1s;
+      font-family: 'Kalam', 'Inter', sans-serif;
+    }
+
+    .form-input:focus {
+      border-color: #b4815c;
+      box-shadow: 0 0 0 3px #f3dccf;
+    }
+
+    .add-btn {
+      background: #c3815b;
+      border: none;
+      border-radius: 60px;
+      padding: 0.8rem 2.2rem;
+      color: white;
+      font-size: 1.3rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      border-bottom: 5px solid #7a543c;
+      transition: 0.08s;
+      font-family: 'Caveat', cursive;
+    }
+
+    .add-btn:active {
+      border-bottom-width: 2px;
+      transform: translateY(3px);
+    }
+
+    .empty-message {
+      text-align: center;
+      padding: 2.5rem;
+      background: #fcf2e4;
+      border-radius: 60px;
+      color: #836b58;
+      font-size: 1.4rem;
+      font-family: 'Caveat', cursive;
+      border: 3px dashed #c9a082;
+    }
+
+    footer {
+      margin-top: 2rem;
+      color: #856b58;
+      font-size: 0.95rem;
+    }
+
+    /* journal entry decoration */
+    .sticker {
+      font-size: 1.8rem;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="scrapbook-container">
+    <h1>📖 Paper & memory</h1>
+    <div class="subhead">
+      <span>✧ digital scrapbook · collect moments ✧</span>
+      <span style="font-size:1rem;">total memories: <span id="memoryCount">0</span></span>
+    </div>
+
+    <!-- 📸 memory grid (dynamic) -->
+    <div id="memoryGrid" class="memory-grid">
+      <!-- JS will inject cards -->
+    </div>
+
+    <!-- ➕ add new memory — sticky form -->
+    <div class="add-memory-section">
+      <div class="form-group">
+        <span class="form-label">📷 image url</span>
+        <input type="text" id="imageInput" class="form-input" placeholder="paste photo link..." value="https://images.pexels.com/photos/572897/pexels-photo-572897.jpeg?auto=compress&cs=tinysrgb&w=300">
+      </div>
+      <div class="form-group">
+        <span class="form-label">🏷️ title</span>
+        <input type="text" id="titleInput" class="form-input" placeholder="e.g. sunset hike" value="Mountain escape">
+      </div>
+      <div class="form-group">
+        <span class="form-label">📝 memory</span>
+        <input type="text" id="descInput" class="form-input" placeholder="a short story..." value="Cold air, warm tea">
+      </div>
+      <div class="form-group">
+        <span class="form-label">📅 date</span>
+        <input type="text" id="dateInput" class="form-input" placeholder="Aug 2025" value="Feb 2026">
+      </div>
+      <button id="addMemoryBtn" class="add-btn">➕ add page</button>
+    </div>
+    <footer>✂️ click ✕ to remove · every moment matters</footer>
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // ---------- INITIAL MEMORIES (preloaded scrapbook pages) ----------
+      const defaultMemories = [
+        {
+          id: 'mem1',
+          imageUrl: 'https://images.pexels.com/photos/1770809/pexels-photo-1770809.jpeg?auto=compress&cs=tinysrgb&w=300',
+          title: '🌊 Beach day',
+          description: 'Salt wind and seashells. Perfect silence.',
+          date: 'July 2025'
+        },
+        {
+          id: 'mem2',
+          imageUrl: 'https://images.pexels.com/photos/102127/pexels-photo-102127.jpeg?auto=compress&cs=tinysrgb&w=300',
+          title: '☕ Coffee & pages',
+          description: 'Saturday morning, old bookstore.',
+          date: 'Oct 2025'
+        },
+        {
+          id: 'mem3',
+          imageUrl: 'https://images.pexels.com/photos/289586/pexels-photo-289586.jpeg?auto=compress&cs=tinysrgb&w=300',
+          title: '🏔️ Road trip',
+          description: 'Playlist on repeat. Open highway.',
+          date: 'Dec 2025'
+        }
+      ];
+
+      // ---------- STATE: memories array ----------
+      let memories = [...defaultMemories.map(m => ({ ...m, id: m.id || crypto.randomUUID?.() || Date.now() + Math.random() }))];
+
+      // ---------- DOM elements ----------
+      const gridEl = document.getElementById('memoryGrid');
+      const memoryCountEl = document.getElementById('memoryCount');
+      const addBtn = document.getElementById('addMemoryBtn');
+      
+      // input fields
+      const imageInput = document.getElementById('imageInput');
+      const titleInput = document.getElementById('titleInput');
+      const descInput = document.getElementById('descInput');
+      const dateInput = document.getElementById('dateInput');
+
+      // ---------- HELPER: generate unique id ----------
+      function generateId() {
+        return 'mem-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+      }
+
+      // ---------- RENDER all memory cards from array ----------
+      function renderGrid() {
+        if (!gridEl) return;
+
+        if (memories.length === 0) {
+          gridEl.innerHTML = `<div class="empty-message">📭 paste a memory — the page is blank ✨</div>`;
+          memoryCountEl.textContent = '0';
+          return;
+        }
+
+        let html = '';
+        memories.forEach(memory => {
+          html += `
+            <div class="memory-card" data-id="${memory.id}">
+              <img src="${escapeHtml(memory.imageUrl)}" alt="${escapeHtml(memory.title)}" class="memory-img" loading="lazy" onerror="this.src='https://images.pexels.com/photos/572897/pexels-photo-572897.jpeg?auto=compress&cs=tinysrgb&w=300';">
+              <div class="memory-title">${escapeHtml(memory.title)}</div>
+              <div class="memory-desc">${escapeHtml(memory.description)}</div>
+              <div class="memory-date">📎 ${escapeHtml(memory.date || 'unknown date')}</div>
+              <div class="card-actions">
+                <button class="icon-btn edit-btn" aria-label="edit" data-id="${memory.id}" title="✎ edit (quick)">✎</button>
+                <button class="icon-btn delete-btn" aria-label="delete" data-id="${memory.id}" title="delete memory">✕</button>
+              </div>
+            </div>
+          `;
+        });
+
+        gridEl.innerHTML = html;
+        memoryCountEl.textContent = memories.length;
+
+        // attach delete events to each delete button
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            deleteMemory(id);
+          });
+        });
+
+        // attach edit events (simple prompt-based edit)
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            editMemoryPrompt(id);
+          });
+        });
+      }
+
+      // simple escape to prevent XSS
+      function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // ---------- DELETE memory ----------
+      function deleteMemory(id) {
+        memories = memories.filter(mem => mem.id !== id);
+        renderGrid();
+      }
+
+      // ---------- EDIT memory (quick, prompt-based for simplicity) ----------
+      function editMemoryPrompt(id) {
+        const memory = memories.find(m => m.id === id);
+        if (!memory) return;
+
+        const newTitle = prompt('📝 Edit title:', memory.title);
+        if (newTitle !== null && newTitle.trim() !== '') memory.title = newTitle.trim() || memory.title;
+        
+        const newDesc = prompt('✏️ Edit description:', memory.description);
+        if (newDesc !== null) memory.description = newDesc.trim() || memory.description;
+        
+        const newDate = prompt('📅 Edit date:', memory.date);
+        if (newDate !== null) memory.date = newDate.trim() || memory.date;
+
+        const newImg = prompt('🌄 Edit image URL:', memory.imageUrl);
+        if (newImg !== null && newImg.trim() !== '') memory.imageUrl = newImg.trim() || memory.imageUrl;
+
+        renderGrid(); // re-render with updated fields
+      }
+
+      // ---------- ADD new memory ----------
+      function addMemory() {
+        // get values from form inputs
+        let imgUrl = imageInput.value.trim();
+        let title = titleInput.value.trim();
+        let desc = descInput.value.trim();
+        let date = dateInput.value.trim();
+
+        // validation / fallbacks
+        if (!imgUrl) imgUrl = 'https://images.pexels.com/photos/572897/pexels-photo-572897.jpeg?auto=compress&cs=tinysrgb&w=300';
+        if (!title) title = '📌 untitled';
+        if (!desc) desc = 'a gentle memory.';
+        if (!date) {
+          const today = new Date();
+          date = today.toLocaleString('default', { month: 'short', year: 'numeric' });
+        }
+
+        // create new memory object
+        const newMemory = {
+          id: generateId(),
+          imageUrl: imgUrl,
+          title: title,
+          description: desc,
+          date: date
+        };
+
+        memories.push(newMemory);
+        renderGrid();
+
+        // optionally clear only if user wants? keep for convenience, but we can keep values for quick add
+        // keep fields but update date placeholder
+        dateInput.value = date; // keep consistency
+      }
+
+      // ---------- RESET to default examples (optional via double click on header) ----------
+      function resetToDefaults() {
+        memories = [...defaultMemories.map(m => ({ 
+          ...m, 
+          id: generateId() 
+        }))];
+        renderGrid();
+      }
+
+      // ---------- INITIAL load and event listeners ----------
+      function initApp() {
+        // load initial grid
+        renderGrid();
+
+        // add memory button listener
+        addBtn.addEventListener('click', addMemory);
+
+        // allow enter key in any input to trigger add?
+        const inputs = [imageInput, titleInput, descInput, dateInput];
+        inputs.forEach(input => {
+          input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addMemory();
+            }
+          });
+        });
+
+        // secret: double-click on header to reset to default 3 cards (like a fresh scrapbook)
+        const header = document.querySelector('h1');
+        header.addEventListener('dblclick', function() {
+          if (confirm('🔄 reset to sample memories?')) {
+            resetToDefaults();
+          }
+        });
+      }
+
+      initApp();
+    })();
+  </script>
+</body>
+</html>

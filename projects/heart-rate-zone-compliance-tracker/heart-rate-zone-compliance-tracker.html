@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Rate Zone Compliance Tracker</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="icon" type="image/png" href="../../Hall of Fame (1).png" />
+    <link rel="icon" href="../../assets/favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/favicon/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="../../assets/favicon/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="heart-rate-zone-compliance-tracker.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <div class="hr-container">
+        <h1>🫀 Heart Rate Zone Compliance Tracker</h1>
+        <p>Track how accurately your workouts stay within target heart rate zones to optimize endurance training. Monitor zone compliance percentages and improve training effectiveness.</p>
+
+        <div class="setup-section">
+            <h2>Zone Setup</h2>
+            <div class="input-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" min="10" max="100" placeholder="30">
+            </div>
+            <div class="input-group">
+                <label for="restingHR">Resting Heart Rate (bpm):</label>
+                <input type="number" id="restingHR" min="40" max="100" placeholder="60">
+            </div>
+            <div class="zone-display" id="zoneDisplay">
+                <h3>Heart Rate Zones</h3>
+                <div id="zonesList"></div>
+            </div>
+        </div>
+
+        <div class="log-section">
+            <h2>Log Workout Session</h2>
+            <div class="input-group">
+                <label for="workoutType">Workout Type:</label>
+                <select id="workoutType">
+                    <option value="endurance">Endurance Run</option>
+                    <option value="tempo">Tempo Run</option>
+                    <option value="interval">Interval Training</option>
+                    <option value="steady-state">Steady State Cardio</option>
+                    <option value="recovery">Recovery/Active Rest</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="targetZone">Target Zone:</label>
+                <select id="targetZone">
+                    <option value="1">Zone 1 (Recovery)</option>
+                    <option value="2">Zone 2 (Endurance)</option>
+                    <option value="3">Zone 3 (Tempo)</option>
+                    <option value="4">Zone 4 (Threshold)</option>
+                    <option value="5">Zone 5 (Maximum)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="duration">Duration (minutes):</label>
+                <input type="number" id="duration" min="1" placeholder="30">
+            </div>
+            <div class="input-group">
+                <label for="avgHR">Average Heart Rate (bpm):</label>
+                <input type="number" id="avgHR" min="50" max="220" placeholder="150">
+            </div>
+            <div class="input-group">
+                <label for="hrData">HR Data Points (optional - comma separated bpm values):</label>
+                <textarea id="hrData" placeholder="145,152,148,155,142,149,151,147,153,146" rows="2"></textarea>
+            </div>
+            <div class="input-group">
+                <label for="notes">Workout Notes:</label>
+                <textarea id="notes" placeholder="How did the workout feel? Any observations about HR zones?"></textarea>
+            </div>
+            <button class="log-btn" onclick="logWorkout()">Log Workout</button>
+        </div>
+
+        <div class="stats-section">
+            <h2>Compliance Statistics</h2>
+            <div class="stat-cards">
+                <div class="stat-card">
+                    <h3>Overall Compliance</h3>
+                    <div class="stat-value" id="overallCompliance">0%</div>
+                    <p class="stat-desc">Average zone accuracy</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Zone 2 Focus</h3>
+                    <div class="stat-value" id="zone2Compliance">0%</div>
+                    <p class="stat-desc">Endurance training accuracy</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Training Load</h3>
+                    <div class="stat-value" id="totalMinutes">0 min</div>
+                    <p class="stat-desc">Total tracked time</p>
+                </div>
+                <div class="stat-card">
+                    <h3>This Week</h3>
+                    <div class="stat-value" id="weeklyWorkouts">0</div>
+                    <p class="stat-desc">Workouts logged</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-container">
+                <h2>Zone Compliance Trends</h2>
+                <canvas id="complianceChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Zone Distribution</h2>
+                <canvas id="zoneDistributionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="insights-section">
+            <h2>Training Insights</h2>
+            <div id="insightsContainer">
+                <div class="insight-card">
+                    <h3>🎯 Best Zone</h3>
+                    <div id="bestZone">No data available</div>
+                </div>
+                <div class="insight-card">
+                    <h3>📈 Progress Trend</h3>
+                    <div id="progressTrend">No data available</div>
+                </div>
+                <div class="insight-card">
+                    <h3>⚡ Training Intensity</h3>
+                    <div id="intensityAnalysis">No data available</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <h2>Workout History</h2>
+            <div class="history-filters">
+                <button class="filter-btn active" data-filter="all" onclick="filterHistory('all')">All</button>
+                <button class="filter-btn" data-filter="week" onclick="filterHistory('week')">This Week</button>
+                <button class="filter-btn" data-filter="month" onclick="filterHistory('month')">This Month</button>
+            </div>
+            <div id="workoutHistory"></div>
+        </div>
+    </div>
+
+    <div id="footer"></div>
+
+    <script src="heart-rate-zone-compliance-tracker.js"></script>
+    <script src="../../js/include.js"></script>
+</body>
+</html>

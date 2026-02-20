@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generative Pattern Machine</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #121212;
+            color: #f0f0f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b, #86a8e7, #91eae4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1.5px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+            font-weight: 300;
+            margin-bottom: 15px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            gap: 25px;
+        }
+        
+        @media (max-width: 1100px) {
+            .main-content {
+                flex-direction: column;
+            }
+        }
+        
+        .pattern-canvas-container {
+            flex: 1;
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        #patternCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls-panel {
+            width: 320px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow-y: auto;
+            max-height: calc(100vh - 160px);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #86a8e7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            font-size: 1.1rem;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        .control-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #ddd;
+            font-size: 1rem;
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #333;
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #86a8e7;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #86a8e7;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-swatch.active {
+            border-color: #fff;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .pattern-type-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .pattern-type {
+            background: #252525;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .pattern-type:hover {
+            background: #2e2e2e;
+            border-color: #86a8e7;
+        }
+        
+        .pattern-type.active {
+            background: #2e2e2e;
+            border-color: #86a8e7;
+            box-shadow: 0 0 10px rgba(134, 168, 231, 0.3);
+        }
+        
+        .buttons-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .control-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #86a8e7, #91eae4);
+            color: #121212;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(134, 168, 231, 0.4);
+        }
+        
+        .control-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .control-btn.secondary {
+            background: #333;
+            color: #f0f0f0;
+        }
+        
+        .info-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #aaa;
+            line-height: 1.5;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        .pattern-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #ddd;
+            backdrop-filter: blur(5px);
+        }
+        
+        .export-options {
+            display: none;
+            margin-top: 20px;
+            background: #252525;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .export-options.show {
+            display: block;
+        }
+        
+        .export-btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background: #333;
+            color: #f0f0f0;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+        
+        .export-btn:hover {
+            background: #3a3a3a;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .controls-panel {
+                width: 100%;
+                max-height: none;
+            }
+            
+            .pattern-type-selector {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .pattern-type-selector {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .buttons-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Generative Pattern Machine</h1>
+            <p class="subtitle">Create infinite textile and mandala patterns with procedural algorithms</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="pattern-canvas-container">
+                <canvas id="patternCanvas"></canvas>
+                <div class="pattern-info">
+                    <span id="patternName">Mandala Symmetry</span> • 
+                    <span id="patternResolution">2048×2048</span> • 
+                    <span id="patternSeed">Seed: #1A3F7B</span>
+                </div>
+            </div>
+            
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3 class="section-title"><i class="fas fa-shapes"></i> Pattern Type</h3>
+                    <div class="pattern-type-selector">
+                        <div class="pattern-type active" data-type="mandala">Mandala</div>
+                        <div class="pattern-type" data-type="textile">Textile</div>
+                        <div class="pattern-type" data-type="geometric">Geometric</div>
+                        <div class="pattern-type" data-type="organic">Organic</div>
+                        <div class="pattern-type" data-type="islamic">Islamic</div>
+                        <div class="pattern-type" data-type="fractal">Fractal</div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3 class="section-title"><i class="fas fa-sliders-h"></i> Pattern Parameters</h3>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Symmetry</span>
+                            <span id="symmetryValue">8</span>
+                        </div>
+                        <input type="range" id="symmetrySlider" min="3" max="24" value="8" step="1">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Complexity</span>
+                            <span id="complexityValue">5</span>
+                        </div>
+                        <input type="range" id="complexitySlider" min="1" max="10" value="5" step="1">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Scale</span>
+                            <span id="scaleValue">1.0</span>
+                        </div>
+                        <input type="range" id="scaleSlider" min="0.2" max="3" value="1.0" step="0.1">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Density</span>
+                            <span id="densityValue">7</span>
+                        </div>
+                        <input type="range" id="densitySlider" min="1" max="10" value="7" step="1">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3 class="section-title"><i class="fas fa-palette"></i> Color Palette</h3>
+                    <div class="color-palette">
+                        <div class="color-swatch active" style="background: linear-gradient(135deg, #ff7e5f, #feb47b);" data-colors="#ff7e5f,#feb47b"></div>
+                        <div class="color-swatch" style="background: linear-gradient(135deg, #86a8e7, #91eae4);" data-colors="#86a8e7,#91eae4"></div>
+                        <div class="color-swatch" style="background: linear-gradient(135deg, #DA4453, #89216B);" data-colors="#DA4453,#89216B"></div>
+                        <div class="color-swatch" style="background: linear-gradient(135deg, #3a7bd5, #00d2ff);" data-colors="#3a7bd5,#00d2ff"></div>
+                        <div class="color-swatch" style="background: linear-gradient(135deg, #11998e, #38ef7d);" data-colors="#11998e,#38ef7d"></div>
+                        <div class="color-swatch" style="background: linear-gradient(135deg, #654ea3, #eaafc8);" data-colors="#654ea3,#eaafc8"></div>
+                        <div class="color-swatch" style="background: linear-gradient(135deg, #f46b45, #eea849);" data-colors="#f46b45,#eea849"></div>
+                        <div class="color-swatch" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);" data-colors="#8e2de2,#4a00e0"></div>
+                    </div>
+                </div>
+                
+                <div class="buttons-row">
+                    <button class="control-btn" id="generateBtn">
+                        <i class="fas fa-redo"></i> Generate New
+                    </button>
+                    <button class="control-btn secondary" id="exportBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+                
+                <div class="export-options" id="exportOptions">
+                    <button class="export-btn" id="exportPNG">
+                        <i class="fas fa-image"></i> Download as PNG (2048×2048)
+                    </button>
+                    <button class="export-btn" id="exportSVG">
+                        <i class="fas fa-code"></i> Download as SVG
+                    </button>
+                    <button class="export-btn" id="exportSmall">
+                        <i class="fas fa-mobile-alt"></i> Download as PNG (1024×1024)
+                    </button>
+                </div>
+                
+                <div class="info-panel">
+                    <p><i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Adjust the parameters to create unique patterns. Each pattern is generated algorithmically using mathematical functions.</p>
+                    <p style="margin-top: 10px;">The patterns are infinitely scalable and can be used for textiles, wallpapers, or digital art.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Generative Pattern Machine • Patterns are procedurally generated in real-time • Made with Canvas API</p>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('patternCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas dimensions to container size
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            generatePattern();
+        }
+        
+        // Pattern generation state
+        let patternType = 'mandala';
+        let symmetry = 8;
+        let complexity = 5;
+        let scale = 1.0;
+        let density = 7;
+        let colors = ['#ff7e5f', '#feb47b'];
+        let seed = Math.random() * 1000;
+        
+        // DOM elements
+        const symmetrySlider = document.getElementById('symmetrySlider');
+        const complexitySlider = document.getElementById('complexitySlider');
+        const scaleSlider = document.getElementById('scaleSlider');
+        const densitySlider = document.getElementById('densitySlider');
+        const symmetryValue = document.getElementById('symmetryValue');
+        const complexityValue = document.getElementById('complexityValue');
+        const scaleValue = document.getElementById('scaleValue');
+        const densityValue = document.getElementById('densityValue');
+        const patternTypeElements = document.querySelectorAll('.pattern-type');
+        const colorSwatches = document.querySelectorAll('.color-swatch');
+        const generateBtn = document.getElementById('generateBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const exportOptions = document.getElementById('exportOptions');
+        const exportPNG = document.getElementById('exportPNG');
+        const exportSVG = document.getElementById('exportSVG');
+        const exportSmall = document.getElementById('exportSmall');
+        const patternName = document.getElementById('patternName');
+        const patternSeed = document.getElementById('patternSeed');
+        const patternResolution = document.getElementById('patternResolution');
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            updatePatternInfo();
+        });
+        
+        // Pattern type selection
+        patternTypeElements.forEach(element => {
+            element.addEventListener('click', () => {
+                patternTypeElements.forEach(el => el.classList.remove('active'));
+                element.classList.add('active');
+                patternType = element.dataset.type;
+                updatePatternInfo();
+                generatePattern();
+            });
+        });
+        
+        // Color palette selection
+        colorSwatches.forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                colorSwatches.forEach(s => s.classList.remove('active'));
+                swatch.classList.add('active');
+                colors = swatch.dataset.colors.split(',');
+                generatePattern();
+            });
+        });
+        
+        // Slider event listeners
+        symmetrySlider.addEventListener('input', () => {
+            symmetry = parseInt(symmetrySlider.value);
+            symmetryValue.textContent = symmetry;
+            generatePattern();
+        });
+        
+        complexitySlider.addEventListener('input', () => {
+            complexity = parseInt(complexitySlider.value);
+            complexityValue.textContent = complexity;
+            generatePattern();
+        });
+        
+        scaleSlider.addEventListener('input', () => {
+            scale = parseFloat(scaleSlider.value);
+            scaleValue.textContent = scale.toFixed(1);
+            generatePattern();
+        });
+        
+        densitySlider.addEventListener('input', () => {
+            density = parseInt(densitySlider.value);
+            densityValue.textContent = density;
+            generatePattern();
+        });
+        
+        // Generate new pattern button
+        generateBtn.addEventListener('click', () => {
+            seed = Math.random() * 1000;
+            generatePattern();
+            updatePatternInfo();
+        });
+        
+        // Export button
+        exportBtn.addEventListener('click', () => {
+            exportOptions.classList.toggle('show');
+        });
+        
+        // Export functions
+        exportPNG.addEventListener('click', () => {
+            exportCanvas(2048, 2048, 'png');
+        });
+        
+        exportSmall.addEventListener('click', () => {
+            exportCanvas(1024, 1024, 'png');
+        });
+        
+        exportSVG.addEventListener('click', () => {
+            alert('SVG export would be implemented with an SVG rendering library in a full implementation.');
+        });
+        
+        // Helper function to export canvas
+        function exportCanvas(width, height, format) {
+            // Create a temporary canvas for export
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Draw pattern on temp canvas
+            drawPatternOnContext(tempCtx, width, height);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.download = `pattern-${patternType}-${Date.now()}.${format}`;
+            link.href = tempCanvas.toDataURL(`image/${format}`);
+            link.click();
+        }
+        
+        // Update pattern info display
+        function updatePatternInfo() {
+            patternName.textContent = patternType.charAt(0).toUpperCase() + patternType.slice(1);
+            patternResolution.textContent = `${canvas.width}×${canvas.height}`;
+            patternSeed.textContent = `Seed: #${Math.floor(seed).toString(16).toUpperCase()}`;
+        }
+        
+        // Main pattern generation function
+        function generatePattern() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPatternOnContext(ctx, canvas.width, canvas.height);
+            updatePatternInfo();
+        }
+        
+        // Draw pattern on a given context
+        function drawPatternOnContext(context, width, height) {
+            // Set up colors
+            const color1 = colors[0];
+            const color2 = colors[1] || colors[0];
+            
+            // Set background
+            context.fillStyle = '#1a1a1a';
+            context.fillRect(0, 0, width, height);
+            
+            // Center of the canvas
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            // Size based on canvas dimensions
+            const size = Math.min(width, height) * 0.4 * scale;
+            
+            // Different pattern algorithms based on type
+            switch(patternType) {
+                case 'mandala':
+                    drawMandalaPattern(context, centerX, centerY, size, color1, color2);
+                    break;
+                case 'textile':
+                    drawTextilePattern(context, width, height, color1, color2);
+                    break;
+                case 'geometric':
+                    drawGeometricPattern(context, width, height, color1, color2);
+                    break;
+                case 'organic':
+                    drawOrganicPattern(context, width, height, color1, color2);
+                    break;
+                case 'islamic':
+                    drawIslamicPattern(context, width, height, color1, color2);
+                    break;
+                case 'fractal':
+                    drawFractalPattern(context, centerX, centerY, size, color1, color2);
+                    break;
+            }
+        }
+        
+        // Mandala pattern algorithm
+        function drawMandalaPattern(ctx, cx, cy, size, color1, color2) {
+            const segments = symmetry;
+            const angleStep = (Math.PI * 2) / segments;
+            
+            for (let i = 0; i < segments; i++) {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(i * angleStep);
+                
+                // Draw mandala segment
+                for (let j = 0; j < density * 2; j++) {
+                    const radius = size * (0.1 + 0.9 * (j / (density * 2)));
+                    const segmentSize = size * 0.08 * (complexity / 5);
+                    
+                    // Alternating colors
+                    ctx.fillStyle = j % 2 === 0 ? color1 : color2;
+                    
+                    // Draw petal-like shapes
+                    for (let k = 0; k < complexity; k++) {
+                        const angle = (k / complexity) * (angleStep * 0.8);
+                        const x1 = Math.cos(angle) * radius;
+                        const y1 = Math.sin(angle) * radius;
+                        const x2 = Math.cos(angle + angleStep * 0.4) * (radius + segmentSize);
+                        const y2 = Math.sin(angle + angleStep * 0.4) * (radius + segmentSize);
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Add inner details
+                        if (j % 2 === 0 && k % 2 === 0) {
+                            ctx.fillStyle = color2;
+                            ctx.beginPath();
+                            ctx.arc(x1 * 0.7, y1 * 0.7, radius * 0.03, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.fillStyle = j % 2 === 0 ? color1 : color2;
+                        }
+                    }
+                }
+                
+                ctx.restore();
+            }
+            
+            // Draw central circle
+            ctx.fillStyle = color2;
+            ctx.beginPath();
+            ctx.arc(cx, cy, size * 0.05, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Textile pattern algorithm
+        function drawTextilePattern(ctx, width, height, color1, color2) {
+            const cellSize = 40 + (10 - density) * 5;
+            const rows = Math.ceil(height / cellSize);
+            const cols = Math.ceil(width / cellSize);
+            
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const x = col * cellSize;
+                    const y = row * cellSize;
+                    
+                    // Alternate colors
+                    ctx.fillStyle = (row + col) % 2 === 0 ? color1 : color2;
+                    
+                    // Draw base cell
+                    ctx.fillRect(x, y, cellSize, cellSize);
+                    
+                    // Add texture details
+                    ctx.strokeStyle = (row + col) % 2 === 0 ? color2 : color1;
+                    ctx.lineWidth = 1 + complexity / 5;
+                    
+                    // Draw weave pattern
+                    if (row % 2 === 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, y + cellSize / 2);
+                        ctx.lineTo(x + cellSize, y + cellSize / 2);
+                        ctx.stroke();
+                    }
+                    
+                    if (col % 2 === 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(x + cellSize / 2, y);
+                        ctx.lineTo(x + cellSize / 2, y + cellSize);
+                        ctx.stroke();
+                    }
+                    
+                    // Add decorative elements based on complexity
+                    if (complexity > 5) {
+                        ctx.fillStyle = (row + col) % 2 === 0 ? color2 : color1;
+                        const dotSize = cellSize * 0.1;
+                        ctx.beginPath();
+                        ctx.arc(x + cellSize / 2, y + cellSize / 2, dotSize, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+        }
+        
+        // Geometric pattern algorithm
+        function drawGeometricPattern(ctx, width, height, color1, color2) {
+            const shapeCount = density * 20;
+            
+            for (let i = 0; i < shapeCount; i++) {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                const shapeSize = 20 + Math.random() * 60 * scale;
+                const rotation = Math.random() * Math.PI * 2;
+                
+                // Alternate colors
+                ctx.fillStyle = Math.random() > 0.5 ? color1 : color2;
+                ctx.strokeStyle = ctx.fillStyle === color1 ? color2 : color1;
+                ctx.lineWidth = 2;
+                
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(rotation);
+                
+                // Draw different geometric shapes based on complexity
+                const shapeType = Math.floor(Math.random() * (complexity > 7 ? 5 : 3));
+                
+                switch(shapeType) {
+                    case 0: // Triangle
+                        ctx.beginPath();
+                        ctx.moveTo(0, -shapeSize / 2);
+                        ctx.lineTo(shapeSize / 2, shapeSize / 2);
+                        ctx.lineTo(-shapeSize / 2, shapeSize / 2);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                        
+                    case 1: // Square
+                        ctx.fillRect(-shapeSize / 2, -shapeSize / 2, shapeSize, shapeSize);
+                        ctx.strokeRect(-shapeSize / 2, -shapeSize / 2, shapeSize, shapeSize);
+                        break;
+                        
+                    case 2: // Hexagon
+                        drawPolygon(ctx, 0, 0, shapeSize / 2, 6);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                        
+                    case 3: // Octagon
+                        drawPolygon(ctx, 0, 0, shapeSize / 2, 8);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                        
+                    case 4: // Star
+                        drawStar(ctx, 0, 0, shapeSize / 2, shapeSize / 4, 5);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                }
+                
+                ctx.restore();
+            }
+        }
+        
+        // Organic pattern algorithm
+        function drawOrganicPattern(ctx, width, height, color1, color2) {
+            const points = [];
+            const pointCount = density * 15;
+            
+            // Generate random organic points
+            for (let i = 0; i < pointCount; i++) {
+                points.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: 5 + Math.random() * 20 * scale,
+                    color: Math.random() > 0.5 ? color1 : color2
+                });
+            }
+            
+            // Draw connecting lines between nearby points
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i < points.length; i++) {
+                for (let j = i + 1; j < points.length; j++) {
+                    const p1 = points[i];
+                    const p2 = points[j];
+                    
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Connect points that are close to each other
+                    if (distance < 100) {
+                        ctx.strokeStyle = p1.color;
+                        ctx.globalAlpha = 0.3;
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            ctx.globalAlpha = 1;
+            
+            // Draw the points
+            for (const point of points) {
+                ctx.fillStyle = point.color;
+                ctx.beginPath();
+                
+                // Draw organic blobs
+                const blobPoints = 6 + Math.floor(Math.random() * 6);
+                for (let i = 0; i < blobPoints; i++) {
+                    const angle = (i / blobPoints) * Math.PI * 2;
+                    const radius = point.size * (0.7 + Math.random() * 0.3);
+                    const x = point.x + Math.cos(angle) * radius;
+                    const y = point.y + Math.sin(angle) * radius;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                ctx.closePath();
+                ctx.fill();
+                
+                // Add inner detail
+                ctx.fillStyle = point.color === color1 ? color2 : color1;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, point.size * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Islamic pattern algorithm (simplified)
+        function drawIslamicPattern(ctx, width, height, color1, color2) {
+            const tileSize = 80 + (10 - density) * 8;
+            const rows = Math.ceil(height / tileSize) + 1;
+            const cols = Math.ceil(width / tileSize) + 1;
+            
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const x = col * tileSize;
+                    const y = row * tileSize;
+                    
+                    ctx.save();
+                    ctx.translate(x, y);
+                    
+                    // Draw intricate tile
+                    drawIslamicTile(ctx, tileSize, color1, color2);
+                    
+                    ctx.restore();
+                }
+            }
+        }
+        
+        // Islamic tile pattern
+        function drawIslamicTile(ctx, size, color1, color2) {
+            const center = size / 2;
+            
+            // Background
+            ctx.fillStyle = color1;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Geometric pattern
+            ctx.strokeStyle = color2;
+            ctx.fillStyle = color2;
+            ctx.lineWidth = 2;
+            
+            // Draw star pattern
+            const starPoints = 8;
+            const outerRadius = size * 0.4;
+            const innerRadius = outerRadius * 0.5;
+            
+            ctx.beginPath();
+            for (let i = 0; i < starPoints * 2; i++) {
+                const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                const angle = (i * Math.PI) / starPoints;
+                const x = center + Math.cos(angle) * radius;
+                const y = center + Math.sin(angle) * radius;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add smaller details
+            if (complexity > 5) {
+                ctx.fillStyle = color1;
+                ctx.beginPath();
+                ctx.arc(center, center, innerRadius * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = color2;
+                ctx.beginPath();
+                ctx.arc(center, center, innerRadius * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Border
+            ctx.strokeStyle = color2;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(0, 0, size, size);
+        }
+        
+        // Fractal pattern algorithm
+        function drawFractalPattern(ctx, cx, cy, size, color1, color2) {
+            // Draw fractal branches
+            function drawBranch(x, y, length, angle, depth) {
+                if (depth > complexity + 2) return;
+                
+                const endX = x + Math.cos(angle) * length;
+                const endY = y + Math.sin(angle) * length;
+                
+                // Set color based on depth
+                const gradient = ctx.createLinearGradient(x, y, endX, endY);
+                gradient.addColorStop(0, depth % 2 === 0 ? color1 : color2);
+                gradient.addColorStop(1, depth % 2 === 0 ? color2 : color1);
+                
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = Math.max(1, 5 - depth * 0.7);
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                
+                // Recursive branches
+                const branchCount = 2 + Math.floor(density / 3);
+                const angleVariation = Math.PI / 4;
+                
+                for (let i = 0; i < branchCount; i++) {
+                    const newAngle = angle - angleVariation / 2 + (i / (branchCount - 1)) * angleVariation;
+                    const newLength = length * (0.6 + Math.random() * 0.2);
+                    drawBranch(endX, endY, newLength, newAngle, depth + 1);
+                }
+            }
+            
+            // Start the fractal from the center
+            const startAngle = seed % (Math.PI * 2);
+            drawBranch(cx, cy, size * 0.8, startAngle, 0);
+            
+            // Add circular background elements
+            const circles = 5 + density;
+            for (let i = 0; i < circles; i++) {
+                const radius = (i + 1) * (size / circles) * 0.8;
+                ctx.strokeStyle = i % 2 === 0 ? color1 : color2;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+        
+        // Helper function to draw a polygon
+        function drawPolygon(ctx, x, y, radius, sides) {
+            ctx.beginPath();
+            for (let i = 0; i < sides; i++) {
+                const angle = (i / sides) * Math.PI * 2;
+                const px = x + Math.cos(angle) * radius;
+                const py = y + Math.sin(angle) * radius;
+                
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+            ctx.closePath();
+        }
+        
+        // Helper function to draw a star
+        function drawStar(ctx, x, y, outerRadius, innerRadius, points) {
+            ctx.beginPath();
+            for (let i = 0; i < points * 2; i++) {
+                const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                const angle = (i * Math.PI) / points;
+                const px = x + Math.cos(angle) * radius;
+                const py = y + Math.sin(angle) * radius;
+                
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+            ctx.closePath();
+        }
+    </script>
+</body>
+</html>

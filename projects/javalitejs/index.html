@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaLiteJS - Pro Compiler Simulator</title>
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="editor.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="brand">
+                <div class="logo-icon">☕</div>
+                <div class="logo-text">
+                    <h1>JavaLiteJS</h1>
+                    <span class="version">v2.0.0</span>
+                </div>
+            </div>
+
+            <div class="controls-area">
+                <div class="control-group">
+                    <label>Example:</label>
+                    <select id="example-selector" class="control-select">
+                        <option value="" disabled selected>Load Code...</option>
+                        <option value="hello">Hello World</option>
+                        <option value="loop">While Loop (Factorial)</option>
+                        <option value="logic">If/Else Logic</option>
+                        <option value="fibonacci">Fibonacci Sequence</option>
+                        <option value="errors">Error Demo</option>
+                    </select>
+                </div>
+
+                <div class="divider"></div>
+
+                <button id="btn-run" class="btn btn-primary" title="Compile and Run (Ctrl+Enter)">
+                    <span class="icon">▶</span> Run
+                </button>
+                <button id="btn-step" class="btn btn-secondary" title="Step Execution (F10)" disabled>
+                    <span class="icon">⤵</span> Step
+                </button>
+                <button id="btn-reset" class="btn btn-danger" title="Reset Simulation">
+                    <span class="icon">↺</span> Reset
+                </button>
+            </div>
+
+            <div class="actions">
+                <button id="btn-guide" class="btn btn-ghost">Guide</button>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            <!-- Left: Editor & Console -->
+            <div class="left-pane">
+                <!-- Editor Section -->
+                <section class="panel editor-panel">
+                    <div class="panel-header">
+                        <div class="tab matched">Main.java</div>
+                        <div class="status-indicator" id="compile-status">Ready</div>
+                    </div>
+                    <div class="editor-subpanel">
+                        <div class="line-numbers" id="line-numbers">1</div>
+                        <div class="code-wrapper">
+                            <pre id="code-display"><code id="code-content" class="language-java"></code></pre>
+                            <textarea id="code-input" spellcheck="false" autocomplete="off" autocorrect="off"
+                                autocapitalize="off"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Console Section -->
+                <section class="panel console-panel">
+                    <div class="panel-header">
+                        <div class="tabs">
+                            <button class="tab-btn active" data-target="console">Output</button>
+                            <button class="tab-btn" data-target="problems">Problems <span id="problem-count"
+                                    class="badge hidden">0</span></button>
+                        </div>
+                        <div class="console-actions">
+                            <button id="btn-clear-console" class="icon-btn" title="Clear Console">oslash;</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="output-console" class="console-view active">
+                            <div class="console-line system">JavaLiteJS Environment Initialized.</div>
+                        </div>
+                        <div id="output-problems" class="console-view">
+                            <div class="empty-state">No problems detected.</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right: Inspector (AST & Memory) -->
+            <div class="right-pane">
+                <section class="panel inspector-panel">
+                    <div class="panel-header">
+                        <div class="tabs">
+                            <button class="tab-btn active" data-target="memory">Memory</button>
+                            <button class="tab-btn" data-target="ast">AST View</button>
+                        </div>
+                    </div>
+                    <div class="panel-content scrollable">
+                        <!-- Memory View -->
+                        <div id="view-memory" class="inspector-view active">
+                            <table class="memory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Variable</th>
+                                        <th>Value</th>
+                                        <th>Type</th>
+                                        <th>Scope</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="memory-body">
+                                    <tr>
+                                        <td colspan="4" class="empty-row">Execution not started</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- AST View -->
+                        <div id="view-ast" class="inspector-view">
+                            <div id="ast-root" class="ast-tree">
+                                <div class="empty-row">Run code to generate AST</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Guide -->
+    <div id="guide-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>JavaLiteJS Guide</h2>
+                <button class="close-btn" id="close-guide">×</button>
+            </div>
+            <div class="modal-body">
+                <h3>Overview</h3>
+                <p>A strictly browser-based Java compiler simulator. It tokenizes, parses, and executes Java-subset code
+                    entirely in JavaScript.</p>
+
+                <h3>Supported Features</h3>
+                <div class="feature-grid">
+                    <div class="feat">
+                        <strong>Primitives</strong>
+                        <code>int</code>, <code>boolean</code>, <code>String</code>
+                    </div>
+                    <div class="feat">
+                        <strong>Control</strong>
+                        <code>if/else</code>, <code>while</code>, <code>for</code>
+                    </div>
+                    <div class="feat">
+                        <strong>IO</strong>
+                        <code>System.out.println()</code>
+                    </div>
+                </div>
+
+                <h3>Shortcuts</h3>
+                <ul>
+                    <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> : Run Code</li>
+                    <li><kbd>F10</kbd> : Step Execution</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modular JS -->
+    <script src="errors.js"></script>
+    <script src="tokens.js"></script>
+    <script src="lexer.js"></script>
+    <script src="parser.js"></script>
+    <script src="semantic.js"></script>
+    <script src="interpreter.js"></script>
+    <script src="ui.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

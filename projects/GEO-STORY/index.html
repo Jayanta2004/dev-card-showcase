@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geography Story Map - Journey Around the World</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Open+Sans:wght@400;600;700&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            color: #333;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(rgba(10, 30, 60, 0.9), rgba(10, 30, 60, 0.8)), url('https://images.unsplash.com/photo-1536152471326-6428c8c06a53?q=80&w=2070');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 3.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1600px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            padding: 1.5rem;
+            gap: 1.5rem;
+            min-height: 800px;
+        }
+
+        @media (max-width: 1100px) {
+            .main-content {
+                flex-direction: column;
+            }
+        }
+
+        .map-container {
+            flex: 1.5;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            position: relative;
+            min-height: 600px;
+        }
+
+        #story-map {
+            height: 100%;
+            width: 100%;
+            border-radius: 12px;
+        }
+
+        .story-sidebar {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            overflow-y: auto;
+            max-height: 800px;
+        }
+
+        .location-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .location-item {
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 5px solid #2c5aa0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .location-item:hover {
+            background-color: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .location-item.active {
+            background-color: #e3f2fd;
+            border-left: 5px solid #1565c0;
+            box-shadow: 0 4px 8px rgba(21, 101, 192, 0.15);
+        }
+
+        .location-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+        }
+
+        .location-content {
+            flex: 1;
+        }
+
+        .location-content h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.3rem;
+            color: #1a237e;
+        }
+
+        .location-content p {
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        .story-content {
+            display: none;
+        }
+
+        .story-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .story-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 2.2rem;
+            color: #1a237e;
+            margin-bottom: 1rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .story-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .story-text {
+            line-height: 1.8;
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
+            color: #444;
+        }
+
+        .story-facts {
+            background-color: #f1f8e9;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 5px solid #7cb342;
+        }
+
+        .story-facts h4 {
+            color: #33691e;
+            margin-bottom: 0.8rem;
+            font-size: 1.2rem;
+        }
+
+        .story-facts ul {
+            padding-left: 1.2rem;
+        }
+
+        .story-facts li {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background-color: white;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            border-radius: 12px 12px 0 0;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.9rem 2rem;
+            background-color: #2c5aa0;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            box-shadow: 0 4px 8px rgba(44, 90, 160, 0.2);
+        }
+
+        .btn:hover {
+            background-color: #1a3d7a;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(44, 90, 160, 0.25);
+        }
+
+        .btn:disabled {
+            background-color: #b0bec5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: #2c5aa0;
+            border: 2px solid #2c5aa0;
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background-color: #2c5aa0;
+            color: white;
+        }
+
+        .progress-container {
+            flex: 1;
+            margin: 0 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #2c5aa0, #4fc3f7);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            background-color: #1a237e;
+            color: white;
+            margin-top: 2rem;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .footer p {
+            opacity: 0.8;
+        }
+
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            font-size: 0.9rem;
+            max-width: 200px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .location-marker {
+            width: 40px;
+            height: 40px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .pulse {
+            display: block;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: pulsate 1.5s ease-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes pulsate {
+            0% {
+                transform: scale(0.1, 0.1);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.2, 1.2);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .timeline-item {
+            text-align: center;
+            flex: 1;
+            position: relative;
+            padding: 0.5rem;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            width: 80%;
+            height: 3px;
+            background-color: #bdbdbd;
+            top: 20px;
+            left: 60%;
+            z-index: 1;
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        .timeline-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #bdbdbd;
+            margin: 0 auto 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            z-index: 2;
+            position: relative;
+        }
+
+        .timeline-item.active .timeline-dot {
+            background-color: #2c5aa0;
+            transform: scale(1.2);
+        }
+
+        .timeline-item.completed .timeline-dot {
+            background-color: #4caf50;
+        }
+
+        .timeline-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .audio-player {
+            width: 100%;
+            margin: 1.5rem 0;
+        }
+
+        .quiz-box {
+            background-color: #fff3e0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border-left: 5px solid #ff9800;
+        }
+
+        .quiz-question {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #e65100;
+        }
+
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .quiz-option {
+            padding: 0.8rem;
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid #ffcc80;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover {
+            background-color: #ffe0b2;
+        }
+
+        .quiz-option.correct {
+            background-color: #c8e6c9;
+            border-color: #4caf50;
+        }
+
+        .quiz-option.incorrect {
+            background-color: #ffcdd2;
+            border-color: #f44336;
+        }
+
+        .quiz-feedback {
+            font-weight: 600;
+            padding: 0.8rem;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .main-content {
+                padding: 1rem;
+                gap: 1rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .progress-container {
+                margin: 0;
+                order: 3;
+            }
+            
+            .quiz-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .timeline {
+                overflow-x: auto;
+                padding-bottom: 1rem;
+            }
+            
+            .timeline-item {
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-globe-americas"></i> Geography Story Map</h1>
+            <p>Journey through fascinating locations around the world. Explore unique cultures, natural wonders, and historical landmarks through interactive stories.</p>
+        </div>
+
+        <div class="main-content">
+            <div class="map-container">
+                <div id="story-map"></div>
+                <div class="map-legend">
+                    <h4><i class="fas fa-key"></i> Map Legend</h4>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #e53935;"></div>
+                        <span>Historical Landmark</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #1e88e5;"></div>
+                        <span>Natural Wonder</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #43a047;"></div>
+                        <span>Cultural Site</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #8e24aa;"></div>
+                        <span>Modern Marvel</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="story-sidebar">
+                <ul class="location-list" id="location-list">
+                    <!-- Location items will be generated by JavaScript -->
+                </ul>
+
+                <div id="story-container">
+                    <!-- Story content will be dynamically loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline" id="journey-timeline">
+            <!-- Timeline will be generated by JavaScript -->
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="prev-btn" disabled>
+                <i class="fas fa-arrow-left"></i> Previous Location
+            </button>
+            
+            <div class="progress-container">
+                <span id="progress-text">Location 1 of 7</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+            
+            <button class="btn" id="next-btn">
+                Next Location <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <div class="footer">
+            <p><i class="fas fa-map-marked-alt"></i> Geography Story Map &copy; 2026 | Explore the world one story at a time</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <script>
+        // Geography Story Data
+        const storyLocations = [
+            {
+                id: 1,
+                title: "The Amazon Rainforest",
+                coordinates: [-3.4653, -62.2159],
+                category: "natural",
+                iconColor: "#1e88e5",
+                icon: "fas fa-tree",
+                image: "https://images.unsplash.com/photo-1448375240586-882707db888b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+                story: "The Amazon rainforest is the world's largest tropical rainforest, covering over 5.5 million square kilometers across nine South American countries. It's often called the 'lungs of the Earth' because it produces more than 20% of the world's oxygen.",
+                facts: [
+                    "Home to approximately 10% of the world's known species",
+                    "The Amazon River is the largest river by discharge volume in the world",
+                    "Indigenous communities have lived in the Amazon for over 11,000 years",
+                    "Approximately 17% of the Amazon has been lost in the last 50 years"
+                ],
+                audio: null,
+                quiz: {
+                    question: "What percentage of the world's oxygen is produced by the Amazon rainforest?",
+                    options: ["About 10%", "More than 20%", "About 5%", "Nearly 50%"],
+                    correct: 1
+                }
+            },
+            {
+                id: 2,
+                title: "The Great Wall of China",
+                coordinates: [40.4319, 116.5704],
+                category: "historical",
+                iconColor: "#e53935",
+                icon: "fas fa-landmark",
+                image: "https://images.unsplash.com/photo-1512529904539-2034f9e1c8b9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+                story: "Stretching over 21,000 kilometers, the Great Wall of China is one of the most impressive architectural feats in history. Originally built to protect Chinese states from invasions, its construction spanned over 2,000 years from the 7th century BC to the Ming Dynasty.",
+                facts: [
+                    "Contrary to popular belief, the Great Wall cannot be seen from space with the naked eye",
+                    "It's not a single continuous wall but a series of fortifications",
+                    "Over 1 million workers died during its construction",
+                    "The most visited section is Badaling, receiving over 10 million visitors annually"
+                ],
+                audio: null,
+                quiz: {
+                    question: "How long is the Great Wall of China?",
+                    options: ["About 5,000 km", "About 10,000 km", "Over 21,000 km", "About 15,000 km"],
+                    correct: 2
+                }
+            },
+            {
+                id: 3,
+                title: "Venice, Italy",
+                coordinates: [45.4408, 12.3155],
+                category: "cultural",
+                iconColor: "#43a047",
+                icon: "fas fa-water",
+                image: "https://images.unsplash.com/photo-1514890547357-a9ee288728e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+                story: "Built on more than 100 small islands in a lagoon in the Adriatic Sea, Venice is a city unlike any other. With no roads, just canals, it's known for its beautiful architecture, art, and of course, gondola rides through its winding waterways.",
+                facts: [
+                    "Venice is sinking at a rate of 1-2 millimeters per year",
+                    "There are over 400 bridges connecting the islands of Venice",
+                    "The city hosts the Venice Film Festival, the oldest film festival in the world",
+                    "During high tide in autumn and winter, Venice experiences 'acqua alta' (high water)"
+                ],
+                audio: null,
+                quiz: {
+                    question: "What is the main mode of transportation in Venice?",
+                    options: ["Bicycles", "Cars", "Canals and boats", "Underground metro"],
+                    correct: 2
+                }
+            },
+            {
+                id: 4,
+                title: "Mount Everest",
+                coordinates: [27.9881, 86.9250],
+                category: "natural",
+                iconColor: "#1e88e5",
+                icon: "fas fa-mountain",
+                image: "https://images.unsplash.com/photo-1580136579312-94651dfd596d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+                story: "Standing at 8,848.86 meters (29,031.7 feet), Mount Everest is Earth's highest mountain above sea level. Located in the Mahalangur Himal sub-range of the Himalayas, it has long captivated climbers and adventurers from around the world.",
+                facts: [
+                    "The mountain grows about 4mm higher every year due to tectonic uplift",
+                    "Over 300 people have died trying to climb Everest since 1922",
+                    "The first successful ascent was in 1953 by Edmund Hillary and Tenzing Norgay",
+                    "The temperature at the summit can be as low as -60°C (-76°F)"
+                ],
+                audio: null,
+                quiz: {
+                    question: "How tall is Mount Everest?",
+                    options: ["8,848.86 meters", "8,000 meters", "9,000 meters", "8,500 meters"],
+                    correct: 0
+                }
+            },
+            {
+                id: 5,
+                title: "Pyramids of Giza",
+                coordinates: [29.9792, 31.1342],
+                category: "historical",
+                iconColor: "#e53935",
+                icon: "fas fa-monument",
+                image: "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+                story: "The Pyramids of Giza, built over 4,500 years ago, are the oldest of the Seven Wonders of the Ancient World and the only one still largely intact. The Great Pyramid was the tallest man-made structure in the world for over 3,800 years.",
+                facts: [
+                    "The Great Pyramid was originally covered in polished limestone casing stones",
+                    "It's estimated that 2.3 million stone blocks were used to build it",
+                    "The pyramids were originally built as tombs for pharaohs",
+                    "They are precisely aligned with the constellation Orion"
+                ],
+                audio: null,
+                quiz: {
+                    question: "How long was the Great Pyramid the tallest man-made structure?",
+                    options: ["About 1,000 years", "Over 3,800 years", "About 2,000 years", "500 years"],
+                    correct: 1
+                }
+            },
+            {
+                id: 6,
+                title: "Sydney Opera House",
+                coordinates: [-33.8568, 151.2153],
+                category: "modern",
+                iconColor: "#8e24aa",
+                icon: "fas fa-theater-masks",
+                image: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+                story: "One of the 20th century's most distinctive buildings, the Sydney Opera House is a masterpiece of modern architecture. Designed by Danish architect Jørn Utzon, it was opened in 1973 and has since become an iconic symbol of Australia.",
+                facts: [
+                    "The roof is made of 1,056,000 white and cream glossy tiles",
+                    "It hosts over 1,500 performances each year",
+                    "The building was originally estimated to cost $7 million but ended up costing $102 million",
+                    "It was added to UNESCO's World Heritage List in 2007"
+                ],
+                audio: null,
+                quiz: {
+                    question: "Who designed the Sydney Opera House?",
+                    options: ["Frank Lloyd Wright", "Jørn Utzon", "Zaha Hadid", "Frank Gehry"],
+                    correct: 1
+                }
+            },
+            {
+                id: 7,
+                title: "Northern Lights in Norway",
+                coordinates: [69.6492, 18.9553],
+                category: "natural",
+                iconColor: "#1e88e5",
+                icon: "fas fa-star",
+                image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+                story: "The Aurora Borealis, or Northern Lights, is a natural light display in Earth's sky, predominantly seen in high-latitude regions around the Arctic. Tromsø, Norway is one of the best places to witness this breathtaking phenomenon.",
+                facts: [
+                    "The lights are caused by charged particles from the sun colliding with Earth's atmosphere",
+                    "They are visible from late September to early April in Norway",
+                    "The colors vary based on the type of gas particles colliding",
+                    "Similar lights in the Southern Hemisphere are called Aurora Australis"
+                ],
+                audio: null,
+                quiz: {
+                    question: "What causes the Northern Lights?",
+                    options: ["Moonlight reflection", "Charged particles from the sun", "Volcanic activity", "Ice crystals in the atmosphere"],
+                    correct: 1
+                }
+            }
+        ];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize map
+            const map = L.map('story-map').setView([20, 0], 2);
+            
+            // Add tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 18,
+            }).addTo(map);
+            
+            // Current location index
+            let currentLocationIndex = 0;
+            
+            // Markers array
+            const markers = [];
+            
+            // Initialize location list and markers
+            function initLocations() {
+                const locationList = document.getElementById('location-list');
+                const timeline = document.getElementById('journey-timeline');
+                
+                storyLocations.forEach((location, index) => {
+                    // Create list item
+                    const li = document.createElement('li');
+                    li.className = `location-item ${index === 0 ? 'active' : ''}`;
+                    li.dataset.id = location.id;
+                    
+                    li.innerHTML = `
+                        <div class="location-icon" style="background-color: ${location.iconColor}">
+                            <i class="${location.icon}"></i>
+                        </div>
+                        <div class="location-content">
+                            <h3>${location.title}</h3>
+                            <p>${getCategoryName(location.category)}</p>
+                        </div>
+                    `;
+                    
+                    li.addEventListener('click', () => {
+                        setActiveLocation(index);
+                    });
+                    
+                    locationList.appendChild(li);
+                    
+                    // Create marker
+                    const markerIcon = L.divIcon({
+                        html: `
+                            <div class="location-marker" style="background-color: ${location.iconColor}">
+                                <i class="${location.icon}"></i>
+                                <div class="pulse" style="background-color: ${location.iconColor}"></div>
+                            </div>
+                        `,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 40],
+                        className: 'custom-marker'
+                    });
+                    
+                    const marker = L.marker(location.coordinates, { icon: markerIcon })
+                        .addTo(map)
+                        .bindPopup(`<strong>${location.title}</strong><br>${getCategoryName(location.category)}`);
+                    
+                    marker.on('click', () => {
+                        setActiveLocation(index);
+                    });
+                    
+                    markers.push(marker);
+                    
+                    // Create timeline item
+                    const timelineItem = document.createElement('div');
+                    timelineItem.className = `timeline-item ${index === 0 ? 'active' : ''}`;
+                    timelineItem.dataset.id = location.id;
+                    
+                    timelineItem.innerHTML = `
+                        <div class="timeline-dot">
+                            <i class="${location.icon}"></i>
+                        </div>
+                        <div class="timeline-label">${location.title.split(',')[0]}</div>
+                    `;
+                    
+                    timelineItem.addEventListener('click', () => {
+                        setActiveLocation(index);
+                    });
+                    
+                    timeline.appendChild(timelineItem);
+                });
+                
+                // Load first location story
+                loadStoryContent(0);
+                updateProgress();
+                centerMapOnLocation(0);
+            }
+            
+            // Get category name
+            function getCategoryName(category) {
+                const categories = {
+                    'natural': 'Natural Wonder',
+                    'historical': 'Historical Landmark',
+                    'cultural': 'Cultural Site',
+                    'modern': 'Modern Marvel'
+                };
+                return categories[category] || 'Geographical Location';
+            }
+            
+            // Load story content
+            function loadStoryContent(index) {
+                const location = storyLocations[index];
+                const container = document.getElementById('story-container');
+                
+                // Create quiz options HTML
+                let quizOptionsHTML = '';
+                if (location.quiz) {
+                    location.quiz.options.forEach((option, i) => {
+                        quizOptionsHTML += `
+                            <div class="quiz-option" data-index="${i}">
+                                ${option}
+                            </div>
+                        `;
+                    });
+                }
+                
+                container.innerHTML = `
+                    <div class="story-content active">
+                        <h2 class="story-title">${location.title}</h2>
+                        <img src="${location.image}" alt="${location.title}" class="story-image">
+                        <p class="story-text">${location.story}</p>
+                        
+                        <div class="story-facts">
+                            <h4><i class="fas fa-lightbulb"></i> Did You Know?</h4>
+                            <ul>
+                                ${location.facts.map(fact => `<li>${fact}</li>`).join('')}
+                            </ul>
+                        </div>
+                        
+                        ${location.quiz ? `
+                        <div class="quiz-box">
+                            <h4><i class="fas fa-question-circle"></i> Test Your Knowledge</h4>
+                            <p class="quiz-question">${location.quiz.question}</p>
+                            <div class="quiz-options">
+                                ${quizOptionsHTML}
+                            </div>
+                            <div class="quiz-feedback" id="quiz-feedback"></div>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="audio-player" id="audio-player-container">
+                            <!-- Audio player could be added here -->
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners to quiz options if they exist
+                if (location.quiz) {
+                    const quizOptions = document.querySelectorAll('.quiz-option');
+                    const quizFeedback = document.getElementById('quiz-feedback');
+                    
+                    quizOptions.forEach(option => {
+                        option.addEventListener('click', function() {
+                            const selectedIndex = parseInt(this.dataset.index);
+                            const isCorrect = selectedIndex === location.quiz.correct;
+                            
+                            // Disable all options
+                            quizOptions.forEach(opt => {
+                                opt.style.pointerEvents = 'none';
+                                if (parseInt(opt.dataset.index) === location.quiz.correct) {
+                                    opt.classList.add('correct');
+                                } else if (parseInt(opt.dataset.index) === selectedIndex && !isCorrect) {
+                                    opt.classList.add('incorrect');
+                                }
+                            });
+                            
+                            // Show feedback
+                            quizFeedback.textContent = isCorrect 
+                                ? "Correct! Well done!" 
+                                : `Incorrect. The right answer is: ${location.quiz.options[location.quiz.correct]}`;
+                            quizFeedback.style.display = 'block';
+                            quizFeedback.style.backgroundColor = isCorrect ? '#d4edda' : '#f8d7da';
+                            quizFeedback.style.color = isCorrect ? '#155724' : '#721c24';
+                            quizFeedback.style.border = isCorrect ? '1px solid #c3e6cb' : '1px solid #f5c6cb';
+                        });
+                    });
+                }
+            }
+            
+            // Set active location
+            function setActiveLocation(index) {
+                // Update current index
+                currentLocationIndex = index;
+                
+                // Update list items
+                document.querySelectorAll('.location-item').forEach((item, i) => {
+                    item.classList.toggle('active', i === index);
+                });
+                
+                // Update timeline items
+                document.querySelectorAll('.timeline-item').forEach((item, i) => {
+                    item.classList.remove('active', 'completed');
+                    if (i === index) {
+                        item.classList.add('active');
+                    } else if (i < index) {
+                        item.classList.add('completed');
+                    }
+                });
+                
+                // Update markers
+                markers.forEach((marker, i) => {
+                    if (i === index) {
+                        marker.openPopup();
+                    } else {
+                        marker.closePopup();
+                    }
+                });
+                
+                // Load story content
+                loadStoryContent(index);
+                
+                // Update progress
+                updateProgress();
+                
+                // Update buttons
+                updateButtons();
+                
+                // Center map on location
+                centerMapOnLocation(index);
+            }
+            
+            // Center map on location
+            function centerMapOnLocation(index) {
+                const location = storyLocations[index];
+                map.setView(location.coordinates, 6);
+            }
+            
+            // Update progress
+            function updateProgress() {
+                const progress = ((currentLocationIndex + 1) / storyLocations.length) * 100;
+                document.getElementById('progress-fill').style.width = `${progress}%`;
+                document.getElementById('progress-text').textContent = 
+                    `Location ${currentLocationIndex + 1} of ${storyLocations.length}`;
+            }
+            
+            // Update navigation buttons
+            function updateButtons() {
+                document.getElementById('prev-btn').disabled = currentLocationIndex === 0;
+                document.getElementById('next-btn').disabled = currentLocationIndex === storyLocations.length - 1;
+            }
+            
+            // Navigation button events
+            document.getElementById('prev-btn').addEventListener('click', () => {
+                if (currentLocationIndex > 0) {
+                    setActiveLocation(currentLocationIndex - 1);
+                }
+            });
+            
+            document.getElementById('next-btn').addEventListener('click', () => {
+                if (currentLocationIndex < storyLocations.length - 1) {
+                    setActiveLocation(currentLocationIndex + 1);
+                }
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft' && currentLocationIndex > 0) {
+                    setActiveLocation(currentLocationIndex - 1);
+                } else if (e.key === 'ArrowRight' && currentLocationIndex < storyLocations.length - 1) {
+                    setActiveLocation(currentLocationIndex + 1);
+                }
+            });
+            
+            // Initialize the application
+            initLocations();
+            updateButtons();
+        });
+    </script>
+</body>
+</html>

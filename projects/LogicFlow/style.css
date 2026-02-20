@@ -1,0 +1,687 @@
+/* =========================================
+   1. DESIGN TOKENS & RESET
+   ========================================= */
+:root {
+    /* UI Colors */
+    --bg-app: #121212;
+    --bg-panel: #1e1e1e;
+    --bg-header: #252526;
+    --bg-canvas: #0a0a0a;
+    --bg-node: #2b2b2b;
+    --border: #383838;
+    --border-light: #555;
+
+    /* Text */
+    --text-main: #e0e0e0;
+    --text-muted: #888;
+
+    /* Node Colors (Blueprint Style) */
+    --node-header-event: #8b0000;
+    /* Red for Events */
+    --node-header-logic: #00558b;
+    /* Blue for Logic */
+    --node-header-math: #006644;
+    /* Green for Math */
+    --node-header-data: #8b5a00;
+    /* Orange for Vars */
+    --node-header-flow: #6a1b9a;
+    /* Purple for Flow */
+
+
+    /* Port Type Colors */
+    --port-exec: #ffffff;
+    /* White Triangle */
+    --port-bool: #d63031;
+    /* Red */
+    --port-number: #55efc4;
+    /* Cyan/Green */
+    --port-string: #e056fd;
+    /* Magenta */
+    --port-any: #b2bec3;
+    /* Grey */
+
+    /* Grid */
+    --grid-color-1: rgba(255, 255, 255, 0.05);
+    --grid-color-2: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 13px;
+}
+
+/* =========================================
+   2. LAYOUT GRID
+   ========================================= */
+#app-root {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.toolbar {
+    height: 50px;
+    background: var(--bg-header);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 100;
+}
+
+.brand {
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.version {
+    font-size: 10px;
+    background: #444;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
+.toolbar-center {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.tool-group {
+    display: flex;
+    gap: 5px;
+    background: #111;
+    padding: 3px;
+    border-radius: 6px;
+}
+
+button {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: #0984e3;
+    color: white;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: #076aba;
+}
+
+.btn-danger {
+    color: #ff4757;
+}
+
+.btn-danger:hover {
+    background: rgba(255, 71, 87, 0.2);
+}
+
+.divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+}
+
+/* =========================================
+   3. WORKSPACE
+   ========================================= */
+.workspace {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 260px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+}
+
+.sidebar.right {
+    border-right: none;
+    border-left: 1px solid var(--border);
+}
+
+.sidebar-header {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.search-box {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.search-box input {
+    width: 100%;
+    background: #111;
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.library-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Node Library Items */
+.lib-category {
+    margin-bottom: 15px;
+}
+
+.cat-header {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-main);
+}
+
+.cat-icon.event {
+    color: #ff6b6b;
+}
+
+.cat-icon.logic {
+    color: #54a0ff;
+}
+
+.cat-icon.math {
+    color: #1dd1a1;
+}
+
+.cat-icon.data {
+    color: #feca57;
+}
+
+.cat-icon.flow {
+    color: #9b59b6;
+}
+
+
+.node-preview {
+    background: #333;
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    cursor: grab;
+    border: 1px solid transparent;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    transition: transform 0.1s;
+}
+
+.node-preview:hover {
+    border-color: #666;
+    background: #3a3a3a;
+    transform: translateX(2px);
+}
+
+.node-preview:active {
+    cursor: grabbing;
+}
+
+/* =========================================
+   4. CANVAS & NODES
+   ========================================= */
+.canvas-wrapper {
+    flex: 1;
+    position: relative;
+    background: var(--bg-canvas);
+    overflow: hidden;
+    cursor: grab;
+}
+
+.canvas-wrapper:active {
+    cursor: grabbing;
+}
+
+.grid-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(var(--grid-color-1) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color-1) 1px, transparent 1px),
+        linear-gradient(var(--grid-color-2) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color-2) 1px, transparent 1px);
+    background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+    pointer-events: none;
+}
+
+.world-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    /* Dimensions handled by children */
+    transform-origin: 0 0;
+    /* Transformation handled by JS */
+}
+
+/* SVG Wires */
+.connections-layer,
+.drag-line-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    /* Let clicks pass through to nodes */
+}
+
+.connections-layer {
+    z-index: 0;
+}
+
+.nodes-layer {
+    z-index: 1;
+    position: absolute;
+}
+
+.drag-line-layer {
+    z-index: 2;
+}
+
+/* Wire Styles */
+path.wire {
+    fill: none;
+    stroke: #888;
+    stroke-width: 2px;
+    cursor: pointer;
+    pointer-events: stroke;
+}
+
+path.wire:hover {
+    stroke: #fff;
+    stroke-width: 3px;
+}
+
+path.wire.exec {
+    stroke: #fff;
+    stroke-width: 3px;
+    animation: flowPulse 2s infinite;
+}
+
+path.wire.bool {
+    stroke: var(--port-bool);
+}
+
+path.wire.number {
+    stroke: var(--port-number);
+}
+
+path.wire.string {
+    stroke: var(--port-string);
+}
+
+path.wire-drag {
+    fill: none;
+    stroke: #aaa;
+    stroke-width: 2px;
+    stroke-dasharray: 5, 5;
+}
+
+@keyframes flowPulse {
+    0% {
+        stroke-opacity: 0.5;
+    }
+
+    50% {
+        stroke-opacity: 1;
+    }
+
+    100% {
+        stroke-opacity: 0.5;
+    }
+}
+
+/* NODE ELEMENT STYLE */
+.node {
+    position: absolute;
+    width: 160px;
+    background: var(--bg-node);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    border: 1px solid #111;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+    transition: box-shadow 0.2s;
+}
+
+.node.selected {
+    border: 1px solid #ffaa00;
+    box-shadow: 0 0 0 2px rgba(255, 170, 0, 0.5);
+}
+
+.node-header {
+    padding: 6px 10px;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), transparent);
+}
+
+/* Header Color Modifiers */
+.node.event .node-header {
+    background-color: var(--node-header-event);
+}
+
+.node.logic .node-header {
+    background-color: var(--node-header-logic);
+}
+
+.node.math .node-header {
+    background-color: var(--node-header-math);
+}
+
+.node.data .node-header {
+    background-color: var(--node-header-data);
+}
+
+.node.flow .node-header {
+    background-color: var(--node-header-flow);
+}
+
+
+.node-body {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    position: relative;
+}
+
+.ports-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 20px;
+}
+
+.ports-left {
+    align-items: flex-start;
+}
+
+.ports-right {
+    align-items: flex-end;
+    text-align: right;
+}
+
+/* PORTS */
+.port {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    position: relative;
+    height: 16px;
+    font-size: 11px;
+    color: #ccc;
+    cursor: crosshair;
+}
+
+.socket {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #666;
+    background: #222;
+    transition: all 0.2s;
+}
+
+.socket:hover {
+    transform: scale(1.2);
+    background: #444;
+}
+
+/* Execution Port (Triangle) */
+.port.exec .socket {
+    border-radius: 0;
+    width: 0;
+    height: 0;
+    border: 5px solid transparent;
+    border-left: 8px solid #ccc;
+    background: transparent;
+}
+
+.port.exec:hover .socket {
+    border-left-color: white;
+}
+
+/* Data Types */
+.port.bool .socket {
+    border-color: var(--port-bool);
+}
+
+.port.number .socket {
+    border-color: var(--port-number);
+}
+
+.port.string .socket {
+    border-color: var(--port-string);
+}
+
+/* Filled state if connected */
+.port.connected .socket {
+    background-color: currentColor;
+}
+
+/* Inspector Panel */
+.panel-section {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid var(--border);
+}
+
+.panel-section.flex-grow {
+    flex: 1;
+    border-bottom: none;
+    overflow: hidden;
+}
+
+.inspector-content {
+    padding: 15px;
+}
+
+.empty-state {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.prop-row {
+    margin-bottom: 10px;
+}
+
+.prop-label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.prop-input {
+    width: 100%;
+    background: #111;
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    color: white;
+    font-family: monospace;
+}
+
+/* Console */
+.console-output {
+    flex: 1;
+    background: #000;
+    padding: 10px;
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    overflow-y: auto;
+    color: #ccc;
+}
+
+.log-entry {
+    margin-bottom: 2px;
+    border-bottom: 1px solid #111;
+    padding-bottom: 2px;
+}
+
+.log-entry.system {
+    color: #555;
+    font-style: italic;
+}
+
+.log-entry.info {
+    color: #fff;
+}
+
+.log-entry.error {
+    color: #ff4757;
+}
+
+.log-entry.exec {
+    color: #2ed573;
+}
+
+.action-icon {
+    cursor: pointer;
+}
+
+.action-icon:hover {
+    color: white;
+}
+
+/* Context Menu */
+.context-menu {
+    position: fixed;
+    background: #252526;
+    border: 1px solid #454545;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    padding: 5px 0;
+    z-index: 1000;
+    min-width: 150px;
+}
+
+.hidden {
+    display: none;
+}
+
+.menu-item {
+    padding: 6px 15px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #e0e0e0;
+}
+
+.menu-item:hover {
+    background: #0984e3;
+    color: white;
+}
+
+.menu-divider {
+    height: 1px;
+    background: #444;
+    margin: 4px 0;
+}
+
+/* Canvas Controls */
+.canvas-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: #222;
+    padding: 5px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #444;
+}
+
+.zoom-display {
+    font-size: 11px;
+    width: 50px;
+    text-align: center;
+}
+
+.canvas-controls button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+}
+
+.canvas-controls button:hover {
+    background: #444;
+}

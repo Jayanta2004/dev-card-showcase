@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StateflowJS - State Machine Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="animations.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="50" height="50" viewBox="0 0 50 50">
+                        <circle cx="25" cy="25" r="20" fill="none" stroke="white" stroke-width="3"/>
+                        <circle cx="25" cy="25" r="8" fill="white"/>
+                        <path d="M 25 5 L 30 15" stroke="white" stroke-width="2"/>
+                        <path d="M 45 25 L 35 25" stroke="white" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="header-text">
+                    <h1>StateflowJS</h1>
+                    <p>Interactive Finite State Machine Visualizer & Debugger</p>
+                </div>
+            </div>
+            <button class="help-btn" id="helpBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="tool-group">
+                <button class="tool-btn active" id="modeState" data-mode="state">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="10" cy="10" r="3" fill="currentColor"/>
+                    </svg>
+                    <span>Add State</span>
+                </button>
+                <button class="tool-btn" id="modeTransition" data-mode="transition">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <path d="M 2 10 L 18 10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M 14 6 L 18 10 L 14 14" fill="currentColor"/>
+                    </svg>
+                    <span>Add Transition</span>
+                </button>
+                <button class="tool-btn" id="modeSimulate" data-mode="simulate">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <polygon points="5,3 5,17 17,10" fill="currentColor"/>
+                    </svg>
+                    <span>Simulate</span>
+                </button>
+                <button class="tool-btn" id="modeDelete" data-mode="delete">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                        <line x1="5" y1="5" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
+                        <line x1="15" y1="5" x2="5" y2="15" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span>Delete</span>
+                </button>
+            </div>
+            <div class="tool-actions">
+                <button class="action-btn" id="loadExampleBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                    Load Example
+                </button>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <!-- Left Sidebar -->
+            <aside class="sidebar left-sidebar">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Controls</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="mode-indicator" id="modeDisplay">
+                            <div class="mode-icon">📍</div>
+                            <div class="mode-text">Add State - Click canvas</div>
+                        </div>
+
+                        <div class="control-section">
+                            <h4>State Properties</h4>
+                            <div class="control-group">
+                                <label>State Name</label>
+                                <input type="text" id="stateName" placeholder="e.g., Idle, Running" class="input-field">
+                            </div>
+
+                            <div class="control-group">
+                                <label>State Type</label>
+                                <select id="stateType" class="input-field">
+                                    <option value="normal">Normal State</option>
+                                    <option value="initial">Initial State</option>
+                                    <option value="final">Final State</option>
+                                </select>
+                            </div>
+
+                            <button class="btn btn-primary" id="addStateBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16">
+                                    <line x1="8" y1="2" x2="8" y2="14" stroke="currentColor" stroke-width="2"/>
+                                    <line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                Add State to Center
+                            </button>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <div class="control-section">
+                            <h4>Event Execution</h4>
+                            <div class="control-group">
+                                <label>Event Name</label>
+                                <input type="text" id="eventName" placeholder="e.g., start, stop, tick" class="input-field">
+                            </div>
+
+                            <button class="btn btn-success" id="fireEventBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16">
+                                    <polygon points="3,2 3,14 13,8" fill="currentColor"/>
+                                </svg>
+                                Fire Event
+                            </button>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <div class="control-section">
+                            <h4>File Operations</h4>
+                            <button class="btn btn-secondary" id="exportBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M8 12 L8 4 M5 9 L8 12 L11 9"/>
+                                    <path d="M2 14 L14 14"/>
+                                </svg>
+                                Export JSON
+                            </button>
+                            <button class="btn btn-secondary" id="importBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M8 4 L8 12 M5 7 L8 4 L11 7"/>
+                                    <path d="M2 14 L14 14"/>
+                                </svg>
+                                Import JSON
+                            </button>
+                            <button class="btn btn-danger" id="clearBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16">
+                                    <line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
+                                    <line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                Clear All
+                            </button>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="stateCount">0</div>
+                                <div class="stat-label">States</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="transitionCount">0</div>
+                                <div class="stat-label">Transitions</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Canvas Area -->
+            <main class="canvas-area">
+                <div class="canvas-wrapper">
+                    <canvas id="stateCanvas" width="900" height="700"></canvas>
+                    <div class="canvas-overlay" id="canvasOverlay">
+                        <div class="welcome-message">
+                            <h2>Welcome to StateflowJS!</h2>
+                            <p>Click "Load Example" to see a traffic light FSM, or start creating your own state machine.</p>
+                            <div class="quick-tips">
+                                <div class="tip">
+                                    <span class="tip-icon">1️⃣</span>
+                                    <span>Click canvas to add states</span>
+                                </div>
+                                <div class="tip">
+                                    <span class="tip-icon">2️⃣</span>
+                                    <span>Switch to "Add Transition" and connect states</span>
+                                </div>
+                                <div class="tip">
+                                    <span class="tip-icon">3️⃣</span>
+                                    <span>Fire events to simulate transitions</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Sidebar -->
+            <aside class="sidebar right-sidebar">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>State Information</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="warningContainer"></div>
+                        <div class="info-section">
+                            <h4>States</h4>
+                            <div class="state-list" id="stateList">
+                                <div class="empty-state">No states yet</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Execution History</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="historyList">
+                            <div class="empty-state">No events fired yet</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Transitions</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="transitionListDisplay">
+                            <div class="empty-state">No transitions defined</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>How to Use StateflowJS</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3>🎯 Getting Started</h3>
+                    <p>StateflowJS helps you design, visualize, and debug finite state machines interactively.</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>📝 Creating States</h3>
+                    <ul>
+                        <li>Click on the canvas in "Add State" mode</li>
+                        <li>Or enter a name and click "Add State to Center"</li>
+                        <li>Choose state type: Normal, Initial, or Final</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h3>🔗 Adding Transitions</h3>
+                    <ul>
+                        <li>Switch to "Add Transition" mode</li>
+                        <li>Click the source state</li>
+                        <li>Click the target state</li>
+                        <li>Enter the event name that triggers this transition</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h3>▶️ Simulating Execution</h3>
+                    <ul>
+                        <li>Set initial state or switch to "Simulate" mode to click a state</li>
+                        <li>Enter an event name and click "Fire Event"</li>
+                        <li>Watch the state machine transition in real-time</li>
+                        <li>View execution history in the right panel</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h3>💡 Example: Traffic Light</h3>
+                    <p>Click "Load Example" to see a working traffic light state machine with states (Red, Yellow, Green) and timer transitions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="StateMachine.js"></script>
+    <script src="Visualizer.js"></script>
+    <script src="UIController.js"></script>
+    <script src="examples.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

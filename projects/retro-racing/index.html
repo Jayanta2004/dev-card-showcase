@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Racer - Top-Down Racing Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background-color: #0a0a1a;
+            color: #00ff00;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .game-header {
+            text-align: center;
+            width: 100%;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 15px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            color: #ffcc00;
+            text-shadow: 0 0 10px #ffcc00;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: #00ccff;
+            font-size: 1.2rem;
+        }
+        
+        .game-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        canvas {
+            border: 3px solid #00ff00;
+            background-color: #000;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        
+        .ui-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: white;
+            font-size: 1.2rem;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 10;
+        }
+        
+        .score {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+        
+        .high-score {
+            color: #ff6600;
+        }
+        
+        .speed {
+            color: #00ccff;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .instructions {
+            background-color: rgba(0, 20, 40, 0.8);
+            border: 1px solid #00ccff;
+            padding: 15px;
+            border-radius: 5px;
+            max-width: 48%;
+        }
+        
+        .instructions h3 {
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+        
+        .instructions p {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .key {
+            display: inline-block;
+            background-color: #333;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #666;
+            font-weight: bold;
+        }
+        
+        .game-stats {
+            background-color: rgba(0, 20, 40, 0.8);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            max-width: 48%;
+        }
+        
+        .game-stats h3 {
+            color: #00ff00;
+            margin-bottom: 10px;
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            color: #ffcc00;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            background-color: #0088ff;
+            transform: translateY(-2px);
+        }
+        
+        #startBtn {
+            background-color: #00aa00;
+        }
+        
+        #startBtn:hover {
+            background-color: #00cc00;
+        }
+        
+        #resetBtn {
+            background-color: #cc3300;
+        }
+        
+        #resetBtn:hover {
+            background-color: #ff5500;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            color: #ff3333;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 20;
+            border: 3px solid #ff3333;
+            display: none;
+        }
+        
+        .game-over h2 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        .game-over p {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #ffcc00;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .difficulty-meter {
+            width: 100%;
+            height: 20px;
+            background-color: #111;
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .difficulty-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #00ff00, #ffcc00, #ff3300);
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .instructions, .game-stats {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>RETRO RACER</h1>
+            <p class="subtitle">Avoid obstacles and survive as long as possible!</p>
+        </div>
+        
+        <div class="game-wrapper">
+            <canvas id="gameCanvas" width="600" height="800"></canvas>
+            
+            <div class="ui-overlay">
+                <div>SCORE: <span class="score" id="score">0</span></div>
+                <div>HIGH SCORE: <span class="high-score" id="highScore">0</span></div>
+                <div>SPEED: <span class="speed" id="speed">0</span> MPH</div>
+                <div>OBSTACLES: <span id="obstacleCount">0</span></div>
+                <div class="difficulty-meter">
+                    <div class="difficulty-fill" id="difficultyFill"></div>
+                </div>
+                <div>DIFFICULTY: <span id="difficulty">NORMAL</span></div>
+            </div>
+            
+            <div class="game-over" id="gameOverScreen">
+                <h2>GAME OVER</h2>
+                <p>Your score: <span id="finalScore">0</span></p>
+                <p>You survived <span id="survivalTime">0</span> seconds</p>
+                <button id="restartBtn">PLAY AGAIN</button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="instructions">
+                <h3>HOW TO PLAY</h3>
+                <p>• Use <span class="key">LEFT</span> and <span class="key">RIGHT</span> arrow keys to steer your car</p>
+                <p>• Avoid obstacles on the road</p>
+                <p>• Game speeds up over time</p>
+                <p>• Survive as long as possible to score points</p>
+                <p>• Each obstacle avoided = 10 points</p>
+            </div>
+            
+            <div class="game-stats">
+                <h3>GAME STATS</h3>
+                <div class="stat">
+                    <span>Time Survived:</span>
+                    <span class="stat-value" id="timeStat">0s</span>
+                </div>
+                <div class="stat">
+                    <span>Obstacles Avoided:</span>
+                    <span class="stat-value" id="obstaclesStat">0</span>
+                </div>
+                <div class="stat">
+                    <span>Current Level:</span>
+                    <span class="stat-value" id="levelStat">1</span>
+                </div>
+                <div class="stat">
+                    <span>Best Time:</span>
+                    <span class="stat-value" id="bestTimeStat">0s</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button id="startBtn">START GAME</button>
+            <button id="resetBtn">RESET HIGH SCORE</button>
+        </div>
+        
+        <div class="footer">
+            <p>Inspired by classic arcade racing games • Made with HTML5 Canvas & JavaScript</p>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const highScoreElement = document.getElementById('highScore');
+        const speedElement = document.getElementById('speed');
+        const obstacleCountElement = document.getElementById('obstacleCount');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreElement = document.getElementById('finalScore');
+        const survivalTimeElement = document.getElementById('survivalTime');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const timeStat = document.getElementById('timeStat');
+        const obstaclesStat = document.getElementById('obstaclesStat');
+        const levelStat = document.getElementById('levelStat');
+        const bestTimeStat = document.getElementById('bestTimeStat');
+        const difficultyFill = document.getElementById('difficultyFill');
+        const difficultyText = document.getElementById('difficulty');
+        
+        // Game state
+        let gameRunning = false;
+        let score = 0;
+        let highScore = localStorage.getItem('retroRacerHighScore') || 0;
+        let gameTime = 0;
+        let bestTime = localStorage.getItem('retroRacerBestTime') || 0;
+        let obstaclesAvoided = 0;
+        let level = 1;
+        
+        // Player car
+        const player = {
+            x: canvas.width / 2 - 15,
+            y: canvas.height - 100,
+            width: 30,
+            height: 50,
+            speed: 5,
+            color: '#ff3300'
+        };
+        
+        // Road properties
+        const road = {
+            width: 300,
+            x: (canvas.width - 300) / 2,
+            laneCount: 3,
+            laneWidth: 300 / 3,
+            markerHeight: 30,
+            markerWidth: 10,
+            markerGap: 20
+        };
+        
+        // Game settings
+        const game = {
+            baseSpeed: 3,
+            speed: 3,
+            maxSpeed: 15,
+            speedIncrease: 0.001,
+            obstacleSpawnRate: 0.02, // Chance per frame
+            obstacleMinSpeed: 2,
+            obstacleMaxSpeed: 6,
+            obstacleColors: ['#ff9900', '#ff3333', '#9966ff', '#33cc33'],
+            frames: 0
+        };
+        
+        // Arrays for game objects
+        let obstacles = [];
+        let roadMarkers = [];
+        
+        // Initialize road markers
+        function initRoadMarkers() {
+            roadMarkers = [];
+            for (let i = 0; i < 10; i++) {
+                roadMarkers.push({
+                    x: road.x + road.width / 2 - road.markerWidth / 2,
+                    y: -i * (road.markerHeight + road.markerGap)
+                });
+            }
+        }
+        
+        // Create a new obstacle
+        function createObstacle() {
+            const lane = Math.floor(Math.random() * road.laneCount);
+            const size = 20 + Math.random() * 20;
+            const speed = game.obstacleMinSpeed + Math.random() * (game.obstacleMaxSpeed - game.obstacleMinSpeed);
+            const color = game.obstacleColors[Math.floor(Math.random() * game.obstacleColors.length)];
+            
+            return {
+                x: road.x + lane * road.laneWidth + (road.laneWidth - size) / 2,
+                y: -size,
+                width: size,
+                height: size * 1.5,
+                speed: speed,
+                color: color,
+                lane: lane
+            };
+        }
+        
+        // Draw the road
+        function drawRoad() {
+            // Road surface
+            ctx.fillStyle = '#333333';
+            ctx.fillRect(road.x, 0, road.width, canvas.height);
+            
+            // Road edges
+            ctx.fillStyle = '#888888';
+            ctx.fillRect(road.x - 5, 0, 5, canvas.height);
+            ctx.fillRect(road.x + road.width, 0, 5, canvas.height);
+            
+            // Road markers
+            ctx.fillStyle = '#ffff00';
+            roadMarkers.forEach(marker => {
+                ctx.fillRect(marker.x, marker.y, road.markerWidth, road.markerHeight);
+            });
+            
+            // Roadside (grass)
+            ctx.fillStyle = '#006600';
+            ctx.fillRect(0, 0, road.x - 5, canvas.height);
+            ctx.fillRect(road.x + road.width + 5, 0, road.x - 5, canvas.height);
+            
+            // Roadside markers
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < canvas.height; i += 40) {
+                ctx.fillRect(road.x - 15, i, 5, 20);
+                ctx.fillRect(road.x + road.width + 10, i, 5, 20);
+            }
+        }
+        
+        // Draw the player car
+        function drawPlayer() {
+            // Car body
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Car details
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillRect(player.x + 5, player.y + 5, player.width - 10, 10); // Top stripe
+            ctx.fillRect(player.x + 5, player.y + player.height - 15, player.width - 10, 10); // Bottom stripe
+            
+            // Windows
+            ctx.fillStyle = '#66ccff';
+            ctx.fillRect(player.x + 8, player.y + 20, player.width - 16, 15);
+            
+            // Wheels
+            ctx.fillStyle = '#222222';
+            ctx.fillRect(player.x - 5, player.y + 10, 5, 10);
+            ctx.fillRect(player.x + player.width, player.y + 10, 5, 10);
+            ctx.fillRect(player.x - 5, player.y + player.height - 20, 5, 10);
+            ctx.fillRect(player.x + player.width, player.y + player.height - 20, 5, 10);
+        }
+        
+        // Draw obstacles
+        function drawObstacles() {
+            obstacles.forEach(obstacle => {
+                // Obstacle body
+                ctx.fillStyle = obstacle.color;
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                
+                // Obstacle details
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(obstacle.x + 5, obstacle.y + 5, obstacle.width - 10, 10);
+                ctx.fillRect(obstacle.x + 5, obstacle.y + obstacle.height - 15, obstacle.width - 10, 10);
+                
+                // Obstacle windows
+                ctx.fillStyle = '#444444';
+                ctx.fillRect(obstacle.x + 8, obstacle.y + 20, obstacle.width - 16, obstacle.height - 40);
+            });
+        }
+        
+        // Update game objects
+        function update() {
+            // Increase game time
+            gameTime += 1/60; // Assuming 60 FPS
+            
+            // Update game speed
+            game.speed = Math.min(game.baseSpeed + gameTime * game.speedIncrease, game.maxSpeed);
+            
+            // Update level based on time
+            level = Math.floor(gameTime / 10) + 1;
+            
+            // Update difficulty
+            const difficultyPercent = Math.min((game.speed - game.baseSpeed) / (game.maxSpeed - game.baseSpeed) * 100, 100);
+            difficultyFill.style.width = `${difficultyPercent}%`;
+            
+            if (difficultyPercent < 30) difficultyText.textContent = "NORMAL";
+            else if (difficultyPercent < 70) difficultyText.textContent = "HARD";
+            else difficultyText.textContent = "EXTREME";
+            
+            // Move road markers (create illusion of scrolling)
+            roadMarkers.forEach(marker => {
+                marker.y += game.speed;
+                
+                // Reset marker when it goes off screen
+                if (marker.y > canvas.height) {
+                    marker.y = -road.markerHeight;
+                }
+            });
+            
+            // Move obstacles
+            obstacles.forEach(obstacle => {
+                obstacle.y += obstacle.speed + game.speed * 0.5;
+            });
+            
+            // Remove obstacles that are off screen
+            obstacles = obstacles.filter(obstacle => obstacle.y < canvas.height);
+            
+            // Spawn new obstacles
+            if (Math.random() < game.obstacleSpawnRate + (gameTime * 0.0001)) {
+                obstacles.push(createObstacle());
+            }
+            
+            // Check for collisions
+            obstacles.forEach(obstacle => {
+                if (isCollision(player, obstacle)) {
+                    gameOver();
+                }
+            });
+            
+            // Update score (based on time survived)
+            score = Math.floor(gameTime * 10) + obstaclesAvoided * 10;
+            
+            // Update UI
+            updateUI();
+        }
+        
+        // Check collision between player and obstacle
+        function isCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+        
+        // Update UI elements
+        function updateUI() {
+            scoreElement.textContent = score;
+            speedElement.textContent = Math.floor(game.speed * 20);
+            obstacleCountElement.textContent = obstacles.length;
+            timeStat.textContent = `${gameTime.toFixed(1)}s`;
+            obstaclesStat.textContent = obstaclesAvoided;
+            levelStat.textContent = level;
+            
+            // Update best time if needed
+            if (gameTime > bestTime) {
+                bestTime = gameTime;
+                bestTimeStat.textContent = `${bestTime.toFixed(1)}s`;
+            }
+        }
+        
+        // Game over function
+        function gameOver() {
+            gameRunning = false;
+            
+            // Update high score if needed
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('retroRacerHighScore', highScore);
+                highScoreElement.textContent = highScore;
+            }
+            
+            // Update best time if needed
+            if (gameTime > bestTime) {
+                bestTime = gameTime;
+                localStorage.setItem('retroRacerBestTime', bestTime);
+                bestTimeStat.textContent = `${bestTime.toFixed(1)}s`;
+            }
+            
+            // Update game over screen
+            finalScoreElement.textContent = score;
+            survivalTimeElement.textContent = gameTime.toFixed(1);
+            
+            // Show game over screen
+            gameOverScreen.style.display = 'block';
+        }
+        
+        // Reset game to initial state
+        function resetGame() {
+            score = 0;
+            gameTime = 0;
+            obstaclesAvoided = 0;
+            level = 1;
+            game.speed = game.baseSpeed;
+            obstacles = [];
+            player.x = canvas.width / 2 - player.width / 2;
+            
+            initRoadMarkers();
+            gameOverScreen.style.display = 'none';
+            
+            updateUI();
+        }
+        
+        // Start the game
+        function startGame() {
+            if (gameRunning) return;
+            
+            resetGame();
+            gameRunning = true;
+            gameOverScreen.style.display = 'none';
+            
+            // Start game loop
+            gameLoop();
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update game state
+            update();
+            
+            // Draw game elements
+            drawRoad();
+            drawObstacles();
+            drawPlayer();
+            
+            // Count frames for animation timing
+            game.frames++;
+            
+            // Continue the game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    player.x = Math.max(road.x, player.x - player.speed);
+                    break;
+                case 'ArrowRight':
+                    player.x = Math.min(road.x + road.width - player.width, player.x + player.speed);
+                    break;
+            }
+        });
+        
+        // Button event listeners
+        startBtn.addEventListener('click', startGame);
+        
+        restartBtn.addEventListener('click', () => {
+            startGame();
+        });
+        
+        resetBtn.addEventListener('click', () => {
+            if (confirm("Are you sure you want to reset your high score and best time?")) {
+                localStorage.removeItem('retroRacerHighScore');
+                localStorage.removeItem('retroRacerBestTime');
+                highScore = 0;
+                bestTime = 0;
+                highScoreElement.textContent = "0";
+                bestTimeStat.textContent = "0s";
+            }
+        });
+        
+        // Initialize the game
+        function init() {
+            // Set initial high score and best time
+            highScoreElement.textContent = highScore;
+            bestTimeStat.textContent = `${bestTime}s`;
+            
+            // Initialize road markers
+            initRoadMarkers();
+            
+            // Draw initial static screen
+            drawRoad();
+            drawPlayer();
+            
+            // Add some sample obstacles for visual reference
+            for (let i = 0; i < 3; i++) {
+                const obstacle = createObstacle();
+                obstacle.y = 150 + i * 150;
+                obstacles.push(obstacle);
+            }
+            drawObstacles();
+        }
+        
+        // Start initialization
+        init();
+    </script>
+</body>
+</html>

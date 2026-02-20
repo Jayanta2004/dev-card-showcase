@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureVault | Military-Grade Browser Encryption</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+</head>
+<body>
+    <!-- Security Overlay -->
+    <div id="security-overlay" class="security-overlay">
+        <div class="security-notice">
+            <i class="fas fa-shield-alt"></i>
+            <h3>Security Notice</h3>
+            <p>All encryption/decryption happens 100% in your browser. Your files and passwords never leave your device.</p>
+            <button id="acknowledge-security" class="btn btn-primary">I Understand</button>
+        </div>
+    </div>
+
+    <!-- Password Strength Meter -->
+    <div id="password-strength-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-lock"></i> Password Strength Analysis</h2>
+                <button id="close-strength-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="strength-meter">
+                    <div class="strength-visual">
+                        <div class="strength-bar" id="strength-bar"></div>
+                    </div>
+                    <div class="strength-label" id="strength-label">Very Weak</div>
+                </div>
+                <div class="strength-criteria">
+                    <h4>Password Requirements:</h4>
+                    <ul>
+                        <li id="criteria-length"><i class="fas fa-check"></i> At least 12 characters</li>
+                        <li id="criteria-uppercase"><i class="fas fa-check"></i> Contains uppercase letters</li>
+                        <li id="criteria-lowercase"><i class="fas fa-check"></i> Contains lowercase letters</li>
+                        <li id="criteria-numbers"><i class="fas fa-check"></i> Contains numbers</li>
+                        <li id="criteria-symbols"><i class="fas fa-check"></i> Contains symbols</li>
+                        <li id="criteria-uncommon"><i class="fas fa-check"></i> Not a common password</li>
+                    </ul>
+                </div>
+                <div class="strength-tips">
+                    <h4><i class="fas fa-lightbulb"></i> Security Tips:</h4>
+                    <p>• Use a passphrase instead of a password (e.g., "CorrectHorseBatteryStaple")</p>
+                    <p>• Consider using a password manager to generate and store strong passwords</p>
+                    <p>• Never reuse passwords across different services</p>
+                </div>
+                <div class="modal-footer">
+                    <button id="generate-password" class="btn btn-secondary">
+                        <i class="fas fa-key"></i> Generate Strong Password
+                    </button>
+                    <button id="use-password" class="btn btn-primary">Use This Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Info Modal -->
+    <div id="file-info-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-file"></i> File Information</h2>
+                <button id="close-file-info" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="file-info-grid">
+                    <div class="info-item">
+                        <span class="info-label">File Name:</span>
+                        <span id="info-filename" class="info-value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">File Type:</span>
+                        <span id="info-filetype" class="info-value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">File Size:</span>
+                        <span id="info-filesize" class="info-value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Last Modified:</span>
+                        <span id="info-modified" class="info-value">-</span>
+                    </div>
+                    <div class="info-item full-width">
+                        <span class="info-label">SHA-256 Hash:</span>
+                        <span id="info-hash" class="info-value monospace">-</span>
+                    </div>
+                    <div class="info-item full-width">
+                        <span class="info-label">Security Assessment:</span>
+                        <span id="info-security" class="info-value">
+                            <i class="fas fa-shield-alt"></i> File appears safe for encryption
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="close-info-modal" class="btn btn-primary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-lock"></i>
+                        <div class="lock-animation">
+                            <div class="lock-body"></div>
+                            <div class="lock-shackle"></div>
+                        </div>
+                    </div>
+                    <div class="logo-text">
+                        <h1>SecureVault</h1>
+                        <p class="tagline">Military-Grade Browser Encryption</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="security-status">
+                        <div class="status-indicator secure">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Secure Connection</span>
+                        </div>
+                        <div class="status-indicator offline">
+                            <i class="fas fa-wifi-slash"></i>
+                            <span>100% Offline</span>
+                        </div>
+                    </div>
+                    <button id="toggle-theme" class="theme-toggle">
+                        <i class="fas fa-moon"></i>
+                        <span>Dark Mode</span>
+                    </button>
+                </div>
+            </div>
+            <div class="header-subtitle">
+                <p><i class="fas fa-exclamation-triangle"></i> All encryption/decryption happens locally in your browser. Your files never leave your device.</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mode Selector -->
+            <div class="mode-selector">
+                <div class="mode-tabs">
+                    <button id="encrypt-tab" class="mode-tab active">
+                        <i class="fas fa-lock"></i>
+                        <span>Encrypt File</span>
+                    </button>
+                    <button id="decrypt-tab" class="mode-tab">
+                        <i class="fas fa-unlock"></i>
+                        <span>Decrypt File</span>
+                    </button>
+                </div>
+                <div class="mode-info">
+                    <p id="mode-description">Select a file, set a strong password, and generate an encrypted .enc file that can only be opened with the correct password.</p>
+                </div>
+            </div>
+
+            <!-- Encryption Section -->
+            <section id="encrypt-section" class="operation-section active">
+                <div class="section-header">
+                    <h2><i class="fas fa-file-export"></i> Encrypt a File</h2>
+                    <button id="encrypt-info" class="btn btn-outline">
+                        <i class="fas fa-info-circle"></i> How It Works
+                    </button>
+                </div>
+                
+                <div class="operation-grid">
+                    <!-- File Selection -->
+                    <div class="operation-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-file-upload"></i> 1. Select File</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="file-drop-area" id="encrypt-drop-area">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <h4>Drag & Drop Files Here</h4>
+                                <p>Or click to browse</p>
+                                <input type="file" id="encrypt-file-input" class="file-input">
+                                <div class="file-types">
+                                    <span class="file-type-tag">PDF</span>
+                                    <span class="file-type-tag">DOC</span>
+                                    <span class="file-type-tag">DOCX</span>
+                                    <span class="file-type-tag">JPG</span>
+                                    <span class="file-type-tag">PNG</span>
+                                    <span class="file-type-tag">TXT</span>
+                                    <span class="file-type-tag">ZIP</span>
+                                    <span class="file-type-tag">+ More</span>
+                                </div>
+                                <p class="file-limit">Maximum file size: 500MB</p>
+                            </div>
+                            <div id="encrypt-file-info" class="file-info-display">
+                                <!-- File info will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Configuration -->
+                    <div class="operation-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-key"></i> 2. Set Password</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="encrypt-password">
+                                    <i class="fas fa-lock"></i> Encryption Password
+                                </label>
+                                <div class="password-input-container">
+                                    <input type="password" id="encrypt-password" class="password-input" 
+                                           placeholder="Enter a strong password" autocomplete="new-password">
+                                    <button type="button" class="password-toggle" id="toggle-encrypt-password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="password-strength" id="encrypt-strength">
+                                    <div class="strength-meter">
+                                        <div class="strength-segment"></div>
+                                        <div class="strength-segment"></div>
+                                        <div class="strength-segment"></div>
+                                        <div class="strength-segment"></div>
+                                        <div class="strength-segment"></div>
+                                    </div>
+                                    <span class="strength-text" id="encrypt-strength-text">Enter a password</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="confirm-password">
+                                    <i class="fas fa-check-circle"></i> Confirm Password
+                                </label>
+                                <div class="password-input-container">
+                                    <input type="password" id="confirm-password" class="password-input" 
+                                           placeholder="Re-enter the password" autocomplete="new-password">
+                                    <button type="button" class="password-toggle" id="toggle-confirm-password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="password-match" id="password-match">
+                                    <i class="fas fa-times"></i>
+                                    <span>Passwords do not match</span>
+                                </div>
+                            </div>
+
+                            <div class="password-options">
+                                <button id="check-password-strength" class="btn btn-outline">
+                                    <i class="fas fa-chart-line"></i> Check Strength
+                                </button>
+                                <button id="generate-random-password" class="btn btn-outline">
+                                    <i class="fas fa-dice"></i> Generate Password
+                                </button>
+                            </div>
+
+                            <div class="encryption-options">
+                                <h4><i class="fas fa-cog"></i> Advanced Options</h4>
+                                <div class="option-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="compress-before-encrypt" checked>
+                                        <span>Compress before encryption</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="include-metadata" checked>
+                                        <span>Include original filename in metadata</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="auto-delete-original">
+                                        <span>Delete original file after download (simulated)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Encryption Output -->
+                    <div class="operation-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-file-download"></i> 3. Download Encrypted File</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="encryption-output">
+                                <div class="output-placeholder" id="encrypt-output-placeholder">
+                                    <i class="fas fa-lock"></i>
+                                    <p>Your encrypted file will appear here</p>
+                                </div>
+                                <div id="encrypt-output" class="output-content" style="display: none;">
+                                    <div class="output-header">
+                                        <i class="fas fa-file-shield"></i>
+                                        <div class="output-info">
+                                            <h4 id="output-filename">encrypted_file.enc</h4>
+                                            <p class="output-size" id="output-filesize">-</p>
+                                        </div>
+                                    </div>
+                                    <div class="output-details">
+                                        <div class="output-detail">
+                                            <span class="detail-label">Encryption:</span>
+                                            <span class="detail-value">AES-GCM 256-bit</span>
+                                        </div>
+                                        <div class="output-detail">
+                                            <span class="detail-label">Status:</span>
+                                            <span class="detail-value secure"><i class="fas fa-check-circle"></i> Secure</span>
+                                        </div>
+                                        <div class="output-detail">
+                                            <span class="detail-label">Timestamp:</span>
+                                            <span class="detail-value" id="output-timestamp">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="action-buttons">
+                                <button id="start-encryption" class="btn btn-primary" disabled>
+                                    <i class="fas fa-lock"></i> Encrypt File
+                                </button>
+                                <button id="download-encrypted" class="btn btn-success" disabled>
+                                    <i class="fas fa-download"></i> Download .enc File
+                                </button>
+                            </div>
+
+                            <div class="encryption-tips">
+                                <h4><i class="fas fa-lightbulb"></i> Security Tips:</h4>
+                                <ul>
+                                    <li>Send the password through a different channel than the encrypted file</li>
+                                    <li>Consider using a password manager to share the password securely</li>
+                                    <li>The .enc file contains everything needed for decryption</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Encryption Progress -->
+                <div class="progress-section" id="encrypt-progress" style="display: none;">
+                    <div class="progress-header">
+                        <h3><i class="fas fa-cogs"></i> Encryption in Progress</h3>
+                        <span class="progress-percentage" id="encrypt-progress-percentage">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="encrypt-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-details">
+                        <div class="progress-detail">
+                            <span class="detail-label">Status:</span>
+                            <span class="detail-value" id="encrypt-status">Initializing...</span>
+                        </div>
+                        <div class="progress-detail">
+                            <span class="detail-label">Time Remaining:</span>
+                            <span class="detail-value" id="encrypt-time-remaining">Calculating...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Decryption Section -->
+            <section id="decrypt-section" class="operation-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-file-import"></i> Decrypt a File</h2>
+                    <button id="decrypt-info" class="btn btn-outline">
+                        <i class="fas fa-info-circle"></i> How It Works
+                    </button>
+                </div>
+                
+                <div class="operation-grid">
+                    <!-- File Selection -->
+                    <div class="operation-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-file-upload"></i> 1. Select .enc File</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="file-drop-area" id="decrypt-drop-area">
+                                <i class="fas fa-file-shield"></i>
+                                <h4>Drag & Drop .enc Files Here</h4>
+                                <p>Or click to browse</p>
+                                <input type="file" id="decrypt-file-input" class="file-input" accept=".enc">
+                                <div class="file-requirements">
+                                    <p><i class="fas fa-info-circle"></i> Only files encrypted with SecureVault can be decrypted</p>
+                                </div>
+                            </div>
+                            <div id="decrypt-file-info" class="file-info-display">
+                                <!-- File info will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="operation-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-key"></i> 2. Enter Password</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="decrypt-password">
+                                    <i class="fas fa-lock"></i> Decryption Password
+                                </label>
+                                <div class="password-input-container">
+                                    <input type="password" id="decrypt-password" class="password-input" 
+                                           placeholder="Enter the encryption password" autocomplete="current-password" disabled>
+                                    <button type="button" class="password-toggle" id="toggle-decrypt-password" disabled>
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <p class="form-help">Enter the exact password used during encryption</p>
+                            </div>
+
+                            <div class="decryption-options">
+                                <h4><i class="fas fa-cog"></i> Decryption Options</h4>
+                                <div class="option-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="verify-integrity" checked disabled>
+                                        <span>Verify file integrity (recommended)</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="restore-metadata" checked disabled>
+                                        <span>Restore original filename</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="auto-open-file">
+                                        <span>Open file after decryption (if supported)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="password-recovery">
+                                <h4><i class="fas fa-question-circle"></i> Forgot Password?</h4>
+                                <p>If you've lost the password, the file cannot be recovered. The encryption uses military-grade AES-256 GCM.</p>
+                                <button id="show-hint" class="btn btn-outline" disabled>
+                                    <i class="fas fa-lightbulb"></i> Show Password Hint
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Decryption Output -->
+                    <div class="operation-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-file-download"></i> 3. Download Original File</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="decryption-output">
+                                <div class="output-placeholder" id="decrypt-output-placeholder">
+                                    <i class="fas fa-unlock"></i>
+                                    <p>Your decrypted file will appear here</p>
+                                </div>
+                                <div id="decrypt-output" class="output-content" style="display: none;">
+                                    <div class="output-header">
+                                        <i class="fas fa-file"></i>
+                                        <div class="output-info">
+                                            <h4 id="decrypted-filename">original_file.pdf</h4>
+                                            <p class="output-size" id="decrypted-filesize">-</p>
+                                        </div>
+                                    </div>
+                                    <div class="output-details">
+                                        <div class="output-detail">
+                                            <span class="detail-label">Original Type:</span>
+                                            <span class="detail-value" id="decrypted-filetype">-</span>
+                                        </div>
+                                        <div class="output-detail">
+                                            <span class="detail-label">Decryption:</span>
+                                            <span class="detail-value success"><i class="fas fa-check-circle"></i> Successful</span>
+                                        </div>
+                                        <div class="output-detail">
+                                            <span class="detail-label">Integrity:</span>
+                                            <span class="detail-value secure"><i class="fas fa-shield-alt"></i> Verified</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="action-buttons">
+                                <button id="start-decryption" class="btn btn-primary" disabled>
+                                    <i class="fas fa-unlock"></i> Decrypt File
+                                </button>
+                                <button id="download-decrypted" class="btn btn-success" disabled>
+                                    <i class="fas fa-download"></i> Download Original
+                                </button>
+                            </div>
+
+                            <div class="decryption-tips">
+                                <h4><i class="fas fa-exclamation-triangle"></i> Security Warning:</h4>
+                                <ul>
+                                    <li>Only decrypt files from trusted sources</li>
+                                    <li>Scan decrypted files with antivirus software</li>
+                                    <li>Delete the .enc file after successful decryption</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decryption Progress -->
+                <div class="progress-section" id="decrypt-progress" style="display: none;">
+                    <div class="progress-header">
+                        <h3><i class="fas fa-cogs"></i> Decryption in Progress</h3>
+                        <span class="progress-percentage" id="decrypt-progress-percentage">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="decrypt-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-details">
+                        <div class="progress-detail">
+                            <span class="detail-label">Status:</span>
+                            <span class="detail-value" id="decrypt-status">Initializing...</span>
+                        </div>
+                        <div class="progress-detail">
+                            <span class="detail-label">Integrity Check:</span>
+                            <span class="detail-value" id="decrypt-integrity">Pending...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Technical Information -->
+            <section class="info-section">
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-user-secret"></i>
+                        </div>
+                        <h3>Zero-Knowledge Architecture</h3>
+                        <p>Your files and passwords are never transmitted over the internet. All processing happens locally in your browser using the Web Crypto API.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>AES-256 GCM Encryption</h3>
+                        <p>Uses military-grade encryption with 256-bit keys and Galois/Counter Mode for authenticated encryption that ensures both confidentiality and integrity.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3>High Performance</h3>
+                        <p>Optimized for modern browsers with WebAssembly acceleration. Can handle files up to 500MB efficiently with streaming encryption.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <div class="footer-logo">
+                        <i class="fas fa-lock"></i>
+                        <span>SecureVault</span>
+                    </div>
+                    <p class="footer-tagline">Military-grade encryption in your browser</p>
+                </div>
+                <div class="footer-security">
+                    <div class="security-badge">
+                        <i class="fas fa-check-circle"></i>
+                        <span>100% Client-Side</span>
+                    </div>
+                    <div class="security-badge">
+                        <i class="fas fa-code"></i>
+                        <span>Open Source</span>
+                    </div>
+                    <div class="security-badge">
+                        <i class="fas fa-globe"></i>
+                        <span>No Internet Required</span>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link" id="view-source">
+                        <i class="fab fa-github"></i> View Source
+                    </a>
+                    <a href="#" class="footer-link" id="report-issue">
+                        <i class="fas fa-bug"></i> Report Issue
+                    </a>
+                    <a href="#" class="footer-link" id="learn-more">
+                        <i class="fas fa-book"></i> Documentation
+                    </a>
+                </div>
+            </div>
+            <div class="footer-disclaimer">
+                <p><i class="fas fa-exclamation-triangle"></i> <strong>Disclaimer:</strong> This tool is for legitimate privacy protection only. The developers are not responsible for misuse.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>

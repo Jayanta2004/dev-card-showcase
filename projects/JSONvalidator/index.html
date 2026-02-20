@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Validator & Formatter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #313244;
+        }
+        
+        h1 {
+            color: #89b4fa;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #bac2de;
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .input-section, .output-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #313244;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #89b4fa;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background-color: #585b70;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        button:hover {
+            background-color: #6c7086;
+        }
+        
+        .btn-primary {
+            background-color: #89b4fa;
+            color: #1e1e2e;
+        }
+        
+        .btn-primary:hover {
+            background-color: #a6c8ff;
+        }
+        
+        .btn-success {
+            background-color: #a6e3a1;
+            color: #1e1e2e;
+        }
+        
+        .btn-success:hover {
+            background-color: #b4f1b0;
+        }
+        
+        .btn-danger {
+            background-color: #f38ba8;
+            color: #1e1e2e;
+        }
+        
+        .btn-danger:hover {
+            background-color: #f5a0b8;
+        }
+        
+        .text-area-container {
+            position: relative;
+            height: 400px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #313244;
+        }
+        
+        textarea, .output-area {
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+            background-color: #181825;
+            color: #cdd6f4;
+            border: none;
+            resize: none;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre;
+        }
+        
+        textarea:focus {
+            outline: 2px solid #89b4fa;
+            outline-offset: -2px;
+        }
+        
+        .output-area {
+            overflow: auto;
+            position: relative;
+        }
+        
+        .error-message {
+            background-color: rgba(243, 139, 168, 0.1);
+            border-left: 4px solid #f38ba8;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 0 5px 5px 0;
+            display: none;
+        }
+        
+        .error-title {
+            color: #f38ba8;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .error-details {
+            font-family: monospace;
+            margin-top: 8px;
+            color: #f5a0b8;
+        }
+        
+        .tree-node {
+            margin-left: 20px;
+        }
+        
+        .tree-node.collapsed > .tree-children {
+            display: none;
+        }
+        
+        .tree-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 2px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .tree-toggle {
+            cursor: pointer;
+            color: #89b4fa;
+            margin-right: 5px;
+            width: 16px;
+            text-align: center;
+            user-select: none;
+        }
+        
+        .tree-key {
+            color: #89b4fa;
+            margin-right: 5px;
+        }
+        
+        .tree-colon {
+            margin-right: 5px;
+        }
+        
+        .tree-value {
+            word-break: break-word;
+        }
+        
+        .tree-value.string {
+            color: #a6e3a1;
+        }
+        
+        .tree-value.number {
+            color: #fab387;
+        }
+        
+        .tree-value.boolean {
+            color: #cba6f7;
+        }
+        
+        .tree-value.null {
+            color: #f38ba8;
+        }
+        
+        .tree-bracket, .tree-brace {
+            color: #cdd6f4;
+            font-weight: bold;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background-color: #181825;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-valid {
+            color: #a6e3a1;
+        }
+        
+        .status-invalid {
+            color: #f38ba8;
+        }
+        
+        .indent-options {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #313244;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        .indent-option {
+            padding: 3px 8px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        
+        .indent-option.active {
+            background-color: #585b70;
+        }
+        
+        .syntax-error {
+            background-color: rgba(243, 139, 168, 0.2);
+            position: relative;
+        }
+        
+        .syntax-error::after {
+            content: "✗";
+            color: #f38ba8;
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            font-size: 12px;
+        }
+        
+        .sample-json {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #89b4fa;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .input-section, .output-section {
+                min-width: 100%;
+            }
+            
+            .controls {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #313244;
+            color: #7f849c;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-code"></i> JSON Validator & Formatter</h1>
+            <p class="subtitle">A sanity-check tool for developers working with APIs. Paste your JSON data to validate, format, and explore it as an interactive tree structure. Detects syntax errors with line numbers.</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <div class="section-header">
+                    <h2 class="section-title">Input JSON</h2>
+                    <div class="controls">
+                        <button class="btn-primary" id="validateBtn">
+                            <i class="fas fa-check-circle"></i> Validate & Format
+                        </button>
+                        <button id="clearBtn">
+                            <i class="fas fa-broom"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-area-container">
+                    <textarea id="jsonInput" placeholder='Paste your JSON here... Example: {"name":"John","age":30,"city":"New York"}'>{"name":"John","age":30,"hobbies":["reading","gaming"],"address":{"street":"123 Main St","city":"New York"}}</textarea>
+                </div>
+                
+                <div class="sample-json" id="loadSample">Load sample JSON with errors</div>
+            </div>
+            
+            <div class="output-section">
+                <div class="section-header">
+                    <h2 class="section-title">Formatted JSON</h2>
+                    <div class="controls">
+                        <div class="indent-options">
+                            <span>Indent:</span>
+                            <span class="indent-option active" data-spaces="2">2 spaces</span>
+                            <span class="indent-option" data-spaces="4">4 spaces</span>
+                        </div>
+                        <button class="btn-success" id="copyBtn">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                        <button class="btn-success" id="downloadBtn">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-area-container">
+                    <div class="output-area" id="jsonOutput">
+                        <!-- Formatted JSON will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="error-message" id="errorContainer">
+            <div class="error-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorTitle">JSON Syntax Error</span>
+            </div>
+            <div id="errorText">Error details will appear here.</div>
+            <div class="error-details" id="errorDetails"></div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-item">
+                <span>Status:</span>
+                <span class="status-valid" id="statusText">Ready</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-file-code"></i>
+                <span>Lines: <span id="lineCount">1</span></span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-object-group"></i>
+                <span>Tree Nodes: <span id="nodeCount">0</span></span>
+            </div>
+        </div>
+        
+        <footer>
+            <p>JSON Validator & Formatter &copy; 2026 | A missing comma in a configuration file can bring down a server. This tool helps identify errors in seconds.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const jsonInput = document.getElementById('jsonInput');
+            const jsonOutput = document.getElementById('jsonOutput');
+            const validateBtn = document.getElementById('validateBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const loadSample = document.getElementById('loadSample');
+            const errorContainer = document.getElementById('errorContainer');
+            const errorTitle = document.getElementById('errorTitle');
+            const errorText = document.getElementById('errorText');
+            const errorDetails = document.getElementById('errorDetails');
+            const statusText = document.getElementById('statusText');
+            const lineCount = document.getElementById('lineCount');
+            const nodeCount = document.getElementById('nodeCount');
+            const indentOptions = document.querySelectorAll('.indent-option');
+            
+            // State variables
+            let currentIndent = 2;
+            let isValidJSON = false;
+            let parsedJSON = null;
+            
+            // Initialize with default JSON
+            formatJSON();
+            
+            // Event listeners
+            validateBtn.addEventListener('click', formatJSON);
+            clearBtn.addEventListener('click', clearInput);
+            copyBtn.addEventListener('click', copyOutput);
+            downloadBtn.addEventListener('click', downloadJSON);
+            loadSample.addEventListener('click', loadSampleJSON);
+            
+            // Add input event to update line count
+            jsonInput.addEventListener('input', updateLineCount);
+            
+            // Set up indent options
+            indentOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    indentOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    currentIndent = parseInt(this.dataset.spaces);
+                    
+                    // Reformat if we have valid JSON
+                    if (isValidJSON && parsedJSON) {
+                        displayFormattedJSON(parsedJSON);
+                    }
+                });
+            });
+            
+            // Format JSON function
+            function formatJSON() {
+                const input = jsonInput.value.trim();
+                
+                if (!input) {
+                    showError('No JSON provided', 'Please enter some JSON data to validate and format.');
+                    return;
+                }
+                
+                try {
+                    // Try to parse the JSON
+                    parsedJSON = JSON.parse(input);
+                    isValidJSON = true;
+                    
+                    // Hide error container
+                    errorContainer.style.display = 'none';
+                    
+                    // Update status
+                    statusText.textContent = 'Valid JSON';
+                    statusText.className = 'status-valid';
+                    
+                    // Display formatted JSON
+                    displayFormattedJSON(parsedJSON);
+                    
+                } catch (error) {
+                    // Handle parsing error
+                    isValidJSON = false;
+                    parsedJSON = null;
+                    
+                    // Display error
+                    showError('JSON Syntax Error', error.message);
+                    
+                    // Try to highlight the error location
+                    highlightError(error, input);
+                    
+                    // Update status
+                    statusText.textContent = 'Invalid JSON';
+                    statusText.className = 'status-invalid';
+                    
+                    // Clear output
+                    jsonOutput.innerHTML = '';
+                    nodeCount.textContent = '0';
+                }
+                
+                // Update line count
+                updateLineCount();
+            }
+            
+            // Display formatted JSON as a tree
+            function displayFormattedJSON(data) {
+                // Clear output
+                jsonOutput.innerHTML = '';
+                
+                // Create the tree structure
+                const treeContainer = document.createElement('div');
+                treeContainer.className = 'tree-container';
+                
+                // Build the tree
+                const nodeCountValue = buildTree(data, treeContainer, 0);
+                
+                // Add to output
+                jsonOutput.appendChild(treeContainer);
+                
+                // Update node count
+                nodeCount.textContent = nodeCountValue;
+                
+                // Also display as text with indentation
+                const formattedText = JSON.stringify(data, null, currentIndent);
+                jsonOutput.setAttribute('data-json-text', formattedText);
+            }
+            
+            // Recursive function to build the tree view
+            function buildTree(data, container, depth, key = null) {
+                let nodeCount = 1; // Count this node
+                
+                const treeItem = document.createElement('div');
+                treeItem.className = 'tree-item';
+                
+                // Add indentation
+                treeItem.style.paddingLeft = (depth * 20) + 'px';
+                
+                // Create key part if this is an object property
+                if (key !== null) {
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'tree-key';
+                    keySpan.textContent = `"${key}"`;
+                    treeItem.appendChild(keySpan);
+                    
+                    const colonSpan = document.createElement('span');
+                    colonSpan.className = 'tree-colon';
+                    colonSpan.textContent = ':';
+                    treeItem.appendChild(colonSpan);
+                }
+                
+                // Handle different data types
+                if (Array.isArray(data)) {
+                    // Array
+                    const toggle = document.createElement('span');
+                    toggle.className = 'tree-toggle';
+                    toggle.textContent = data.length > 0 ? '▶' : '';
+                    toggle.addEventListener('click', () => toggleCollapse(toggle));
+                    treeItem.appendChild(toggle);
+                    
+                    const bracket = document.createElement('span');
+                    bracket.className = 'tree-bracket';
+                    bracket.textContent = '[';
+                    treeItem.appendChild(bracket);
+                    
+                    if (data.length === 0) {
+                        bracket.textContent = '[]';
+                    } else {
+                        // Add count
+                        const countSpan = document.createElement('span');
+                        countSpan.className = 'tree-value';
+                        countSpan.textContent = ` // ${data.length} item${data.length === 1 ? '' : 's'}`;
+                        treeItem.appendChild(countSpan);
+                        
+                        // Create children container
+                        const childrenContainer = document.createElement('div');
+                        childrenContainer.className = 'tree-children';
+                        
+                        // Add children
+                        data.forEach((item, index) => {
+                            nodeCount += buildTree(item, childrenContainer, depth + 1, index);
+                        });
+                        
+                        treeItem.appendChild(childrenContainer);
+                        
+                        // Closing bracket
+                        const closeBracket = document.createElement('div');
+                        closeBracket.className = 'tree-item';
+                        closeBracket.style.paddingLeft = (depth * 20) + 'px';
+                        
+                        const bracketSpan = document.createElement('span');
+                        bracketSpan.className = 'tree-bracket';
+                        bracketSpan.textContent = ']';
+                        closeBracket.appendChild(bracketSpan);
+                        
+                        container.appendChild(treeItem);
+                        container.appendChild(closeBracket);
+                        
+                        return nodeCount;
+                    }
+                } else if (typeof data === 'object' && data !== null) {
+                    // Object
+                    const toggle = document.createElement('span');
+                    toggle.className = 'tree-toggle';
+                    toggle.textContent = Object.keys(data).length > 0 ? '▶' : '';
+                    toggle.addEventListener('click', () => toggleCollapse(toggle));
+                    treeItem.appendChild(toggle);
+                    
+                    const brace = document.createElement('span');
+                    brace.className = 'tree-brace';
+                    brace.textContent = '{';
+                    treeItem.appendChild(brace);
+                    
+                    if (Object.keys(data).length === 0) {
+                        brace.textContent = '{}';
+                    } else {
+                        // Add count
+                        const countSpan = document.createElement('span');
+                        countSpan.className = 'tree-value';
+                        countSpan.textContent = ` // ${Object.keys(data).length} property${Object.keys(data).length === 1 ? '' : 's'}`;
+                        treeItem.appendChild(countSpan);
+                        
+                        // Create children container
+                        const childrenContainer = document.createElement('div');
+                        childrenContainer.className = 'tree-children';
+                        
+                        // Add children
+                        for (const [key, value] of Object.entries(data)) {
+                            nodeCount += buildTree(value, childrenContainer, depth + 1, key);
+                        }
+                        
+                        treeItem.appendChild(childrenContainer);
+                        
+                        // Closing brace
+                        const closeBrace = document.createElement('div');
+                        closeBrace.className = 'tree-item';
+                        closeBrace.style.paddingLeft = (depth * 20) + 'px';
+                        
+                        const braceSpan = document.createElement('span');
+                        braceSpan.className = 'tree-brace';
+                        braceSpan.textContent = '}';
+                        closeBrace.appendChild(braceSpan);
+                        
+                        container.appendChild(treeItem);
+                        container.appendChild(closeBrace);
+                        
+                        return nodeCount;
+                    }
+                } else {
+                    // Primitive value
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'tree-value';
+                    
+                    // Add appropriate class based on type
+                    if (typeof data === 'string') {
+                        valueSpan.classList.add('string');
+                        valueSpan.textContent = `"${data}"`;
+                    } else if (typeof data === 'number') {
+                        valueSpan.classList.add('number');
+                        valueSpan.textContent = data;
+                    } else if (typeof data === 'boolean') {
+                        valueSpan.classList.add('boolean');
+                        valueSpan.textContent = data;
+                    } else if (data === null) {
+                        valueSpan.classList.add('null');
+                        valueSpan.textContent = 'null';
+                    }
+                    
+                    treeItem.appendChild(valueSpan);
+                }
+                
+                container.appendChild(treeItem);
+                return nodeCount;
+            }
+            
+            // Toggle collapse/expand for tree nodes
+            function toggleCollapse(toggle) {
+                const treeItem = toggle.parentElement;
+                treeItem.classList.toggle('collapsed');
+                
+                if (treeItem.classList.contains('collapsed')) {
+                    toggle.textContent = '▶';
+                } else {
+                    toggle.textContent = '▼';
+                }
+            }
+            
+            // Show error message
+            function showError(title, message) {
+                errorTitle.textContent = title;
+                errorText.textContent = message;
+                errorContainer.style.display = 'block';
+            }
+            
+            // Try to highlight syntax error in input
+            function highlightError(error, input) {
+                // Parse error message to extract line number
+                const match = error.message.match(/position (\d+)/);
+                if (match) {
+                    const errorPosition = parseInt(match[1]);
+                    
+                    // Calculate line and column
+                    const textBeforeError = input.substring(0, errorPosition);
+                    const lines = textBeforeError.split('\n');
+                    const errorLine = lines.length;
+                    const errorColumn = lines[lines.length - 1].length + 1;
+                    
+                    // Update error details
+                    errorDetails.textContent = `Error at line ${errorLine}, column ${errorColumn}`;
+                    
+                    // Highlight the error line in the input
+                    highlightErrorLine(errorLine);
+                } else {
+                    errorDetails.textContent = '';
+                }
+            }
+            
+            // Highlight the line with error in the input
+            function highlightErrorLine(lineNumber) {
+                const lines = jsonInput.value.split('\n');
+                const lineIndex = lineNumber - 1;
+                
+                if (lineIndex >= 0 && lineIndex < lines.length) {
+                    // Create a marker to show error location
+                    const errorLine = lines[lineIndex];
+                    const marker = ' '.repeat(errorLine.length) + '^';
+                    
+                    // Insert marker in the text (for demo purposes)
+                    // In a real app, you might use a code editor library
+                    errorDetails.textContent += `\n${lines[lineIndex]}\n${marker}`;
+                }
+            }
+            
+            // Update line count
+            function updateLineCount() {
+                const lines = jsonInput.value.split('\n').length;
+                lineCount.textContent = lines;
+            }
+            
+            // Clear input
+            function clearInput() {
+                jsonInput.value = '';
+                jsonOutput.innerHTML = '';
+                errorContainer.style.display = 'none';
+                statusText.textContent = 'Ready';
+                statusText.className = 'status-valid';
+                lineCount.textContent = '1';
+                nodeCount.textContent = '0';
+            }
+            
+            // Copy output to clipboard
+            function copyOutput() {
+                if (!isValidJSON || !jsonOutput.getAttribute('data-json-text')) {
+                    alert('No valid JSON to copy. Please validate your JSON first.');
+                    return;
+                }
+                
+                const formattedText = jsonOutput.getAttribute('data-json-text');
+                
+                navigator.clipboard.writeText(formattedText)
+                    .then(() => {
+                        // Show temporary feedback
+                        const originalText = copyBtn.innerHTML;
+                        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalText;
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert('Failed to copy to clipboard');
+                    });
+            }
+            
+            // Download JSON as file
+            function downloadJSON() {
+                if (!isValidJSON || !jsonOutput.getAttribute('data-json-text')) {
+                    alert('No valid JSON to download. Please validate your JSON first.');
+                    return;
+                }
+                
+                const formattedText = jsonOutput.getAttribute('data-json-text');
+                const blob = new Blob([formattedText], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                a.href = url;
+                a.download = 'formatted.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            // Load sample JSON with errors
+            function loadSampleJSON() {
+                const sampleJSON = `{
+  "name": "John Doe",
+  "age": 30,
+  "isStudent": false
+  "hobbies": ["reading", "gaming", "coding",],
+  "address": {
+    "street": "123 Main St",
+    "city": "New York",
+    "zip": 10001
+  },
+  "contacts": [
+    { "type": "email", "value": "john@example.com" }
+    { "type": "phone", "value": "+1-234-567-8900" }
+  ]
+  "metadata": {
+    "created": "2023-01-15",
+    "modified": "2023-10-20"
+}`;
+                
+                jsonInput.value = sampleJSON;
+                formatJSON();
+            }
+        });
+    </script>
+</body>
+</html>

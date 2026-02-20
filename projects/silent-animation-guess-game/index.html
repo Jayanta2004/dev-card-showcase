@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silent Scene Guesser 🎭</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Neue', cursive, sans-serif;
+        }
+
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --accent: #fd79a8;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #e17055;
+            --dark: #2d3436;
+            --light: #f9f9f9;
+            --shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            --border-radius: 20px;
+        }
+
+        body {
+            background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0 var(--secondary);
+            letter-spacing: 2px;
+        }
+
+        .tagline {
+            font-size: 1.3rem;
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            color: white;
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            display: block;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .animation-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            position: relative;
+            overflow: hidden;
+            border: 8px dashed var(--secondary);
+        }
+
+        .animation-title {
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .scene {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        /* Silent Animation Scenes */
+        .scene-1 {
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F7FF 100%);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        /* Sun */
+        .sun {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 70px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 40px #FFA500;
+            animation: sunGlow 4s infinite alternate;
+        }
+
+        @keyframes sunGlow {
+            0% { box-shadow: 0 0 30px #FFA500; }
+            100% { box-shadow: 0 0 60px #FFA500, 0 0 100px #FF8C00; }
+        }
+
+        /* Person with umbrella */
+        .person {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 120px;
+        }
+
+        .head {
+            position: absolute;
+            top: 0;
+            left: 20px;
+            width: 20px;
+            height: 20px;
+            background: #FFCCAA;
+            border-radius: 50%;
+        }
+
+        .body {
+            position: absolute;
+            top: 20px;
+            left: 15px;
+            width: 30px;
+            height: 50px;
+            background: #3498db;
+            border-radius: 10px;
+        }
+
+        .umbrella {
+            position: absolute;
+            top: -40px;
+            left: 5px;
+            width: 50px;
+            height: 30px;
+            background: var(--accent);
+            border-radius: 50% 50% 0 0;
+            transform: rotate(180deg);
+            animation: umbrellaTilt 3s infinite alternate;
+        }
+
+        @keyframes umbrellaTilt {
+            0% { transform: rotate(180deg) rotateZ(0deg); }
+            100% { transform: rotate(180deg) rotateZ(10deg); }
+        }
+
+        /* Raindrops */
+        .raindrop {
+            position: absolute;
+            width: 4px;
+            height: 20px;
+            background: #3498db;
+            border-radius: 0 0 10px 10px;
+            opacity: 0.7;
+        }
+
+        .raindrop:nth-child(1) {
+            top: -30px;
+            left: 30%;
+            animation: fall 1.5s infinite linear;
+        }
+
+        .raindrop:nth-child(2) {
+            top: -50px;
+            left: 50%;
+            animation: fall 1.8s infinite linear 0.2s;
+        }
+
+        .raindrop:nth-child(3) {
+            top: -40px;
+            left: 70%;
+            animation: fall 1.6s infinite linear 0.5s;
+        }
+
+        .raindrop:nth-child(4) {
+            top: -60px;
+            left: 40%;
+            animation: fall 1.7s infinite linear 0.7s;
+        }
+
+        .raindrop:nth-child(5) {
+            top: -30px;
+            left: 60%;
+            animation: fall 1.4s infinite linear 0.9s;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(330px);
+                opacity: 0;
+            }
+        }
+
+        .guess-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+
+        .difficulty-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            margin: 0 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .difficulty-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .difficulty-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 3px white, 0 0 0 6px var(--primary);
+        }
+
+        .easy {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .medium {
+            background-color: var(--warning);
+            color: var(--dark);
+        }
+
+        .hard {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .option-btn {
+            padding: 18px;
+            border: 3px solid var(--secondary);
+            background: white;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-btn:hover {
+            background-color: var(--secondary);
+            color: white;
+            transform: translateX(10px);
+        }
+
+        .option-btn.selected {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateX(10px);
+        }
+
+        .option-btn::before {
+            content: "?";
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--accent);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover::before {
+            opacity: 1;
+            left: 10px;
+        }
+
+        .input-guess {
+            display: flex;
+            margin-bottom: 25px;
+        }
+
+        .input-guess input {
+            flex: 1;
+            padding: 18px;
+            border: 3px solid var(--secondary);
+            border-radius: 15px 0 0 15px;
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-guess input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+        }
+
+        .submit-btn {
+            padding: 0 30px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0 15px 15px 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent);
+            letter-spacing: 1px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .action-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .reveal-btn {
+            background: var(--accent);
+            color: white;
+        }
+
+        .next-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .answer-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+            display: none;
+            position: relative;
+            z-index: 1;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .answer-section.show {
+            display: block;
+        }
+
+        .answer-title {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .answer-text {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid var(--success);
+        }
+
+        .explanation-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--dark);
+            padding: 15px;
+            background-color: #f1f8ff;
+            border-radius: 10px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .result-feedback {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .correct {
+            background-color: rgba(0, 184, 148, 0.2);
+            color: var(--success);
+        }
+
+        .incorrect {
+            background-color: rgba(225, 112, 85, 0.2);
+            color: var(--danger);
+        }
+
+        .score-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5rem;
+            font-weight: 800;
+            color: var(--accent);
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            animation: scorePop 1s ease;
+        }
+
+        @keyframes scorePop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .hint {
+            margin-top: 15px;
+            font-style: italic;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hint i {
+            color: var(--accent);
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            background-color: var(--accent);
+            top: -10px;
+            opacity: 0;
+            z-index: 50;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .difficulty-selector {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-theater-masks"></i> Silent Scene Guesser</h1>
+            <p class="tagline">Watch silent animations and guess what's happening! 🎭</p>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-value" id="score">0</span>
+                <span class="stat-label">Score</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="streak">0</span>
+                <span class="stat-label">Streak</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="level">1</span>
+                <span class="stat-label">Level</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="hints">3</span>
+                <span class="stat-label">Hints Left</span>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="animation-container">
+                <h2 class="animation-title">Scene #1: What's happening here?</h2>
+                <div class="scene scene-1">
+                    <!-- Silent animation will be displayed here -->
+                    <div class="sun"></div>
+                    <div class="person">
+                        <div class="head"></div>
+                        <div class="body"></div>
+                        <div class="umbrella"></div>
+                    </div>
+                    <div class="raindrop"></div>
+                    <div class="raindrop"></div>
+                    <div class="raindrop"></div>
+                    <div class="raindrop"></div>
+                    <div class="raindrop"></div>
+                </div>
+                <div class="hint">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Hint: This scene involves weather and a protective item.</span>
+                </div>
+            </div>
+
+            <div class="guess-container">
+                <div class="difficulty-selector">
+                    <button class="difficulty-btn easy active" data-level="easy">Easy 👶</button>
+                    <button class="difficulty-btn medium" data-level="medium">Medium 🤔</button>
+                    <button class="difficulty-btn hard" data-level="hard">Hard 🧠</button>
+                </div>
+
+                <div class="options">
+                    <button class="option-btn" data-option="1">A person enjoying a sunny day at the beach</button>
+                    <button class="option-btn" data-option="2">Someone caught in unexpected rain with an umbrella</button>
+                    <button class="option-btn" data-option="3">A person waiting for a bus on a cloudy day</button>
+                    <button class="option-btn" data-option="4">A gardener watering plants in the garden</button>
+                </div>
+
+                <div class="input-guess">
+                    <input type="text" id="text-guess" placeholder="Or type your own guess...">
+                    <button class="submit-btn" id="submit-guess">Submit</button>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="action-btn reveal-btn" id="reveal-btn">
+                        <i class="fas fa-eye"></i> Reveal Answer
+                    </button>
+                    <button class="action-btn next-btn" id="next-btn">
+                        Next Scene <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="answer-section" id="answer-section">
+            <h2 class="answer-title"><i class="fas fa-star"></i> Answer & Explanation</h2>
+            <div class="result-feedback correct" id="result-feedback">Correct! Well done! 🎉</div>
+            <div class="answer-text" id="answer-text">Someone caught in unexpected rain with an umbrella</div>
+            <div class="explanation-text" id="explanation-text">The animation shows a person with an umbrella while the sun is shining, but there are raindrops falling. This depicts a "sunshower" - a meteorological phenomenon where rain falls while the sun is shining. The person is using an umbrella to stay dry despite the sunny appearance.</div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Silent Scene Guesser | Improve your visual interpretation and observation skills | Made with CSS magic ✨</p>
+    </footer>
+
+    <script>
+        // Game state
+        const gameState = {
+            score: 0,
+            streak: 0,
+            level: 1,
+            hints: 3,
+            currentScene: 1,
+            selectedOption: null,
+            difficulty: 'easy',
+            scenes: [
+                {
+                    id: 1,
+                    correctAnswer: "Someone caught in unexpected rain with an umbrella",
+                    explanation: "The animation shows a person with an umbrella while the sun is shining, but there are raindrops falling. This depicts a 'sunshower' - a meteorological phenomenon where rain falls while the sun is shining. The person is using an umbrella to stay dry despite the sunny appearance.",
+                    options: [
+                        "A person enjoying a sunny day at the beach",
+                        "Someone caught in unexpected rain with an umbrella",
+                        "A person waiting for a bus on a cloudy day",
+                        "A gardener watering plants in the garden"
+                    ]
+                }
+            ]
+        };
+
+        // DOM elements
+        const scoreElement = document.getElementById('score');
+        const streakElement = document.getElementById('streak');
+        const levelElement = document.getElementById('level');
+        const hintsElement = document.getElementById('hints');
+        const optionButtons = document.querySelectorAll('.option-btn');
+        const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+        const submitGuessButton = document.getElementById('submit-guess');
+        const textGuessInput = document.getElementById('text-guess');
+        const revealButton = document.getElementById('reveal-btn');
+        const nextButton = document.getElementById('next-btn');
+        const answerSection = document.getElementById('answer-section');
+        const answerText = document.getElementById('answer-text');
+        const explanationText = document.getElementById('explanation-text');
+        const resultFeedback = document.getElementById('result-feedback');
+
+        // Initialize game
+        function initGame() {
+            updateStats();
+            setupEventListeners();
+        }
+
+        // Update game stats display
+        function updateStats() {
+            scoreElement.textContent = gameState.score;
+            streakElement.textContent = gameState.streak;
+            levelElement.textContent = gameState.level;
+            hintsElement.textContent = gameState.hints;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Option button clicks
+            optionButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    optionButtons.forEach(btn => btn.classList.remove('selected'));
+                    
+                    // Add selected class to clicked option
+                    button.classList.add('selected');
+                    
+                    // Store selected option
+                    gameState.selectedOption = button.dataset.option;
+                    
+                    // Clear text input
+                    textGuessInput.value = '';
+                });
+            });
+
+            // Difficulty button clicks
+            difficultyButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all difficulty buttons
+                    difficultyButtons.forEach(btn => btn.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    button.classList.add('active');
+                    
+                    // Update difficulty
+                    gameState.difficulty = button.dataset.level;
+                    
+                    // Update scene based on difficulty
+                    updateSceneDifficulty();
+                });
+            });
+
+            // Submit guess button
+            submitGuessButton.addEventListener('click', submitGuess);
+
+            // Text input enter key
+            textGuessInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    submitGuess();
+                }
+            });
+
+            // Reveal answer button
+            revealButton.addEventListener('click', revealAnswer);
+
+            // Next scene button
+            nextButton.addEventListener('click', nextScene);
+        }
+
+        // Submit guess
+        function submitGuess() {
+            let userGuess = '';
+            
+            // Check if text input has value
+            if (textGuessInput.value.trim() !== '') {
+                userGuess = textGuessInput.value.trim();
+                gameState.selectedOption = null; // Clear selected option
+            } 
+            // Check if an option button is selected
+            else if (gameState.selectedOption) {
+                const selectedButton = document.querySelector(`.option-btn[data-option="${gameState.selectedOption}"]`);
+                userGuess = selectedButton.textContent;
+            } 
+            // No guess made
+            else {
+                alert('Please select an option or type your guess!');
+                return;
+            }
+
+            // Check if guess is correct
+            const currentSceneData = gameState.scenes[gameState.currentScene - 1];
+            const isCorrect = userGuess === currentSceneData.correctAnswer;
+            
+            // Update game state
+            if (isCorrect) {
+                gameState.score += gameState.difficulty === 'easy' ? 10 : 
+                                  gameState.difficulty === 'medium' ? 20 : 30;
+                gameState.streak++;
+                
+                if (gameState.streak % 5 === 0) {
+                    gameState.level++;
+                    createConfetti();
+                }
+                
+                showScoreAnimation('+10', 'success');
+            } else {
+                gameState.streak = 0;
+                showScoreAnimation('Try Again', 'error');
+            }
+
+            // Show answer section
+            answerText.textContent = currentSceneData.correctAnswer;
+            explanationText.textContent = currentSceneData.explanation;
+            
+            // Update feedback
+            if (isCorrect) {
+                resultFeedback.textContent = `Correct! Well done! 🎉 +${gameState.difficulty === 'easy' ? 10 : gameState.difficulty === 'medium' ? 20 : 30} points`;
+                resultFeedback.className = 'result-feedback correct';
+            } else {
+                resultFeedback.textContent = 'Not quite! Try again next time! 💪';
+                resultFeedback.className = 'result-feedback incorrect';
+            }
+            
+            answerSection.classList.add('show');
+            
+            // Update stats
+            updateStats();
+        }
+
+        // Reveal answer
+        function revealAnswer() {
+            const currentSceneData = gameState.scenes[gameState.currentScene - 1];
+            
+            // Show answer section
+            answerText.textContent = currentSceneData.correctAnswer;
+            explanationText.textContent = currentSceneData.explanation;
+            resultFeedback.textContent = 'Answer Revealed 👀';
+            resultFeedback.className = 'result-feedback';
+            
+            answerSection.classList.add('show');
+            
+            // Use a hint
+            if (gameState.hints > 0) {
+                gameState.hints--;
+                updateStats();
+            }
+        }
+
+        // Next scene
+        function nextScene() {
+            // Hide answer section
+            answerSection.classList.remove('show');
+            
+            // Reset selection
+            optionButtons.forEach(btn => btn.classList.remove('selected'));
+            textGuessInput.value = '';
+            gameState.selectedOption = null;
+            
+            // For now, just reset to scene 1 (in a full game, you would load a new scene)
+            // This is a demo, so we'll just simulate a new scene
+            gameState.currentScene = 1;
+            
+            // Simulate updating scene description
+            document.querySelector('.animation-title').textContent = `Scene #${gameState.currentScene}: What's happening here?`;
+        }
+
+        // Update scene based on difficulty
+        function updateSceneDifficulty() {
+            // In a full game, this would change the animation or options based on difficulty
+            const difficultyText = gameState.difficulty === 'easy' ? 'Easy 👶' : 
+                                 gameState.difficulty === 'medium' ? 'Medium 🤔' : 'Hard 🧠';
+            
+            // Update options slightly based on difficulty
+            if (gameState.difficulty === 'hard') {
+                // Make options more challenging for hard difficulty
+                const hardOptions = [
+                    "A sunshower phenomenon with precipitation",
+                    "A person caught in a meteorological anomaly",
+                    "An individual experiencing concurrent rain and sunshine",
+                    "A scene depicting weather contradiction"
+                ];
+                
+                optionButtons.forEach((button, index) => {
+                    button.textContent = hardOptions[index];
+                });
+            } else {
+                // Reset to normal options for easy/medium
+                const normalOptions = [
+                    "A person enjoying a sunny day at the beach",
+                    "Someone caught in unexpected rain with an umbrella",
+                    "A person waiting for a bus on a cloudy day",
+                    "A gardener watering plants in the garden"
+                ];
+                
+                optionButtons.forEach((button, index) => {
+                    button.textContent = normalOptions[index];
+                });
+            }
+        }
+
+        // Show score animation
+        function showScoreAnimation(text, type) {
+            const animation = document.createElement('div');
+            animation.className = 'score-animation';
+            animation.textContent = text;
+            animation.style.color = type === 'success' ? '#00b894' : '#e17055';
+            
+            document.body.appendChild(animation);
+            
+            // Remove animation after it finishes
+            setTimeout(() => {
+                animation.remove();
+            }, 1000);
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = getRandomColor();
+                confetti.style.animation = `confettiFall ${Math.random() * 3 + 2}s linear forwards`;
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                
+                document.body.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // Get random color for confetti
+        function getRandomColor() {
+            const colors = ['#6c5ce7', '#a29bfe', '#fd79a8', '#00b894', '#fdcb6e', '#e17055'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Initialize the game when page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

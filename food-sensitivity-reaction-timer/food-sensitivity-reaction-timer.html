@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Sensitivity Reaction Timer</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="./food-sensitivity-reaction-timer.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Navbar Container -->
+    <div id="navbar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Header -->
+            <header class="header">
+                <h1>Food Sensitivity Reaction Timer</h1>
+                <p>Track the time between food intake and symptom onset to identify delayed food reactions and sensitivities.</p>
+            </header>
+
+            <!-- Dashboard Overview -->
+            <section class="dashboard-overview">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i data-lucide="clock"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="avgReactionTime">--</div>
+                        <div class="metric-label">Avg Reaction Time</div>
+                        <div class="metric-description">Time to symptom onset</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i data-lucide="alert-triangle"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="totalReactions">0</div>
+                        <div class="metric-label">Total Reactions</div>
+                        <div class="metric-description">Logged reactions</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i data-lucide="utensils"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="totalMeals">0</div>
+                        <div class="metric-label">Meals Logged</div>
+                        <div class="metric-description">Food intake records</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="suspectedTriggers">--</div>
+                        <div class="metric-label">Suspected Triggers</div>
+                        <div class="metric-description">Foods with reactions</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logging Forms -->
+            <div class="forms-grid">
+                <!-- Log Meal Form -->
+                <section class="form-section">
+                    <h2>Log Meal/Food Intake</h2>
+                    <form id="mealForm" class="meal-form">
+                        <div class="form-group">
+                            <label for="mealDateTime">Date & Time</label>
+                            <input type="datetime-local" id="mealDateTime" name="mealDateTime" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mealDescription">Food/Meal Description</label>
+                            <textarea id="mealDescription" name="mealDescription" rows="3" placeholder="Describe what you ate (e.g., 'Grilled chicken salad with tomatoes')" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Food Categories (select all that apply)</label>
+                            <div class="categories-grid">
+                                <label class="category-checkbox">
+                                    <input type="checkbox" name="categories" value="dairy">
+                                    <span class="checkmark"></span>
+                                    Dairy
+                                </label>
+                                <label class="category-checkbox">
+                                    <input type="checkbox" name="categories" value="gluten">
+                                    <span class="checkmark"></span>
+                                    Gluten
+                                </label>
+                                <label class="category-checkbox">
+                                    <input type="checkbox" name="categories" value="nuts">
+                                    <span class="checkmark"></span>
+                                    Nuts
+                                </label>
+                                <label class="category-checkbox">
+                                    <input type="checkbox" name="categories" value="eggs">
+                                    <span class="checkmark"></span>
+                                    Eggs
+                                </label>
+                                <label class="category-checkbox">
+                                    <input type="checkbox" name="categories" value="soy">
+                                    <span class="checkmark"></span>
+                                    Soy
+                                </label>
+                                <label class="category-checkbox">
+                                    <input type="checkbox" name="categories" value="shellfish">
+                                    <span class="checkmark"></span>
+                                    Shellfish
+                                </label>
+                                <label class="category-checkbox">
+                                    <input type="checkbox" name="categories" value="nightshades">
+                                    <span class="checkmark"></span>
+                                    Nightshades
+                                </label>
+                                <label class="category-checkbox">
+                                    <input type="checkbox" name="categories" value="other">
+                                    <span class="checkmark"></span>
+                                    Other
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mealPortion">Portion Size</label>
+                            <select id="mealPortion" name="mealPortion">
+                                <option value="small">Small</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="large">Large</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mealNotes">Additional Notes</label>
+                            <textarea id="mealNotes" name="mealNotes" rows="2" placeholder="Any additional details about preparation, ingredients, etc."></textarea>
+                        </div>
+
+                        <button type="submit" class="submit-btn">
+                            <i data-lucide="plus"></i>
+                            Log Meal
+                        </button>
+                    </form>
+                </section>
+
+                <!-- Log Reaction Form -->
+                <section class="form-section">
+                    <h2>Log Reaction/Symptom</h2>
+                    <form id="reactionForm" class="reaction-form">
+                        <div class="form-group">
+                            <label for="reactionDateTime">Date & Time</label>
+                            <input type="datetime-local" id="reactionDateTime" name="reactionDateTime" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Symptoms (select all that apply)</label>
+                            <div class="symptoms-grid">
+                                <label class="symptom-checkbox">
+                                    <input type="checkbox" name="symptoms" value="headache">
+                                    <span class="checkmark"></span>
+                                    Headache
+                                </label>
+                                <label class="symptom-checkbox">
+                                    <input type="checkbox" name="symptoms" value="nausea">
+                                    <span class="checkmark"></span>
+                                    Nausea
+                                </label>
+                                <label class="symptom-checkbox">
+                                    <input type="checkbox" name="symptoms" value="bloating">
+                                    <span class="checkmark"></span>
+                                    Bloating
+                                </label>
+                                <label class="symptom-checkbox">
+                                    <input type="checkbox" name="symptoms" value="diarrhea">
+                                    <span class="checkmark"></span>
+                                    Diarrhea
+                                </label>
+                                <label class="symptom-checkbox">
+                                    <input type="checkbox" name="symptoms" value="rash">
+                                    <span class="checkmark"></span>
+                                    Skin Rash
+                                </label>
+                                <label class="symptom-checkbox">
+                                    <input type="checkbox" name="symptoms" value="fatigue">
+                                    <span class="checkmark"></span>
+                                    Fatigue
+                                </label>
+                                <label class="symptom-checkbox">
+                                    <input type="checkbox" name="symptoms" value="joint-pain">
+                                    <span class="checkmark"></span>
+                                    Joint Pain
+                                </label>
+                                <label class="symptom-checkbox">
+                                    <input type="checkbox" name="symptoms" value="other">
+                                    <span class="checkmark"></span>
+                                    Other
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reactionSeverity">Severity (1-10)</label>
+                            <div class="severity-container">
+                                <input type="range" id="reactionSeverity" name="reactionSeverity" min="1" max="10" value="5">
+                                <div class="severity-display">
+                                    <span class="severity-value" id="severityValue">5</span>
+                                    <span class="severity-text" id="severityText">Moderate</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reactionNotes">Symptom Details</label>
+                            <textarea id="reactionNotes" name="reactionNotes" rows="2" placeholder="Describe the symptoms in detail..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="submit-btn">
+                            <i data-lucide="alert-circle"></i>
+                            Log Reaction
+                        </button>
+                    </form>
+                </section>
+            </div>
+
+            <!-- Reaction Timing Analysis -->
+            <section class="analysis-section">
+                <h2>Reaction Timing Analysis</h2>
+                <div class="analysis-controls">
+                    <select id="analysisTimeRange">
+                        <option value="24">Last 24 hours</option>
+                        <option value="72">Last 3 days</option>
+                        <option value="168">Last week</option>
+                        <option value="all" selected>All time</option>
+                    </select>
+                    <button id="analyzeBtn" class="analyze-btn">
+                        <i data-lucide="search"></i>
+                        Analyze
+                    </button>
+                </div>
+                <div class="analysis-results" id="analysisResults">
+                    <div class="analysis-placeholder">
+                        <i data-lucide="bar-chart-3"></i>
+                        <p>Log meals and reactions to see timing analysis</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Correlation Chart -->
+            <section class="chart-section">
+                <h2>Meal-Reaction Correlations</h2>
+                <div class="chart-container">
+                    <canvas id="correlationChart"></canvas>
+                </div>
+            </section>
+
+            <!-- History -->
+            <div class="history-grid">
+                <!-- Meal History -->
+                <section class="history-section">
+                    <div class="section-header">
+                        <h2>Meal History</h2>
+                        <div class="history-controls">
+                            <button id="viewRecentMeals" class="history-btn active">Recent</button>
+                            <button id="viewAllMeals" class="history-btn">All</button>
+                        </div>
+                    </div>
+                    <div id="mealHistory" class="history-container">
+                        <!-- Meal history items will be populated by JavaScript -->
+                    </div>
+                </section>
+
+                <!-- Reaction History -->
+                <section class="history-section">
+                    <div class="section-header">
+                        <h2>Reaction History</h2>
+                        <div class="history-controls">
+                            <button id="viewRecentReactions" class="history-btn active">Recent</button>
+                            <button id="viewAllReactions" class="history-btn">All</button>
+                        </div>
+                    </div>
+                    <div id="reactionHistory" class="history-container">
+                        <!-- Reaction history items will be populated by JavaScript -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Suspected Triggers -->
+            <section class="triggers-section">
+                <h2>Suspected Food Triggers</h2>
+                <div id="suspectedTriggers" class="triggers-container">
+                    <!-- Suspected triggers will be populated by JavaScript -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer Container -->
+    <div id="footer-container"></div>
+
+    <!-- Scripts -->
+    <script src="../include.js"></script>
+    <script src="../js/food-sensitivity-reaction-timer.js"></script>
+</body>
+</html>

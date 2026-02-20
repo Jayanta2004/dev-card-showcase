@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 pennywise · budget tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e0eee5, #c7dfd4);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .budget-card {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 2px solid rgba(90, 150, 130, 0.5);
+            border-radius: 56px;
+            box-shadow: 0 30px 40px -20px #1a4e44, inset 0 1px 5px white;
+            padding: 2.5rem 2.2rem;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .title h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            color: #1e4f47;
+            letter-spacing: -0.5px;
+        }
+        .balance-panel {
+            background: #236457d0;
+            border-radius: 80px;
+            padding: 0.8rem 2.2rem;
+            color: white;
+            border: 3px solid #bbe9da;
+            box-shadow: inset 0 -4px 0 #0e4036, 0 12px 12px -8px black;
+        }
+        .balance-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .balance-amount {
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .summary {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2.5rem;
+        }
+        .summary-item {
+            background: #d2f0e6;
+            border-radius: 60px;
+            padding: 1.2rem 2.5rem;
+            flex: 1 1 180px;
+            box-shadow: inset 0 -3px 0 #a7cfc0, 0 10px 10px -8px #417263;
+            border: 2px solid #5daa95;
+        }
+        .summary-label {
+            font-size: 1rem;
+            color: #1f5f51;
+        }
+        .summary-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+        .income-num { color: #1d8444; }
+        .expense-num { color: #c44242; }
+
+        .add-transaction {
+            background: #b7dfd2;
+            border-radius: 100px;
+            padding: 1.8rem 2rem;
+            margin-bottom: 2.5rem;
+            border: 3px solid #409f88;
+            box-shadow: inset 0 -4px 0 #398373, 0 12px 15px -10px #1b5b4e;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+        }
+        .form-row input, .form-row select, .form-row button {
+            padding: 1rem 1.5rem;
+            border-radius: 60px;
+            border: 2px solid #36947d;
+            font-size: 1.1rem;
+            outline: none;
+            background: white;
+        }
+        .form-row input {
+            flex: 2 1 200px;
+        }
+        .form-row select {
+            flex: 1 1 140px;
+        }
+        .form-row button {
+            background: #236457;
+            color: white;
+            font-weight: 600;
+            border-bottom: 6px solid #0e4036;
+            cursor: pointer;
+            transition: 0.06s;
+            box-shadow: 0 7px 0 #0d3c33;
+            flex: 1 1 120px;
+            border-left: 2px solid #7dd7bf;
+            border-right: 2px solid #7dd7bf;
+        }
+        .form-row button:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #0d3c33;
+            border-bottom-width: 3px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 1.8rem;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            background: transparent;
+            border: 2px solid #479f8b;
+            border-radius: 40px;
+            padding: 0.6rem 2rem;
+            font-weight: 600;
+            color: #16574a;
+            cursor: pointer;
+        }
+        .filter-btn.active {
+            background: #297a68;
+            border-color: #c6ffe8;
+            color: white;
+            box-shadow: 0 4px 0 #195b4b;
+        }
+
+        .transaction-list {
+            list-style: none;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 8px;
+            margin-bottom: 2rem;
+        }
+        .transaction-item {
+            background: #f2fcf8;
+            border-radius: 60px;
+            padding: 1rem 2rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 2px solid #87cfbd;
+            box-shadow: 0 5px 0 #59a48f;
+        }
+        .tx-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .tx-category {
+            background: #27846e;
+            border-radius: 40px;
+            padding: 0.2rem 1.2rem;
+            color: white;
+            font-weight: 500;
+        }
+        .tx-desc {
+            font-size: 1.2rem;
+            color: #1a4e44;
+        }
+        .tx-amount {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .income-amount { color: #197a47; }
+        .expense-amount { color: #c73737; }
+        .delete-btn {
+            background: transparent;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #b76b6b;
+            padding: 0 10px;
+        }
+
+        .chart-container {
+            background: #d1efe6;
+            border-radius: 40px;
+            padding: 1.5rem;
+            border: 3px solid #7fc7b4;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        .mini-chart {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+        }
+        .bar {
+            width: 40px;
+            background: #3ca380;
+            border-radius: 20px 20px 4px 4px;
+            transition: 0.2s;
+        }
+        .bar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .bar-label {
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .footer-note {
+            margin-top: 2rem;
+            text-align: center;
+            color: #347a68;
+        }
+    </style>
+</head>
+<body>
+    <div class="budget-card">
+        <div class="header">
+            <div class="title">
+                <h1>💰 pennywise</h1>
+            </div>
+            <div class="balance-panel">
+                <div class="balance-label">current balance</div>
+                <div class="balance-amount" id="balanceDisplay">$0.00</div>
+            </div>
+        </div>
+
+        <!-- income / expense summary -->
+        <div class="summary">
+            <div class="summary-item">
+                <div class="summary-label">total income</div>
+                <div class="summary-number income-num" id="totalIncome">$0</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">total expenses</div>
+                <div class="summary-number expense-num" id="totalExpense">$0</div>
+            </div>
+        </div>
+
+        <!-- add transaction -->
+        <div class="add-transaction">
+            <div class="form-row">
+                <input type="text" id="descInput" placeholder="description (e.g. salary, coffee)" value="Groceries">
+                <input type="number" id="amountInput" placeholder="amount" value="42.50" step="0.01">
+                <select id="categorySelect">
+                    <option value="Food">🍕 Food</option>
+                    <option value="Transport">🚗 Transport</option>
+                    <option value="Shopping">🛍️ Shopping</option>
+                    <option value="Bills">💡 Bills</option>
+                    <option value="Income">💵 Income</option>
+                    <option value="Other">📦 Other</option>
+                </select>
+                <button id="addBtn">➕ add</button>
+            </div>
+        </div>
+
+        <!-- filters -->
+        <div class="filters">
+            <button class="filter-btn active" id="filterAll">all</button>
+            <button class="filter-btn" id="filterIncome">income only</button>
+            <button class="filter-btn" id="filterExpense">expenses only</button>
+        </div>
+
+        <!-- transaction list -->
+        <ul class="transaction-list" id="transactionList"></ul>
+
+        <!-- mini chart / visualization -->
+        <div class="chart-container">
+            <div style="font-size:1.3rem; margin-bottom:1rem;">📊 category breakdown</div>
+            <div class="mini-chart" id="chartBars">
+                <!-- bars injected via js -->
+            </div>
+        </div>
+
+        <div class="footer-note">
+            ⚡ transactions saved in local storage
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- data model ----------
+            let transactions = [];
+            let currentFilter = 'all'; // 'all', 'income', 'expense'
+
+            // DOM elements
+            const balanceSpan = document.getElementById('balanceDisplay');
+            const totalIncomeSpan = document.getElementById('totalIncome');
+            const totalExpenseSpan = document.getElementById('totalExpense');
+            const transactionList = document.getElementById('transactionList');
+            const descInput = document.getElementById('descInput');
+            const amountInput = document.getElementById('amountInput');
+            const categorySelect = document.getElementById('categorySelect');
+            const addBtn = document.getElementById('addBtn');
+            const filterAll = document.getElementById('filterAll');
+            const filterIncome = document.getElementById('filterIncome');
+            const filterExpense = document.getElementById('filterExpense');
+            const chartBars = document.getElementById('chartBars');
+
+            // ---------- load from localStorage ----------
+            function loadTransactions() {
+                const stored = localStorage.getItem('pennywise_transactions');
+                if (stored) {
+                    try {
+                        transactions = JSON.parse(stored);
+                    } catch (e) {
+                        transactions = [];
+                    }
+                } else {
+                    // demo data
+                    transactions = [
+                        { id: Date.now() - 3000, description: 'Salary', amount: 3200, category: 'Income', type: 'income' },
+                        { id: Date.now() - 2000, description: 'Rent', amount: 1200, category: 'Bills', type: 'expense' },
+                        { id: Date.now() - 1000, description: 'Groceries', amount: 86.50, category: 'Food', type: 'expense' },
+                        { id: Date.now() - 500, description: 'Freelance', amount: 300, category: 'Income', type: 'income' },
+                    ];
+                }
+            }
+
+            function saveTransactions() {
+                localStorage.setItem('pennywise_transactions', JSON.stringify(transactions));
+            }
+
+            // ---------- helpers ----------
+            function isIncome(cat) {
+                return cat === 'Income' || cat === 'income'; // both
+            }
+
+            function getTransactionType(transaction) {
+                return transaction.type || (isIncome(transaction.category) ? 'income' : 'expense');
+            }
+
+            // update totals and balance
+            function updateTotals() {
+                let income = 0, expense = 0;
+                transactions.forEach(t => {
+                    if (getTransactionType(t) === 'income') income += t.amount;
+                    else expense += t.amount;
+                });
+                const balance = income - expense;
+                balanceSpan.innerText = `$${balance.toFixed(2)}`;
+                totalIncomeSpan.innerText = `$${income.toFixed(2)}`;
+                totalExpenseSpan.innerText = `$${expense.toFixed(2)}`;
+            }
+
+            // filter transactions
+            function getFilteredTransactions() {
+                if (currentFilter === 'all') return transactions;
+                if (currentFilter === 'income') return transactions.filter(t => getTransactionType(t) === 'income');
+                return transactions.filter(t => getTransactionType(t) === 'expense');
+            }
+
+            // render transaction list
+            function renderList() {
+                const filtered = getFilteredTransactions();
+                if (filtered.length === 0) {
+                    transactionList.innerHTML = `<li style="background: transparent; border:2px dashed #6ea28f; color:#246b59; text-align:center; padding:1.5rem;">✨ no transactions</li>`;
+                    return;
+                }
+
+                let html = '';
+                filtered.forEach(t => {
+                    const type = getTransactionType(t);
+                    const amountClass = type === 'income' ? 'income-amount' : 'expense-amount';
+                    const sign = type === 'income' ? '' : '-';
+                    html += `
+                        <li class="transaction-item" data-id="${t.id}">
+                            <div class="tx-left">
+                                <span class="tx-category">${t.category}</span>
+                                <span class="tx-desc">${escapeHtml(t.description)}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <span class="tx-amount ${amountClass}">${sign}$${t.amount.toFixed(2)}</span>
+                                <button class="delete-btn" aria-label="delete">✕</button>
+                            </div>
+                        </li>
+                    `;
+                });
+                transactionList.innerHTML = html;
+            }
+
+            // simple escape
+            function escapeHtml(unsafe) {
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; if(m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            // render mini chart (category totals)
+            function renderChart() {
+                const catMap = new Map(); // category -> { income:0, expense:0 }
+                transactions.forEach(t => {
+                    const cat = t.category;
+                    const type = getTransactionType(t);
+                    if (!catMap.has(cat)) catMap.set(cat, { income:0, expense:0 });
+                    const entry = catMap.get(cat);
+                    if (type === 'income') entry.income += t.amount;
+                    else entry.expense += t.amount;
+                });
+
+                // take top 5 categories by total volume
+                const sorted = Array.from(catMap.entries()).map(([cat, val]) => ({ cat, total: val.income + val.expense, val }));
+                sorted.sort((a,b) => b.total - a.total);
+                const top = sorted.slice(0,5);
+
+                let barsHtml = '';
+                top.forEach(item => {
+                    const maxAmount = Math.max(...top.map(d => d.total), 0.01);
+                    const barHeight = (item.total / maxAmount) * 70; // max 70px
+                    barsHtml += `
+                        <div class="bar-container">
+                            <div class="bar" style="height: ${barHeight}px; background: ${item.val.income > item.val.expense ? '#46a586' : '#c47c7c'};"></div>
+                            <div class="bar-label">${item.cat}</div>
+                            <div style="font-size:0.8rem;">$${item.total.toFixed(0)}</div>
+                        </div>
+                    `;
+                });
+                if (top.length === 0) barsHtml = '<div style="color: #1b6a58;">add transactions to see chart</div>';
+                chartBars.innerHTML = barsHtml;
+            }
+
+            // full UI refresh
+            function refreshUI() {
+                updateTotals();
+                renderList();
+                renderChart();
+                // update active filter buttons
+                [filterAll, filterIncome, filterExpense].forEach(btn => btn.classList.remove('active'));
+                if (currentFilter === 'all') filterAll.classList.add('active');
+                if (currentFilter === 'income') filterIncome.classList.add('active');
+                if (currentFilter === 'expense') filterExpense.classList.add('active');
+            }
+
+            // add transaction
+            function addTransaction() {
+                const desc = descInput.value.trim();
+                const amountVal = parseFloat(amountInput.value);
+                const category = categorySelect.value;
+
+                if (!desc) {
+                    alert('enter a description');
+                    return;
+                }
+                if (isNaN(amountVal) || amountVal <= 0) {
+                    alert('amount must be positive number');
+                    return;
+                }
+
+                const type = (category === 'Income') ? 'income' : 'expense';
+                const newTx = {
+                    id: Date.now() + Math.random(),
+                    description: desc,
+                    amount: amountVal,
+                    category: category,
+                    type: type
+                };
+                transactions.push(newTx);
+                saveTransactions();
+                refreshUI();
+
+                // reset inputs (keep category)
+                descInput.value = '';
+                amountInput.value = '';
+            }
+
+            // delete transaction
+            function deleteTransaction(id) {
+                transactions = transactions.filter(t => t.id != id);
+                saveTransactions();
+                refreshUI();
+            }
+
+            // event listeners
+            addBtn.addEventListener('click', addTransaction);
+
+            transactionList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-btn')) {
+                    const item = e.target.closest('.transaction-item');
+                    if (item) {
+                        const id = item.dataset.id;
+                        deleteTransaction(id);
+                    }
+                }
+            });
+
+            filterAll.addEventListener('click', () => { currentFilter = 'all'; refreshUI(); });
+            filterIncome.addEventListener('click', () => { currentFilter = 'income'; refreshUI(); });
+            filterExpense.addEventListener('click', () => { currentFilter = 'expense'; refreshUI(); });
+
+            // initial load
+            loadTransactions();
+            refreshUI();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regex Debugger Sandbox - Demystify Regular Expressions</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>.*</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1><span class="regex-icon">.*</span> Regex Debugger Sandbox</h1>
+                <p class="tagline">A developer-centric tool that demystifies Regular Expressions</p>
+            </div>
+            <div class="header-right">
+                <div class="theme-toggle">
+                    <button id="themeToggle" aria-label="Toggle theme">
+                        <i class="fas fa-moon"></i> Dark Mode
+                    </button>
+                </div>
+                <div class="regex-flags">
+                    <label class="flag-option">
+                        <input type="checkbox" id="flagGlobal" checked> g (global)
+                    </label>
+                    <label class="flag-option">
+                        <input type="checkbox" id="flagCaseInsensitive"> i (case insensitive)
+                    </label>
+                    <label class="flag-option">
+                        <input type="checkbox" id="flagMultiline"> m (multiline)
+                    </label>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="main-content">
+
+                <div class="input-group">
+                    <label for="regexInput">
+                        <i class="fas fa-code"></i> Regular Expression Pattern
+                        <span class="hint">Type your regex pattern below</span>
+                    </label>
+                    <div class="input-with-prefix">
+                        <span class="input-prefix">/</span>
+                        <input type="text" id="regexInput" placeholder="e.g., \d{3}-\d{3}-\d{4} (for phone numbers)" autofocus>
+                        <span class="input-suffix">/</span>
+                    </div>
+                    <div class="input-hints">
+                        <span>Press <kbd>Enter</kbd> to test</span>
+                        <span>Tip: Type \ for escape sequences</span>
+                    </div>
+                    <div class="pattern-examples">
+                        <small>Examples: 
+                            <code class="pattern-example" data-pattern="\d{3}-\d{3}-\d{4}">Phone</code>
+                            <code class="pattern-example" data-pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}">Email</code>
+                            <code class="pattern-example" data-pattern="https?://[^\s]+">URL</code>
+                        </small>
+                    </div>
+                </div>
+
+
+                <div class="input-group">
+                    <label for="testString">
+                        <i class="fas fa-file-alt"></i> Test String
+                        <span class="hint">Text to match against</span>
+                    </label>
+                    <textarea id="testString" rows="5" placeholder="Paste your text here to test the regex pattern against..." spellcheck="false"></textarea>
+                    <div class="textarea-stats">
+                        <span id="charCount">0 characters</span>
+                        <span id="lineCount">0 lines</span>
+                    </div>
+                </div>
+
+                <div class="results-section">
+                    <div class="results-header">
+                        <h2><i class="fas fa-search"></i> Match Results</h2>
+                        <div class="results-stats">
+                            <span id="matchCount">0 matches</span>
+                            <span id="errorStatus" class="no-error">No errors</span>
+                        </div>
+                    </div>
+                    
+                    <div class="output-panels">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3><i class="fas fa-highlighter"></i> Highlighted Text</h3>
+                                <div class="panel-actions">
+                                    <button id="copyHighlighted" class="icon-btn" title="Copy highlighted text">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <button id="clearAll" class="icon-btn" title="Clear all">
+                                        <i class="fas fa-broom"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="panel-content">
+                                <div id="highlightedText" class="highlighted-text">
+                                    <!-- Highlighted matches will appear here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="panel match-details-panel">
+                            <div class="panel-header">
+                                <h3><i class="fas fa-list"></i> Match Breakdown</h3>
+                                <div class="panel-actions">
+                                    <button id="toggleGroups" class="icon-btn" title="Toggle group details">
+                                        <i class="fas fa-layer-group"></i>
+                                    </button>
+                                    <button id="exportMatches" class="icon-btn" title="Export matches as JSON">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="panel-content">
+                                <div id="matchList" class="match-list">
+                                    <!-- Match list will appear here -->
+                                    <div class="empty-state">
+                                        <i class="fas fa-search"></i>
+                                        <p>No matches found yet. Enter a regex pattern to see matches here.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-header">
+                        <h3><i class="fas fa-book"></i> Regex Cheat Sheet</h3>
+                        <button id="toggleCheatSheet" class="collapse-btn" title="Collapse cheat sheet">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                    </div>
+                    <div id="cheatSheetContent" class="sidebar-content">
+                        <div class="cheat-sheet-grid">
+                            <div class="cheat-category">
+                                <h4>Character Classes</h4>
+                                <div class="cheat-item">
+                                    <code>.</code>
+                                    <span>Any character except newline</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\d</code>
+                                    <span>Digit (0-9)</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\D</code>
+                                    <span>Not a digit</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\w</code>
+                                    <span>Word character (a-z, A-Z, 0-9, _)</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\W</code>
+                                    <span>Not a word character</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\s</code>
+                                    <span>Whitespace (space, tab, newline)</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\S</code>
+                                    <span>Not whitespace</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>[abc]</code>
+                                    <span>Any of a, b, or c</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>[^abc]</code>
+                                    <span>Not a, b, or c</span>
+                                </div>
+                            </div>
+                            
+                            <div class="cheat-category">
+                                <h4>Quantifiers</h4>
+                                <div class="cheat-item">
+                                    <code>*</code>
+                                    <span>0 or more</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>+</code>
+                                    <span>1 or more</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>?</code>
+                                    <span>0 or 1</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>{3}</code>
+                                    <span>Exactly 3</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>{3,}</code>
+                                    <span>3 or more</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>{3,5}</code>
+                                    <span>3, 4 or 5</span>
+                                </div>
+                            </div>
+                            
+                            <div class="cheat-category">
+                                <h4>Anchors & Boundaries</h4>
+                                <div class="cheat-item">
+                                    <code>^</code>
+                                    <span>Start of string/line</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>$</code>
+                                    <span>End of string/line</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\b</code>
+                                    <span>Word boundary</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\B</code>
+                                    <span>Not a word boundary</span>
+                                </div>
+                            </div>
+                            
+                            <div class="cheat-category">
+                                <h4>Groups & Lookarounds</h4>
+                                <div class="cheat-item">
+                                    <code>(abc)</code>
+                                    <span>Capture group</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>(?:abc)</code>
+                                    <span>Non-capturing group</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>(?=abc)</code>
+                                    <span>Positive lookahead</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>(?!abc)</code>
+                                    <span>Negative lookahead</span>
+                                </div>
+                            </div>
+                            
+                            <div class="cheat-category">
+                                <h4>Escaped Characters</h4>
+                                <div class="cheat-item">
+                                    <code>\. \* \\</code>
+                                    <span>Escape special chars</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\t \n \r</code>
+                                    <span>Tab, newline, return</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\x23</code>
+                                    <span>Hex character</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>\u00A9</code>
+                                    <span>Unicode character</span>
+                                </div>
+                            </div>
+                            
+                            <div class="cheat-category">
+                                <h4>Common Patterns</h4>
+                                <div class="cheat-item">
+                                    <code>\d{3}-\d{3}-\d{4}</code>
+                                    <span>US Phone number</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>[\w\.-]+@[\w\.-]+\.\w+</code>
+                                    <span>Email (simple)</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>https?://[^\s]+</code>
+                                    <span>URL</span>
+                                </div>
+                                <div class="cheat-item">
+                                    <code>#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})</code>
+                                    <span>Hex color</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-actions">
+                            <h4>Quick Actions</h4>
+                            <div class="action-buttons">
+                                <button class="action-btn" data-regex="\d+">
+                                    <i class="fas fa-hashtag"></i> Digits
+                                </button>
+                                <button class="action-btn" data-regex="[\w\.-]+@[\w\.-]+\.\w+">
+                                    <i class="fas fa-envelope"></i> Email
+                                </button>
+                                <button class="action-btn" data-regex="https?://[^\s]+">
+                                    <i class="fas fa-link"></i> URL
+                                </button>
+                                <button class="action-btn" data-regex="\b[A-Z][a-z]+\b">
+                                    <i class="fas fa-font"></i> Capitalized
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <div class="sidebar-header">
+                        <h3><i class="fas fa-exclamation-circle"></i> Error Reporting</h3>
+                        <span id="errorIndicator" class="error-indicator no-error">
+                            <i class="fas fa-check-circle"></i>
+                        </span>
+                    </div>
+                    <div id="errorContent" class="sidebar-content">
+                        <div id="errorDisplay" class="error-display">
+                            <p>No regex errors detected.</p>
+                        </div>
+                        <div class="error-help">
+                            <h4>Common Regex Errors:</h4>
+                            <ul>
+                                <li>Unclosed parentheses or brackets</li>
+                                <li>Unescaped special characters</li>
+                                <li>Invalid quantifier usage</li>
+                                <li>Unmatched alternation operator</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+        
+        <footer>
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>Regex Debugger Sandbox v1.0 | A tool for demystifying regular expressions</p>
+                    <p class="footer-note">Use this sandbox to debug complex string matching logic with real-time visual feedback.</p>
+                </div>
+                <div class="footer-right">
+                    <div class="footer-links">
+                        <a href="#" id="regexReference" title="Learn more about regex">
+                            <i class="fas fa-external-link-alt"></i> Regex Reference
+                        </a>
+                        <a href="#" id="resetTool" title="Reset to default">
+                            <i class="fas fa-redo"></i> Reset Tool
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

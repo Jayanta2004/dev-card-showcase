@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KanbanFlow | Visual Project Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-columns"></i>
+                    <div>
+                        <h1>KanbanFlow</h1>
+                        <p class="subtitle">Visual project management for Agile teams</p>
+                    </div>
+                </div>
+                
+                <div class="header-controls">
+                    <button id="themeToggle" class="btn-icon" aria-label="Toggle theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search tasks...">
+                    </div>
+                    <button id="newTaskBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i> New Task
+                    </button>
+                    <button id="exportBtn" class="btn-secondary">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+            
+            <div class="board-stats">
+                <div class="stat">
+                    <span class="stat-value" id="totalTasks">0</span>
+                    <span class="stat-label">Total Tasks</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="completedTasks">0</span>
+                    <span class="stat-label">Completed</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="inProgressTasks">0</span>
+                    <span class="stat-label">In Progress</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="overdueTasks">0</span>
+                    <span class="stat-label">Overdue</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="todayTasks">0</span>
+                    <span class="stat-label">Due Today</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="board-controls">
+                <div class="board-title">
+                    <h2><i class="fas fa-project-diagram"></i> Project Board</h2>
+                    <div class="board-actions">
+                        <button id="addColumnBtn" class="btn-secondary">
+                            <i class="fas fa-plus"></i> Add Column
+                        </button>
+                        <button id="resetBoardBtn" class="btn-secondary danger">
+                            <i class="fas fa-redo"></i> Reset Board
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="priorityFilter"><i class="fas fa-filter"></i> Filter by Priority:</label>
+                        <select id="priorityFilter">
+                            <option value="all">All Priorities</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                            <option value="none">No Priority</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="assigneeFilter"><i class="fas fa-user"></i> Filter by Assignee:</label>
+                        <select id="assigneeFilter">
+                            <option value="all">All Assignees</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                    
+                    <button id="clearFilters" class="btn-text">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </button>
+                </div>
+            </div>
+            
+            <div class="kanban-board" id="kanbanBoard">
+                <!-- Columns will be dynamically generated here -->
+                <div class="empty-board">
+                    <div class="empty-icon">
+                        <i class="fas fa-columns"></i>
+                    </div>
+                    <h3>No columns yet</h3>
+                    <p>Click "Add Column" to create your first column and start organizing tasks.</p>
+                    <button id="initBoardBtn" class="btn-primary">
+                        <i class="fas fa-rocket"></i> Initialize Sample Board
+                    </button>
+                </div>
+            </div>
+            
+            <div class="activity-log">
+                <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                <div class="log-container" id="activityLog">
+                    <div class="log-entry">
+                        <span class="log-time">Just now</span>
+                        <span class="log-text">Board loaded successfully</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>KanbanFlow &copy; <span id="currentYear"></span> | Drag, Drop, Done!</p>
+            <div class="footer-links">
+                <button id="keyboardShortcuts" class="btn-text">
+                    <i class="fas fa-keyboard"></i> Keyboard Shortcuts
+                </button>
+                <span class="hint">Drag cards between columns • Double-click to edit • Right-click for options</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add New Task</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskTitle">Task Title *</label>
+                        <input type="text" id="taskTitle" required maxlength="100" placeholder="What needs to be done?">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskDescription">Description</label>
+                        <textarea id="taskDescription" rows="3" placeholder="Add details, requirements, or notes..."></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taskPriority">Priority</label>
+                            <div class="priority-selector">
+                                <input type="radio" name="priority" id="priority-high" value="high">
+                                <label for="priority-high" class="priority-label high">High</label>
+                                
+                                <input type="radio" name="priority" id="priority-medium" value="medium">
+                                <label for="priority-medium" class="priority-label medium">Medium</label>
+                                
+                                <input type="radio" name="priority" id="priority-low" value="low">
+                                <label for="priority-low" class="priority-label low">Low</label>
+                                
+                                <input type="radio" name="priority" id="priority-none" value="none" checked>
+                                <label for="priority-none" class="priority-label none">None</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="taskDueDate">Due Date</label>
+                            <input type="date" id="taskDueDate">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taskAssignee">Assignee</label>
+                            <select id="taskAssignee">
+                                <option value="">Unassigned</option>
+                                <option value="alex">Alex Johnson</option>
+                                <option value="sam">Sam Davis</option>
+                                <option value="jordan">Jordan Lee</option>
+                                <option value="taylor">Taylor Smith</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="taskColumn">Column</label>
+                            <select id="taskColumn">
+                                <!-- Will be populated with columns -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskTags">Tags (comma separated)</label>
+                        <input type="text" id="taskTags" placeholder="e.g., bug, feature, design">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelTask" class="btn-secondary">Cancel</button>
+                <button type="submit" form="taskForm" id="saveTask" class="btn-primary">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column Modal -->
+    <div id="columnModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="columnModalTitle">Add New Column</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="columnForm">
+                    <div class="form-group">
+                        <label for="columnName">Column Name *</label>
+                        <input type="text" id="columnName" required maxlength="50" placeholder="e.g., In Progress, Review, Done">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="columnColor">Column Color</label>
+                        <div class="color-selector">
+                            <input type="radio" name="columnColor" id="color-blue" value="#4361ee" checked>
+                            <label for="color-blue" class="color-label" style="background-color: #4361ee;"></label>
+                            
+                            <input type="radio" name="columnColor" id="color-green" value="#4CAF50">
+                            <label for="color-green" class="color-label" style="background-color: #4CAF50;"></label>
+                            
+                            <input type="radio" name="columnColor" id="color-purple" value="#9c27b0">
+                            <label for="color-purple" class="color-label" style="background-color: #9c27b0;"></label>
+                            
+                            <input type="radio" name="columnColor" id="color-orange" value="#FF9800">
+                            <label for="color-orange" class="color-label" style="background-color: #FF9800;"></label>
+                            
+                            <input type="radio" name="columnColor" id="color-red" value="#f44336">
+                            <label for="color-red" class="color-label" style="background-color: #f44336;"></label>
+                            
+                            <input type="radio" name="columnColor" id="color-gray" value="#607d8b">
+                            <label for="color-gray" class="color-label" style="background-color: #607d8b;"></label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="columnLimit">WIP Limit (Optional)</label>
+                        <input type="number" id="columnLimit" min="1" max="20" placeholder="Max tasks in this column">
+                        <small class="form-hint">Leave empty for no limit</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelColumn" class="btn-secondary">Cancel</button>
+                <button type="submit" form="columnForm" id="saveColumn" class="btn-primary">Save Column</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcutsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-keyboard"></i> Keyboard Shortcuts</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item">
+                        <kbd>N</kbd>
+                        <span>New Task</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>C</kbd>
+                        <span>New Column</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>F</kbd>
+                        <span>Focus Search</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>ESC</kbd>
+                        <span>Close Modal/Cancel</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl/Cmd + S</kbd>
+                        <span>Save Task</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Del</kbd>
+                        <span>Delete Selected Task</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl/Cmd + Z</kbd>
+                        <span>Undo Last Action</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl/Cmd + Shift + Z</kbd>
+                        <span>Redo Last Action</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeShortcuts" class="btn-primary">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <ul>
+            <li data-action="edit"><i class="fas fa-edit"></i> Edit Task</li>
+            <li data-action="duplicate"><i class="fas fa-copy"></i> Duplicate Task</li>
+            <li data-action="delete"><i class="fas fa-trash"></i> Delete Task</li>
+            <li class="divider"></li>
+            <li data-action="move-left"><i class="fas fa-arrow-left"></i> Move Left</li>
+            <li data-action="move-right"><i class="fas fa-arrow-right"></i> Move Right</li>
+            <li class="divider"></li>
+            <li data-action="high-priority"><i class="fas fa-circle" style="color: #f44336;"></i> Set High Priority</li>
+            <li data-action="medium-priority"><i class="fas fa-circle" style="color: #FF9800;"></i> Set Medium Priority</li>
+            <li data-action="low-priority"><i class="fas fa-circle" style="color: #4CAF50;"></i> Set Low Priority</li>
+        </ul>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <i class="fas fa-check-circle toast-icon"></i>
+            <span class="toast-message">Task saved successfully!</span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

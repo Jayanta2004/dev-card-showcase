@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Signs Recognition Guide</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --warning-color: #f7b731;
+            --mandatory-color: #eb3b5a;
+            --informational-color: #3867d6;
+            --background-color: #f1f2f6;
+            --card-bg: #ffffff;
+            --text-dark: #2d3436;
+            --text-light: #636e72;
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-top: 20px;
+        }
+
+        h1 {
+            color: #2d3436;
+            margin-bottom: 10px;
+            font-size: 2.8rem;
+        }
+
+        .subtitle {
+            color: var(--text-light);
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 20px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background-color: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 140px;
+        }
+
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 5px;
+        }
+
+        .categories {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .category-btn.active {
+            color: white;
+        }
+
+        .warning-btn {
+            background-color: rgba(247, 183, 49, 0.2);
+            color: #b78a1a;
+        }
+
+        .warning-btn.active {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .mandatory-btn {
+            background-color: rgba(235, 59, 90, 0.2);
+            color: #b52b46;
+        }
+
+        .mandatory-btn.active {
+            background-color: var(--mandatory-color);
+            color: white;
+        }
+
+        .info-btn {
+            background-color: rgba(56, 103, 214, 0.2);
+            color: #2a4da5;
+        }
+
+        .info-btn.active {
+            background-color: var(--informational-color);
+            color: white;
+        }
+
+        .all-btn {
+            background-color: rgba(99, 110, 114, 0.2);
+            color: var(--text-light);
+        }
+
+        .all-btn.active {
+            background-color: var(--text-light);
+            color: white;
+        }
+
+        .signs-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .sign-card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            height: 320px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .sign-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .sign-image {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .sign-image img {
+            max-width: 100%;
+            max-height: 140px;
+            object-fit: contain;
+        }
+
+        .sign-content {
+            padding: 20px;
+            position: relative;
+        }
+
+        .sign-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .sign-description {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            height: 60px;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .sign-card.expanded .sign-description {
+            height: auto;
+            overflow: visible;
+        }
+
+        .sign-category {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .warning-category {
+            background-color: rgba(247, 183, 49, 0.2);
+            color: #b78a1a;
+        }
+
+        .mandatory-category {
+            background-color: rgba(235, 59, 90, 0.2);
+            color: #b52b46;
+        }
+
+        .info-category {
+            background-color: rgba(56, 103, 214, 0.2);
+            color: #2a4da5;
+        }
+
+        .expand-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sign-card.expanded .expand-btn i {
+            transform: rotate(180deg);
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px 0;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            border-top: 1px solid #dfe6e9;
+            margin-top: 30px;
+        }
+
+        .instructions {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+
+        .instructions p {
+            color: var(--text-light);
+        }
+
+        .highlight {
+            background-color: rgba(247, 183, 49, 0.1);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .signs-container {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .categories {
+                gap: 10px;
+            }
+            
+            .category-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .signs-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-box {
+                min-width: 120px;
+                padding: 12px 15px;
+            }
+            
+            .stat-number {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Traffic Signs Recognition Guide</h1>
+            <p class="subtitle">An interactive visual guide to help you learn and remember common road signs. Hover or click on signs to see descriptions and organize by category.</p>
+            
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-number">24</div>
+                    <div class="stat-label">Total Signs</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Categories</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Visual Learning</div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="instructions">
+                <h3>How to Use This Guide</h3>
+                <p><span class="highlight">Hover</span> over any sign card to see a preview effect. <span class="highlight">Click</span> on a card to expand and read the full description. Use the category buttons below to filter signs by type.</p>
+            </div>
+
+            <div class="categories">
+                <button class="category-btn all-btn active" data-category="all">
+                    <i class="fas fa-th"></i> All Signs
+                </button>
+                <button class="category-btn warning-btn" data-category="warning">
+                    <i class="fas fa-exclamation-triangle"></i> Warning Signs
+                </button>
+                <button class="category-btn mandatory-btn" data-category="mandatory">
+                    <i class="fas fa-ban"></i> Mandatory Signs
+                </button>
+                <button class="category-btn info-btn" data-category="informational">
+                    <i class="fas fa-info-circle"></i> Informational Signs
+                </button>
+            </div>
+
+            <div class="signs-container" id="signsContainer">
+                <!-- Signs will be dynamically generated by JavaScript -->
+            </div>
+        </main>
+
+        <footer>
+            <p>Traffic Signs Recognition Guide | Designed for educational purposes | All signs are based on standard traffic regulations</p>
+            <p style="margin-top: 10px;">© 2023 Road Safety Education. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Traffic signs data
+        const trafficSigns = [
+            {
+                id: 1,
+                name: "Stop",
+                category: "mandatory",
+                description: "Come to a full stop at the intersection. Yield to all other vehicles and pedestrians before proceeding.",
+                image: "stop_sign"
+            },
+            {
+                id: 2,
+                name: "No Entry",
+                category: "mandatory",
+                description: "Entry prohibited. Do not enter this road or driveway from your current direction.",
+                image: "no_entry"
+            },
+            {
+                id: 3,
+                name: "Speed Limit 50",
+                category: "mandatory",
+                description: "Maximum speed limit is 50 km/h. Do not exceed this speed under normal conditions.",
+                image: "speed_limit_50"
+            },
+            {
+                id: 4,
+                name: "Yield",
+                category: "mandatory",
+                description: "Slow down and give way to traffic on the intersecting road. Stop if necessary.",
+                image: "yield"
+            },
+            {
+                id: 5,
+                name: "No Parking",
+                category: "mandatory",
+                description: "Parking is prohibited at all times. Stopping temporarily to pick up or drop off passengers may be allowed.",
+                image: "no_parking"
+            },
+            {
+                id: 6,
+                name: "No Overtaking",
+                category: "mandatory",
+                description: "Overtaking other vehicles is prohibited. Stay in your lane until this restriction ends.",
+                image: "no_overtaking"
+            },
+            {
+                id: 7,
+                name: "Roundabout",
+                category: "warning",
+                description: "Roundabout ahead. Slow down and prepare to yield to traffic already in the roundabout.",
+                image: "roundabout"
+            },
+            {
+                id: 8,
+                name: "Pedestrian Crossing",
+                category: "warning",
+                description: "Pedestrian crossing ahead. Slow down and be prepared to stop for pedestrians.",
+                image: "pedestrian_crossing"
+            },
+            {
+                id: 9,
+                name: "Sharp Curve",
+                category: "warning",
+                description: "Sharp curve to the right ahead. Reduce speed and navigate the curve carefully.",
+                image: "sharp_curve"
+            },
+            {
+                id: 10,
+                name: "School Zone",
+                category: "warning",
+                description: "School zone ahead. Reduce speed and watch for children crossing the road.",
+                image: "school_zone"
+            },
+            {
+                id: 11,
+                name: "Slippery Road",
+                category: "warning",
+                description: "Road may be slippery, especially during wet conditions. Reduce speed and increase following distance.",
+                image: "slippery_road"
+            },
+            {
+                id: 12,
+                name: "Deer Crossing",
+                category: "warning",
+                description: "Deer may cross the road in this area. Be alert, especially at dawn and dusk.",
+                image: "deer_crossing"
+            },
+            {
+                id: 13,
+                name: "Hospital",
+                category: "informational",
+                description: "Hospital ahead. Maintain quiet and be prepared for ambulances entering/exiting.",
+                image: "hospital"
+            },
+            {
+                id: 14,
+                name: "Gas Station",
+                category: "informational",
+                description: "Gas station ahead. Indicates availability of fuel and often other services.",
+                image: "gas_station"
+            },
+            {
+                id: 15,
+                name: "Parking",
+                category: "informational",
+                description: "Parking area ahead. Follow any additional signs for parking rules and payment requirements.",
+                image: "parking"
+            },
+            {
+                id: 16,
+                name: "Rest Area",
+                category: "informational",
+                description: "Rest area ahead. Place to stop, rest, and use facilities during long journeys.",
+                image: "rest_area"
+            },
+            {
+                id: 17,
+                name: "One Way",
+                category: "informational",
+                description: "One-way street. Traffic flows only in the direction of the arrow.",
+                image: "one_way"
+            },
+            {
+                id: 18,
+                name: "Food Services",
+                category: "informational",
+                description: "Food services available ahead. Indicates restaurants or eating facilities.",
+                image: "food_services"
+            },
+            {
+                id: 19,
+                name: "No U-Turn",
+                category: "mandatory",
+                description: "U-turns are prohibited. Do not turn your vehicle around in the roadway.",
+                image: "no_uturn"
+            },
+            {
+                id: 20,
+                name: "Railroad Crossing",
+                category: "warning",
+                description: "Railroad crossing ahead. Slow down, look both ways, and be prepared to stop if a train is approaching.",
+                image: "railroad_crossing"
+            },
+            {
+                id: 21,
+                name: "Falling Rocks",
+                category: "warning",
+                description: "Area prone to falling rocks. Be alert for debris on the road, especially after storms.",
+                image: "falling_rocks"
+            },
+            {
+                id: 22,
+                name: "Bicycle Lane",
+                category: "informational",
+                description: "Bicycle lane ahead. Watch for cyclists and do not drive or park in the bike lane.",
+                image: "bicycle_lane"
+            },
+            {
+                id: 23,
+                name: "No Horn",
+                category: "mandatory",
+                description: "Horn prohibited. Do not use your vehicle's horn in this area, typically near hospitals or schools.",
+                image: "no_horn"
+            },
+            {
+                id: 24,
+                name: "Speed Bump",
+                category: "warning",
+                description: "Speed bump or hump ahead. Reduce speed to avoid damage to your vehicle.",
+                image: "speed_bump"
+            }
+        ];
+
+        // Function to generate SVG images for signs (in a real app, these would be actual images)
+        function generateSignImage(signName) {
+            const signImages = {
+                'stop_sign': `<svg width="120" height="120" viewBox="0 0 120 120">
+                    <rect x="10" y="10" width="100" height="100" rx="10" fill="#eb3b5a"/>
+                    <text x="60" y="70" text-anchor="middle" fill="white" font-size="28" font-weight="bold">STOP</text>
+                </svg>`,
+                'no_entry': `<svg width="120" height="120" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="50" fill="#eb3b5a"/>
+                    <rect x="30" y="55" width="60" height="10" fill="white"/>
+                    <circle cx="60" cy="60" r="35" fill="white" opacity="0"/>
+                    <circle cx="60" cy="60" r="40" fill="none" stroke="white" stroke-width="8"/>
+                </svg>`,
+                'speed_limit_50': `<svg width="120" height="120" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="50" fill="#2d3436"/>
+                    <circle cx="60" cy="60" r="45" fill="white"/>
+                    <circle cx="60" cy="60" r="40" fill="#2d3436"/>
+                    <text x="60" y="65" text-anchor="middle" fill="white" font-size="32" font-weight="bold">50</text>
+                </svg>`,
+                'yield': `<svg width="120" height="120" viewBox="0 0 120 120">
+                    <polygon points="60,10 110,110 10,110" fill="#f7b731"/>
+                    <text x="60" y="80" text-anchor="middle" fill="#2d3436" font-size="24" font-weight="bold">YIELD</text>
+                </svg>`,
+                'no_parking': `<svg width="120" height="120" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="50" fill="#eb3b5a"/>
+                    <rect x="35" y="35" width="50" height="50" rx="5" fill="white"/>
+                    <line x1="40" y1="40" x2="80" y2="80" stroke="#eb3b5a" stroke-width="8"/>
+                </svg>`,
+                'roundabout': `<svg width="120" height="120" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="40" fill="#f7b731" stroke="#2d3436" stroke-width="3"/>
+                    <path d="M20,60 A40,40 0 0,1 60,20" fill="none" stroke="#2d3436" stroke-width="8" marker-end="url(#arrow)"/>
+                    <defs>
+                        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#2d3436"/>
+                        </marker>
+                    </defs>
+                </svg>`,
+                'pedestrian_crossing': `<svg width="120" height="120" viewBox="0 0 120 120">
+                    <rect x="10" y="10" width="100" height="100" rx="10" fill="#f7b731"/>
+                    <circle cx="40" cy="40" r="8" fill="#2d3436"/>
+                    <line x1="40" y1="48" x2="40" y2="80" stroke="#2d3436" stroke-width="6"/>
+                    <line x1="25" y1="60" x2="40" y2="50" stroke="#2d3436" stroke-width="6"/>
+                    <line x1="55" y1="60" x2="40" y2="50" stroke="#2d3436" stroke-width="6"/>
+                    <line x1="25" y1="90" x2="40" y2="80" stroke="#2d3436" stroke-width="6"/>
+                    <line x1="55" y1="90" x2="40" y2="80" stroke="#2d3436" stroke-width="6"/>
+                </svg>`,
+                'sharp_curve': `<svg width="120" height="120" viewBox="0 0 120 120">
+                    <rect x="10" y="10" width="100" height="100" rx="10" fill="#f7b731"/>
+                    <path d="M30,80 Q80,30 90,80" fill="none" stroke="#2d3436" stroke-width="10"/>
+                </svg>`,
+                'school_zone': `<svg width="120" height="120" viewBox="0 0 120 120">
+                    <rect x="10" y="10" width="100" height="100" rx="10" fill="#f7b731"/>
+                    <path d="M40,50 L50,30 L60,50 L70,30 L80,50" fill="none" stroke="#2d3436" stroke-width="6"/>
+                    <rect x="35" y="60" width="50" height="30" rx="5" fill="#2d3436"/>
+                    <rect x="45" y="65" width="10" height="20" fill="#f7b731"/>
+                    <rect x="65" y="65" width="10" height="20" fill="#f7b731"/>
+                </svg>`
+            };
+
+            // Default generic sign if specific one not found
+            if (signImages[signName]) {
+                return signImages[signName];
+            } else {
+                // Create a generic sign based on category
+                return `<svg width="120" height="120" viewBox="0 0 120 120">
+                    <rect x="10" y="10" width="100" height="100" rx="10" fill="#3867d6"/>
+                    <text x="60" y="65" text-anchor="middle" fill="white" font-size="18" font-weight="bold">${signName.split('_').join(' ')}</text>
+                </svg>`;
+            }
+        }
+
+        // Function to render traffic signs
+        function renderSigns(category = "all") {
+            const container = document.getElementById("signsContainer");
+            container.innerHTML = "";
+
+            // Filter signs by category if needed
+            const filteredSigns = category === "all" 
+                ? trafficSigns 
+                : trafficSigns.filter(sign => sign.category === category);
+
+            // Update the stats
+            document.querySelector('.stat-number').textContent = filteredSigns.length;
+
+            // Create sign cards
+            filteredSigns.forEach(sign => {
+                const signCard = document.createElement("div");
+                signCard.className = `sign-card ${sign.category}-card`;
+                signCard.dataset.category = sign.category;
+
+                const categoryClass = `${sign.category}-category`;
+                const categoryText = sign.category === "warning" ? "Warning" : 
+                                   sign.category === "mandatory" ? "Mandatory" : "Informational";
+
+                signCard.innerHTML = `
+                    <div class="sign-image">
+                        ${generateSignImage(sign.image)}
+                    </div>
+                    <div class="sign-content">
+                        <div class="sign-category ${categoryClass}">${categoryText}</div>
+                        <h3 class="sign-name">${sign.name}</h3>
+                        <p class="sign-description">${sign.description}</p>
+                        <button class="expand-btn">
+                            <span>Read More</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                `;
+
+                // Add click event to expand/collapse description
+                const expandBtn = signCard.querySelector('.expand-btn');
+                expandBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    signCard.classList.toggle('expanded');
+                    
+                    const icon = this.querySelector('i');
+                    const text = this.querySelector('span');
+                    
+                    if (signCard.classList.contains('expanded')) {
+                        text.textContent = 'Read Less';
+                    } else {
+                        text.textContent = 'Read More';
+                    }
+                });
+
+                // Add hover effect with slight delay for better UX
+                let hoverTimeout;
+                signCard.addEventListener('mouseenter', () => {
+                    hoverTimeout = setTimeout(() => {
+                        signCard.style.transform = 'translateY(-10px)';
+                        signCard.style.boxShadow = '0 15px 30px rgba(0, 0, 0, 0.15)';
+                    }, 100);
+                });
+
+                signCard.addEventListener('mouseleave', () => {
+                    clearTimeout(hoverTimeout);
+                    if (!signCard.classList.contains('expanded')) {
+                        signCard.style.transform = 'translateY(0)';
+                        signCard.style.boxShadow = 'var(--shadow)';
+                    }
+                });
+
+                container.appendChild(signCard);
+            });
+        }
+
+        // Function to handle category filtering
+        function setupCategoryFilters() {
+            const categoryButtons = document.querySelectorAll('.category-btn');
+            
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active button
+                    categoryButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Get selected category
+                    const category = this.dataset.category;
+                    
+                    // Render signs for selected category
+                    renderSigns(category);
+                });
+            });
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Render all signs initially
+            renderSigns("all");
+            
+            // Setup category filters
+            setupCategoryFilters();
+            
+            // Add a simple animation to the title
+            const title = document.querySelector('h1');
+            title.style.opacity = '0';
+            title.style.transform = 'translateY(-20px)';
+            
+            setTimeout(() => {
+                title.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                title.style.opacity = '1';
+                title.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

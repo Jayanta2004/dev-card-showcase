@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ energy usage tracker · kWh & cost</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f7fa 0%, #dae6f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .tracker-card {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 3rem;
+            box-shadow: 0 30px 45px -25px #2f5570, 0 0 0 1px #f0faff inset;
+            padding: 2.2rem 2.2rem 2.5rem;
+            border: 1px solid #ffffff;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .title h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+            color: #1c4b6e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-badge {
+            background: #2679b3;
+            color: white;
+            padding: 0.6rem 2rem;
+            border-radius: 60px;
+            font-size: 1.3rem;
+            font-weight: 500;
+            box-shadow: 0 5px 0 #0f3a57;
+        }
+
+        .rate-setter {
+            background: #e9f2fa;
+            border-radius: 60px;
+            padding: 0.5rem 1.5rem 0.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            border: 1px solid #b7d6f5;
+        }
+
+        .rate-setter label {
+            font-weight: 600;
+            color: #215574;
+        }
+
+        .rate-setter input {
+            width: 100px;
+            padding: 0.6rem 1rem;
+            border-radius: 40px;
+            border: 2px solid #a0c4e8;
+            font-size: 1.1rem;
+            background: white;
+            text-align: center;
+        }
+
+        /* main grid: left form + right list */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1.2fr 1.8fr;
+            gap: 1.8rem;
+            margin: 2rem 0 1.8rem;
+        }
+
+        .add-appliance {
+            background: #edf6fd;
+            border-radius: 2rem;
+            padding: 1.8rem 1.5rem;
+            border: 1px solid #cde2f7;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            margin-bottom: 1.2rem;
+            color: #154258;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px dashed #b7d3ed;
+            padding-bottom: 0.5rem;
+        }
+
+        .input-field {
+            margin-bottom: 1.2rem;
+        }
+
+        .input-field label {
+            display: block;
+            font-weight: 500;
+            color: #1a4f73;
+            margin-bottom: 0.3rem;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border-radius: 40px;
+            border: 2px solid #b8d5f2;
+            font-size: 1rem;
+            background: white;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: #1f70b0;
+            box-shadow: 0 0 0 3px #b1d5ff;
+        }
+
+        .add-btn {
+            background: #2679b3;
+            border: none;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            border: 1px solid #a3d0ff;
+            box-shadow: 0 6px 0 #0f3a57;
+            transition: 0.08s linear;
+        }
+
+        .add-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #0f3a57;
+        }
+
+        /* appliance list */
+        .appliance-list {
+            background: #ffffffd9;
+            border-radius: 2rem;
+            padding: 1.8rem 1.5rem;
+            border: 1px solid #b8d9f5;
+            box-shadow: 0 10px 16px -12px #6797bb;
+        }
+
+        .list-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 0.5fr;
+            font-weight: 700;
+            color: #0f3a57;
+            padding: 0.2rem 0.5rem 0.8rem;
+            border-bottom: 2px solid #c3ddfa;
+        }
+
+        .items-container {
+            max-height: 340px;
+            overflow-y: auto;
+            margin: 0.8rem 0;
+        }
+
+        .list-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 0.5fr;
+            align-items: center;
+            padding: 0.8rem 0.5rem;
+            border-bottom: 1px solid #cfe2f5;
+            font-size: 1rem;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #154a6e;
+        }
+
+        .item-power, .item-hours, .item-kwh {
+            color: #1c5779;
+        }
+
+        .delete-btn {
+            background: #e13b3b;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            width: 36px;
+            height: 36px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #7e2626;
+            transition: 0.05s;
+        }
+
+        .delete-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #7e2626;
+        }
+
+        /* totals */
+        .totals-panel {
+            background: #2679b3;
+            border-radius: 2rem;
+            padding: 1.5rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            margin-top: 1rem;
+        }
+
+        .total-item {
+            font-size: 1.3rem;
+        }
+
+        .total-item span {
+            font-weight: 700;
+            font-size: 2rem;
+            margin-left: 10px;
+            background: #ffffff26;
+            padding: 0.2rem 1rem;
+            border-radius: 60px;
+        }
+
+        .reset-btn {
+            background: #174d71;
+            border: none;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #a1ceff;
+            box-shadow: 0 5px 0 #083044;
+        }
+
+        .reset-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #083044;
+        }
+    </style>
+</head>
+<body>
+<div class="tracker-card">
+    <div class="header">
+        <div class="title">
+            <h1>⚡ energy tracker <span style="font-size: 1rem; background: #2679b3; color:white; padding:0.3rem 1rem; border-radius:60px;">daily estimate</span></h1>
+        </div>
+        <div class="rate-setter">
+            <label>💰 rate ($/kWh):</label>
+            <input type="number" id="rateInput" value="0.15" step="0.01" min="0">
+        </div>
+    </div>
+
+    <!-- main grid -->
+    <div class="dashboard">
+        <!-- left: add form -->
+        <div class="add-appliance">
+            <div class="section-title"><span>➕</span> add appliance</div>
+            <div class="input-field">
+                <label>🏷️ name</label>
+                <input type="text" id="appName" placeholder="e.g. refrigerator" value="LED bulb">
+            </div>
+            <div class="input-field">
+                <label>⚡ power (watts)</label>
+                <input type="number" id="appPower" value="10" min="1" step="1">
+            </div>
+            <div class="input-field">
+                <label>⏱️ hours per day</label>
+                <input type="number" id="appHours" value="5" min="0.1" step="0.5">
+            </div>
+            <button class="add-btn" id="addBtn">➕ add to list</button>
+        </div>
+
+        <!-- right: appliance list -->
+        <div class="appliance-list">
+            <div class="section-title"><span>📋</span> your appliances</div>
+            <div class="list-header">
+                <span>name</span>
+                <span>watts</span>
+                <span>hrs/day</span>
+                <span>kWh</span>
+                <span></span>
+            </div>
+            <div id="itemsContainer" class="items-container">
+                <!-- dynamic rows -->
+            </div>
+            <div style="margin-top: 1rem; font-style: italic; color:#346f96;">* daily energy in kWh</div>
+        </div>
+    </div>
+
+    <!-- totals & cost -->
+    <div class="totals-panel" id="totalsPanel">
+        <div class="total-item">📊 total kWh <span id="totalKwh">0.00</span></div>
+        <div class="total-item">💵 estimated cost <span id="totalCost">$0.00</span></div>
+        <button class="reset-btn" id="resetAllBtn">⟲ reset all</button>
+    </div>
+    <div style="text-align: center; margin-top: 1rem; color: #25658b;">⚡ daily consumption · update rate to see cost change</div>
+</div>
+
+<script>
+    (function() {
+        // ---------- state ----------
+        let appliances = [
+            { name: 'Refrigerator', power: 150, hours: 8 },
+            { name: 'LED TV', power: 100, hours: 4 },
+            { name: 'Laptop', power: 50, hours: 6 }
+        ];
+
+        // DOM elements
+        const itemsContainer = document.getElementById('itemsContainer');
+        const totalKwhSpan = document.getElementById('totalKwh');
+        const totalCostSpan = document.getElementById('totalCost');
+        const rateInput = document.getElementById('rateInput');
+        const addBtn = document.getElementById('addBtn');
+        const resetBtn = document.getElementById('resetAllBtn');
+
+        // form inputs
+        const appName = document.getElementById('appName');
+        const appPower = document.getElementById('appPower');
+        const appHours = document.getElementById('appHours');
+
+        // helper: compute daily kWh for one appliance (power in watts, hours)
+        function computeKwh(powerWatts, hours) {
+            return (powerWatts * hours) / 1000;  // watt-hours /1000 = kWh
+        }
+
+        // render list and totals
+        function render() {
+            let html = '';
+            let totalKwh = 0;
+
+            appliances.forEach((app, index) => {
+                const kwh = computeKwh(app.power, app.hours);
+                totalKwh += kwh;
+                html += `<div class="list-item">
+                    <span class="item-name">${app.name}</span>
+                    <span class="item-power">${app.power} W</span>
+                    <span class="item-hours">${app.hours} h</span>
+                    <span class="item-kwh">${kwh.toFixed(2)}</span>
+                    <span><button class="delete-btn" data-index="${index}">✕</button></span>
+                </div>`;
+            });
+
+            itemsContainer.innerHTML = html;
+
+            // update totals
+            totalKwhSpan.textContent = totalKwh.toFixed(2);
+            const rate = parseFloat(rateInput.value) || 0;
+            const cost = totalKwh * rate;
+            totalCostSpan.textContent = `$${cost.toFixed(2)}`;
+
+            // attach delete events
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = e.target.dataset.index;
+                    if (idx !== undefined) {
+                        appliances.splice(idx, 1);
+                        render();
+                    }
+                });
+            });
+        }
+
+        // add new appliance
+        function addAppliance() {
+            const name = appName.value.trim();
+            const power = parseFloat(appPower.value);
+            const hours = parseFloat(appHours.value);
+
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+            if (isNaN(power) || power <= 0) {
+                alert('Power must be a positive number');
+                return;
+            }
+            if (isNaN(hours) || hours <= 0) {
+                alert('Hours must be positive');
+                return;
+            }
+
+            appliances.push({ name, power, hours });
+            render();
+
+            // optional reset form fields to default placeholder, keep sensible defaults
+            appName.value = '';
+            appPower.value = '';
+            appHours.value = '';
+        }
+
+        // reset all
+        function resetAll() {
+            appliances = [];  // empty list
+            render();
+        }
+
+        // event listeners
+        addBtn.addEventListener('click', addAppointment); // corrected: addAppliance
+        // typo fix:
+        addBtn.removeEventListener('click', addAppointment);
+        addBtn.addEventListener('click', addAppliance);
+
+        resetBtn.addEventListener('click', resetAll);
+
+        rateInput.addEventListener('input', () => {
+            render(); // just update cost display
+        });
+
+        // initial render
+        render();
+
+        // quick fix: ensure function name consistency
+        function addAppliance() {
+            const name = appName.value.trim();
+            const power = parseFloat(appPower.value);
+            const hours = parseFloat(appHours.value);
+
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+            if (isNaN(power) || power <= 0) {
+                alert('Power must be a positive number');
+                return;
+            }
+            if (isNaN(hours) || hours <= 0) {
+                alert('Hours must be positive');
+                return;
+            }
+
+            appliances.push({ name, power, hours });
+            render();
+
+            appName.value = '';
+            appPower.value = '';
+            appHours.value = '';
+        }
+
+        // now correct
+    })();
+</script>
+</body>
+</html>

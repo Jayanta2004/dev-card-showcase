@@ -1,0 +1,3 @@
+// Image Compressor & Converter Script
+// Handles drag-and-drop, compression, conversion, resizing, preview, and ZIP download
+// ...implementation will follow the requested features...
