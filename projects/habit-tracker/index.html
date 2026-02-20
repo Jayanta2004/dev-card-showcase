@@ -3,151 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📅 Habit Tracker - Build Better Habits</title>
+    <title>Habit Tracker - Build Better Habits</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="../../images/logo/nav-bar-logo.png">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>📅 Habit Tracker</h1>
-            <p class="subtitle">Build better habits and maintain consistency</p>
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>📊 Habit Tracker</h1>
+                <p class="subtitle">Build positive routines, track your progress</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-primary" onclick="openAddHabitModal()">+ Add Habit</button>
+                <button class="btn-secondary" onclick="exportData()">📥 Export</button>
+            </div>
         </header>
 
-        <div class="main-content">
-            <div class="habit-creation">
-                <h2>Create New Habit</h2>
-                <form id="habitForm">
-                    <div class="form-group">
-                        <label for="habitName">Habit Name</label>
-                        <input type="text" id="habitName" placeholder="e.g., Drink 8 glasses of water" required>
-                    </div>
+        <!-- Navigation Tabs -->
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="showTab('dashboard')">📈 Dashboard</button>
+            <button class="tab-btn" onclick="showTab('habits')">✓ My Habits</button>
+            <button class="tab-btn" onclick="showTab('calendar')">📅 Calendar</button>
+            <button class="tab-btn" onclick="showTab('statistics')">📊 Statistics</button>
+            <button class="tab-btn" onclick="showTab('badges')">🏆 Badges</button>
+        </nav>
 
+        <!-- Dashboard Tab -->
+        <div id="dashboardTab" class="tab-content active">
+            <!-- Overview Cards -->
+            <div class="overview-cards">
+                <div class="overview-card">
+                    <div class="card-icon">📝</div>
+                    <div class="card-content">
+                        <div class="card-value" id="totalHabits">0</div>
+                        <div class="card-label">Total Habits</div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="card-icon">✅</div>
+                    <div class="card-content">
+                        <div class="card-value" id="activeHabits">0</div>
+                        <div class="card-label">Active Habits</div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="card-icon">🔥</div>
+                    <div class="card-content">
+                        <div class="card-value" id="longestStreak">0</div>
+                        <div class="card-label">Longest Streak</div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="card-icon">📈</div>
+                    <div class="card-content">
+                        <div class="card-value" id="completionRate">0%</div>
+                        <div class="card-label">Completion Today</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Habits -->
+            <div class="card">
+                <h2>Today's Habits</h2>
+                <div id="todayHabits" class="today-habits-list"></div>
+            </div>
+
+            <!-- Recent Badges -->
+            <div class="card">
+                <h2>Recent Achievements</h2>
+                <div id="recentBadges" class="badges-grid-small"></div>
+            </div>
+        </div>
+
+        <!-- My Habits Tab -->
+        <div id="habitsTab" class="tab-content">
+            <!-- Category Filter -->
+            <div class="card filter-card">
+                <div class="filters">
+                    <select id="categoryFilter" onchange="filterHabits()">
+                        <option value="">All Categories</option>
+                        <option value="health">🏥 Health</option>
+                        <option value="fitness">💪 Fitness</option>
+                        <option value="learning">📚 Learning</option>
+                        <option value="productivity">⚡ Productivity</option>
+                        <option value="mindfulness">🧘 Mindfulness</option>
+                        <option value="social">👥 Social</option>
+                        <option value="finance">💰 Finance</option>
+                        <option value="creativity">🎨 Creativity</option>
+                        <option value="other">📌 Other</option>
+                    </select>
+                    <select id="statusFilter" onchange="filterHabits()">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="paused">Paused</option>
+                    </select>
+                    <input type="text" id="searchHabit" placeholder="Search habits..." oninput="filterHabits()">
+                </div>
+            </div>
+
+            <!-- Habits List -->
+            <div id="habitsList" class="habits-container"></div>
+        </div>
+
+        <!-- Calendar Tab -->
+        <div id="calendarTab" class="tab-content">
+            <div class="card">
+                <div class="calendar-header">
+                    <button class="nav-btn" onclick="previousMonth()">← Previous</button>
+                    <h2 id="calendarMonth">January 2024</h2>
+                    <button class="nav-btn" onclick="nextMonth()">Next →</button>
+                </div>
+                <div id="calendarGrid" class="calendar-grid"></div>
+                <div class="calendar-legend">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #10b981"></span>
+                        <span>All Complete</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #f59e0b"></span>
+                        <span>Partial</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ef4444"></span>
+                        <span>None Complete</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Day Details -->
+            <div class="card">
+                <h2>Selected Day: <span id="selectedDate">-</span></h2>
+                <div id="dayDetails" class="day-details"></div>
+            </div>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="statisticsTab" class="tab-content">
+            <div class="stats-grid">
+                <div class="card">
+                    <h3>Weekly Completion Rate</h3>
+                    <canvas id="weeklyChart" width="400" height="300"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Category Distribution</h3>
+                    <canvas id="categoryChart" width="400" height="300"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Consistency Score</h3>
+                    <div class="consistency-score">
+                        <div class="score-circle" id="consistencyCircle">
+                            <span id="consistencyScore">0%</span>
+                        </div>
+                        <p>Based on last 30 days</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Habit Performance</h3>
+                    <div id="habitPerformance" class="performance-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Badges Tab -->
+        <div id="badgesTab" class="tab-content">
+            <div class="card">
+                <h2>Your Achievements</h2>
+                <p class="badges-intro">Earn badges by building consistent habits and reaching milestones!</p>
+                <div id="badgesGrid" class="badges-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Habit Modal -->
+    <div id="habitModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Habit</h2>
+                <button class="close-btn" onclick="closeHabitModal()">&times;</button>
+            </div>
+            <form id="habitForm" onsubmit="saveHabit(event)">
+                <div class="form-group">
+                    <label for="habitName">Habit Name *</label>
+                    <input type="text" id="habitName" required placeholder="e.g., Morning Exercise">
+                </div>
+                <div class="form-row">
                     <div class="form-group">
-                        <label for="habitCategory">Category</label>
+                        <label for="habitCategory">Category *</label>
                         <select id="habitCategory" required>
-                            <option value="">Select Category</option>
                             <option value="health">🏥 Health</option>
                             <option value="fitness">💪 Fitness</option>
                             <option value="learning">📚 Learning</option>
                             <option value="productivity">⚡ Productivity</option>
                             <option value="mindfulness">🧘 Mindfulness</option>
                             <option value="social">👥 Social</option>
+                            <option value="finance">💰 Finance</option>
                             <option value="creativity">🎨 Creativity</option>
                             <option value="other">📌 Other</option>
                         </select>
                     </div>
-
                     <div class="form-group">
-                        <label for="habitFrequency">Frequency</label>
+                        <label for="habitFrequency">Frequency *</label>
                         <select id="habitFrequency" required>
                             <option value="daily">Daily</option>
-                            <option value="weekdays">Weekdays Only</option>
-                            <option value="weekends">Weekends Only</option>
-                            <option value="custom">Custom Schedule</option>
+                            <option value="weekly">Weekly</option>
                         </select>
                     </div>
-
-                    <div class="form-group" id="customDaysGroup" style="display: none;">
-                        <label>Custom Days</label>
-                        <div class="days-selector">
-                            <label><input type="checkbox" value="monday"> Mon</label>
-                            <label><input type="checkbox" value="tuesday"> Tue</label>
-                            <label><input type="checkbox" value="wednesday"> Wed</label>
-                            <label><input type="checkbox" value="thursday"> Thu</label>
-                            <label><input type="checkbox" value="friday"> Fri</label>
-                            <label><input type="checkbox" value="saturday"> Sat</label>
-                            <label><input type="checkbox" value="sunday"> Sun</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="habitTarget">Daily Target (optional)</label>
-                        <input type="number" id="habitTarget" placeholder="e.g., 8 for 8 glasses of water" min="1">
-                    </div>
-
-                    <button type="submit" class="create-btn">Create Habit</button>
-                </form>
-            </div>
-
-            <div class="stats-section">
-                <h2>Overview</h2>
-                <div class="overview-stats">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalHabits">0</div>
-                        <div class="stat-label">Total Habits</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="activeStreaks">0</div>
-                        <div class="stat-label">Active Streaks</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="completionRate">0%</div>
-                        <div class="stat-label">Completion Rate</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="longestStreak">0</div>
-                        <div class="stat-label">Longest Streak</div>
-                    </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="habits-section">
-            <h2>Today's Habits</h2>
-            <div id="todayHabits" class="habits-list">
-                <!-- Today's habits will be loaded dynamically -->
-            </div>
-        </div>
-
-        <div class="progress-section">
-            <h2>Weekly Progress</h2>
-            <div class="progress-charts">
-                <canvas id="progressChart"></canvas>
-            </div>
-        </div>
-
-        <div class="motivation-section">
-            <h2>💪 Motivation</h2>
-            <div id="motivationMessage" class="motivation-card">
-                <!-- Motivation message will be generated dynamically -->
-            </div>
-            <div class="tips-container">
-                <div class="tip-card">
-                    <h3>Start Small</h3>
-                    <p>Begin with habits that take less than 2 minutes to complete. Small wins build momentum.</p>
+                <div class="form-group">
+                    <label for="habitGoal">Goal</label>
+                    <input type="text" id="habitGoal" placeholder="e.g., Exercise for 30 minutes">
                 </div>
-                <div class="tip-card">
-                    <h3>Stack Habits</h3>
-                    <p>Attach new habits to existing routines. For example, meditate right after brushing your teeth.</p>
+                <div class="form-group">
+                    <label for="habitDescription">Description</label>
+                    <textarea id="habitDescription" placeholder="Why is this habit important to you?"></textarea>
                 </div>
-                <div class="tip-card">
-                    <h3>Track Consistently</h3>
-                    <p>Mark your habits done immediately after completion. Don't wait until the end of the day.</p>
+                <div class="form-group">
+                    <label for="habitReminder">
+                        <input type="checkbox" id="habitReminder">
+                        Enable daily reminder
+                    </label>
                 </div>
-                <div class="tip-card">
-                    <h3>Be Kind to Yourself</h3>
-                    <p>Missed a day? No problem. Get back on track immediately. Progress, not perfection.</p>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Habit</button>
+                    <button type="button" class="btn-secondary" onclick="closeHabitModal()">Cancel</button>
                 </div>
-                <div class="tip-card">
-                    <h3>Visualize Success</h3>
-                    <p>Imagine how great you'll feel after maintaining your habit for 30 days. Focus on the benefits.</p>
-                </div>
-                <div class="tip-card">
-                    <h3>Find Accountability</h3>
-                    <p>Share your goals with a friend or join a community. Accountability increases success rates.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="all-habits-section">
-            <h2>All Habits</h2>
-            <div id="allHabits" class="habits-grid">
-                <!-- All habits will be loaded dynamically -->
-            </div>
+            </form>
         </div>
     </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
 
     <script src="script.js"></script>
 </body>

@@ -1,14 +1,18 @@
 const board = document.getElementById("board");
 const scoreEl = document.getElementById("score");
+const bestEl = document.getElementById("bestScore");
 const restartBtn = document.getElementById("restart");
 
 let grid = [];
 let score = 0;
+let bestScore = Number(localStorage.getItem("bestScore")) || 0;
+bestEl.textContent = bestScore;
 
 function init() {
   grid = Array(16).fill(0);
   score = 0;
   scoreEl.textContent = score;
+  bestEl.textContent = bestScore;
   addTile();
   addTile();
   draw();
@@ -22,6 +26,8 @@ function draw() {
     if (value) {
       tile.textContent = value;
       tile.classList.add(`tile-${value}`);
+    } else {
+      tile.classList.add("tile-empty");
     }
     board.appendChild(tile);
   });
@@ -82,6 +88,11 @@ function move(dir) {
   if (moved) {
     addTile();
     scoreEl.textContent = score;
+    if (score > bestScore) {
+      bestScore = score;
+      bestEl.textContent = bestScore;
+      localStorage.setItem("bestScore", String(bestScore));
+    }
     draw();
   }
 }

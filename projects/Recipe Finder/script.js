@@ -1,89 +1,114 @@
-const recipesDiv = document.getElementById("recipes");
-const title = document.getElementById("sectionTitle");
-
-function searchRecipes() {
-  const q = document.getElementById("searchInput").value.trim();
-  if (!q) return;
-
-  title.textContent = "🍽️ Dishes";
-  recipesDiv.innerHTML = "<p>Loading...</p>";
-
-  fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${q}`)
-    .then(res => res.json())
-    .then(data => {
-      recipesDiv.innerHTML = "";
-      if (!data.meals) {
-        recipesDiv.innerHTML = "<p>No dishes found</p>";
-        return;
-      }
-      data.meals.forEach(meal => {
-        recipesDiv.appendChild(createCard(meal, true));
-      });
-    });
-}
-
+const recipesContainer = document.getElementById("recipes");
 const modal = document.getElementById("modal");
-const modalContent = document.getElementById("modalContent");
+const modalBody = document.getElementById("modalBody");
 
-function createCard(meal, canSave) {
-  const div = document.createElement("div");
-  div.className = "card";
+document.getElementById("searchBtn").addEventListener("click", searchMeal);
+document.getElementById("favBtn").addEventListener("click", showFavorites);
+document.getElementById("homeBtn").addEventListener("click", loadFeatured);
+document.getElementById("closeModal").addEventListener("click", ()=> modal.style.display="none");
 
-  div.innerHTML = `
-    <img src="${meal.strMealThumb}">
-    <div class="content">
-      <h3>${meal.strMeal}</h3>
-      <div class="actions">
-        <button onclick="viewRecipe('${meal.idMeal}')">View</button>
-        ${canSave ? `<button onclick='saveFav(${JSON.stringify(meal)})'>❤️</button>` : ""}
-      </div>
-    </div>
-  `;
-  return div;
+window.onclick = (e)=>{
+  if(e.target==modal) modal.style.display="none";
 }
 
-function viewRecipe(id) {
-  fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`)
-    .then(res => res.json())
-    .then(data => {
-      const m = data.meals[0];
-      modalContent.innerHTML = `
-        <div style="text-align:center;">
-        <h2>${m.strMeal}</h2>
-        <img src="${m.strMealThumb}" style="width:50%;height:50vh;border-radius:12px;margin:10px 0;">
-        </div>
-        <p><b>Category:</b> ${m.strCategory}</p>
-        <p><b>Cuisine:</b> ${m.strArea}</p>
-        <p style="margin-top:10px;">${m.strInstructions}</p>
-      `;
-      modal.style.display = "flex";
-    });
+/* LOAD FEATURED ON START */
+loadFeatured();
+
+async function loadFeatured(){
+  document.getElementById("sectionTitle").textContent="Featured Recipes";
+  const res = await fetch("https://www.themealdb.com/api/json/v1/1/search.php?s=");
+  const data = await res.json();
+  displayMeals(data.meals.slice(0,8));
 }
 
-function closeModal() {
-  modal.style.display = "none";
+async function searchMeal(){
+  const query = document.getElementById("searchInput").value;
+  if(!query) return;
+
+  const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${query}`);
+  const data = await res.json();
+  displayMeals(data.meals);
 }
 
-
-function saveFav(meal) {
-  let favs = JSON.parse(localStorage.getItem("favs")) || [];
-  if (!favs.find(f => f.idMeal === meal.idMeal)) {
-    favs.push(meal);
-    localStorage.setItem("favs", JSON.stringify(favs));
-  }
+async function filterCategory(category){
+  const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`);
+  const data = await res.json();
+  displayMeals(data.meals);
 }
 
-function showFavorites() {
-  title.textContent = "❤️ Favorites";
-  recipesDiv.innerHTML = "";
-
-  const favs = JSON.parse(localStorage.getItem("favs")) || [];
-  if (favs.length === 0) {
-    recipesDiv.innerHTML = "<p>No favorites yet ❤️</p>";
+function displayMeals(meals){
+  recipesContainer.innerHTML="";
+  if(!meals){
+    recipesContainer.innerHTML="<p>No recipes found</p>";
     return;
   }
 
-  favs.forEach(meal => {
-    recipesDiv.appendChild(createCard(meal, false));
+  meals.forEach(meal=>{
+    const card=document.createElement("div");
+    card.classList.add("card");
+
+    card.innerHTML=`
+      <img src="${meal.strMealThumb}">
+      <div class="card-content">
+        <h3>${meal.strMeal}</h3>
+        <div class="card-buttons">
+          <button onclick="viewRecipe('${meal.idMeal}')">View</button>
+          <button onclick="saveFavorite('${meal.idMeal}')">❤️</button>
+        </div>
+      </div>
+    `;
+
+    recipesContainer.appendChild(card);
   });
+}
+
+async function viewRecipe(id){
+  const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+  const data = await res.json();
+  const meal=data.meals[0];
+
+  let ingredients="";
+  for(let i=1;i<=20;i++){
+    if(meal[`strIngredient${i}`]){
+      ingredients+=`<li>${meal[`strIngredient${i}`]} - ${meal[`strMeasure${i}`]}</li>`;
+    }
+  }
+
+  modalBody.innerHTML=`
+    <h2>${meal.strMeal}</h2>
+    <img src="${meal.strMealThumb}" style="width:100%;border-radius:10px;margin:10px 0;">
+    <h3>Ingredients</h3>
+    <ul>${ingredients}</ul>
+    <h3>Instructions</h3>
+    <p>${meal.strInstructions}</p>
+    ${meal.strYoutube ? `<a href="${meal.strYoutube}" target="_blank" style="color:#ff7e5f;">Watch on YouTube</a>`:""}
+  `;
+
+  modal.style.display="flex";
+}
+
+function saveFavorite(id){
+  let favs=JSON.parse(localStorage.getItem("favorites"))||[];
+  if(!favs.includes(id)){
+    favs.push(id);
+    localStorage.setItem("favorites",JSON.stringify(favs));
+    alert("Added to favorites ❤️");
+  }
+}
+
+async function showFavorites(){
+  let favs=JSON.parse(localStorage.getItem("favorites"))||[];
+  if(favs.length===0){
+    recipesContainer.innerHTML="<p>No favorites yet</p>";
+    return;
+  }
+
+  let meals=[];
+  for(let id of favs){
+    const res=await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+    const data=await res.json();
+    meals.push(data.meals[0]);
+  }
+
+  displayMeals(meals);
 }

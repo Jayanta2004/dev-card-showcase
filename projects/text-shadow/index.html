@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✧ text shadow generator · interactive design tool</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(45deg, #1c262c, #141e24);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      padding: 1.8rem;
+    }
+
+    .generator-card {
+      max-width: 1300px;
+      width: 100%;
+      background: rgba(20, 32, 38, 0.75);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(230, 180, 120, 0.2);
+      border-radius: 3.2rem;
+      padding: 2.5rem 2.5rem;
+      box-shadow: 0 30px 50px -20px #000000cc, inset 0 1px 3px rgba(255, 215, 150, 0.15);
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 500;
+      background: linear-gradient(135deg, #fbd7a0, #fecb8a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      letter-spacing: -0.5px;
+    }
+
+    h1 span {
+      background: #2e424b;
+      font-size: 1.2rem;
+      font-weight: 500;
+      padding: 0.2rem 1.5rem;
+      border-radius: 60px;
+      color: #ffdbb6;
+      -webkit-text-fill-color: #ffdbb6;
+      border: 1px solid #b98f5a;
+    }
+
+    .sub {
+      color: #b8c9b0;
+      margin-bottom: 2.2rem;
+      font-size: 1.1rem;
+      border-left: 4px solid #f0b064;
+      padding-left: 1.5rem;
+      font-weight: 300;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 2.2rem;
+    }
+
+    /* ---------- control panel ---------- */
+    .control-panel {
+      background: #1b2d33d9;
+      border-radius: 2.5rem;
+      padding: 2rem 1.5rem;
+      border: 1px solid #63543d;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 25px -10px black;
+      height: fit-content;
+    }
+
+    .control-group {
+      margin-bottom: 2rem;
+    }
+
+    .control-group h3 {
+      color: #f5cba0;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 0.8rem;
+      margin-bottom: 1.2rem;
+      border-bottom: 1px dashed #c6944e60;
+      padding-bottom: 0.5rem;
+    }
+
+    .slider-item {
+      margin-bottom: 1.3rem;
+    }
+
+    .slider-item label {
+      display: flex;
+      justify-content: space-between;
+      color: #e2d3bc;
+      font-size: 1rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .slider-item input[type=range] {
+      width: 100%;
+      height: 7px;
+      background: #152d36;
+      border-radius: 20px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .slider-item input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      background: #f5b256;
+      border-radius: 50%;
+      border: 2px solid #ffeac2;
+      cursor: grab;
+      box-shadow: 0 4px 8px #00000080;
+      transition: 0.1s;
+    }
+    .slider-item input[type=range]::-webkit-slider-thumb:hover {
+      background: #ffa73a;
+      transform: scale(1.15);
+    }
+
+    .value-badge {
+      background: #273e48;
+      padding: 0.3rem 1rem;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #ffc489;
+    }
+
+    .color-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .color-item label {
+      flex: 1;
+      color: #e2d3bc;
+    }
+    .color-item input[type=color] {
+      width: 70px;
+      height: 45px;
+      border: 2px solid #cfa668;
+      border-radius: 18px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .color-item input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-item input[type=color]::-webkit-color-swatch { border: none; border-radius: 14px; }
+
+    .double-input {
+      display: flex;
+      gap: 0.8rem;
+    }
+    .double-input > div {
+      flex: 1;
+    }
+
+    .extra-toggle {
+      margin-top: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .extra-toggle label {
+      color: #eaceaa;
+    }
+    .extra-toggle input[type=checkbox] {
+      width: 22px;
+      height: 22px;
+      accent-color: #f0b064;
+    }
+
+    /* preview area */
+    .preview-container {
+      background: #1c2c32f2;
+      border-radius: 2.5rem;
+      border: 1px solid #a98551;
+      box-shadow: 0 20px 35px -10px black;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .preview-header {
+      background: #15282e;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid #806d48;
+      color: #ffdbb5;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .preview-area {
+      flex: 1;
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background: radial-gradient(circle at 30% 30%, #2e444c, #102128);
+    }
+
+    #previewText {
+      font-size: 4rem;
+      font-weight: 800;
+      font-family: 'Poppins', 'Inter', sans-serif;
+      letter-spacing: 2px;
+      text-align: center;
+      word-break: break-word;
+      max-width: 100%;
+      color: var(--text-color, #f2e2c9);
+      text-shadow: var(--text-shadow, 'none');
+      transition: text-shadow 0.1s, color 0.1s;
+      cursor: default;
+    }
+
+    /* editable text line */
+    .edit-row {
+      background: #1f383f;
+      padding: 1.2rem 2rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .edit-row label {
+      color: #f3d9b1;
+    }
+    #customTextInput {
+      flex: 2;
+      min-width: 200px;
+      background: #102a33;
+      border: 1px solid #b59157;
+      padding: 0.8rem 1.5rem;
+      border-radius: 60px;
+      font-size: 1rem;
+      color: #f7e5c6;
+      font-family: 'Inter', sans-serif;
+    }
+    #customTextInput::placeholder { color: #ac9b80; }
+
+    #fontSizeInput {
+      width: 90px;
+      background: #102a33;
+      border: 1px solid #b59157;
+      padding: 0.8rem;
+      border-radius: 40px;
+      color: #f7e5c6;
+      text-align: center;
+    }
+
+    .css-output {
+      margin-top: 2rem;
+      background: #1f313a;
+      border-radius: 1.8rem;
+      padding: 1.5rem;
+      border: 1px solid #aa874e;
+    }
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      color: #ffdbb6;
+      margin-bottom: 0.8rem;
+    }
+    #copyBtn {
+      background: #e5a95b;
+      border: none;
+      padding: 0.4rem 1.5rem;
+      border-radius: 40px;
+      font-weight: 600;
+      color: #1d2f2f;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    #copyBtn:hover { background: #ffb85b; transform: scale(1.02); }
+    pre {
+      background: #0a1f28;
+      padding: 1.2rem;
+      border-radius: 1.2rem;
+      color: #c6e0db;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      border: 1px solid #6f644a;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+<div class="generator-card">
+  <h1>✧ text shadow generator <span>CSS</span></h1>
+  <div class="sub">adjust offset, blur, color — live preview + multiple shadows</div>
+
+  <div class="workspace">
+    <!-- left: controls -->
+    <div class="control-panel">
+      <div class="control-group">
+        <h3>📐 OFFSET & BLUR</h3>
+        <div class="slider-item">
+          <label>offset X <span id="offXval" class="value-badge">4px</span></label>
+          <input type="range" id="offX" min="-30" max="30" value="6" step="1">
+        </div>
+        <div class="slider-item">
+          <label>offset Y <span id="offYval" class="value-badge">4px</span></label>
+          <input type="range" id="offY" min="-30" max="30" value="6" step="1">
+        </div>
+        <div class="slider-item">
+          <label>blur radius <span id="blurVal" class="value-badge">8px</span></label>
+          <input type="range" id="blur" min="0" max="40" value="8" step="1">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>🎨 COLOR</h3>
+        <div class="color-item">
+          <label>shadow color</label>
+          <input type="color" id="shadowColor" value="#2b1e0f">
+        </div>
+        <div class="slider-item">
+          <label>opacity (alpha) <span id="alphaVal" class="value-badge">0.75</span></label>
+          <input type="range" id="alphaSlider" min="0" max="1" step="0.01" value="0.75">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>➕ SECONDARY SHADOW (optional)</h3>
+        <div class="extra-toggle">
+          <input type="checkbox" id="enableSecond">
+          <label>enable second layer</label>
+        </div>
+        <div id="secondGroup" style="opacity:0.6; pointer-events:none; margin-top:0.8rem;">
+          <div class="double-input">
+            <div>
+              <label>X</label>
+              <input type="range" id="offX2" min="-30" max="30" value="-4" step="1" disabled>
+            </div>
+            <div>
+              <label>Y</label>
+              <input type="range" id="offY2" min="-30" max="30" value="-4" step="1" disabled>
+            </div>
+          </div>
+          <div class="slider-item">
+            <label>blur 2 <span id="blur2Val" class="value-badge">3px</span></label>
+            <input type="range" id="blur2" min="0" max="40" value="3" step="1" disabled>
+          </div>
+          <div class="color-item" style="margin-top:0.5rem;">
+            <label>color 2</label>
+            <input type="color" id="shadowColor2" value="#3f5a4b" disabled>
+          </div>
+          <div class="slider-item">
+            <label>opacity 2 <span id="alpha2Val" class="value-badge">0.4</span></label>
+            <input type="range" id="alpha2" min="0" max="1" step="0.01" value="0.4" disabled>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- right: preview + css -->
+    <div>
+      <div class="preview-container">
+        <div class="preview-header">
+          <span>📺 live preview</span>
+          <span id="shadowPreviewBadge">text-shadow: 6px 6px 8px #2b1e0f</span>
+        </div>
+        <div class="preview-area" id="previewArea">
+          <div id="previewText" style="color: #f0e0ca;">DESIGN</div>
+        </div>
+        <div class="edit-row">
+          <label>✎ text</label>
+          <input type="text" id="customTextInput" placeholder="hello" value="DESIGN">
+          <label>size</label>
+          <input type="number" id="fontSizeInput" min="16" max="120" value="64" step="2">
+        </div>
+      </div>
+
+      <!-- css output block -->
+      <div class="css-output">
+        <div class="output-header">
+          <span>📋 text-shadow property</span>
+          <button id="copyBtn">copy</button>
+        </div>
+        <pre id="cssShadowCode">text-shadow: 6px 6px 8px rgba(43,30,15,0.75);</pre>
+        <div style="color:#c0a878; margin-top:0.8rem; font-size:0.85rem;">⚡ multiple shadows supported (secondary)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ----- DOM elements -----
+    const offX = document.getElementById('offX');
+    const offY = document.getElementById('offY');
+    const blur = document.getElementById('blur');
+    const shadowColor = document.getElementById('shadowColor');
+    const alphaSlider = document.getElementById('alphaSlider');
+    const offXval = document.getElementById('offXval');
+    const offYval = document.getElementById('offYval');
+    const blurVal = document.getElementById('blurVal');
+    const alphaVal = document.getElementById('alphaVal');
+
+    // secondary
+    const enableSecond = document.getElementById('enableSecond');
+    const secondGroup = document.getElementById('secondGroup');
+    const offX2 = document.getElementById('offX2');
+    const offY2 = document.getElementById('offY2');
+    const blur2 = document.getElementById('blur2');
+    const shadowColor2 = document.getElementById('shadowColor2');
+    const alpha2 = document.getElementById('alpha2');
+    const blur2Val = document.getElementById('blur2Val');
+    const alpha2Val = document.getElementById('alpha2Val');
+
+    const previewText = document.getElementById('previewText');
+    const customTextInput = document.getElementById('customTextInput');
+    const fontSizeInput = document.getElementById('fontSizeInput');
+    const shadowPreviewBadge = document.getElementById('shadowPreviewBadge');
+    const cssShadowCode = document.getElementById('cssShadowCode');
+
+    // helper to hex to rgba
+    function hexToRgb(hex) {
+      const r = parseInt(hex.slice(1,3), 16);
+      const g = parseInt(hex.slice(3,5), 16);
+      const b = parseInt(hex.slice(5,7), 16);
+      return [r, g, b];
+    }
+
+    // main update
+    function updateShadow() {
+      // main shadow values
+      const x = offX.value;
+      const y = offY.value;
+      const b = blur.value;
+      const alpha = alphaSlider.value;
+      const [r, g, bl] = hexToRgb(shadowColor.value);
+      const mainRGBA = `rgba(${r}, ${g}, ${bl}, ${alpha})`;
+      const mainShadow = `${x}px ${y}px ${b}px ${mainRGBA}`;
+
+      let fullShadow = mainShadow;
+
+      // secondary?
+      if (enableSecond.checked) {
+        const x2 = offX2.value;
+        const y2 = offY2.value;
+        const b2 = blur2.value;
+        const a2 = alpha2.value;
+        const [r2, g2, b2c] = hexToRgb(shadowColor2.value);
+        const secRGBA = `rgba(${r2}, ${g2}, ${b2c}, ${a2})`;
+        const secShadow = `${x2}px ${y2}px ${b2}px ${secRGBA}`;
+        fullShadow = `${mainShadow}, ${secShadow}`;
+      }
+
+      // apply to preview
+      previewText.style.textShadow = fullShadow;
+
+      // update badge (short version)
+      if (!enableSecond.checked) {
+        shadowPreviewBadge.innerText = `text-shadow: ${x}px ${y}px ${b}px ${mainRGBA}`;
+      } else {
+        shadowPreviewBadge.innerText = `text-shadow: multi (2 layers)`;
+      }
+
+      // update code output
+      let code = `text-shadow: ${fullShadow};`;
+      cssShadowCode.innerText = code;
+
+      // update numeric labels
+      offXval.innerText = x + 'px';
+      offYval.innerText = y + 'px';
+      blurVal.innerText = b + 'px';
+      alphaVal.innerText = alpha;
+
+      // secondary labels
+      blur2Val.innerText = blur2.value + 'px';
+      alpha2Val.innerText = alpha2.value;
+    }
+
+    // enable/disable secondary controls
+    function toggleSecond(enabled) {
+      const inputs = [offX2, offY2, blur2, shadowColor2, alpha2];
+      inputs.forEach(inp => inp.disabled = !enabled);
+      secondGroup.style.opacity = enabled ? '1' : '0.5';
+      secondGroup.style.pointerEvents = enabled ? 'auto' : 'none';
+      updateShadow();
+    }
+
+    enableSecond.addEventListener('change', (e) => {
+      toggleSecond(e.target.checked);
+    });
+
+    // text content & size
+    function updateTextContent() {
+      previewText.innerText = customTextInput.value || 'DESIGN';
+    }
+    customTextInput.addEventListener('input', updateTextContent);
+
+    function updateFontSize() {
+      previewText.style.fontSize = fontSizeInput.value + 'px';
+    }
+    fontSizeInput.addEventListener('input', updateFontSize);
+
+    // attach listeners to all sliders/colors
+    [offX, offY, blur, shadowColor, alphaSlider, offX2, offY2, blur2, shadowColor2, alpha2].forEach(el => {
+      if (el) el.addEventListener('input', updateShadow);
+    });
+
+    // extra: ensure color picker triggers update even for secondary
+    // initial call
+    toggleSecond(false); // secondary disabled by default
+    updateTextContent();
+    updateFontSize();
+    updateShadow();
+
+    // copy to clipboard
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(cssShadowCode.innerText).then(() => {
+        const btn = document.getElementById('copyBtn');
+        const original = btn.innerText;
+        btn.innerText = 'copied!';
+        setTimeout(() => btn.innerText = original, 1400);
+      });
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nap Efficiency Tracker - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/nap-efficiency-tracker.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="moon"></i> Nap Efficiency Tracker</h1>
+            <p>Log nap duration, measure productivity impact, and find your optimal nap length with performance ratings and comparison graphs.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Nap Logger -->
+            <section class="tracker-section nap-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Nap Session</h2>
+                <form id="napForm" class="nap-form">
+                    <div class="form-group">
+                        <label for="napDate">Nap Date & Time</label>
+                        <input type="datetime-local" id="napDate" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="napDuration">Nap Duration (minutes)</label>
+                            <input type="number" id="napDuration" min="1" max="180" step="1" placeholder="e.g., 20" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="napType">Nap Type</label>
+                            <select id="napType" required>
+                                <option value="">Select type</option>
+                                <option value="power">Power Nap (10-20 min)</option>
+                                <option value="short">Short Nap (20-45 min)</option>
+                                <option value="long">Long Nap (45-90 min)</option>
+                                <option value="full">Full Sleep Cycle (90+ min)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="preNapEnergy">Pre-Nap Energy Level (1-10)</label>
+                        <input type="range" id="preNapEnergy" min="1" max="10" value="5" class="energy-slider">
+                        <div class="slider-labels">
+                            <span>1</span>
+                            <span>10</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="wakeUpMethod">Wake Up Method</label>
+                        <select id="wakeUpMethod">
+                            <option value="natural">Natural Wake</option>
+                            <option value="alarm">Alarm</option>
+                            <option value="interruption">Interruption</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="save"></i> Log Nap
+                    </button>
+                </form>
+            </section>
+
+            <!-- Post-Nap Rating -->
+            <section class="tracker-section post-nap-rating">
+                <h2><i data-lucide="star"></i> Post-Nap Performance Rating</h2>
+                <div id="pendingRatings" class="pending-ratings">
+                    <p>No pending nap ratings. Log a nap first!</p>
+                </div>
+                <div id="ratingInterface" class="rating-interface" style="display: none;">
+                    <div class="nap-summary">
+                        <h3>Rate Your Recent Nap</h3>
+                        <p id="napSummary"></p>
+                    </div>
+                    <div class="rating-section">
+                        <label for="postNapEnergy">Post-Nap Energy Level (1-10)</label>
+                        <input type="range" id="postNapEnergy" min="1" max="10" value="5" class="energy-slider">
+                        <div class="slider-labels">
+                            <span>1</span>
+                            <span>10</span>
+                        </div>
+                    </div>
+                    <div class="rating-section">
+                        <label for="productivityImpact">Productivity Impact</label>
+                        <select id="productivityImpact">
+                            <option value="negative">Negative (-2 to -1)</option>
+                            <option value="neutral">Neutral (-1 to +1)</option>
+                            <option value="positive">Positive (+1 to +2)</option>
+                            <option value="highly_positive">Highly Positive (+2+)</option>
+                        </select>
+                    </div>
+                    <div class="rating-section">
+                        <label for="grogginessLevel">Grogginess Level (1-10)</label>
+                        <input type="range" id="grogginessLevel" min="1" max="10" value="5" class="energy-slider">
+                        <div class="slider-labels">
+                            <span>1</span>
+                            <span>10</span>
+                        </div>
+                    </div>
+                    <div class="rating-section">
+                        <label for="notes">Additional Notes</label>
+                        <textarea id="notes" rows="3" placeholder="How did you feel after the nap? Any observations..."></textarea>
+                    </div>
+                    <button id="submitRating" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Submit Rating
+                    </button>
+                </div>
+            </section>
+
+            <!-- Nap History -->
+            <section class="tracker-section nap-history">
+                <h2><i data-lucide="history"></i> Nap History</h2>
+                <div id="napList" class="nap-list">
+                    <p>No naps logged yet. Start by logging your first nap!</p>
+                </div>
+            </section>
+
+            <!-- Analytics -->
+            <section class="tracker-section nap-analytics">
+                <h2><i data-lucide="bar-chart-3"></i> Nap Analytics</h2>
+                <div class="chart-container">
+                    <canvas id="efficiencyChart"></canvas>
+                </div>
+                <div class="analytics-summary">
+                    <div class="metric">
+                        <h4>Average Nap Duration</h4>
+                        <span id="avgDuration">-- min</span>
+                    </div>
+                    <div class="metric">
+                        <h4>Most Effective Type</h4>
+                        <span id="bestType">--</span>
+                    </div>
+                    <div class="metric">
+                        <h4>Average Energy Gain</h4>
+                        <span id="avgEnergyGain">--</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Nap Timer -->
+            <section class="tracker-section nap-timer">
+                <h2><i data-lucide="clock"></i> Nap Timer</h2>
+                <div class="timer-display">
+                    <div class="time">00:00:00</div>
+                    <div class="timer-controls">
+                        <button id="startTimer" class="btn-primary">
+                            <i data-lucide="play"></i> Start Nap
+                        </button>
+                        <button id="pauseTimer" class="btn-secondary" disabled>
+                            <i data-lucide="pause"></i> Pause
+                        </button>
+                        <button id="resetTimer" class="btn-secondary">
+                            <i data-lucide="rotate-ccw"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="timer-settings">
+                    <label for="timerDuration">Set Timer (minutes)</label>
+                    <input type="number" id="timerDuration" min="1" max="180" value="20" step="1">
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="../js/nap-efficiency-tracker.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

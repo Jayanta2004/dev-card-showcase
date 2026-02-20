@@ -3,33 +3,30 @@ function loadHTML(id, file, callback) {
         .then(response => response.text())
         .then(data => {
             document.getElementById(id).innerHTML = data;
-            initThemeToggle(); // Initialize theme toggle after loading navbar
             if (callback) callback();
         })
         .catch(error => console.log("Error loading file:", file));
-        function initThemeToggle() {
-        const btn = document.getElementById("themeToggle");
-        if (!btn) return;
-
-        const savedTheme = localStorage.getItem("theme") || "dark";
-        document.body.setAttribute("data-theme", savedTheme);
-
-        btn.textContent = savedTheme === "light" ? "🌞" : "🌙";
-
-        btn.addEventListener("click", () => {
-            const current = document.body.getAttribute("data-theme");
-            const next = current === "dark" ? "light" : "dark";
-
-            document.body.setAttribute("data-theme", next);
-            localStorage.setItem("theme", next);
-            btn.textContent = next === "light" ? "🌞" : "🌙";
-        });
-        }
-
 }
 
-loadHTML("navbar", "navbar.html", () => {
+// Determine base path for navbar and footer
+const currentPath = window.location.pathname;
+const isInProjects = currentPath.includes('/projects/');
+const basePath = isInProjects ? '../' : '';
+
+// Load theme persistence script
+function loadThemeScript() {
+    const script = document.createElement('script');
+    script.src = basePath + 'theme-persistence/theme.js';
+    script.onload = () => console.log('Theme persistence loaded');
+    document.head.appendChild(script);
+}
+
+// Load theme script immediately
+loadThemeScript();
+
+// Load navbar and footer
+loadHTML("navbar", basePath + "navbar.html", () => {
     document.dispatchEvent(new Event("navbarLoaded"));
 });
 
-loadHTML("footer", "footer.html");
+loadHTML("footer", basePath + "footer.html");

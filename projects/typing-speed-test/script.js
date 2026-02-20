@@ -1,4 +1,428 @@
-/**
+// ===== Typing Speed Test - Complete Game Logic =====
+
+// Text Content Database
+const TEXT_CONTENT = {
+    quotes: {
+        easy: [
+            "The quick brown fox jumps over the lazy dog.",
+            "Practice makes perfect in typing speed.",
+            "Stay focused and type with confidence.",
+            "Every expert was once a beginner.",
+            "Keep calm and type on."
+        ],
+        medium: [
+            "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+            "The only way to do great work is to love what you do.",
+            "Innovation distinguishes between a leader and a follower.",
+            "The future belongs to those who believe in the beauty of their dreams.",
+            "Quality is not an act, it is a habit."
+        ],
+        hard: [
+            "The greatest glory in living lies not in never falling, but in rising every time we fall. We must accept finite disappointment, but never lose infinite hope.",
+            "Your time is limited, so don't waste it living someone else's life. Don't be trapped by dogma which is living with the results of other people's thinking.",
+            "If you set your goals ridiculously high and it's a failure, you will fail above everyone else's success. Believe you can and you're halfway there."
+        ]
+    },
+    code: {
+        easy: [
+            "function add(a, b) { return a + b; }",
+            "const name = 'John'; console.log(name);",
+            "let x = 10; let y = 20; let sum = x + y;",
+            "if (true) { console.log('Hello World'); }",
+            "for (let i = 0; i < 10; i++) { console.log(i); }"
+        ],
+        medium: [
+            "const arr = [1, 2, 3, 4, 5]; const doubled = arr.map(x => x * 2);",
+            "async function fetchData() { const response = await fetch(url); return response.json(); }",
+            "class Person { constructor(name) { this.name = name; } greet() { return `Hello ${this.name}`; } }",
+            "const findMax = (arr) => arr.reduce((max, val) => val > max ? val : max, arr[0]);"
+        ],
+        hard: [
+            "function quickSort(arr) { if (arr.length <= 1) return arr; const pivot = arr[arr.length - 1]; const left = arr.filter((x, i) => x <= pivot && i < arr.length - 1); const right = arr.filter(x => x > pivot); return [...quickSort(left), pivot, ...quickSort(right)]; }",
+            "const debounce = (func, delay) => { let timeoutId; return (...args) => { clearTimeout(timeoutId); timeoutId = setTimeout(() => func.apply(this, args), delay); }; };",
+            "class EventEmitter { constructor() { this.events = {}; } on(event, listener) { if (!this.events[event]) this.events[event] = []; this.events[event].push(listener); } emit(event, ...args) { if (this.events[event]) this.events[event].forEach(listener => listener(...args)); } }"
+        ]
+    }
+};
+
+// Game State
+let gameState = {
+    difficulty: 'easy',
+    contentType: 'quotes',
+    duration: 60,
+    isTestActive: false,
+    startTime: null,
+    currentText: '',
+    typedText: '',
+    errors: 0,
+    correctChars: 0,
+    timerInterval: null,
+    timeRemaining: 60
+};
+
+// DOM Elements
+const modeScreen = document.getElementById('modeScreen');
+const testScreen = document.getElementById('testScreen');
+const resultsScreen = document.getElementById('resultsScreen');
+const leaderboardScreen = document.getElementById('leaderboardScreen');
+
+const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+const contentBtns = document.querySelectorAll('.content-btn');
+const durationBtns = document.querySelectorAll('.duration-btn');
+
+const textDisplay = document.getElementById('textDisplay');
+const typingInput = document.getElementById('typingInput');
+const timeDisplay = document.getElementById('timeDisplay');
+const wpmDisplay = document.getElementById('wpmDisplay');
+const accuracyDisplay = document.getElementById('accuracyDisplay');
+const errorsDisplay = document.getElementById('errorsDisplay');
+const progressBar = document.getElementById('progressBar');
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    setupEventListeners();
+    loadLeaderboard();
+});
+
+// Event Listeners
+function setupEventListeners() {
+    // Difficulty selection
+    difficultyBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            difficultyBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            gameState.difficulty = btn.dataset.difficulty;
+        });
+    });
+
+    // Content type selection
+    contentBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            contentBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            gameState.contentType = btn.dataset.content;
+        });
+    });
+
+    // Duration selection
+    durationBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            durationBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            gameState.duration = parseInt(btn.dataset.duration);
+        });
+    });
+
+    // Start test
+    document.getElementById('startTestBtn').addEventListener('click', startTest);
+
+    // Leaderboard
+    document.getElementById('leaderboardBtn').addEventListener('click', showLeaderboard);
+    document.getElementById('backFromLeaderboardBtn').addEventListener('click', showMenu);
+
+    // Test controls
+    document.getElementById('restartTestBtn').addEventListener('click', restartTest);
+    document.getElementById('exitTestBtn').addEventListener('click', exitTest);
+
+    // Results
+    document.getElementById('tryAgainBtn').addEventListener('click', tryAgain);
+    document.getElementById('backToMenuBtn').addEventListener('click', showMenu);
+
+    // Typing input
+    typingInput.addEventListener('input', handleTyping);
+    typingInput.addEventListener('paste', (e) => e.preventDefault());
+
+    // Leaderboard filters
+    document.querySelectorAll('#leaderboardScreen .filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#leaderboardScreen .filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterLeaderboard(btn.dataset.filter);
+        });
+    });
+}
+
+// Screen Navigation
+function showScreen(screen) {
+    [modeScreen, testScreen, resultsScreen, leaderboardScreen].forEach(s => s.classList.remove('active'));
+    screen.classList.add('active');
+}
+
+function showMenu() {
+    showScreen(modeScreen);
+}
+
+function showLeaderboard() {
+    showScreen(leaderboardScreen);
+    loadLeaderboard();
+}
+
+// Start Test
+function startTest() {
+    // Reset game state
+    gameState.isTestActive = true;
+    gameState.startTime = Date.now();
+    gameState.typedText = '';
+    gameState.errors = 0;
+    gameState.correctChars = 0;
+    gameState.timeRemaining = gameState.duration;
+
+    // Get random text
+    gameState.currentText = getRandomText();
+
+    // Setup UI
+    displayText();
+    showScreen(testScreen);
+    
+    // Reset and focus input
+    typingInput.value = '';
+    typingInput.focus();
+
+    // Start timer
+    timeDisplay.textContent = gameState.duration;
+    startTimer();
+
+    // Update stats
+    updateStats();
+}
+
+// Get Random Text
+function getRandomText() {
+    const contentType = gameState.contentType === 'mixed' 
+        ? (Math.random() > 0.5 ? 'quotes' : 'code')
+        : gameState.contentType;
+    
+    const texts = TEXT_CONTENT[contentType][gameState.difficulty];
+    return texts[Math.floor(Math.random() * texts.length)];
+}
+
+// Display Text
+function displayText() {
+    textDisplay.innerHTML = '';
+    gameState.currentText.split('').forEach((char, index) => {
+        const span = document.createElement('span');
+        span.textContent = char;
+        span.className = 'char';
+        if (index === 0) span.classList.add('current');
+        textDisplay.appendChild(span);
+    });
+}
+
+// Handle Typing
+function handleTyping(e) {
+    if (!gameState.isTestActive) return;
+
+    const typed = typingInput.value;
+    const chars = textDisplay.querySelectorAll('.char');
+
+    // Update each character
+    chars.forEach((char, index) => {
+        char.classList.remove('correct', 'incorrect', 'current');
+        
+        if (index < typed.length) {
+            if (typed[index] === char.textContent) {
+                char.classList.add('correct');
+                if (index >= gameState.typedText.length) {
+                    gameState.correctChars++;
+                }
+            } else {
+                char.classList.add('incorrect');
+                if (index >= gameState.typedText.length) {
+                    gameState.errors++;
+                    typingInput.classList.add('error');
+                    setTimeout(() => typingInput.classList.remove('error'), 300);
+                }
+            }
+        } else if (index === typed.length) {
+            char.classList.add('current');
+        }
+    });
+
+    gameState.typedText = typed;
+    updateStats();
+
+    // Check if test complete
+    if (typed.length >= gameState.currentText.length) {
+        const allCorrect = typed === gameState.currentText;
+        if (allCorrect) {
+            endTest();
+        }
+    }
+}
+
+//Update Stats
+function updateStats() {
+    // Calculate WPM
+    const timeElapsed = (Date.now() - gameState.startTime) / 1000 / 60;
+    const wordsTyped = gameState.typedText.trim().split(/\s+/).length;
+    const wpm = timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
+    wpmDisplay.textContent = wpm;
+
+    // Calculate accuracy
+    const totalTyped = gameState.typedText.length;
+    const accuracy = totalTyped > 0 
+        ? Math.round(((totalTyped - gameState.errors) / totalTyped) * 100)
+        : 100;
+    accuracyDisplay.textContent = accuracy + '%';
+
+    // Update errors
+    errorsDisplay.textContent = gameState.errors;
+
+    // Update progress
+    const progress = (gameState.typedText.length / gameState.currentText.length) * 100;
+    progressBar.style.width = progress + '%';
+}
+
+// Timer
+function startTimer() {
+    clearInterval(gameState.timerInterval);
+    
+    gameState.timerInterval = setInterval(() => {
+        gameState.timeRemaining--;
+        timeDisplay.textContent = gameState.timeRemaining;
+
+        if (gameState.timeRemaining <= 0) {
+            endTest();
+        }
+    }, 1000);
+}
+
+// End Test
+function endTest() {
+    gameState.isTestActive = false;
+    clearInterval(gameState.timerInterval);
+
+    // Calculate final stats
+    const timeElapsed = (Date.now() - gameState.startTime) / 1000 / 60;
+    const wordsTyped = gameState.typedText.trim().split(/\s+/).length;
+    const wpm = timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
+    const totalTyped = gameState.typedText.length;
+    const accuracy = totalTyped > 0 
+        ? Math.round(((totalTyped - gameState.errors) / totalTyped) * 100)
+        : 100;
+
+    // Display results
+    document.getElementById('finalWPM').textContent = wpm;
+    document.getElementById('finalAccuracy').textContent = accuracy + '%';
+    document.getElementById('finalChars').textContent = gameState.typedText.length;
+    document.getElementById('finalErrors').textContent = gameState.errors;
+
+    // Save score
+    const isNewRecord = saveScore(wpm, accuracy);
+    if (isNewRecord) {
+        document.getElementById('newRecordBadge').style.display = 'block';
+    } else {
+        document.getElementById('newRecordBadge').style.display = 'none';
+    }
+
+    // Show results
+    showScreen(resultsScreen);
+}
+
+// Restart Test
+function restartTest() {
+    clearInterval(gameState.timerInterval);
+    startTest();
+}
+
+// Exit Test
+function exitTest() {
+    clearInterval(gameState.timerInterval);
+    gameState.isTestActive = false;
+    showMenu();
+}
+
+// Try Again
+function tryAgain() {
+    startTest();
+}
+
+// Save Score
+function saveScore(wpm, accuracy) {
+    const scores = getScores();
+    
+    const newScore = {
+        wpm: wpm,
+        accuracy: accuracy,
+        difficulty: gameState.difficulty,
+        contentType: gameState.contentType,
+        duration: gameState.duration,
+        date: new Date().toLocaleDateString(),
+        timestamp: Date.now()
+    };
+
+    scores.push(newScore);
+    scores.sort((a, b) => b.wpm - a.wpm);
+
+    // Keep top 50
+    const topScores = scores.slice(0, 50);
+    localStorage.setItem('typingTestScores', JSON.stringify(topScores));
+
+    // Check if new record (top 5)
+    return scores.indexOf(newScore) < 5;
+}
+
+// Get Scores
+function getScores() {
+    const scores = localStorage.getItem('typingTestScores');
+    return scores ? JSON.parse(scores) : [];
+}
+
+// Load Leaderboard
+function loadLeaderboard() {
+    filterLeaderboard('all');
+}
+
+// Filter Leaderboard
+function filterLeaderboard(filter) {
+    const scores = getScores();
+    const leaderboardList = document.getElementById('leaderboardList');
+
+    let filtered = filter === 'all' 
+        ? scores 
+        : scores.filter(s => s.difficulty === filter);
+
+    if (filtered.length === 0) {
+        leaderboardList.innerHTML = `
+            <div class="empty-leaderboard">
+                <div class="empty-leaderboard-icon">🏆</div>
+                <p>No scores yet. Be the first!</p>
+            </div>
+        `;
+        return;
+    }
+
+    leaderboardList.innerHTML = filtered.slice(0, 20).map((score, index) => `
+        <div class="leaderboard-entry">
+            <div class="entry-rank">#${index + 1}</div>
+            <div class="entry-info">
+                <div class="entry-difficulty">
+                    ${capitalize(score.difficulty)} - ${capitalize(score.contentType)}
+                </div>
+                <div class="entry-date">${score.date} • ${score.duration}s</div>
+            </div>
+            <div class="entry-stats">
+                <div class="entry-wpm">${score.wpm} WPM</div>
+                <div class="entry-accuracy">${score.accuracy}% Accuracy</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Utility Functions
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// Keyboard Shortcuts
+document.addEventListener('keydown', (e) => {
+    // ESC to exit test
+    if (e.key === 'Escape' && testScreen.classList.contains('active')) {
+        if (confirm('Are you sure you want to exit the test?')) {
+            exitTest();
+        }
+    }
+});
  * Typing Speed Test - Core JavaScript
  * Features: WPM calculation, Accuracy tracking, Leaderboard, Difficulty levels
  */

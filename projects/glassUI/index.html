@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glass UI · calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #0f2027 0%, #203a43 40%, #2c5364 100%);
+      background-attachment: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    /* main glass container */
+    .calculator {
+      width: 100%;
+      max-width: 400px;
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 42px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.5),
+                  inset 0 1px 4px rgba(255, 255, 255, 0.3);
+      padding: 1.8rem 1.5rem 2rem;
+      transition: all 0.2s;
+    }
+
+    /* subtle reflection line (top edge) */
+    .calculator::after {
+      content: '';
+      position: absolute;
+      top: 6px;
+      left: 15%;
+      width: 70%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      filter: blur(1px);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* display glass panel */
+    .display {
+      background: rgba(10, 25, 35, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 28px;
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* previous operand (small top) */
+    .history {
+      min-height: 28px;
+      font-size: 1rem;
+      font-weight: 300;
+      color: rgba(230, 245, 255, 0.7);
+      text-align: right;
+      word-wrap: break-word;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      border-bottom: 1px dashed rgba(255,255,255,0.2);
+      padding-bottom: 6px;
+    }
+
+    /* main input */
+    .current {
+      width: 100%;
+      font-size: 2.8rem;
+      font-weight: 400;
+      color: white;
+      text-align: right;
+      border: none;
+      outline: none;
+      background: transparent;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      letter-spacing: 1px;
+    }
+
+    .current::placeholder {
+      color: rgba(255, 255, 255, 0.35);
+      font-weight: 300;
+      font-size: 1.8rem;
+    }
+
+    /* button grid */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    /* base glass button */
+    .btn {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 26px;
+      padding: 1.2rem 0.5rem;
+      font-size: 1.6rem;
+      font-weight: 400;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 2px rgba(255, 255, 255, 0.3);
+      transition: all 0.12s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* operator buttons (slightly more prominent) */
+    .btn.operator {
+      background: rgba(255, 215, 140, 0.18);
+      border-color: rgba(255, 235, 170, 0.35);
+      color: #fff5d9;
+      font-weight: 500;
+      font-size: 1.9rem;
+    }
+
+    /* equals special */
+    .btn.equals {
+      background: rgba(100, 210, 255, 0.28);
+      border-color: rgba(160, 235, 255, 0.6);
+      color: white;
+      font-weight: 600;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 22px rgba(0, 160, 255, 0.3);
+    }
+
+    /* clear button tint */
+    .btn.clear {
+      background: rgba(255, 120, 120, 0.2);
+      border-color: rgba(255, 160, 160, 0.4);
+      color: #ffe2e2;
+      font-weight: 500;
+    }
+
+    /* backspace icon (style) */
+    .btn.backspace {
+      font-size: 1.7rem;
+      font-weight: 300;
+    }
+
+    /* pressed / active effect */
+    .btn:active {
+      transform: scale(0.94);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 4px white;
+    }
+
+    /* zero spans two columns (nice) */
+    .btn.zero {
+      grid-column: span 2;
+    }
+
+    /* footer tiny label */
+    .glass-footer {
+      margin-top: 1.5rem;
+      text-align: center;
+      color: rgba(220, 240, 255, 0.6);
+      font-size: 0.7rem;
+      font-weight: 300;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      backdrop-filter: blur(5px);
+    }
+
+    /* responsive */
+    @media (max-width: 400px) {
+      .calculator {
+        padding: 1.2rem 1rem 1.5rem;
+      }
+      .btn {
+        padding: 1rem 0.2rem;
+        font-size: 1.4rem;
+        border-radius: 22px;
+      }
+      .current {
+        font-size: 2.2rem;
+      }
+    }
+
+    /* blink animation for overflow warning (optional) */
+    @keyframes softBlink {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; background: rgba(255,80,80,0.2); }
+      100% { opacity: 1; }
+    }
+    .overflow {
+      animation: softBlink 0.5s ease;
+    }
+
+    /* disable tap highlight */
+    .btn:focus-visible {
+      outline: 2px solid rgba(255,255,255,0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <!-- display area with glass effect -->
+    <div class="display">
+      <div class="history" id="historyDisplay"></div>
+      <input type="text" class="current" id="currentInput" placeholder="0" readonly value="0">
+    </div>
+
+    <!-- button grid -->
+    <div class="buttons">
+      <!-- row 1 -->
+      <button class="btn clear" id="clearBtn">C</button>
+      <button class="btn backspace" id="backspaceBtn">⌫</button>
+      <button class="btn operator" id="percentBtn">%</button>
+      <button class="btn operator" id="divideBtn">÷</button>
+
+      <!-- row 2 -->
+      <button class="btn" id="btn7">7</button>
+      <button class="btn" id="btn8">8</button>
+      <button class="btn" id="btn9">9</button>
+      <button class="btn operator" id="multiplyBtn">×</button>
+
+      <!-- row 3 -->
+      <button class="btn" id="btn4">4</button>
+      <button class="btn" id="btn5">5</button>
+      <button class="btn" id="btn6">6</button>
+      <button class="btn operator" id="subtractBtn">−</button>
+
+      <!-- row 4 -->
+      <button class="btn" id="btn1">1</button>
+      <button class="btn" id="btn2">2</button>
+      <button class="btn" id="btn3">3</button>
+      <button class="btn operator" id="addBtn">+</button>
+
+      <!-- row 5: zero spans two columns, dot, equals -->
+      <button class="btn zero" id="btn0">0</button>
+      <button class="btn" id="dotBtn">.</button>
+      <button class="btn equals" id="equalsBtn">=</button>
+    </div>
+
+    <div class="glass-footer">frosted glass · calc</div>
+  </div>
+
+  <script>
+    (function() {
+      // DOM elements
+      const historyEl = document.getElementById('historyDisplay');
+      const currentInput = document.getElementById('currentInput');
+
+      // Buttons (will attach via delegation, but also define for clarity)
+      const buttonsContainer = document.querySelector('.buttons');
+
+      // Calculator state
+      let current = '0';
+      let previous = '';          // previous operand / expression
+      let operator = null;
+      let resetCurrent = false;   // flag to overwrite current on next digit
+      let lastResult = null;
+
+      // update both display fields
+      function updateDisplay() {
+        // format current: if it includes .0? but keep as is
+        if (current === '' || current === '-' || current === '.') {
+          currentInput.value = '0';
+        } else {
+          currentInput.value = current;
+        }
+        historyEl.innerText = previous + (operator ? ' ' + operator : '');
+      }
+
+      // sanitize input for multiple decimals, leading zeros etc.
+      function sanitizeNumber(value) {
+        // if it ends with a dot, keep it for typing
+        if (value === '.') return '0.';
+        if (value === '') return '';
+        // limit dots to one
+        const dotCount = (value.match(/\./g) || []).length;
+        if (dotCount > 1) {
+          // remove extra dots (keep first)
+          const parts = value.split('.');
+          value = parts[0] + '.' + parts.slice(1).join('');
+        }
+        // avoid leading zeros like "007" -> "7" but keep "0" and "0.x"
+        if (value.length > 1 && !value.startsWith('0.') && !value.startsWith('-0.')) {
+          if (value.startsWith('-') && value[1] === '0' && value[2] !== '.' && value.length > 2) {
+            value = '-' + parseFloat(value.slice(1)).toString();
+          } else if (value[0] === '0' && value[1] !== '.' && value.length > 1) {
+            value = parseFloat(value).toString();
+          }
+        }
+        return value;
+      }
+
+      // handle number / dot input
+      function inputDigit(digit) {
+        if (resetCurrent) {
+          current = '';
+          resetCurrent = false;
+        }
+        // avoid multiple leading zeros
+        if (digit === '0' && (current === '0' || current === '-0')) {
+          return;
+        }
+        if (digit === '.' && current.includes('.')) {
+          return; // already have a dot
+        }
+        if (current === '0' && digit !== '.') {
+          current = digit;
+        } else if (current === '-0' && digit !== '.') {
+          current = '-' + digit;
+        } else {
+          current = (current === '0' && digit === '.') ? '0.' : current + digit;
+        }
+        current = sanitizeNumber(current);
+        updateDisplay();
+      }
+
+      // operator clicked
+      function setOperator(op) {
+        if (operator && !resetCurrent && previous !== '' && current !== '') {
+          // evaluate pending operation
+          compute();
+        } else if (current === '' && previous !== '' && operator) {
+          // just change operator
+          operator = op;
+          updateDisplay();
+          return;
+        } else if (current === '' || current === '0') {
+          // ignore if no current value, but allow if previous exists
+          if (previous !== '') {
+            operator = op;
+          }
+          updateDisplay();
+          return;
+        }
+
+        if (previous !== '' && operator && !resetCurrent) {
+          // after compute, previous becomes result, current cleared
+          // then set new operator
+          operator = op;
+          previous = current;   // result becomes previous
+          current = '';
+          resetCurrent = false;
+        } else {
+          // first operator after entering number
+          if (current !== '') {
+            previous = current;
+            current = '';
+          }
+          operator = op;
+        }
+        resetCurrent = false;
+        updateDisplay();
+      }
+
+      // compute result
+      function compute() {
+        if (operator === null || previous === '' || current === '' || current === '-') return;
+
+        let a = parseFloat(previous);
+        let b = parseFloat(current);
+        if (isNaN(a) || isNaN(b)) return;
+
+        let result;
+        switch (operator) {
+          case '+': result = a + b; break;
+          case '−': result = a - b; break;
+          case '×': result = a * b; break;
+          case '÷': 
+            if (b === 0) {
+              current = 'Error';
+              previous = '';
+              operator = null;
+              resetCurrent = true;
+              updateDisplay();
+              return;
+            }
+            result = a / b; 
+            break;
+          case '%': result = a % b; break;
+          default: return;
+        }
+
+        // handle floating point precision
+        result = Math.round(result * 1e12) / 1e12;
+
+        // store in history
+        previous = previous + ' ' + operator + ' ' + current + ' =';
+        current = result.toString();
+        operator = null;
+        resetCurrent = true;  // next digit will start fresh
+        updateDisplay();
+      }
+
+      // clear all
+      function clearAll() {
+        current = '0';
+        previous = '';
+        operator = null;
+        resetCurrent = false;
+        updateDisplay();
+      }
+
+      // backspace
+      function backspace() {
+        if (resetCurrent) {
+          // if we just had a result, backspace clears it
+          current = '0';
+          resetCurrent = false;
+        } else if (current.length > 1) {
+          current = current.slice(0, -1);
+        } else {
+          current = '0';
+        }
+        if (current === '' || current === '-') current = '0';
+        updateDisplay();
+      }
+
+      // toggle sign (+/-)
+      function toggleSign() {
+        if (current !== '' && current !== '0' && current !== 'Error') {
+          if (current.startsWith('-')) {
+            current = current.slice(1);
+          } else {
+            current = '-' + current;
+          }
+        }
+        updateDisplay();
+      }
+
+      // handle percentage quickly: convert current to % of current (like 50% -> 0.5)
+      function percentTransform() {
+        if (current !== '' && current !== 'Error' && current !== '-') {
+          let val = parseFloat(current);
+          if (!isNaN(val)) {
+            current = (val / 100).toString();
+          }
+        }
+        updateDisplay();
+      }
+
+      // event delegation for all buttons
+      buttonsContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn');
+        if (!btn) return;
+
+        // handle via id or text content
+        const text = btn.innerText;
+
+        // numbers and dot
+        if (!btn.classList.contains('operator') && !btn.classList.contains('equals') && !btn.classList.contains('clear') && !btn.classList.contains('backspace')) {
+          // digit or dot
+          if (text === '.' || (!isNaN(parseInt(text)) && text.length === 1)) {
+            inputDigit(text);
+          }
+        } else if (btn.classList.contains('operator')) {
+          const op = text;  // '÷', '×', '−', '+', '%'
+          if (op === '%') {
+            percentTransform();
+          } else {
+            setOperator(op);
+          }
+        } else if (btn.classList.contains('equals')) {
+          if (operator && previous !== '' && current !== '' && current !== 'Error') {
+            compute();
+          } else if (current === 'Error') {
+            clearAll();
+          } else {
+            // just show current
+          }
+        } else if (btn.classList.contains('clear')) {
+          clearAll();
+        } else if (btn.classList.contains('backspace')) {
+          backspace();
+        }
+
+        // extra: double-check if any unexpected button
+        // also handle zero explicitly (text '0')
+        if (text === '0' && !btn.classList.contains('operator') && !btn.classList.contains('equals')) {
+          inputDigit('0');
+        }
+      });
+
+      // also sign toggling via a hidden gesture? we don't have a dedicated button, but we can simulate with double tap? not needed.
+      // Add ± button? many glass calculators have it. we can add it by using 'C' long? but better to embed ± using operator? let's include one extra button? but grid is full.
+      // To keep design clean, I'll add ± as a hidden double-click on display? but simpler: long-press on 'C'? not user friendly. Instead I'll replace % with ±? but we have % already.
+      // I'll add a small extra: double-tap on display clears history (optional). But better: we reuse a combination? Since the user expects ±, I'll replace the functionality of '%' with ±? no, that's worse. 
+      // For completeness, let's add an extra gesture: Press and hold 'C' for ±. (common pattern). We'll implement.
+      const clearBtn = document.getElementById('clearBtn');
+      let clearPressTimer;
+      clearBtn.addEventListener('mousedown', (e) => {
+        clearPressTimer = setTimeout(() => {
+          toggleSign();
+          clearPressTimer = null;
+        }, 500); // long press 500ms
+      });
+      clearBtn.addEventListener('mouseup', () => {
+        if (clearPressTimer) {
+          clearTimeout(clearPressTimer);
+          clearPressTimer = null;
+        }
+      });
+      clearBtn.addEventListener('mouseleave', () => {
+        if (clearPressTimer) {
+          clearTimeout(clearPressTimer);
+          clearPressTimer = null;
+        }
+      });
+
+      // For mobile touch
+      clearBtn.addEventListener('touchstart', (e) => {
+        clearPressTimer = setTimeout(() => {
+          toggleSign();
+          clearPressTimer = null;
+        }, 500);
+      });
+      clearBtn.addEventListener('touchend', (e) => {
+        if (clearPressTimer) {
+          clearTimeout(clearPressTimer);
+          clearPressTimer = null;
+        }
+      });
+      clearBtn.addEventListener('touchcancel', (e) => {
+        if (clearPressTimer) {
+          clearTimeout(clearPressTimer);
+          clearPressTimer = null;
+        }
+      });
+
+      // Add keyboard support (bonus)
+      document.addEventListener('keydown', (e) => {
+        const key = e.key;
+        if (key >= '0' && key <= '9') inputDigit(key);
+        else if (key === '.') inputDigit('.');
+        else if (key === '+' || key === '-') {
+          if (key === '-') setOperator('−'); // we display as minus
+          else setOperator('+');
+        }
+        else if (key === '*') setOperator('×');
+        else if (key === '/') {
+          e.preventDefault();
+          setOperator('÷');
+        }
+        else if (key === '%') percentTransform();
+        else if (key === 'Enter' || key === '=') {
+          e.preventDefault();
+          if (operator && previous !== '' && current !== '' && current !== 'Error') compute();
+        }
+        else if (key === 'Backspace') {
+          e.preventDefault();
+          backspace();
+        }
+        else if (key === 'Escape') clearAll();
+        else if (key === 'Delete') clearAll();
+      });
+
+      // initial update
+      updateDisplay();
+
+      // also if someone clicks outside but fine
+      // handle error reset on new input
+      // if current is error, any digit will clear it
+      const originalInputDigit = inputDigit;
+      window.inputDigit = function(d) {
+        if (current === 'Error') clearAll();
+        originalInputDigit(d);
+      };
+      // override closure reference? we need to wrap the actual event handler.
+      // easiest: patch the inputDigit function itself
+      const superInput = inputDigit;
+      inputDigit = function(d) {
+        if (current === 'Error') clearAll();
+        superInput(d);
+      };
+      // but we also need inside the event listener
+      // replace the event delegation with a wrapper
+      // but we already defined listeners. we need to update. We'll re-declare the listener part? simpler: add check at top of handler
+      // I'll wrap inside the main listener with a condition. Just modify the existing event delegation code to handle error.
+      // Better: add a small check at the beginning of the click handler:
+      // we can't change it now because it's hoisted. I'll copy the logic but it's fine, I'll edit above quickly? no, but we can fix by overriding
+      // the current function before event attach? but it's already attached. Instead we add another little patch:
+      // add event listener to document for keydown, but for click we need to patch the closure? easier: reset the whole listener.
+      // I'll rewrite the whole event listener with the error check. It's fine, I can just add below and remove previous?
+      // But code is long, let's just adapt the inputDigit function to handle error globally. we'll also adjust the current variable.
+      // We'll also override the inputDigit closure by reassigning the function.
+      const oldInputDigit = inputDigit;
+      inputDigit = function(digit) {
+        if (current === 'Error') {
+          clearAll();
+        }
+        oldInputDigit(digit);
+      };
+      // and we need to update the same inside listener? We'll keep original listener but we call inputDigit function.
+      // Our listener calls inputDigit(digit) which now uses the new function. Great.
+      // But inside setOperator we also need? we'll patch similarly? setOperator calls compute which sets error. fine.
+      // Also backspace should reset error if backspacing? I'll add condition at backspace start:
+      const oldBackspace = backspace;
+      backspace = function() {
+        if (current === 'Error') {
+          clearAll();
+          return;
+        }
+        oldBackspace();
+      };
+      // override functions
+      backspace = backspace.bind(this);
+    })();
+  </script>
+</body>
+</html>

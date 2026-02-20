@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>flashcard · smart learning app</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(145deg, #eef4ff 0%, #dde9f5 100%);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .flashcard-app {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 3.5rem;
+            box-shadow: 0 30px 50px -20px #1f405a, 0 8px 20px rgba(0,30,50,0.1);
+            padding: 2.2rem 2rem;
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+
+        h1 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 2.2rem;
+            letter-spacing: -0.02em;
+            color: #113946;
+            margin-left: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        h1 span {
+            background: #2a5f7a;
+            color: white;
+            font-size: 1rem;
+            padding: 0.2rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 400;
+        }
+
+        .deck-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem 2rem;
+            background: #ffffffb3;
+            border-radius: 4rem;
+            padding: 0.8rem 2rem;
+            margin: 1.2rem 0 2rem;
+            border: 1px solid #c6dcee;
+        }
+
+        .deck-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .deck-btn {
+            background: #e2effa;
+            border: 1px solid #9ec0da;
+            padding: 0.5rem 1.5rem;
+            border-radius: 3rem;
+            font-weight: 500;
+            color: #1a4f70;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        .deck-btn.active {
+            background: #2a6f94;
+            border-color: #185b80;
+            color: white;
+            box-shadow: 0 6px 10px -6px #0f3a50;
+        }
+        .progress-indicator {
+            margin-left: auto;
+            font-weight: 500;
+            color: #2a607c;
+            background: #deecf7;
+            padding: 0.4rem 1.5rem;
+            border-radius: 3rem;
+        }
+
+        /* main card area */
+        .card-container {
+            perspective: 1500px;
+            margin: 2rem auto 2.2rem;
+            max-width: 580px;
+            width: 100%;
+            height: 340px;
+            cursor: pointer;
+        }
+
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            transform-style: preserve-3d;
+            border-radius: 2.5rem;
+            box-shadow: 0 20px 30px -12px #1d4861;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 2.5rem;
+            background: white;
+            padding: 2.2rem 1.8rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 -4px 0 #bdd6ea, 0 10px 20px -8px #14384b;
+            border: 2px solid rgba(255,255,255,0.9);
+        }
+
+        .card-front {
+            background: linear-gradient(145deg, #ffffff, #f7fcff);
+        }
+        .card-back {
+            background: #f9f3e0;
+            transform: rotateY(180deg);
+        }
+
+        .card-question {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #16445f;
+            margin-bottom: 1.2rem;
+        }
+        .card-answer {
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: #1e6a50;
+        }
+        .hint {
+            color: #6688a1;
+            font-size: 0.9rem;
+            margin-top: 1.5rem;
+        }
+
+        /* action buttons */
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0 1.2rem;
+        }
+
+        .btn {
+            background: white;
+            border: none;
+            padding: 0.9rem 2rem;
+            border-radius: 4rem;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: 0 8px 14px -8px #21475f;
+            cursor: pointer;
+            transition: 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #c0ddf5;
+            color: #1a4d6b;
+        }
+        .btn.primary {
+            background: #2a6f94;
+            color: white;
+            border: none;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .btn.small {
+            padding: 0.6rem 1.4rem;
+            font-size: 0.9rem;
+        }
+
+        .difficulty-tag {
+            background: #dbeefe;
+            padding: 0.4rem 1.8rem;
+            border-radius: 3rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1e6188;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background: #e1eff9;
+            padding: 0.8rem 2rem;
+            border-radius: 4rem;
+            margin-top: 2rem;
+            color: #1f4f6e;
+            font-weight: 500;
+        }
+
+        /* form for new cards */
+        .add-card-panel {
+            background: #eef6fd;
+            border-radius: 2.5rem;
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+            border: 1px solid #b7d6f0;
+        }
+        .add-card-panel h3 {
+            color: #1e5677;
+            margin-bottom: 1rem;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+        .form-group {
+            flex: 1 1 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #2c607d;
+            text-transform: uppercase;
+        }
+        .form-group input, .form-group select {
+            background: white;
+            border: 1px solid #b7d3e8;
+            border-radius: 3rem;
+            padding: 0.7rem 1.2rem;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+<div class="flashcard-app">
+    <h1>🧠 flashcard lab <span>spaced repetition</span></h1>
+
+    <!-- deck management -->
+    <div class="deck-bar">
+        <div class="deck-selector" id="deckSelector">
+            <span class="deck-btn active" data-deck="spanish">🇪🇸 spanish</span>
+            <span class="deck-btn" data-deck="science">🔬 science</span>
+            <span class="deck-btn" data-deck="history">🏛️ history</span>
+        </div>
+        <div class="progress-indicator" id="progressText">0/0 mastered</div>
+    </div>
+
+    <!-- flashcard -->
+    <div class="card-container" id="cardContainer">
+        <div class="flashcard" id="flashcard">
+            <div class="card-front">
+                <div class="card-question" id="questionFront">loading...</div>
+                <div class="hint">click to flip</div>
+            </div>
+            <div class="card-back">
+                <div class="card-answer" id="answerBack">...</div>
+                <div class="hint">flip back</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- controls -->
+    <div class="action-row">
+        <button class="btn" id="flipBtn">🔄 flip card</button>
+        <button class="btn primary" id="knownBtn">✅ known (easy)</button>
+        <button class="btn" id="againBtn">🔁 again (hard)</button>
+        <span class="difficulty-tag" id="currentDeckLabel">spanish</span>
+    </div>
+
+    <!-- stats & progress -->
+    <div class="stats">
+        <span>📊 deck: <span id="deckCardCount">0</span> cards</span>
+        <span>🎯 mastered: <span id="masteredCount">0</span></span>
+        <span>🔄 due: <span id="dueCount">0</span></span>
+    </div>
+
+    <!-- add new card form -->
+    <div class="add-card-panel">
+        <h3>➕ create new card</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label>question</label>
+                <input type="text" id="newQuestion" placeholder="hola" value="hola">
+            </div>
+            <div class="form-group">
+                <label>answer</label>
+                <input type="text" id="newAnswer" placeholder="hello" value="hello">
+            </div>
+            <div class="form-group">
+                <label>deck</label>
+                <select id="newDeckSelect">
+                    <option value="spanish">spanish</option>
+                    <option value="science">science</option>
+                    <option value="history">history</option>
+                </select>
+            </div>
+            <button class="btn primary" id="addCardBtn">add card</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ----- data model: cards with spaced repetition fields -----
+        let cards = [];
+        let nextId = 500;
+
+        // current deck & card index
+        let currentDeck = 'spanish';
+        let currentCardIndex = 0; // index in filteredCards array
+
+        // filtered cards based on currentDeck
+        let filteredCards = [];
+
+        // DOM elements
+        const flashcardEl = document.getElementById('flashcard');
+        const questionFront = document.getElementById('questionFront');
+        const answerBack = document.getElementById('answerBack');
+        const flipBtn = document.getElementById('flipBtn');
+        const knownBtn = document.getElementById('knownBtn');
+        const againBtn = document.getElementById('againBtn');
+        const deckSelector = document.getElementById('deckSelector');
+        const deckBtns = document.querySelectorAll('.deck-btn');
+        const currentDeckLabel = document.getElementById('currentDeckLabel');
+        const deckCardCount = document.getElementById('deckCardCount');
+        const masteredCountSpan = document.getElementById('masteredCount');
+        const dueCountSpan = document.getElementById('dueCount');
+        const progressText = document.getElementById('progressText');
+        const addCardBtn = document.getElementById('addCardBtn');
+        const newQuestion = document.getElementById('newQuestion');
+        const newAnswer = document.getElementById('newAnswer');
+        const newDeckSelect = document.getElementById('newDeckSelect');
+
+        // ----- seed demo cards -----
+        function seedCards() {
+            cards = [
+                // spanish
+                { id: 1, deck: 'spanish', question: 'hola', answer: 'hello', ease: 2.5, interval: 0, dueDate: 0, lastReviewed: null, mastered: false },
+                { id: 2, deck: 'spanish', question: 'adiós', answer: 'goodbye', ease: 2.5, interval: 0, dueDate: 0, mastered: false },
+                { id: 3, deck: 'spanish', question: 'gracias', answer: 'thank you', ease: 2.5, interval: 0, dueDate: 0, mastered: false },
+                { id: 4, deck: 'spanish', question: 'casa', answer: 'house', ease: 2.5, interval: 0, dueDate: 0, mastered: false },
+                // science
+                { id: 5, deck: 'science', question: 'H₂O', answer: 'water', ease: 2.5, interval: 0, dueDate: 0, mastered: false },
+                { id: 6, deck: 'science', question: 'photosynthesis', answer: 'plants convert light', ease: 2.5, interval: 0, dueDate: 0, mastered: false },
+                { id: 7, deck: 'science', question: 'atom', answer: 'protons, neutrons, electrons', ease: 2.5, interval: 0, dueDate: 0, mastered: false },
+                // history
+                { id: 8, deck: 'history', question: '1066', answer: 'battle of Hastings', ease: 2.5, interval: 0, dueDate: 0, mastered: false },
+                { id: 9, deck: 'history', question: '1789', answer: 'french revolution', ease: 2.5, interval: 0, dueDate: 0, mastered: false },
+                { id: 10, deck: 'history', question: '1969', answer: 'moon landing', ease: 2.5, interval: 0, dueDate: 0, mastered: false },
+            ];
+            nextId = 600;
+            // add mastered example
+            cards[0].mastered = true; // hola mastered for demo
+        }
+        seedCards();
+
+        // ----- helper: filter cards by deck, and sort by due (simple) -----
+        function updateFilteredCards() {
+            filteredCards = cards.filter(c => c.deck === currentDeck);
+            // sort by due date: those with dueDate <= 0 (meaning new) or due soon – we keep original order for demo, but due first
+            // we'll just keep order as inserted, but simulate spaced: later.
+            // For simplicity, keep as is. We'll implement due logic in review.
+        }
+
+        // ----- update current card display (based on currentCardIndex) -----
+        function renderCard() {
+            if (filteredCards.length === 0) {
+                questionFront.innerText = '✨ no cards';
+                answerBack.innerText = 'add some →';
+                flashcardEl.classList.remove('flipped');
+                return;
+            }
+            // ensure index in range
+            if (currentCardIndex >= filteredCards.length) currentCardIndex = 0;
+            if (currentCardIndex < 0) currentCardIndex = 0;
+
+            const card = filteredCards[currentCardIndex];
+            questionFront.innerText = card.question;
+            answerBack.innerText = card.answer;
+
+            // reset flip to front when changing card
+            flashcardEl.classList.remove('flipped');
+
+            // update stats
+            updateStats();
+        }
+
+        // update deck stats & progress
+        function updateStats() {
+            const total = filteredCards.length;
+            const mastered = filteredCards.filter(c => c.mastered === true).length;
+            const due = filteredCards.filter(c => !c.mastered).length; // simple: not mastered = due
+            deckCardCount.innerText = total;
+            masteredCountSpan.innerText = mastered;
+            dueCountSpan.innerText = due;
+            progressText.innerText = `${mastered}/${total} mastered`;
+
+            // update label
+            currentDeckLabel.innerText = currentDeck;
+        }
+
+        // ----- change deck -----
+        function setDeck(deckName) {
+            currentDeck = deckName;
+            updateFilteredCards();
+            currentCardIndex = 0;
+            renderCard();
+
+            // update active class on deck buttons
+            deckBtns.forEach(btn => {
+                const d = btn.dataset.deck;
+                if (d === deckName) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+
+        // ----- event listeners for decks -----
+        deckBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                setDeck(btn.dataset.deck);
+            });
+        });
+
+        // ----- flip card -----
+        function flipCard() {
+            flashcardEl.classList.toggle('flipped');
+        }
+        flipBtn.addEventListener('click', flipCard);
+        document.getElementById('cardContainer').addEventListener('click', flipCard);
+
+        // ----- known (easy) handler: mark mastered, move to next-----
+        function handleKnown() {
+            if (filteredCards.length === 0) return;
+            const card = filteredCards[currentCardIndex];
+            card.mastered = true;
+
+            // remove from due (simple) & move to next
+            // refresh filtered list
+            updateFilteredCards();
+
+            // if current index beyond length, adjust
+            if (currentCardIndex >= filteredCards.length) currentCardIndex = filteredCards.length - 1;
+            if (filteredCards.length === 0) currentCardIndex = 0;
+
+            renderCard();
+        }
+
+        // ----- again (hard) handler: not mastered, just move to next (or reschedule later)-----
+        function handleAgain() {
+            if (filteredCards.length === 0) return;
+            const card = filteredCards[currentCardIndex];
+            // simple: keep as not mastered, just move to next
+            card.mastered = false; // ensure false
+
+            // move to next index
+            currentCardIndex = (currentCardIndex + 1) % filteredCards.length;
+            renderCard();
+        }
+
+        knownBtn.addEventListener('click', handleKnown);
+        againBtn.addEventListener('click', handleAgain);
+
+        // ----- add new card -----
+        function addNewCard() {
+            const q = newQuestion.value.trim();
+            const a = newAnswer.value.trim();
+            const deck = newDeckSelect.value;
+            if (!q || !a) {
+                alert('fill both sides');
+                return;
+            }
+
+            const newCard = {
+                id: nextId++,
+                deck: deck,
+                question: q,
+                answer: a,
+                ease: 2.5,
+                interval: 0,
+                dueDate: 0,
+                mastered: false
+            };
+            cards.push(newCard);
+
+            // if current deck matches, refresh
+            if (deck === currentDeck) {
+                updateFilteredCards();
+                // move to new card? optional: set index to last
+                currentCardIndex = filteredCards.length - 1;
+                renderCard();
+            } else {
+                // just update counts later if needed
+                updateStats();
+            }
+
+            // clear inputs (optional keep placeholder)
+            newQuestion.value = '';
+            newAnswer.value = '';
+        }
+        addCardBtn.addEventListener('click', addNewCard);
+
+        // initialize
+        updateFilteredCards();
+        setDeck('spanish'); // also renders
+
+        // additional: if filtered empty, show message
+    })();
+</script>
+</body>
+</html>

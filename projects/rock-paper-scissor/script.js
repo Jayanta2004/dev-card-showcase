@@ -13,8 +13,11 @@ let player1Choice = "";
 const resultText = document.getElementById("result");
 const userScoreText = document.getElementById("userScore");
 const botScoreText = document.getElementById("botScore");
-const gameBox = document.querySelector(".game-container");
+const gameBox = document.querySelector(".panel");
 const botLabel = document.getElementById("botLabel");
+const oppLabel = document.getElementById("oppLabel");
+const userPick = document.getElementById("userPick");
+const botPick = document.getElementById("botPick");
 
 userScoreText.innerText = userScore;
 botScoreText.innerText = botScore;
@@ -24,7 +27,11 @@ function play(choice) {
   gameBox.classList.remove("win", "lose");
 
   const mode = document.getElementById("mode").value;
-  botLabel.innerHTML = mode === "bot" ? "Bot: <span id='botScore'>" + botScore + "</span>" : "Player 2: <span id='botScore'>" + botScore + "</span>";
+  const opponentName = mode === "bot" ? "Bot" : "Player 2";
+  botLabel.textContent = opponentName;
+  oppLabel.textContent = opponentName;
+  userPick.textContent = "...";
+  botPick.textContent = "...";
 
   if (mode === "bot") {
     playBot(choice);
@@ -35,14 +42,18 @@ function play(choice) {
 
 function playBot(userChoice) {
   const botChoice = choices[Math.floor(Math.random() * choices.length)];
+  userPick.textContent = formatChoice(userChoice);
+  botPick.textContent = formatChoice(botChoice);
   decideWinner(userChoice, botChoice, true);
 }
 
 function playFriend(choice) {
   if (!player1Choice) {
     player1Choice = choice;
+    userPick.textContent = formatChoice(choice);
     resultText.innerText = "Player 2, make your choice!";
   } else {
+    botPick.textContent = formatChoice(choice);
     decideWinner(player1Choice, choice, false);
     player1Choice = "";
   }
@@ -82,9 +93,21 @@ function decideWinner(choice1, choice2, isBot) {
 function resetGame() {
   userScore = 0;
   botScore = 0;
-  localStorage.clear();
+  localStorage.setItem("userScore", "0");
+  localStorage.setItem("botScore", "0");
   userScoreText.innerText = 0;
   botScoreText.innerText = 0;
   resultText.innerText = "";
   player1Choice = "";
+  userPick.textContent = "-";
+  botPick.textContent = "-";
+}
+
+function formatChoice(choice) {
+  const icons = {
+    rock: "🪨 Rock",
+    paper: "📄 Paper",
+    scissors: "✂️ Scissors"
+  };
+  return icons[choice] || "-";
 }
