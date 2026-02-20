@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Sort Puzzle</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #b0bec5;
+            max-width: 800px;
+            margin: 0 auto 25px;
+            line-height: 1.6;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #4fc3f7;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #b0bec5;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        button {
+            background: linear-gradient(to right, #2193b0, #6dd5ed);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(33, 147, 176, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(33, 147, 176, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button.reset {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+        }
+        
+        button.reset:hover {
+            box-shadow: 0 6px 20px rgba(255, 65, 108, 0.4);
+        }
+        
+        .game-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+        
+        .jars-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            width: 100%;
+        }
+        
+        .jar {
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .jar.selected {
+            transform: translateY(-10px);
+        }
+        
+        .jar.selected::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            width: 80%;
+            height: 5px;
+            background: #ffeb3b;
+            border-radius: 3px;
+            box-shadow: 0 0 10px #ffeb3b;
+        }
+        
+        .jar-body {
+            width: 80px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px 10px 40px 40px;
+            display: flex;
+            flex-direction: column-reverse;
+            overflow: hidden;
+            position: relative;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .jar-neck {
+            width: 50px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px 10px 0 0;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-bottom: none;
+        }
+        
+        .color-layer {
+            width: 100%;
+            transition: height 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(0, 0, 0, 0.6);
+            font-weight: bold;
+        }
+        
+        .jar-label {
+            margin-top: 10px;
+            font-weight: 600;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 800px;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .instructions h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #4fc3f7;
+        }
+        
+        .instructions p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .level-selector {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .level-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .level-btn.active {
+            background: linear-gradient(to right, #2193b0, #6dd5ed);
+            box-shadow: 0 4px 15px rgba(33, 147, 176, 0.3);
+        }
+        
+        .win-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .win-content {
+            background: linear-gradient(135deg, #0f2027, #203a43);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            animation: popIn 0.5s ease;
+        }
+        
+        .win-content h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .win-content p {
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .color-palette {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .color-sample {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                gap: 20px;
+                align-items: center;
+            }
+            
+            .stats {
+                justify-content: center;
+            }
+            
+            .jar {
+                width: 80px;
+            }
+            
+            .jar-body {
+                width: 65px;
+                height: 150px;
+            }
+            
+            .jar-neck {
+                width: 40px;
+            }
+        }
+        
+        .footer {
+            margin-top: 30px;
+            color: #90a4ae;
+            text-align: center;
+            font-size: 0.9rem;
+            padding-bottom: 20px;
+        }
+        
+        .highlight {
+            color: #ffcc80;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-flask"></i> Color Sort Puzzle</h1>
+            <p class="subtitle">Arrange the colored layers in each jar so that every jar contains only one color. Pour colors between jars to organize them. Challenge your logic and problem-solving skills with this visually satisfying puzzle!</p>
+        </header>
+        
+        <div class="game-info">
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="moves">0</div>
+                    <div class="stat-label">Moves</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="level">1</div>
+                    <div class="stat-label">Level</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="time">0:00</div>
+                    <div class="stat-label">Time</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button id="resetBtn" class="reset">
+                    <i class="fas fa-redo"></i> Reset Level
+                </button>
+                <button id="hintBtn">
+                    <i class="fas fa-lightbulb"></i> Get Hint
+                </button>
+                <button id="nextLevelBtn">
+                    <i class="fas fa-arrow-right"></i> Next Level
+                </button>
+            </div>
+        </div>
+        
+        <div class="level-selector">
+            <div class="level-btn active" data-level="1">Level 1</div>
+            <div class="level-btn" data-level="2">Level 2</div>
+            <div class="level-btn" data-level="3">Level 3</div>
+            <div class="level-btn" data-level="4">Level 4</div>
+        </div>
+        
+        <div class="game-area">
+            <div class="jars-container" id="jarsContainer">
+                <!-- Jars will be generated here -->
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2><i class="fas fa-info-circle"></i> How to Play</h2>
+            <p>Sort the colors so that each jar contains only one color. Follow these rules:</p>
+            <ul>
+                <li>Click on a jar to select it (it will highlight in yellow).</li>
+                <li>Click on another jar to pour the top color from the selected jar into it.</li>
+                <li>You can only pour a color into an empty jar or onto the same color.</li>
+                <li>You can pour multiple layers of the same color at once.</li>
+                <li>Complete the level by sorting all colors correctly!</li>
+            </ul>
+            <p class="highlight">Tip: Plan your moves ahead to avoid getting stuck!</p>
+        </div>
+        
+        <div class="footer">
+            <p>Color Sort Puzzle | A Logic Game by Interactive Puzzles</p>
+        </div>
+    </div>
+    
+    <div class="win-message" id="winMessage">
+        <div class="win-content">
+            <h2><i class="fas fa-trophy"></i> Level Complete!</h2>
+            <p>You sorted all the colors correctly!</p>
+            <p id="winStats">Moves: 0 | Time: 0:00</p>
+            <div class="color-palette" id="winPalette"></div>
+            <button id="continueBtn">
+                <i class="fas fa-arrow-right"></i> Continue to Next Level
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            jars: [],
+            selectedJar: null,
+            moves: 0,
+            level: 1,
+            startTime: null,
+            timer: null,
+            elapsedTime: 0,
+            colors: []
+        };
+
+        // Level configurations
+        const levels = [
+            {
+                jars: 4,
+                colors: ['#FF6B6B', '#4ECDC4', '#FFD166', '#06D6A0'],
+                layersPerColor: 3
+            },
+            {
+                jars: 5,
+                colors: ['#FF6B6B', '#4ECDC4', '#FFD166', '#06D6A0', '#118AB2'],
+                layersPerColor: 3
+            },
+            {
+                jars: 6,
+                colors: ['#FF6B6B', '#4ECDC4', '#FFD166', '#06D6A0', '#118AB2', '#EF476F'],
+                layersPerColor: 3
+            },
+            {
+                jars: 7,
+                colors: ['#FF6B6B', '#4ECDC4', '#FFD166', '#06D6A0', '#118AB2', '#EF476F', '#073B4C'],
+                layersPerColor: 3
+            }
+        ];
+
+        // DOM elements
+        const jarsContainer = document.getElementById('jarsContainer');
+        const movesElement = document.getElementById('moves');
+        const levelElement = document.getElementById('level');
+        const timeElement = document.getElementById('time');
+        const resetBtn = document.getElementById('resetBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const nextLevelBtn = document.getElementById('nextLevelBtn');
+        const levelButtons = document.querySelectorAll('.level-btn');
+        const winMessage = document.getElementById('winMessage');
+        const winStats = document.getElementById('winStats');
+        const winPalette = document.getElementById('winPalette');
+        const continueBtn = document.getElementById('continueBtn');
+
+        // Initialize the game
+        function initGame() {
+            const levelConfig = levels[gameState.level - 1];
+            gameState.colors = [...levelConfig.colors];
+            
+            // Reset game state
+            gameState.jars = [];
+            gameState.selectedJar = null;
+            gameState.moves = 0;
+            gameState.elapsedTime = 0;
+            
+            // Update UI
+            movesElement.textContent = gameState.moves;
+            levelElement.textContent = gameState.level;
+            timeElement.textContent = '0:00';
+            
+            // Create jars
+            createJars(levelConfig);
+            
+            // Start timer
+            startTimer();
+            
+            // Render jars
+            renderJars();
+        }
+
+        // Create jars with random colors
+        function createJars(levelConfig) {
+            // Clear existing jars
+            gameState.jars = [];
+            
+            // Create color array with repeated colors
+            let allColors = [];
+            for (let color of levelConfig.colors) {
+                for (let i = 0; i < levelConfig.layersPerColor; i++) {
+                    allColors.push(color);
+                }
+            }
+            
+            // Add empty jars (2 extra jars for moving colors)
+            const totalJars = levelConfig.jars + 2;
+            
+            // Initialize all jars as empty
+            for (let i = 0; i < totalJars; i++) {
+                gameState.jars.push([]);
+            }
+            
+            // Shuffle colors
+            allColors = shuffleArray(allColors);
+            
+            // Distribute colors to first jars (leave last 2 jars empty)
+            let colorIndex = 0;
+            for (let i = 0; i < levelConfig.jars; i++) {
+                for (let j = 0; j < levelConfig.layersPerColor; j++) {
+                    if (colorIndex < allColors.length) {
+                        gameState.jars[i].push(allColors[colorIndex]);
+                        colorIndex++;
+                    }
+                }
+            }
+        }
+
+        // Shuffle array using Fisher-Yates algorithm
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // Render jars in the DOM
+        function renderJars() {
+            jarsContainer.innerHTML = '';
+            
+            for (let i = 0; i < gameState.jars.length; i++) {
+                const jar = document.createElement('div');
+                jar.className = `jar ${gameState.selectedJar === i ? 'selected' : ''}`;
+                jar.dataset.index = i;
+                
+                const jarBody = document.createElement('div');
+                jarBody.className = 'jar-body';
+                
+                // Add color layers
+                for (let color of gameState.jars[i]) {
+                    const colorLayer = document.createElement('div');
+                    colorLayer.className = 'color-layer';
+                    colorLayer.style.backgroundColor = color;
+                    colorLayer.style.height = `${100 / levels[gameState.level - 1].layersPerColor}%`;
+                    
+                    // Add color name for accessibility
+                    const colorName = getColorName(color);
+                    colorLayer.title = colorName;
+                    colorLayer.innerHTML = `<span style="font-size: 0.7rem;">${colorName}</span>`;
+                    
+                    jarBody.appendChild(colorLayer);
+                }
+                
+                const jarNeck = document.createElement('div');
+                jarNeck.className = 'jar-neck';
+                
+                const jarLabel = document.createElement('div');
+                jarLabel.className = 'jar-label';
+                jarLabel.textContent = `Jar ${i + 1}`;
+                
+                jar.appendChild(jarBody);
+                jar.appendChild(jarNeck);
+                jar.appendChild(jarLabel);
+                
+                jar.addEventListener('click', () => handleJarClick(i));
+                
+                jarsContainer.appendChild(jar);
+            }
+        }
+
+        // Get color name from hex value
+        function getColorName(hex) {
+            const colorMap = {
+                '#FF6B6B': 'Red',
+                '#4ECDC4': 'Teal',
+                '#FFD166': 'Yellow',
+                '#06D6A0': 'Green',
+                '#118AB2': 'Blue',
+                '#EF476F': 'Pink',
+                '#073B4C': 'Navy'
+            };
+            return colorMap[hex] || hex;
+        }
+
+        // Handle jar click
+        function handleJarClick(jarIndex) {
+            // If no jar is selected, select this jar
+            if (gameState.selectedJar === null) {
+                // Can't select an empty jar
+                if (gameState.jars[jarIndex].length === 0) return;
+                
+                gameState.selectedJar = jarIndex;
+                renderJars();
+                return;
+            }
+            
+            // If the same jar is clicked, deselect it
+            if (gameState.selectedJar === jarIndex) {
+                gameState.selectedJar = null;
+                renderJars();
+                return;
+            }
+            
+            // Try to pour from selected jar to clicked jar
+            const fromJar = gameState.selectedJar;
+            const toJar = jarIndex;
+            
+            if (canPour(fromJar, toJar)) {
+                pour(fromJar, toJar);
+                gameState.moves++;
+                movesElement.textContent = gameState.moves;
+                
+                // Check for win condition
+                if (checkWin()) {
+                    endGame();
+                }
+            }
+            
+            // Deselect the jar
+            gameState.selectedJar = null;
+            renderJars();
+        }
+
+        // Check if pouring is allowed
+        function canPour(fromJar, toJar) {
+            // If from jar is empty, can't pour
+            if (gameState.jars[fromJar].length === 0) return false;
+            
+            // If to jar is full, can't pour
+            if (gameState.jars[toJar].length >= levels[gameState.level - 1].layersPerColor) return false;
+            
+            // Get the top color of from jar
+            const topColor = gameState.jars[fromJar][gameState.jars[fromJar].length - 1];
+            
+            // To jar can be empty or have the same color on top
+            if (gameState.jars[toJar].length === 0) return true;
+            
+            const toTopColor = gameState.jars[toJar][gameState.jars[toJar].length - 1];
+            return topColor === toTopColor;
+        }
+
+        // Pour from one jar to another
+        function pour(fromJar, toJar) {
+            const fromColors = gameState.jars[fromJar];
+            const toColors = gameState.jars[toJar];
+            
+            // Find how many consecutive same colors we can pour
+            let pourCount = 0;
+            const topColor = fromColors[fromColors.length - 1];
+            
+            for (let i = fromColors.length - 1; i >= 0; i--) {
+                if (fromColors[i] === topColor) {
+                    pourCount++;
+                } else {
+                    break;
+                }
+            }
+            
+            // Check how much space is available in the destination jar
+            const availableSpace = levels[gameState.level - 1].layersPerColor - toColors.length;
+            pourCount = Math.min(pourCount, availableSpace);
+            
+            // Move colors
+            for (let i = 0; i < pourCount; i++) {
+                const color = fromColors.pop();
+                toColors.push(color);
+            }
+        }
+
+        // Check if the player has won
+        function checkWin() {
+            for (let jar of gameState.jars) {
+                // If jar is not empty and not full, it's not complete
+                if (jar.length > 0 && jar.length < levels[gameState.level - 1].layersPerColor) {
+                    return false;
+                }
+                
+                // If jar is full, check if all colors are the same
+                if (jar.length === levels[gameState.level - 1].layersPerColor) {
+                    const firstColor = jar[0];
+                    for (let color of jar) {
+                        if (color !== firstColor) return false;
+                    }
+                }
+            }
+            
+            return true;
+        }
+
+        // Start the game timer
+        function startTimer() {
+            if (gameState.timer) clearInterval(gameState.timer);
+            
+            gameState.startTime = Date.now() - gameState.elapsedTime * 1000;
+            
+            gameState.timer = setInterval(() => {
+                const now = Date.now();
+                gameState.elapsedTime = Math.floor((now - gameState.startTime) / 1000);
+                
+                const minutes = Math.floor(gameState.elapsedTime / 60);
+                const seconds = gameState.elapsedTime % 60;
+                
+                timeElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }, 1000);
+        }
+
+        // End the game (win)
+        function endGame() {
+            clearInterval(gameState.timer);
+            
+            // Update win stats
+            const minutes = Math.floor(gameState.elapsedTime / 60);
+            const seconds = gameState.elapsedTime % 60;
+            const timeString = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            winStats.textContent = `Moves: ${gameState.moves} | Time: ${timeString}`;
+            
+            // Create color palette for win screen
+            winPalette.innerHTML = '';
+            for (let color of gameState.colors) {
+                const colorSample = document.createElement('div');
+                colorSample.className = 'color-sample';
+                colorSample.style.backgroundColor = color;
+                colorSample.title = getColorName(color);
+                winPalette.appendChild(colorSample);
+            }
+            
+            // Show win message
+            winMessage.style.display = 'flex';
+        }
+
+        // Reset the current level
+        function resetLevel() {
+            clearInterval(gameState.timer);
+            initGame();
+        }
+
+        // Go to the next level
+        function nextLevel() {
+            if (gameState.level < levels.length) {
+                gameState.level++;
+                resetLevel();
+                
+                // Update level buttons
+                levelButtons.forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.level) === gameState.level);
+                });
+            } else {
+                // If it's the last level, go back to level 1
+                gameState.level = 1;
+                resetLevel();
+                
+                // Update level buttons
+                levelButtons.forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.level) === gameState.level);
+                });
+            }
+            
+            winMessage.style.display = 'none';
+        }
+
+        // Provide a hint
+        function provideHint() {
+            // Find a valid move
+            for (let i = 0; i < gameState.jars.length; i++) {
+                for (let j = 0; j < gameState.jars.length; j++) {
+                    if (i !== j && canPour(i, j)) {
+                        // Highlight the from jar
+                        gameState.selectedJar = i;
+                        renderJars();
+                        
+                        // After a delay, highlight the to jar
+                        setTimeout(() => {
+                            const jars = document.querySelectorAll('.jar');
+                            jars[j].style.boxShadow = '0 0 0 3px #ffeb3b';
+                            jars[j].style.borderRadius = '10px';
+                            
+                            // Remove the highlight after a moment
+                            setTimeout(() => {
+                                jars[j].style.boxShadow = '';
+                                jars[j].style.borderRadius = '';
+                                gameState.selectedJar = null;
+                                renderJars();
+                            }, 1500);
+                        }, 500);
+                        
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Event listeners
+        resetBtn.addEventListener('click', resetLevel);
+        hintBtn.addEventListener('click', provideHint);
+        nextLevelBtn.addEventListener('click', nextLevel);
+        continueBtn.addEventListener('click', nextLevel);
+
+        // Level selector buttons
+        levelButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const level = parseInt(btn.dataset.level);
+                gameState.level = level;
+                resetLevel();
+                
+                // Update active button
+                levelButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Initialize the game when the page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

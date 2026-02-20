@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoftRender | Vanilla JS 3D Engine</title>
+    <link rel="stylesheet" href="style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+
+<body>
+    <div id="app-root">
+
+        <header class="menubar">
+            <div class="brand">
+                <i class='bx bxs-cube'></i> SoftRender <span class="badge">CPU</span>
+            </div>
+
+            <div class="menu-items">
+                <div class="menu-item active">View</div>
+                <div class="menu-item">Select</div>
+                <div class="menu-item">Add</div>
+                <div class="menu-item">Object</div>
+            </div>
+
+            <div class="stats-display">
+                <span id="stat-fps">FPS: 60</span>
+                <span class="divider">|</span>
+                <span id="stat-verts">Verts: 0</span>
+                <span class="divider">|</span>
+                <span id="stat-faces">Faces: 0</span>
+            </div>
+
+            <div class="actions-right">
+                <button class="btn-icon" title="Reset Camera"><i class='bx bx-home-alt-2'></i></button>
+                <button class="btn-icon" title="Settings"><i class='bx bx-cog'></i></button>
+            </div>
+        </header>
+
+        <div class="workspace">
+
+            <aside class="toolbar left">
+                <div class="tool-group">
+                    <button class="tool-btn active" title="Select (V)"><i class='bx bx-pointer'></i></button>
+                    <button class="tool-btn" title="Cursor"><i class='bx bx-crosshair'></i></button>
+                    <button class="tool-btn" title="Move (G)"><i class='bx bx-move'></i></button>
+                    <button class="tool-btn" title="Rotate (R)"><i class='bx bx-revision'></i></button>
+                    <button class="tool-btn" title="Scale (S)"><i class='bx bx-expand-alt'></i></button>
+                </div>
+                <div class="tool-divider"></div>
+                <div class="tool-group">
+                    <button class="tool-btn" title="Annotate"><i class='bx bx-pencil'></i></button>
+                    <button class="tool-btn" title="Measure"><i class='bx bx-ruler'></i></button>
+                </div>
+            </aside>
+
+            <main class="viewport" id="viewport-container">
+
+                <canvas id="render-surface"></canvas>
+
+                <div class="viewport-overlay top-left">
+                    <div class="overlay-text">Perspective</div>
+                    <div class="overlay-text sub">Object Mode</div>
+                </div>
+
+                <div class="gizmo-container">
+                    <div class="axis x-axis">X</div>
+                    <div class="axis y-axis">Y</div>
+                    <div class="axis z-axis">Z</div>
+                </div>
+
+                <div id="drop-zone" class="drop-message">
+                    <i class='bx bxs-cloud-upload'></i>
+                    <h3>Drag & Drop OBJ File</h3>
+                    <p>or use the default Cube</p>
+                    <button id="btn-load-sample" class="btn-outline">Load Sample Model</button>
+                    <input type="file" id="file-input" accept=".obj" hidden>
+                </div>
+
+            </main>
+
+            <aside class="sidebar right">
+
+                <div class="panel half-height">
+                    <div class="panel-header">
+                        <i class='bx bx-list-ul'></i> Outliner
+                    </div>
+                    <div class="panel-content list-view" id="outliner-list">
+                        <div class="list-item active">
+                            <i class='bx bxs-cube-alt'></i> Mesh_Cube
+                        </div>
+                        <div class="list-item">
+                            <i class='bx bxs-camera'></i> Camera
+                        </div>
+                        <div class="list-item">
+                            <i class='bx bxs-bulb'></i> Light
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel half-height">
+                    <div class="prop-tabs">
+                        <div class="prop-tab active" title="Object Props"><i class='bx bx-cube'></i></div>
+                        <div class="prop-tab" title="Material"><i class='bx bxs-color-fill'></i></div>
+                        <div class="prop-tab" title="Render Settings"><i class='bx bx-camera-movie'></i></div>
+                    </div>
+
+                    <div class="panel-content" id="properties-content">
+
+                        <div class="prop-section">
+                            <div class="prop-header">
+                                <i class='bx bx-chevron-down'></i> Transform
+                            </div>
+                            <div class="prop-body">
+
+                                <div class="vector-row">
+                                    <label>Location</label>
+                                    <div class="vec3-inputs">
+                                        <div class="vec-input x">
+                                            <span>X</span> <input type="number" id="inp-loc-x" value="0.00">
+                                        </div>
+                                        <div class="vec-input y">
+                                            <span>Y</span> <input type="number" id="inp-loc-y" value="0.00">
+                                        </div>
+                                        <div class="vec-input z">
+                                            <span>Z</span> <input type="number" id="inp-loc-z" value="0.00">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="vector-row">
+                                    <label>Rotation</label>
+                                    <div class="vec3-inputs">
+                                        <div class="vec-input x">
+                                            <span>X</span> <input type="number" id="inp-rot-x" value="0">
+                                        </div>
+                                        <div class="vec-input y">
+                                            <span>Y</span> <input type="number" id="inp-rot-y" value="0">
+                                        </div>
+                                        <div class="vec-input z">
+                                            <span>Z</span> <input type="number" id="inp-rot-z" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="vector-row">
+                                    <label>Scale</label>
+                                    <div class="vec3-inputs">
+                                        <div class="vec-input x">
+                                            <span>X</span> <input type="number" id="inp-scl-x" value="1.00">
+                                        </div>
+                                        <div class="vec-input y">
+                                            <span>Y</span> <input type="number" id="inp-scl-y" value="1.00">
+                                        </div>
+                                        <div class="vec-input z">
+                                            <span>Z</span> <input type="number" id="inp-scl-z" value="1.00">
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="prop-section">
+                            <div class="prop-header">
+                                <i class='bx bx-chevron-down'></i> Viewport Display
+                            </div>
+                            <div class="prop-body">
+                                <div class="control-row">
+                                    <label>Wireframe</label>
+                                    <input type="checkbox" id="chk-wireframe" checked>
+                                </div>
+                                <div class="control-row">
+                                    <label>Backface Culling</label>
+                                    <input type="checkbox" id="chk-culling" checked>
+                                </div>
+                                <div class="control-row">
+                                    <label>Perspective</label>
+                                    <input type="checkbox" id="chk-perspective" checked>
+                                </div>
+                                <div class="control-row">
+                                    <label>Field of View</label>
+                                    <input type="range" id="rng-fov" min="30" max="120" value="60">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <footer class="timeline">
+            <div class="timeline-controls">
+                <button><i class='bx bx-skip-previous'></i></button>
+                <button><i class='bx bx-play'></i></button>
+                <button><i class='bx bx-skip-next'></i></button>
+                <div class="time-display">0</div>
+            </div>
+            <div class="timeline-track">
+            </div>
+        </footer>
+
+    </div>
+
+    <script src="math.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

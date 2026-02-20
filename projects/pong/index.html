@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Retro Pong</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #0a0a1a;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #fff;
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            z-index: 10;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 
+                0 0 5px #0ff,
+                0 0 10px #0ff,
+                0 0 20px #0ff;
+            color: #8afcff;
+        }
+        
+        .subtitle {
+            color: #f0f;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #f0f;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            margin-bottom: 20px;
+        }
+        
+        #gameCanvas {
+            background-color: #000;
+            border: 3px solid #333;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 255, 0.5),
+                inset 0 0 20px rgba(0, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            margin-bottom: 10px;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .player-score {
+            padding: 10px 30px;
+            border-radius: 10px;
+            text-shadow: 0 0 10px currentColor;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            background-color: rgba(0, 20, 40, 0.7);
+        }
+        
+        .player1 {
+            color: #0ff;
+            border: 2px solid #0ff;
+        }
+        
+        .player2 {
+            color: #f0f;
+            border: 2px solid #f0f;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(0, 20, 40, 0.7);
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        
+        .player-controls {
+            width: 45%;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .player1-controls {
+            border: 1px solid #0ff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        .player2-controls {
+            border: 1px solid #f0f;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+        }
+        
+        .control-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .player1-controls .control-title {
+            color: #0ff;
+            text-shadow: 0 0 5px #0ff;
+        }
+        
+        .player2-controls .control-title {
+            color: #f0f;
+            text-shadow: 0 0 5px #f0f;
+        }
+        
+        .keys {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .key {
+            background-color: #222;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .key.active {
+            background-color: #444;
+            box-shadow: 0 0 10px #fff;
+        }
+        
+        .middle-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                #0ff 10%, 
+                transparent 20%, 
+                transparent 30%, 
+                #f0f 40%, 
+                transparent 50%, 
+                transparent 60%, 
+                #0ff 70%, 
+                transparent 80%, 
+                transparent 90%, 
+                #f0f 100%);
+            opacity: 0.7;
+        }
+        
+        .game-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            text-align: center;
+            z-index: 100;
+            border: 2px solid #0ff;
+            box-shadow: 0 0 20px #0ff;
+            display: none;
+        }
+        
+        .restart-btn {
+            background: linear-gradient(to bottom, #0a0a2a, #000);
+            color: #0ff;
+            border: 2px solid #0ff;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            margin-top: 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-shadow: 0 0 5px #0ff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .restart-btn:hover {
+            background: linear-gradient(to bottom, #0ff, #0a0a2a);
+            color: #000;
+            box-shadow: 0 0 20px #0ff;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
+            color: #8afcff;
+            font-size: 0.9rem;
+            max-width: 800px;
+            line-height: 1.5;
+        }
+        
+        .glow {
+            animation: glow 2s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
+            }
+            to {
+                text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+            }
+        }
+        
+        @media (max-width: 850px) {
+            .game-container, .score-container, .controls {
+                width: 95%;
+            }
+            
+            #gameCanvas {
+                width: 100%;
+                height: auto;
+                max-height: 400px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="glow">Neon Retro Pong</h1>
+        <div class="subtitle">A Two-Player Classic with Modern Neon Flair</div>
+    </div>
+    
+    <div class="score-container">
+        <div class="player-score player1">PLAYER 1: <span id="score1">0</span></div>
+        <div class="player-score player2">PLAYER 2: <span id="score2">0</span></div>
+    </div>
+    
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        <div class="middle-line"></div>
+        <div id="gameMessage" class="game-message">
+            <div id="messageText"></div>
+            <button class="restart-btn" onclick="resetGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <div class="player-controls player1-controls">
+            <div class="control-title">PLAYER 1 CONTROLS</div>
+            <div class="keys">
+                <div class="key" id="keyW">W</div>
+                <div class="key" id="keyS">S</div>
+            </div>
+        </div>
+        
+        <div class="player-controls player2-controls">
+            <div class="control-title">PLAYER 2 CONTROLS</div>
+            <div class="keys">
+                <div class="key" id="keyUp">↑</div>
+                <div class="key" id="keyDown">↓</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        First player to reach 5 points wins! The ball speeds up with each paddle hit.
+        <br>Inspired by the original Pong arcade game with a modern neon twist.
+    </div>
+
+    <script>
+        // Game elements
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const score1Element = document.getElementById('score1');
+        const score2Element = document.getElementById('score2');
+        const gameMessage = document.getElementById('gameMessage');
+        const messageText = document.getElementById('messageText');
+        
+        // Game state
+        let gameRunning = true;
+        let score1 = 0;
+        let score2 = 0;
+        const winningScore = 5;
+        
+        // Paddle properties
+        const paddleWidth = 15;
+        const paddleHeight = 100;
+        const paddleSpeed = 8;
+        
+        // Ball properties
+        let ballSize = 12;
+        let ballSpeed = 5;
+        let ballSpeedIncrement = 0.3;
+        
+        // Paddle positions
+        let player1Y = canvas.height / 2 - paddleHeight / 2;
+        let player2Y = canvas.height / 2 - paddleHeight / 2;
+        
+        // Ball position and velocity
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height / 2;
+        let ballDX = ballSpeed;
+        let ballDY = ballSpeed * 0.7;
+        
+        // Controls state
+        const keys = {
+            w: false,
+            s: false,
+            ArrowUp: false,
+            ArrowDown: false
+        };
+        
+        // Key elements for visual feedback
+        const keyW = document.getElementById('keyW');
+        const keyS = document.getElementById('keyS');
+        const keyUp = document.getElementById('keyUp');
+        const keyDown = document.getElementById('keyDown');
+        
+        // Event listeners for keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key in keys) {
+                keys[e.key] = true;
+                updateKeyVisuals();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (e.key in keys) {
+                keys[e.key] = false;
+                updateKeyVisuals();
+            }
+        });
+        
+        // Update key visuals based on pressed state
+        function updateKeyVisuals() {
+            keyW.classList.toggle('active', keys.w);
+            keyS.classList.toggle('active', keys.s);
+            keyUp.classList.toggle('active', keys.ArrowUp);
+            keyDown.classList.toggle('active', keys.ArrowDown);
+        }
+        
+        // Draw a rounded rectangle (for paddles)
+        function drawRoundedRect(x, y, width, height, radius, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Draw the neon ball with glow effect
+        function drawBall(x, y, size, color) {
+            // Outer glow
+            ctx.beginPath();
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, size * 2);
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(0.5, color + '80');
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.arc(x, y, size * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Ball core
+            ctx.beginPath();
+            ctx.fillStyle = color;
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Ball highlight
+            ctx.beginPath();
+            ctx.fillStyle = '#fff';
+            ctx.arc(x - size/3, y - size/3, size/3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Draw the game elements
+        function draw() {
+            // Clear canvas with black background
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw center dashed line
+            ctx.strokeStyle = '#0ff';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 15]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Draw player 1 paddle (left) with neon cyan
+            drawRoundedRect(20, player1Y, paddleWidth, paddleHeight, 10, '#0ff');
+            // Inner glow for paddle
+            ctx.fillStyle = '#8afcff';
+            ctx.fillRect(22, player1Y + 2, paddleWidth - 4, paddleHeight - 4);
+            
+            // Draw player 2 paddle (right) with neon magenta
+            drawRoundedRect(canvas.width - 20 - paddleWidth, player2Y, paddleWidth, paddleHeight, 10, '#f0f');
+            // Inner glow for paddle
+            ctx.fillStyle = '#ff8afc';
+            ctx.fillRect(canvas.width - 22 - paddleWidth + 2, player2Y + 2, paddleWidth - 4, paddleHeight - 4);
+            
+            // Draw the ball with alternating neon colors
+            const ballColor = Math.floor(Date.now() / 200) % 2 === 0 ? '#0ff' : '#f0f';
+            drawBall(ballX, ballY, ballSize, ballColor);
+            
+            // Draw border glow
+            ctx.strokeStyle = '#0ff';
+            ctx.lineWidth = 4;
+            ctx.shadowColor = '#0ff';
+            ctx.shadowBlur = 20;
+            ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+            ctx.shadowBlur = 0;
+        }
+        
+        // Update game state
+        function update() {
+            if (!gameRunning) return;
+            
+            // Move player 1 paddle
+            if (keys.w && player1Y > 0) {
+                player1Y -= paddleSpeed;
+            }
+            if (keys.s && player1Y < canvas.height - paddleHeight) {
+                player1Y += paddleSpeed;
+            }
+            
+            // Move player 2 paddle
+            if (keys.ArrowUp && player2Y > 0) {
+                player2Y -= paddleSpeed;
+            }
+            if (keys.ArrowDown && player2Y < canvas.height - paddleHeight) {
+                player2Y += paddleSpeed;
+            }
+            
+            // Move the ball
+            ballX += ballDX;
+            ballY += ballDY;
+            
+            // Ball collision with top and bottom walls
+            if (ballY - ballSize <= 0 || ballY + ballSize >= canvas.height) {
+                ballDY = -ballDY;
+                playSound('wall');
+            }
+            
+            // Ball collision with player 1 paddle (left)
+            if (ballX - ballSize <= 20 + paddleWidth && 
+                ballX - ballSize >= 20 &&
+                ballY >= player1Y && 
+                ballY <= player1Y + paddleHeight) {
+                
+                // Calculate bounce angle based on where the ball hits the paddle
+                const hitPosition = (ballY - player1Y) / paddleHeight;
+                const bounceAngle = hitPosition * Math.PI - Math.PI / 2;
+                
+                // Set new ball direction
+                ballDX = Math.abs(ballDX) * 1.05; // Speed up slightly
+                ballDY = Math.sin(bounceAngle) * ballSpeed;
+                
+                // Make sure the ball goes to the right
+                ballDX = Math.abs(ballDX);
+                
+                // Add some randomness to make the game less predictable
+                ballDY += (Math.random() - 0.5) * 0.5;
+                
+                playSound('paddle');
+            }
+            
+            // Ball collision with player 2 paddle (right)
+            if (ballX + ballSize >= canvas.width - 20 - paddleWidth && 
+                ballX + ballSize <= canvas.width - 20 &&
+                ballY >= player2Y && 
+                ballY <= player2Y + paddleHeight) {
+                
+                // Calculate bounce angle based on where the ball hits the paddle
+                const hitPosition = (ballY - player2Y) / paddleHeight;
+                const bounceAngle = hitPosition * Math.PI - Math.PI / 2;
+                
+                // Set new ball direction
+                ballDX = -Math.abs(ballDX) * 1.05; // Speed up slightly
+                ballDY = Math.sin(bounceAngle) * ballSpeed;
+                
+                // Make sure the ball goes to the left
+                ballDX = -Math.abs(ballDX);
+                
+                // Add some randomness to make the game less predictable
+                ballDY += (Math.random() - 0.5) * 0.5;
+                
+                playSound('paddle');
+            }
+            
+            // Check if ball goes out of bounds (score)
+            if (ballX < 0) {
+                // Player 2 scores
+                score2++;
+                score2Element.textContent = score2;
+                resetBall();
+                playSound('score');
+                checkWin();
+            } else if (ballX > canvas.width) {
+                // Player 1 scores
+                score1++;
+                score1Element.textContent = score1;
+                resetBall();
+                playSound('score');
+                checkWin();
+            }
+        }
+        
+        // Reset the ball to the center
+        function resetBall() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            
+            // Randomize initial direction (towards the player who just scored)
+            ballDX = (Math.random() > 0.5 ? 1 : -1) * ballSpeed;
+            ballDY = (Math.random() * 2 - 1) * ballSpeed * 0.7;
+            
+            // Reset ball size (it might have changed during gameplay)
+            ballSize = 12;
+        }
+        
+        // Check if a player has won
+        function checkWin() {
+            if (score1 >= winningScore) {
+                showMessage("PLAYER 1 WINS!");
+            } else if (score2 >= winningScore) {
+                showMessage("PLAYER 2 WINS!");
+            }
+        }
+        
+        // Show game message
+        function showMessage(text) {
+            messageText.textContent = text;
+            gameMessage.style.display = 'block';
+            gameRunning = false;
+        }
+        
+        // Reset the game
+        function resetGame() {
+            gameRunning = true;
+            score1 = 0;
+            score2 = 0;
+            score1Element.textContent = '0';
+            score2Element.textContent = '0';
+            gameMessage.style.display = 'none';
+            player1Y = canvas.height / 2 - paddleHeight / 2;
+            player2Y = canvas.height / 2 - paddleHeight / 2;
+            resetBall();
+        }
+        
+        // Simple sound effects using Web Audio API
+        function playSound(type) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Set frequency based on sound type
+                switch(type) {
+                    case 'paddle':
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                        break;
+                    case 'wall':
+                        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                        break;
+                    case 'score':
+                        oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
+                        break;
+                }
+                
+                // Set volume and duration
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                // Play the sound
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (e) {
+                // Sound not supported or error, continue silently
+                console.log("Audio not supported");
+            }
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start the game
+        resetBall();
+        gameLoop();
+    </script>
+</body>
+</html>

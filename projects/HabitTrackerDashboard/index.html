@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker Analytics Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1><i class="fas fa-chart-line"></i> Habit Tracker Analytics</h1>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="addHabitBtn">
+                        <i class="fas fa-plus"></i> Add Habit
+                    </button>
+                    <button class="btn btn-secondary" id="exportBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="container">
+        <!-- Analytics Overview -->
+        <section class="analytics-overview">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="longestStreak">0</h3>
+                    <p>Longest Streak</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="totalHabits">0</h3>
+                    <p>Total Habits</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-percent"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="completionRate">0%</h3>
+                    <p>Completion Rate</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="activeStreak">0</h3>
+                    <p>Active Streaks</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Charts -->
+        <section class="charts-section">
+            <div class="chart-container">
+                <h2>Weekly Progress</h2>
+                <div class="chart" id="weeklyChart">
+                    <canvas id="weeklyCanvas"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h2>Monthly Overview</h2>
+                <div class="chart" id="monthlyChart">
+                    <canvas id="monthlyCanvas"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter and Category Tabs -->
+        <section class="filter-section">
+            <div class="category-tabs" id="categoryTabs">
+                <button class="tab-btn active" data-category="all">All</button>
+                <button class="tab-btn" data-category="health">Health</button>
+                <button class="tab-btn" data-category="productivity">Productivity</button>
+                <button class="tab-btn" data-category="learning">Learning</button>
+                <button class="tab-btn" data-category="fitness">Fitness</button>
+                <button class="tab-btn" data-category="mindfulness">Mindfulness</button>
+                <button class="tab-btn" data-category="other">Other</button>
+            </div>
+        </section>
+
+        <!-- Habits Grid -->
+        <section class="habits-section">
+            <div class="habits-grid" id="habitsGrid">
+                <!-- Habit cards will be dynamically inserted here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Add/Edit Habit Modal -->
+    <div class="modal" id="habitModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Habit</h2>
+                <button class="close-btn" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="habitForm">
+                <div class="form-group">
+                    <label for="habitName">Habit Name</label>
+                    <input type="text" id="habitName" required placeholder="e.g., Morning Run">
+                </div>
+                <div class="form-group">
+                    <label for="habitCategory">Category</label>
+                    <select id="habitCategory" required>
+                        <option value="health">Health</option>
+                        <option value="productivity">Productivity</option>
+                        <option value="learning">Learning</option>
+                        <option value="fitness">Fitness</option>
+                        <option value="mindfulness">Mindfulness</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="habitGoal">Target Days (per week)</label>
+                    <input type="number" id="habitGoal" min="1" max="7" value="7" required>
+                </div>
+                <div class="form-group">
+                    <label for="habitReminder">Reminder Time</label>
+                    <input type="time" id="habitReminder">
+                </div>
+                <div class="form-group">
+                    <label for="habitColor">Color</label>
+                    <input type="color" id="habitColor" value="#4CAF50">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Habit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Habit Detail Modal -->
+    <div class="modal" id="habitDetailModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="detailHabitName">Habit Details</h2>
+                <button class="close-btn" id="closeDetailModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="habit-detail-content">
+                <div class="detail-stats">
+                    <div class="detail-stat">
+                        <i class="fas fa-fire"></i>
+                        <div>
+                            <h3 id="detailStreak">0</h3>
+                            <p>Current Streak</p>
+                        </div>
+                    </div>
+                    <div class="detail-stat">
+                        <i class="fas fa-calendar-check"></i>
+                        <div>
+                            <h3 id="detailTotal">0</h3>
+                            <p>Total Completions</p>
+                        </div>
+                    </div>
+                    <div class="detail-stat">
+                        <i class="fas fa-trophy"></i>
+                        <div>
+                            <h3 id="detailBest">0</h3>
+                            <p>Best Streak</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-calendar" id="detailCalendar">
+                    <!-- Calendar will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success!</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

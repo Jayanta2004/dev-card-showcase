@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color DNA Extractor - Image to Palette Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎨</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-dna"></i>
+                    <h1>Color DNA Extractor</h1>
+                </div>
+                <p class="tagline">Extract beautiful color palettes from your images</p>
+            </div>
+            <div class="header-right">
+                <button class="btn-icon" id="themeToggle" title="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                    <i class="fas fa-sun"></i>
+                </button>
+                <button class="btn-icon" id="helpBtn" title="Help">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel: Image Upload & Preview -->
+            <div class="upload-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-upload"></i> Upload Image</h2>
+                    <div class="file-info" id="fileInfo">
+                        No file selected
+                    </div>
+                </div>
+                
+                <!-- Upload Zone -->
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-content">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Drag & Drop Image</h3>
+                        <p>or click to browse</p>
+                        <p class="formats">Supported: JPG, PNG, WebP, GIF</p>
+                        <input type="file" id="fileInput" accept="image/*" hidden>
+                        <button class="btn-primary" id="browseBtn">
+                            <i class="fas fa-folder-open"></i> Browse Files
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Image Preview -->
+                <div class="preview-container" id="previewContainer">
+                    <div class="preview-header">
+                        <h3><i class="fas fa-image"></i> Preview</h3>
+                        <button class="btn-text" id="clearImageBtn">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                    <div class="image-wrapper">
+                        <img id="imagePreview" alt="Preview">
+                        <canvas id="imageCanvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="image-info">
+                        <div class="info-item">
+                            <i class="fas fa-ruler"></i>
+                            <span id="dimensions">0 × 0 px</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-weight"></i>
+                            <span id="fileSize">0 KB</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-palette"></i>
+                            <span id="colorCount">0 colors</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Extraction Controls -->
+                <div class="controls-section">
+                    <h2><i class="fas fa-sliders-h"></i> Extraction Settings</h2>
+                    
+                    <div class="control-group">
+                        <label for="paletteSize">
+                            <i class="fas fa-layer-group"></i> Palette Size
+                            <span class="value-display" id="paletteSizeValue">8 colors</span>
+                        </label>
+                        <input type="range" id="paletteSize" min="3" max="12" value="8" step="1">
+                        <div class="slider-labels">
+                            <span>Small</span>
+                            <span>Large</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="algorithmSelect">
+                            <i class="fas fa-cogs"></i> Algorithm
+                        </label>
+                        <select id="algorithmSelect">
+                            <option value="kmeans">K-Means Clustering</option>
+                            <option value="mediancut">Median Cut</option>
+                            <option value="octree">Octree Quantization</option>
+                            <option value="simple">Simple Dominant Colors</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="sensitivitySlider">
+                            <i class="fas fa-magic"></i> Color Sensitivity
+                            <span class="value-display" id="sensitivityValue">Medium</span>
+                        </label>
+                        <input type="range" id="sensitivitySlider" min="1" max="3" value="2" step="1">
+                        <div class="slider-labels">
+                            <span>Low</span>
+                            <span>High</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary btn-block" id="extractBtn" disabled>
+                        <i class="fas fa-flask"></i> Extract Color DNA
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Color Results -->
+            <div class="results-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-palette"></i> Extracted Color Palette</h2>
+                    <div class="palette-actions">
+                        <button class="btn-icon" id="refreshPaletteBtn" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn-secondary" id="exportBtn">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Dominant Colors -->
+                <div class="colors-section">
+                    <h3><i class="fas fa-crown"></i> Dominant Colors</h3>
+                    <div class="dominant-colors" id="dominantColors">
+                        <div class="empty-state">
+                            <i class="fas fa-palette"></i>
+                            <p>Upload an image to extract colors</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Accent Colors -->
+                <div class="colors-section">
+                    <h3><i class="fas fa-star"></i> Accent Colors</h3>
+                    <div class="accent-colors" id="accentColors">
+                        <div class="empty-state">
+                            <i class="fas fa-star"></i>
+                            <p>Accent colors will appear here</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Color Details -->
+                <div class="details-section">
+                    <h3><i class="fas fa-info-circle"></i> Color Details</h3>
+                    <div class="color-details" id="colorDetails">
+                        <div class="empty-details">
+                            <p>Click a color swatch to view details</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contrast Checker -->
+                <div class="contrast-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-eye"></i> Accessibility Checker</h3>
+                        <span class="status-badge" id="contrastStatus">Inactive</span>
+                    </div>
+                    <div class="contrast-checker">
+                        <div class="contrast-preview" id="contrastPreview">
+                            <div class="text-sample light">
+                                <p>Sample Text</p>
+                                <span class="contrast-ratio" id="lightRatio">-</span>
+                            </div>
+                            <div class="text-sample dark">
+                                <p>Sample Text</p>
+                                <span class="contrast-ratio" id="darkRatio">-</span>
+                            </div>
+                        </div>
+                        <div class="contrast-info">
+                            <div class="wcag-rating" id="wcagRating">
+                                <div class="rating-item">
+                                    <span class="rating-label">WCAG AA:</span>
+                                    <span class="rating-value">--</span>
+                                </div>
+                                <div class="rating-item">
+                                    <span class="rating-label">WCAG AAA:</span>
+                                    <span class="rating-value">--</span>
+                                </div>
+                            </div>
+                            <p class="contrast-hint" id="contrastHint">
+                                Select a color to check text readability
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Export Options -->
+                <div class="export-section">
+                    <h3><i class="fas fa-code"></i> Export Formats</h3>
+                    <div class="export-formats">
+                        <button class="format-btn" data-format="css">
+                            <i class="fab fa-css3-alt"></i> CSS Variables
+                        </button>
+                        <button class="format-btn" data-format="json">
+                            <i class="fas fa-code"></i> JSON
+                        </button>
+                        <button class="format-btn" data-format="scss">
+                            <i class="fab fa-sass"></i> SCSS
+                        </button>
+                        <button class="format-btn" data-format="tailwind">
+                            <i class="fas fa-wind"></i> Tailwind
+                        </button>
+                    </div>
+                    <div class="export-preview">
+                        <pre id="exportPreview">// Select an export format</pre>
+                        <button class="btn-icon copy-btn" id="copyExportBtn" title="Copy to clipboard">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-left">
+                <p>Color DNA Extractor v1.0 • For designers & developers</p>
+            </div>
+            <div class="footer-right">
+                <div class="color-mode-toggle">
+                    <span>Color Mode:</span>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-mode="hex">HEX</button>
+                        <button class="toggle-btn" data-mode="rgb">RGB</button>
+                        <button class="toggle-btn" data-mode="hsl">HSL</button>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Help Modal -->
+        <div class="modal" id="helpModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>How to Use Color DNA Extractor</h2>
+                    <button class="modal-close" id="closeHelpModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="help-step">
+                        <h3><i class="fas fa-upload"></i> Step 1: Upload Image</h3>
+                        <p>Drag and drop any image file or click to browse. Supported formats: JPG, PNG, WebP, GIF.</p>
+                    </div>
+                    <div class="help-step">
+                        <h3><i class="fas fa-sliders-h"></i> Step 2: Adjust Settings</h3>
+                        <p>Choose palette size (3-12 colors), select algorithm, and adjust sensitivity for different results.</p>
+                    </div>
+                    <div class="help-step">
+                        <h3><i class="fas fa-flask"></i> Step 3: Extract Colors</h3>
+                        <p>Click "Extract Color DNA" to analyze the image and generate a color palette.</p>
+                    </div>
+                    <div class="help-step">
+                        <h3><i class="fas fa-copy"></i> Step 4: Use Colors</h3>
+                        <p>Click any color to copy its code. Check accessibility contrast and export in various formats.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💤 Sleep Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #818cf8;
+            --primary-dark: #3730a3;
+            --secondary: #10b981;
+            --secondary-light: #34d399;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+            --border-radius: 16px;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 25px;
+        }
+
+        .date-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            margin: 0 auto;
+            max-width: 400px;
+        }
+
+        .date-display i {
+            font-size: 1.2rem;
+        }
+
+        /* Main Layout */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            padding: 40px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Sleep Input Section */
+        .sleep-input-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            border: 2px solid var(--gray-light);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            font-size: 1.2rem;
+        }
+
+        .sleep-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .sleep-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        label {
+            font-weight: 500;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label i {
+            color: var(--primary);
+        }
+
+        .time-input {
+            padding: 15px;
+            border: 2px solid var(--gray-light);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-family: 'Inter', monospace;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .sleep-quality {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .quality-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .quality-option {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px;
+            border: 2px solid var(--gray-light);
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quality-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .quality-option.selected {
+            border-color: var(--primary);
+            background: rgba(79, 70, 229, 0.05);
+            color: var(--primary);
+        }
+
+        .quality-icon {
+            font-size: 1.5rem;
+        }
+
+        .quality-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-actions {
+            grid-column: span 2;
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .form-actions {
+                grid-column: span 1;
+                flex-direction: column;
+            }
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            flex: 2;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 2px solid var(--gray-light);
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-light);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--gray-light);
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 5px;
+            font-family: 'Inter', monospace;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .stat-trend {
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .trend-up {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--secondary);
+        }
+
+        .trend-down {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* Sleep Cycle Visualization */
+        .sleep-cycle {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            border: 2px solid var(--gray-light);
+        }
+
+        .cycle-visualization {
+            height: 200px;
+            position: relative;
+            margin: 30px 0;
+            background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+            border-radius: 12px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .cycle-stage {
+            position: absolute;
+            bottom: 0;
+            height: 150px;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.5s ease;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 10px;
+            font-weight: 500;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .cycle-stage.light {
+            background: linear-gradient(to top, #818cf8, #6366f1);
+        }
+
+        .cycle-stage.deep {
+            background: linear-gradient(to top, #4f46e5, #3730a3);
+        }
+
+        .cycle-stage.rem {
+            background: linear-gradient(to top, #8b5cf6, #7c3aed);
+        }
+
+        .cycle-stage.awake {
+            background: linear-gradient(to top, #fbbf24, #f59e0b);
+        }
+
+        .cycle-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Charts Section */
+        .charts-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            border: 2px solid var(--gray-light);
+        }
+
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .chart-placeholder {
+            height: 100%;
+            background: linear-gradient(to right, #f8fafc, #e2e8f0);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        /* Sleep History */
+        .sleep-history {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--gray-light);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 15px;
+            background: var(--light);
+            color: var(--dark);
+            font-weight: 600;
+            border-bottom: 2px solid var(--gray-light);
+        }
+
+        .history-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--gray-light);
+            font-family: 'Inter', monospace;
+        }
+
+        .history-table tr:hover {
+            background: var(--light);
+        }
+
+        .sleep-quality-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .quality-excellent {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--secondary);
+        }
+
+        .quality-good {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .quality-fair {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .quality-poor {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Tips Section */
+        .tips-section {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .tip-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+        }
+
+        .tip-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tip-icon {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .tip-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Sleep Goal */
+        .goal-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--gray-light);
+        }
+
+        .goal-progress {
+            margin: 25px 0;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: var(--gray-light);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-light), var(--secondary));
+            border-radius: 6px;
+            transition: width 1s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Recommendations */
+        .recommendations-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--gray-light);
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .recommendation-item:last-child {
+            border-bottom: none;
+        }
+
+        .rec-icon {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-top: 3px;
+        }
+
+        .rec-text {
+            flex: 1;
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 30px;
+            background: var(--light);
+            border-top: 2px solid var(--gray-light);
+            text-align: center;
+            color: var(--gray);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .footer-links a {
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .main-content {
+                padding: 25px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quality-options {
+                flex-direction: column;
+            }
+            
+            .date-display {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-moon"></i>
+                    Sleep Tracker
+                    <i class="fas fa-bed"></i>
+                </h1>
+                <p class="subtitle">Track your sleep patterns and improve your sleep quality</p>
+                
+                <div class="date-display">
+                    <i class="far fa-calendar-alt"></i>
+                    <span id="currentDate">Loading...</span>
+                    <i class="far fa-clock"></i>
+                    <span id="currentTime">--:--</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Column -->
+            <div class="left-column">
+                <!-- Sleep Input Section -->
+                <section class="sleep-input-section fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-clock"></i>
+                        Log Your Sleep
+                    </h2>
+                    
+                    <div class="sleep-form">
+                        <div class="form-group">
+                            <label for="bedtime">
+                                <i class="fas fa-moon"></i>
+                                Bedtime
+                            </label>
+                            <input type="time" id="bedtime" class="time-input" value="22:30">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="waketime">
+                                <i class="fas fa-sun"></i>
+                                Wake-up Time
+                            </label>
+                            <input type="time" id="waketime" class="time-input" value="06:30">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-star"></i>
+                                Sleep Quality
+                            </label>
+                            <div class="quality-options">
+                                <div class="quality-option" data-quality="excellent">
+                                    <div class="quality-icon">😊</div>
+                                    <div class="quality-label">Excellent</div>
+                                </div>
+                                <div class="quality-option" data-quality="good">
+                                    <div class="quality-icon">🙂</div>
+                                    <div class="quality-label">Good</div>
+                                </div>
+                                <div class="quality-option selected" data-quality="fair">
+                                    <div class="quality-icon">😐</div>
+                                    <div class="quality-label">Fair</div>
+                                </div>
+                                <div class="quality-option" data-quality="poor">
+                                    <div class="quality-icon">😔</div>
+                                    <div class="quality-label">Poor</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="notes">
+                                <i class="fas fa-edit"></i>
+                                Notes (Optional)
+                            </label>
+                            <textarea id="notes" class="time-input" rows="3" placeholder="How did you sleep? Any disturbances?"></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button class="btn btn-primary" id="logSleepBtn">
+                                <i class="fas fa-save"></i>
+                                Log Sleep Session
+                            </button>
+                            <button class="btn btn-secondary" id="quickLogBtn">
+                                <i class="fas fa-bolt"></i>
+                                Quick Log (8 hrs)
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid fade-in">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-moon"></i>
+                        </div>
+                        <div class="stat-value" id="avgSleep">7h 24m</div>
+                        <div class="stat-label">Average Sleep</div>
+                        <div class="stat-trend trend-up">
+                            <i class="fas fa-arrow-up"></i> 12min vs last week
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <div class="stat-value" id="sleepScore">82%</div>
+                        <div class="stat-label">Sleep Score</div>
+                        <div class="stat-trend trend-up">
+                            <i class="fas fa-arrow-up"></i> 5% improvement
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-value" id="streak">14</div>
+                        <div class="stat-label">Day Streak</div>
+                        <div class="stat-trend trend-up">
+                            <i class="fas fa-fire"></i> Keep it up!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sleep Cycle Visualization -->
+                <section class="sleep-cycle fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-wave-square"></i>
+                        Sleep Cycle Visualization
+                    </h2>
+                    <p style="color: var(--gray); margin-bottom: 20px;">Your typical sleep pattern over an 8-hour period</p>
+                    
+                    <div class="cycle-visualization" id="sleepCycle">
+                        <!-- Sleep stages will be drawn here -->
+                    </div>
+                    
+                    <div class="cycle-labels">
+                        <div>10 PM</div>
+                        <div>12 AM</div>
+                        <div>2 AM</div>
+                        <div>4 AM</div>
+                        <div>6 AM</div>
+                    </div>
+                </section>
+
+                <!-- Charts -->
+                <section class="charts-section fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        Sleep Trends
+                    </h2>
+                    
+                    <div class="chart-container">
+                        <div class="chart-placeholder">
+                            <div>
+                                <i class="fas fa-chart-bar"></i>
+                                <p>Weekly Sleep Duration Chart</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sleep History -->
+                <section class="sleep-history fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-history"></i>
+                        Recent Sleep History
+                    </h2>
+                    
+                    <div class="table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Duration</th>
+                                    <th>Bedtime</th>
+                                    <th>Wake-up</th>
+                                    <th>Quality</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sleepHistoryBody">
+                                <!-- Sleep history rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Sleep Tips -->
+                <section class="tips-section fade-in">
+                    <h2 class="section-title" style="color: white;">
+                        <i class="fas fa-lightbulb"></i>
+                        Sleep Tips
+                    </h2>
+                    
+                    <div class="tip-card">
+                        <div class="tip-icon">💡</div>
+                        <div class="tip-text">
+                            <strong>Consistent Schedule:</strong> Go to bed and wake up at the same time every day, even on weekends.
+                        </div>
+                    </div>
+                    
+                    <div class="tip-card">
+                        <div class="tip-icon">🌡️</div>
+                        <div class="tip-text">
+                            <strong>Optimal Temperature:</strong> Keep your bedroom cool (around 65°F or 18°C) for better sleep.
+                        </div>
+                    </div>
+                    
+                    <div class="tip-card">
+                        <div class="tip-icon">📵</div>
+                        <div class="tip-text">
+                            <strong>Digital Detox:</strong> Avoid screens at least 1 hour before bedtime to reduce blue light exposure.
+                        </div>
+                    </div>
+                    
+                    <div class="tip-card">
+                        <div class="tip-icon">🧘</div>
+                        <div class="tip-text">
+                            <strong>Relaxation Routine:</strong> Develop a pre-sleep routine like reading or meditation to signal your body it's time to sleep.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sleep Goal -->
+                <section class="goal-section fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-bullseye"></i>
+                        Weekly Sleep Goal
+                    </h2>
+                    
+                    <div class="goal-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="goalProgress" style="width: 75%;"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span>Current: 52.5 hrs</span>
+                            <span>Goal: 56 hrs</span>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <div style="font-size: 0.9rem; color: var(--gray);">
+                            <i class="fas fa-info-circle"></i>
+                            Aim for 8 hours per night (7-9 hours recommended)
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recommendations -->
+                <section class="recommendations-section fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-heart"></i>
+                        Personalized Recommendations
+                    </h2>
+                    
+                    <div class="recommendation-item">
+                        <div class="rec-icon">
+                            <i class="fas fa-coffee"></i>
+                        </div>
+                        <div class="rec-text">
+                            <strong>Reduce Caffeine:</strong> Try to avoid caffeine after 2 PM.
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-item">
+                        <div class="rec-icon">
+                            <i class="fas fa-walking"></i>
+                        </div>
+                        <div class="rec-text">
+                            <strong>Evening Walk:</strong> A 20-minute walk after dinner can improve sleep quality.
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-item">
+                        <div class="rec-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="rec-text">
+                            <strong>Reading Time:</strong> Replace screen time with 30 minutes of reading before bed.
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>💤 Sleep Tracker • Track your way to better sleep</p>
+            <div class="footer-links">
+                <a href="#" id="exportData">
+                    <i class="fas fa-download"></i> Export Data
+                </a>
+                <a href="#" id="viewInsights">
+                    <i class="fas fa-chart-pie"></i> View Insights
+                </a>
+                <a href="#" id="settingsBtn">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Sleep Tracker Application
+        class SleepTracker {
+            constructor() {
+                // Sample sleep data
+                this.sleepData = JSON.parse(localStorage.getItem('sleepData')) || [
+                    { date: '2024-01-10', bedtime: '22:45', waketime: '06:30', duration: '7h 45m', quality: 'good' },
+                    { date: '2024-01-11', bedtime: '23:15', waketime: '07:00', duration: '7h 45m', quality: 'good' },
+                    { date: '2024-01-12', bedtime: '22:30', waketime: '06:15', duration: '7h 45m', quality: 'excellent' },
+                    { date: '2024-01-13', bedtime: '01:00', waketime: '09:30', duration: '8h 30m', quality: 'fair' },
+                    { date: '2024-01-14', bedtime: '22:00', waketime: '06:00', duration: '8h 0m', quality: 'excellent' },
+                    { date: '2024-01-15', bedtime: '23:30', waketime: '07:15', duration: '7h 45m', quality: 'good' },
+                    { date: '2024-01-16', bedtime: '22:15', waketime: '05:45', duration: '7h 30m', quality: 'poor' }
+                ];
+
+                this.currentDate = new Date();
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.updateDateTime();
+                this.renderSleepHistory();
+                this.calculateStats();
+                this.drawSleepCycle();
+                setInterval(() => this.updateDateTime(), 60000);
+            }
+
+            setupEventListeners() {
+                // Sleep quality selection
+                document.querySelectorAll('.quality-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        document.querySelectorAll('.quality-option').forEach(opt => {
+                            opt.classList.remove('selected');
+                        });
+                        e.currentTarget.classList.add('selected');
+                    });
+                });
+
+                // Log sleep button
+                document.getElementById('logSleepBtn').addEventListener('click', () => {
+                    this.logSleep();
+                });
+
+                // Quick log button
+                document.getElementById('quickLogBtn').addEventListener('click', () => {
+                    this.quickLog();
+                });
+
+                // Footer buttons
+                document.getElementById('exportData').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.exportData();
+                });
+
+                document.getElementById('viewInsights').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.showInsights();
+                });
+
+                document.getElementById('settingsBtn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.showSettings();
+                });
+            }
+
+            updateDateTime() {
+                const now = new Date();
+                
+                // Format date
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const dateStr = now.toLocaleDateString('en-US', dateOptions);
+                document.getElementById('currentDate').textContent = dateStr;
+                
+                // Format time
+                const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('currentTime').textContent = timeStr;
+            }
+
+            logSleep() {
+                const bedtime = document.getElementById('bedtime').value;
+                const waketime = document.getElementById('waketime').value;
+                const notes = document.getElementById('notes').value;
+                
+                // Get selected quality
+                const selectedQuality = document.querySelector('.quality-option.selected');
+                const quality = selectedQuality ? selectedQuality.dataset.quality : 'fair';
+                
+                // Validate inputs
+                if (!bedtime || !waketime) {
+                    this.showMessage('Please enter both bedtime and wake-up time', 'error');
+                    return;
+                }
+                
+                // Calculate duration
+                const duration = this.calculateDuration(bedtime, waketime);
+                
+                // Create sleep record
+                const today = new Date().toISOString().split('T')[0];
+                const sleepRecord = {
+                    date: today,
+                    bedtime: bedtime,
+                    waketime: waketime,
+                    duration: duration,
+                    quality: quality,
+                    notes: notes
+                };
+                
+                // Add to sleep data
+                this.sleepData.unshift(sleepRecord);
+                
+                // Keep only last 30 days
+                if (this.sleepData.length > 30) {
+                    this.sleepData = this.sleepData.slice(0, 30);
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('sleepData', JSON.stringify(this.sleepData));
+                
+                // Update UI
+                this.renderSleepHistory();
+                this.calculateStats();
+                this.drawSleepCycle();
+                
+                // Show success message
+                this.showMessage(`Sleep logged successfully! Duration: ${duration}`, 'success');
+                
+                // Reset form
+                document.getElementById('notes').value = '';
+                
+                // Add some animation
+                document.getElementById('logSleepBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('logSleepBtn').classList.remove('pulse');
+                }, 500);
+            }
+
+            quickLog() {
+                // Set bedtime to 8 hours before current time
+                const now = new Date();
+                const bedtime = new Date(now.getTime() - 8 * 60 * 60 * 1000);
+                
+                // Format times
+                const bedtimeStr = this.formatTime(bedtime);
+                const waketimeStr = this.formatTime(now);
+                
+                // Set form values
+                document.getElementById('bedtime').value = bedtimeStr;
+                document.getElementById('waketime').value = waketimeStr;
+                
+                // Auto-select "good" quality
+                document.querySelectorAll('.quality-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                    if (opt.dataset.quality === 'good') {
+                        opt.classList.add('selected');
+                    }
+                });
+                
+                this.showMessage('Quick log: 8 hours of sleep with "Good" quality', 'info');
+            }
+
+            calculateDuration(bedtime, waketime) {
+                const [bedHour, bedMin] = bedtime.split(':').map(Number);
+                const [wakeHour, wakeMin] = waketime.split(':').map(Number);
+                
+                let bedDate = new Date();
+                bedDate.setHours(bedHour, bedMin, 0, 0);
+                
+                let wakeDate = new Date();
+                wakeDate.setHours(wakeHour, wakeMin, 0, 0);
+                
+                // If wake time is earlier than bedtime, assume it's the next day
+                if (wakeDate < bedDate) {
+                    wakeDate.setDate(wakeDate.getDate() + 1);
+                }
+                
+                const durationMs = wakeDate - bedDate;
+                const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                return `${hours}h ${minutes}m`;
+            }
+
+            formatTime(date) {
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                return `${hours}:${minutes}`;
+            }
+
+            renderSleepHistory() {
+                const tbody = document.getElementById('sleepHistoryBody');
+                tbody.innerHTML = '';
+                
+                // Display last 7 entries
+                const recentData = this.sleepData.slice(0, 7);
+                
+                recentData.forEach(record => {
+                    const row = document.createElement('tr');
+                    
+                    // Format date
+                    const date = new Date(record.date);
+                    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    
+                    // Quality badge
+                    const qualityClass = `sleep-quality-badge quality-${record.quality}`;
+                    const qualityText = record.quality.charAt(0).toUpperCase() + record.quality.slice(1);
+                    
+                    row.innerHTML = `
+                        <td>${dateStr}</td>
+                        <td>${record.duration}</td>
+                        <td>${record.bedtime}</td>
+                        <td>${record.waketime}</td>
+                        <td><span class="${qualityClass}">${qualityText}</span></td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+            }
+
+            calculateStats() {
+                if (this.sleepData.length === 0) return;
+                
+                // Calculate average sleep duration
+                let totalMinutes = 0;
+                this.sleepData.forEach(record => {
+                    const match = record.duration.match(/(\d+)h\s*(\d+)?m?/);
+                    if (match) {
+                        const hours = parseInt(match[1]);
+                        const minutes = match[2] ? parseInt(match[2]) : 0;
+                        totalMinutes += hours * 60 + minutes;
+                    }
+                });
+                
+                const avgMinutes = totalMinutes / this.sleepData.length;
+                const avgHours = Math.floor(avgMinutes / 60);
+                const avgMins = Math.round(avgMinutes % 60);
+                
+                document.getElementById('avgSleep').textContent = `${avgHours}h ${avgMins}m`;
+                
+                // Calculate sleep score (simplified)
+                let score = 75; // Base score
+                
+                // Adjust based on average duration
+                if (avgHours >= 7 && avgHours <= 9) score += 10;
+                if (avgHours < 6 || avgHours > 10) score -= 15;
+                
+                // Adjust based on consistency (simplified)
+                const lastWeekData = this.sleepData.slice(0, 7);
+                if (lastWeekData.length >= 5) {
+                    score += 5;
+                }
+                
+                // Ensure score is within 0-100
+                score = Math.max(0, Math.min(100, score));
+                
+                document.getElementById('sleepScore').textContent = `${Math.round(score)}%`;
+                
+                // Calculate streak
+                let streak = 0;
+                const today = new Date().toISOString().split('T')[0];
+                
+                for (let i = 0; i < this.sleepData.length; i++) {
+                    const recordDate = new Date(this.sleepData[i].date);
+                    const expectedDate = new Date(today);
+                    expectedDate.setDate(expectedDate.getDate() - i);
+                    
+                    if (recordDate.toISOString().split('T')[0] === expectedDate.toISOString().split('T')[0]) {
+                        streak++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                document.getElementById('streak').textContent = streak;
+                
+                // Update goal progress
+                const weeklyGoal = 56; // hours
+                const weeklyTotal = (totalMinutes / 60) * (7 / this.sleepData.length);
+                const progressPercent = Math.min(100, Math.round((weeklyTotal / weeklyGoal) * 100));
+                
+                document.getElementById('goalProgress').style.width = `${progressPercent}%`;
+            }
+
+            drawSleepCycle() {
+                const container = document.getElementById('sleepCycle');
+                container.innerHTML = '';
+                
+                // Simulated sleep stages for visualization
+                const sleepStages = [
+                    { type: 'light', start: 0, duration: 1.5 },
+                    { type: 'deep', start: 1.5, duration: 2 },
+                    { type: 'light', start: 3.5, duration: 1 },
+                    { type: 'rem', start: 4.5, duration: 1.5 },
+                    { type: 'light', start: 6, duration: 1 },
+                    { type: 'awake', start: 7, duration: 0.5 }
+                ];
+                
+                const containerWidth = container.offsetWidth - 40;
+                const totalHours = 8;
+                
+                sleepStages.forEach(stage => {
+                    const stageElement = document.createElement('div');
+                    stageElement.className = `cycle-stage ${stage.type}`;
+                    
+                    // Calculate position and width
+                    const left = (stage.start / totalHours) * containerWidth;
+                    const width = (stage.duration / totalHours) * containerWidth;
+                    
+                    stageElement.style.left = `${left}px`;
+                    stageElement.style.width = `${width}px`;
+                    stageElement.style.height = `${100 + Math.random() * 50}px`;
+                    
+                    // Add stage label
+                    const label = document.createElement('div');
+                    label.textContent = stage.type.toUpperCase();
+                    label.style.fontSize = '0.8rem';
+                    
+                    stageElement.appendChild(label);
+                    container.appendChild(stageElement);
+                });
+            }
+
+            showMessage(message, type) {
+                // Create message element
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message message-${type}`;
+                messageDiv.textContent = message;
+                messageDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 25px;
+                    border-radius: 12px;
+                    background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+                    color: white;
+                    font-weight: 500;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    animation: fadeIn 0.3s ease;
+                    max-width: 300px;
+                `;
+                
+                document.body.appendChild(messageDiv);
+                
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    messageDiv.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => {
+                        if (messageDiv.parentNode) {
+                            messageDiv.parentNode.removeChild(messageDiv);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+
+            exportData() {
+                const dataStr = JSON.stringify(this.sleepData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = `sleep-data-${new Date().toISOString().split('T')[0]}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                this.showMessage('Sleep data exported successfully!', 'success');
+            }
+
+            showInsights() {
+                if (this.sleepData.length === 0) {
+                    this.showMessage('No sleep data available for insights', 'info');
+                    return;
+                }
+                
+                // Calculate insights
+                const totalNights = this.sleepData.length;
+                const goodNights = this.sleepData.filter(record => 
+                    record.quality === 'good' || record.quality === 'excellent'
+                ).length;
+                
+                const avgSleepPercent = (goodNights / totalNights) * 100;
+                
+                const insights = `
+                    🧠 SLEEP INSIGHTS:
+                    
+                    • Total nights tracked: ${totalNights}
+                    • Good/excellent nights: ${goodNights} (${Math.round(avgSleepPercent)}%)
+                    • Average duration: ${document.getElementById('avgSleep').textContent}
+                    • Current streak: ${document.getElementById('streak').textContent} days
+                    
+                    ${avgSleepPercent > 70 ? '🌟 Excellent sleep habits!' : 
+                      avgSleepPercent > 50 ? '👍 Good progress!' : 
+                      '💪 Keep working on your sleep routine!'}
+                `;
+                
+                alert(insights);
+            }
+
+            showSettings() {
+                const settings = `
+                    ⚙️ SETTINGS:
+                    
+                    1. Sleep Goal: 8 hours per night
+                    2. Notification Time: 30 minutes before bedtime
+                    3. Week Start: Monday
+                    4. Export Format: JSON
+                    5. Theme: Auto
+                    
+                    To adjust settings, please use the web interface.
+                `;
+                
+                alert(settings);
+            }
+        }
+
+        // Initialize the application
+        const sleepTracker = new SleepTracker();
+
+        // Add fade-in animations to elements
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animate elements on load
+            const animateElements = document.querySelectorAll('.fade-in');
+            animateElements.forEach((element, index) => {
+                element.style.animationDelay = `${index * 0.1}s`;
+            });
+            
+            // Add CSS for fadeOut animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeOut {
+                    from { opacity: 1; transform: translateY(0); }
+                    to { opacity: 0; transform: translateY(-10px); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Update bedtime to 1 hour from now
+            const now = new Date();
+            const bedtime = new Date(now.getTime() + 60 * 60 * 1000);
+            document.getElementById('bedtime').value = sleepTracker.formatTime(bedtime);
+            
+            // Update wake-up time to 8 hours after bedtime
+            const waketime = new Date(bedtime.getTime() + 8 * 60 * 60 * 1000);
+            document.getElementById('waketime').value = sleepTracker.formatTime(waketime);
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Enter to log sleep
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('logSleepBtn').click();
+            }
+            
+            // Ctrl+L for quick log
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                document.getElementById('quickLogBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>

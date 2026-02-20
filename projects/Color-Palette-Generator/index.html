@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Palette Generator - Create Beautiful Palettes</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🎨 Color Palette Generator</h1>
+            <p class="tagline">Create harmonious color palettes with AI-powered tools</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-wrapper">
+            <!-- Control Panel -->
+            <aside class="control-panel">
+                <div class="panel-section">
+                    <h3>⚙️ Generation Options</h3>
+                    
+                    <!-- Generation Mode -->
+                    <div class="control-group">
+                        <label>Generation Mode</label>
+                        <div class="mode-buttons">
+                            <button id="randomModeBtn" class="mode-btn active" data-mode="random">
+                                🎲 Random
+                            </button>
+                            <button id="imageModeBtn" class="mode-btn" data-mode="image">
+                                🖼️ From Image
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload (initially hidden) -->
+                    <div id="imageUploadSection" class="control-group" style="display: none;">
+                        <label>Upload Image</label>
+                        <div class="upload-area" id="uploadArea">
+                            <input type="file" id="imageInput" accept="image/*" hidden>
+                            <div class="upload-content">
+                                <span class="upload-icon">📁</span>
+                                <span>Click or drag image here</span>
+                            </div>
+                        </div>
+                        <canvas id="imageCanvas" style="display: none;"></canvas>
+                    </div>
+
+                    <!-- Color Scheme Type -->
+                    <div class="control-group">
+                        <label>Color Scheme</label>
+                        <select id="schemeType" class="scheme-select">
+                            <option value="analogous">Analogous</option>
+                            <option value="complementary">Complementary</option>
+                            <option value="triadic">Triadic</option>
+                            <option value="tetradic">Tetradic</option>
+                            <option value="monochromatic">Monochromatic</option>
+                            <option value="split-complementary">Split Complementary</option>
+                        </select>
+                    </div>
+
+                    <!-- Number of Colors -->
+                    <div class="control-group">
+                        <label>Number of Colors: <span id="colorCountLabel">5</span></label>
+                        <input type="range" id="colorCount" min="3" max="10" value="5" class="slider">
+                    </div>
+
+                    <!-- Generate Button -->
+                    <button id="generateBtn" class="generate-btn">
+                        <span>✨</span>
+                        <span>Generate Palette</span>
+                    </button>
+
+                    <!-- Lock Colors Info -->
+                    <div class="info-box">
+                        💡 <strong>Tip:</strong> Click the lock icon on any color to keep it while generating new palettes
+                    </div>
+                </div>
+
+                <!-- Export Section -->
+                <div class="panel-section">
+                    <h3>💾 Export & Save</h3>
+                    
+                    <div class="export-buttons">
+                        <button id="exportCSSBtn" class="export-btn">
+                            <span>📋</span>
+                            <span>Copy CSS</span>
+                        </button>
+                        <button id="exportJSONBtn" class="export-btn">
+                            <span>📄</span>
+                            <span>Copy JSON</span>
+                        </button>
+                        <button id="saveFavoriteBtn" class="export-btn">
+                            <span>⭐</span>
+                            <span>Save Favorite</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Favorites Section -->
+                <div class="panel-section">
+                    <h3>⭐ Saved Favorites</h3>
+                    <div id="favoritesList" class="favorites-list">
+                        <p class="empty-state">No favorites yet. Save your first palette!</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Palette Display -->
+            <main class="palette-display">
+                <!-- Color Cards -->
+                <div id="paletteContainer" class="palette-container">
+                    <!-- Colors will be generated here -->
+                </div>
+
+                <!-- Accessibility Checker -->
+                <div class="accessibility-section">
+                    <h3>♿ Accessibility Contrast Checker</h3>
+                    <div class="contrast-checker">
+                        <div class="contrast-inputs">
+                            <div class="contrast-input-group">
+                                <label>Foreground Color</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="fgColor" value="#000000">
+                                    <input type="text" id="fgColorText" value="#000000" maxlength="7">
+                                </div>
+                            </div>
+                            <div class="contrast-input-group">
+                                <label>Background Color</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="bgColor" value="#ffffff">
+                                    <input type="text" id="bgColorText" value="#ffffff" maxlength="7">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="contrast-results">
+                            <div class="contrast-preview" id="contrastPreview">
+                                <span>Sample Text</span>
+                            </div>
+                            <div class="contrast-ratios">
+                                <div class="ratio-item">
+                                    <span class="ratio-label">Contrast Ratio:</span>
+                                    <span id="contrastRatio" class="ratio-value">21:1</span>
+                                </div>
+                                <div class="wcag-badges">
+                                    <div id="wcagAANormal" class="wcag-badge pass">
+                                        <span>AA Normal</span>
+                                        <span class="badge-icon">✓</span>
+                                    </div>
+                                    <div id="wcagAALarge" class="wcag-badge pass">
+                                        <span>AA Large</span>
+                                        <span class="badge-icon">✓</span>
+                                    </div>
+                                    <div id="wcagAAA" class="wcag-badge pass">
+                                        <span>AAA</span>
+                                        <span class="badge-icon">✓</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color Harmony Visualization -->
+                <div class="harmony-section">
+                    <h3>🎨 Color Harmony Wheel</h3>
+                    <canvas id="colorWheel" width="300" height="300"></canvas>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Export Palette</h2>
+                <button class="close-btn" id="closeModal">×</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="exportCode" readonly></textarea>
+                <button id="copyCodeBtn" class="copy-btn">
+                    <span>📋</span>
+                    <span>Copy to Clipboard</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="mode-selector">
+                <label><i class="fas fa-wand-magic-sparkles"></i> Generation Mode:</label>
+                <select id="modeSelect" class="mode-select">
+                    <option value="random">Random</option>
+                    <option value="monochromatic">Monochromatic</option>
+                    <option value="complementary">Complementary</option>
+                    <option value="triadic">Triadic</option>
+                    <option value="analogous">Analogous</option>
+                    <option value="split-complementary">Split-Complementary</option>
+                </select>
+            </div>
+
+            <div class="format-selector">
+                <label><i class="fas fa-code"></i> Color Format:</label>
+                <div class="format-buttons">
+                    <button class="format-btn active" data-format="hex">HEX</button>
+                    <button class="format-btn" data-format="rgb">RGB</button>
+                    <button class="format-btn" data-format="hsl">HSL</button>
+                </div>
+            </div>
+
+            <button class="btn-generate" id="generateBtn">
+                <i class="fas fa-rotate"></i>
+                <span>Generate Palette</span>
+            </button>
+        </div>
+
+        <!-- Color Palette Display -->
+        <div class="palette-container" id="paletteContainer">
+            <!-- Color cards will be generated here -->
+        </div>
+
+        <!-- Export Section -->
+        <div class="export-section">
+            <h2><i class="fas fa-file-export"></i> Export Palette</h2>
+            <div class="export-buttons">
+                <button class="btn-export" id="exportCSS">
+                    <i class="fab fa-css3-alt"></i> Export as CSS
+                </button>
+                <button class="btn-export" id="exportTailwind">
+                    <i class="fas fa-wind"></i> Export as Tailwind
+                </button>
+                <button class="btn-export" id="exportJSON">
+                    <i class="fas fa-file-code"></i> Export as JSON
+                </button>
+                <button class="btn-export" id="copyPalette">
+                    <i class="fas fa-copy"></i> Copy All Colors
+                </button>
+            </div>
+        </div>
+
+        <!-- Accessibility Info -->
+        <div class="accessibility-section">
+            <h2><i class="fas fa-universal-access"></i> Accessibility Contrast Check</h2>
+            <div class="contrast-grid" id="contrastGrid">
+                <!-- Contrast info will be generated here -->
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="info-cards">
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <h3>Smart Algorithms</h3>
+                <p>6 color theory-based generation modes for perfect palettes</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h3>Lock Colors</h3>
+                <p>Lock individual colors to preserve them while generating</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <h3>Accessibility</h3>
+                <p>WCAG contrast ratios for readable color combinations</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Export Code</h3>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <textarea id="exportCode" readonly></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-copy-modal" id="copyModalBtn">
+                    <i class="fas fa-copy"></i> Copy Code
+                </button>
+                <button class="btn-download-modal" id="downloadModalBtn">
+                    <i class="fas fa-download"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success!</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

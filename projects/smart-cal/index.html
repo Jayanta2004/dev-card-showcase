@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>smart calendar · priority & conflict</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e8f0f9 0%, #d4e2f0 100%);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .calendar-app {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            box-shadow: 0 30px 45px -20px #1f405a, 0 8px 20px rgba(0,30,50,0.15);
+            padding: 2rem 2rem 2.2rem;
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+
+        h1 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 2.2rem;
+            letter-spacing: -0.02em;
+            color: #113946;
+            margin-left: 0.8rem;
+            margin-bottom: 0.2rem;
+        }
+        h1 span {
+            background: #2a5f7a;
+            color: white;
+            font-size: 1rem;
+            padding: 0.2rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 400;
+        }
+
+        .smart-indicator {
+            display: flex;
+            gap: 2rem;
+            margin: 0.8rem 0 1.8rem 1rem;
+            color: #2e5f7a;
+            font-weight: 500;
+        }
+        .conflict-badge {
+            background: #c44545;
+            color: white;
+            padding: 0.2rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+        }
+
+        .main-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        /* ---------- calendar grid ---------- */
+        .calendar-grid-section {
+            flex: 3 1 600px;
+            background: white;
+            border-radius: 2.5rem;
+            padding: 1.5rem 1.2rem 1.2rem;
+            box-shadow: 0 15px 25px -15px #1f4a66;
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: 600;
+            color: #30658a;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .day-cell {
+            aspect-ratio: 1 / 1;
+            background: #f3f9ff;
+            border-radius: 1.4rem;
+            padding: 0.5rem 0.3rem 0.3rem;
+            border: 2px solid transparent;
+            transition: 0.1s;
+            box-shadow: inset 0 1px 4px #bed9f0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .day-cell.today {
+            border-color: #1e79b9;
+            background: #e1f0fd;
+        }
+        .day-cell.has-events {
+            background: #fcf8e7;
+        }
+        .day-cell.conflict-day {
+            border: 3px solid #d97777;
+            background: #ffe3e3;
+        }
+
+        .day-number {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1a4c6e;
+            margin-bottom: 0.2rem;
+            text-align: center;
+        }
+
+        .event-preview {
+            font-size: 0.65rem;
+            background: #2a6b93;
+            color: white;
+            border-radius: 30px;
+            padding: 0.15rem 0.3rem;
+            margin: 2px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: left;
+            padding-left: 0.6rem;
+            font-weight: 500;
+        }
+        .event-preview.high { background: #b13e3e; }
+        .event-preview.medium { background: #d eighteenth 74; background: #d eighteenth 74; background: #cf9b4b; }
+        .event-preview.low { background: #3f8f6f; }
+
+        /* ---------- right panel (events & form) ---------- */
+        .event-sidebar {
+            flex: 1.2 1 300px;
+            background: #ffffffd9;
+            border-radius: 2.5rem;
+            padding: 1.8rem 1.4rem;
+            box-shadow: 0 15px 25px -15px #1f4a66;
+        }
+
+        .selected-date {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #114259;
+            margin-bottom: 0.2rem;
+        }
+        .selected-date small {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #467a9e;
+        }
+
+        .event-list {
+            margin: 1.8rem 0 2rem;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .event-item {
+            background: #f0f7fe;
+            border-radius: 2rem;
+            padding: 0.7rem 1rem;
+            margin-bottom: 0.7rem;
+            border-left: 8px solid #2f739b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .event-item.high { border-left-color: #c44545; }
+        .event-item.medium { border-left-color: #e6a345; }
+        .event-item.low { border-left-color: #479f7a; }
+        .event-item.conflict {
+            background: #ffdcdc;
+            box-shadow: 0 0 0 2px #e07b7b;
+        }
+
+        .event-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .event-title {
+            font-weight: 600;
+            color: #153e54;
+        }
+        .event-time {
+            font-size: 0.7rem;
+            color: #3f6e8c;
+        }
+        .event-priority {
+            font-size: 0.7rem;
+            background: #e1effb;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+        }
+        .delete-event {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #b05555;
+            padding: 0 5px;
+        }
+
+        /* form */
+        .add-event-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            margin-top: 1rem;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+        }
+        .form-row input, .form-row select {
+            flex: 1 1 120px;
+            background: #eef5fa;
+            border: 1px solid #b7d3e8;
+            border-radius: 3rem;
+            padding: 0.7rem 1rem;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .form-row input:focus, .form-row select:focus {
+            border-color: #3c86b4;
+            box-shadow: 0 0 0 3px #a3cfec;
+        }
+        .btn {
+            background: #2a6f94;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.8rem 1rem;
+            border-radius: 3rem;
+            cursor: pointer;
+            transition: 0.1s;
+            border: 1px solid #7db9dc;
+        }
+        .btn:hover {
+            background: #1f5c7e;
+        }
+
+        .footer-note {
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: #306a88;
+        }
+    </style>
+</head>
+<body>
+<div class="calendar-app">
+    <h1>📅 smart calendar <span>priority + conflict</span></h1>
+    <div class="smart-indicator">
+        <span>🔴 high &nbsp;&nbsp;🟠 medium &nbsp;&nbsp;🟢 low</span>
+        <span id="conflictWarning" class="conflict-badge">⚠️ conflicts detected</span>
+    </div>
+
+    <div class="main-panel">
+        <!-- left: calendar grid -->
+        <div class="calendar-grid-section">
+            <div class="weekdays">
+                <div>mon</div><div>tue</div><div>wed</div><div>thu</div><div>fri</div><div>sat</div><div>sun</div>
+            </div>
+            <div id="daysGrid" class="days-grid">
+                <!-- generated via js -->
+            </div>
+        </div>
+
+        <!-- right: events + form -->
+        <div class="event-sidebar">
+            <div class="selected-date" id="selectedDateDisplay">select a day</div>
+            <div class="event-list" id="eventListContainer">
+                <!-- dynamic event list -->
+            </div>
+
+            <h4 style="color: #194a66; margin-bottom: 0.5rem;">➕ new event</h4>
+            <div class="add-event-form">
+                <div class="form-row">
+                    <input type="text" id="eventTitle" placeholder="title" value="meeting">
+                </div>
+                <div class="form-row">
+                    <input type="time" id="startTime" value="10:00">
+                    <input type="time" id="endTime" value="11:00">
+                </div>
+                <div class="form-row">
+                    <select id="prioritySelect">
+                        <option value="high">🔴 high</option>
+                        <option value="medium" selected>🟠 medium</option>
+                        <option value="low">🟢 low</option>
+                    </select>
+                    <button class="btn" id="addEventBtn">add</button>
+                </div>
+            </div>
+            <div class="footer-note">
+                💡 days with red border = conflicting events
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- data model ----------
+        let events = [];
+        let nextId = 100;
+
+        // current selected date (YYYY-MM-DD)
+        let selectedDate = '2025-03-15'; // default demo
+
+        // ---------- helper: date utilities ----------
+        function formatDate(year, month, day) {
+            return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        }
+
+        // get events for a specific date
+        function getEventsForDate(dateStr) {
+            return events.filter(e => e.date === dateStr);
+        }
+
+        // ---------- conflict detection ----------
+        function checkConflictsOnDate(dateStr) {
+            const dayEvents = getEventsForDate(dateStr);
+            if (dayEvents.length < 2) return false;
+
+            // sort by start time
+            const sorted = [...dayEvents].sort((a,b) => a.start.localeCompare(b.start));
+            for (let i = 0; i < sorted.length - 1; i++) {
+                const current = sorted[i];
+                const next = sorted[i+1];
+                if (current.end > next.start) {
+                    return true; // overlap
+                }
+            }
+            return false;
+        }
+
+        // get all dates with conflicts (set)
+        function getConflictDatesSet() {
+            const conflictDates = new Set();
+            const dates = [...new Set(events.map(e => e.date))];
+            dates.forEach(d => {
+                if (checkConflictsOnDate(d)) conflictDates.add(d);
+            });
+            return conflictDates;
+        }
+
+        // ---------- generate month view (March 2025 as demo) ----------
+        function renderCalendar() {
+            const year = 2025;
+            const month = 2; // march (0-index) -> 2 = March
+            const firstDay = new Date(year, month, 1).getDay(); // 0 = sun, we need mon=0 .. sun=6
+            // adjust: our week starts monday (0 = monday) -> if sunday (0) becomes 6; if monday (1) becomes 0.
+            let startOffset = (firstDay === 0) ? 6 : firstDay - 1; // mon=0 .. sun=6
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const grid = document.getElementById('daysGrid');
+            grid.innerHTML = '';
+
+            const todayStr = '2025-03-15'; // static "today" for demo
+            const conflictSet = getConflictDatesSet();
+
+            for (let i = 0; i < startOffset; i++) {
+                // empty cells
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'day-cell';
+                emptyCell.style.background = 'transparent';
+                emptyCell.style.boxShadow = 'none';
+                emptyCell.style.border = '2px solid transparent';
+                grid.appendChild(emptyCell);
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = formatDate(year, month+1, d);
+                const dayEvents = getEventsForDate(dateStr);
+                const hasEvents = dayEvents.length > 0;
+                const isToday = (dateStr === todayStr);
+                const isConflict = conflictSet.has(dateStr);
+
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                if (isToday) cell.classList.add('today');
+                if (hasEvents) cell.classList.add('has-events');
+                if (isConflict) cell.classList.add('conflict-day');
+
+                // day number
+                const numberDiv = document.createElement('div');
+                numberDiv.className = 'day-number';
+                numberDiv.innerText = d;
+                cell.appendChild(numberDiv);
+
+                // show up to 2 events preview
+                const maxPreview = 2;
+                for (let j = 0; j < Math.min(dayEvents.length, maxPreview); j++) {
+                    const ev = dayEvents[j];
+                    const preview = document.createElement('div');
+                    preview.className = `event-preview ${ev.priority}`;
+                    preview.innerText = ev.title.substring(0, 4) + (ev.title.length>4?'..':'');
+                    cell.appendChild(preview);
+                }
+                if (dayEvents.length > maxPreview) {
+                    const more = document.createElement('div');
+                    more.style.fontSize = '0.6rem';
+                    more.innerText = `+${dayEvents.length-maxPreview}`;
+                    cell.appendChild(more);
+                }
+
+                cell.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectedDate = dateStr;
+                    renderCalendar(); // re-highlight
+                    renderEventSidebar();
+                });
+
+                grid.appendChild(cell);
+            }
+
+            // highlight selected date border (if visible)
+            // we can walk cells and compare date
+            const cells = document.querySelectorAll('.day-cell');
+            // remove any previous 'selected' style
+            cells.forEach(c => c.style.border = ''); // reset
+            // find cell with matching date (by comparing data attribute we could set)
+            // easier: set dataset on cell
+            cells.forEach((cell, idx) => {
+                const dayNum = cell.querySelector('.day-number')?.innerText;
+                if (dayNum) {
+                    const dayInt = parseInt(dayNum, 10);
+                    const dateStrCell = formatDate(year, month+1, dayInt);
+                    if (dateStrCell === selectedDate) {
+                        cell.style.border = '4px solid #1b7fb0';
+                    }
+                }
+            });
+
+            // update conflict badge
+            const conflictBadge = document.getElementById('conflictWarning');
+            if (conflictSet.size > 0) {
+                conflictBadge.innerHTML = `⚠️ ${conflictSet.size} day(s) with conflicts`;
+            } else {
+                conflictBadge.innerHTML = '✅ no conflicts';
+            }
+        }
+
+        // ---------- render right panel: events for selected date ----------
+        function renderEventSidebar() {
+            const displayEl = document.getElementById('selectedDateDisplay');
+            displayEl.innerHTML = `${selectedDate} <small>click day to change</small>`;
+
+            const dayEvents = getEventsForDate(selectedDate);
+            dayEvents.sort((a,b) => a.start.localeCompare(b.start));
+
+            const conflictDates = getConflictDatesSet();
+            const hasConflictToday = conflictDates.has(selectedDate);
+
+            const container = document.getElementById('eventListContainer');
+            if (dayEvents.length === 0) {
+                container.innerHTML = '<div style="color:#6b93b0;">✨ no events</div>';
+                return;
+            }
+
+            let html = '';
+            dayEvents.forEach(ev => {
+                const conflictClass = hasConflictToday ? 'conflict' : '';
+                html += `
+                    <div class="event-item ${ev.priority} ${conflictClass}" data-event-id="${ev.id}">
+                        <div class="event-info">
+                            <span class="event-title">${ev.title}</span>
+                            <span class="event-time">${ev.start} – ${ev.end}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="event-priority">${ev.priority}</span>
+                            <button class="delete-event" data-id="${ev.id}">✕</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            // attach delete listeners
+            document.querySelectorAll('.delete-event').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.dataset.id, 10);
+                    events = events.filter(e => e.id !== id);
+                    renderCalendar();
+                    renderEventSidebar();
+                });
+            });
+        }
+
+        // ---------- add new event ----------
+        function addEvent() {
+            const title = document.getElementById('eventTitle').value.trim() || 'untitled';
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            const priority = document.getElementById('prioritySelect').value;
+
+            if (!start || !end) {
+                alert('set start/end time');
+                return;
+            }
+            if (start >= end) {
+                alert('end must be after start');
+                return;
+            }
+
+            const newEvent = {
+                id: nextId++,
+                date: selectedDate,
+                title: title,
+                start: start,
+                end: end,
+                priority: priority
+            };
+            events.push(newEvent);
+            renderCalendar();
+            renderEventSidebar();
+        }
+
+        // ---------- seed demo events with overlapping for conflict example ----------
+        function seedEvents() {
+            events = [
+                { id: 1, date: '2025-03-15', title: 'standup', start: '09:30', end: '10:30', priority: 'medium' },
+                { id: 2, date: '2025-03-15', title: 'client call', start: '10:00', end: '11:15', priority: 'high' }, // conflict
+                { id: 3, date: '2025-03-15', title: 'lunch', start: '12:00', end: '13:00', priority: 'low' },
+                { id: 4, date: '2025-03-16', title: 'workshop', start: '14:00', end: '16:00', priority: 'high' },
+                { id: 5, date: '2025-03-18', title: 'review', start: '11:00', end: '12:00', priority: 'medium' },
+                { id: 6, date: '2025-03-18', title: 'planning', start: '11:30', end: '12:30', priority: 'medium' }, // conflict
+                { id: 7, date: '2025-03-20', title: 'design critique', start: '15:00', end: '16:30', priority: 'low' },
+            ];
+            nextId = 100;
+        }
+        seedEvents();
+
+        // ---------- attach listeners ----------
+        document.getElementById('addEventBtn').addEventListener('click', addEvent);
+
+        // initial render
+        renderCalendar();
+        renderEventSidebar();
+
+        // also update conflict badge when events change
+        window.updateAll = function() {
+            renderCalendar();
+            renderEventSidebar();
+        };
+
+        // optional: auto refresh after any delete (already)
+    })();
+</script>
+</body>
+</html>

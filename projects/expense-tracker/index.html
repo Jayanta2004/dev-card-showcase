@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Manage Your Finances</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>💰 Expense Tracker</h1>
+                <p class="subtitle">Manage your finances effortlessly</p>
+            </div>
+            <button class="add-expense-btn" onclick="openAddExpenseModal()">+ Add Expense</button>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Left Sidebar -->
+            <aside class="sidebar">
+                <!-- Quick Stats -->
+                <div class="card stats-card">
+                    <h3>This Month</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Spent:</span>
+                        <span class="stat-value" id="totalSpent">$0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Highest Category:</span>
+                        <span class="stat-value" id="highestCategory">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Transactions:</span>
+                        <span class="stat-value" id="transactionCount">0</span>
+                    </div>
+                </div>
+
+                <!-- Budget Management -->
+                <div class="card">
+                    <h3>Budget Settings</h3>
+                    <div class="budget-form">
+                        <select id="budgetCategory">
+                            <option value="">Select Category</option>
+                            <option value="food">Food & Dining</option>
+                            <option value="transport">Transport</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="health">Health & Fitness</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <input type="number" id="budgetAmount" placeholder="Budget Amount" min="0" step="0.01">
+                        <button onclick="setBudget()" class="action-btn">Set Budget</button>
+                    </div>
+                    <div id="budgetsList"></div>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div class="card">
+                    <h3>Category Summary</h3>
+                    <div id="categorySummary"></div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Filters -->
+                <div class="card filters-card">
+                    <h3>Filters & Search</h3>
+                    <div class="filters-grid">
+                        <input type="text" id="searchInput" placeholder="Search expenses..." class="filter-input">
+                        <select id="categoryFilter" class="filter-input">
+                            <option value="">All Categories</option>
+                            <option value="food">Food & Dining</option>
+                            <option value="transport">Transport</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="health">Health & Fitness</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <input type="date" id="dateFromFilter" class="filter-input">
+                        <input type="date" id="dateToFilter" class="filter-input">
+                        <input type="number" id="amountFromFilter" placeholder="Amount from" min="0" step="0.01" class="filter-input" style="width: 100%;">
+                        <input type="number" id="amountToFilter" placeholder="Amount to" min="0" step="0.01" class="filter-input" style="width: 100%;">
+                        <button onclick="applyFilters()" class="action-btn">Apply Filters</button>
+                        <button onclick="resetFilters()" class="action-btn secondary">Reset</button>
+                    </div>
+                </div>
+
+                <!-- Timeline View -->
+                <div class="card">
+                    <div class="section-header">
+                        <h3>Transaction History</h3>
+                        <div class="sort-options">
+                            <select id="sortBy" onchange="sortExpenses()">
+                                <option value="date-desc">Newest First</option>
+                                <option value="date-asc">Oldest First</option>
+                                <option value="amount-desc">Highest Amount</option>
+                                <option value="amount-asc">Lowest Amount</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="expensesList" class="expenses-list">
+                        <div class="empty-state">No expenses yet. Add one to get started!</div>
+                    </div>
+                </div>
+
+                <!-- Monthly Summary -->
+                <div class="card">
+                    <h3>Monthly Summary</h3>
+                    <div class="month-selector">
+                        <button onclick="previousMonth()" class="nav-btn">← Previous</button>
+                        <span id="currentMonth"></span>
+                        <button onclick="nextMonth()" class="nav-btn">Next →</button>
+                    </div>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Spending:</span>
+                            <span class="summary-value" id="monthlySummaryTotal">$0.00</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Budget Limit:</span>
+                            <span class="summary-value" id="monthlyBudgetLimit">Not Set</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Remaining:</span>
+                            <span class="summary-value" id="monthlyRemaining">$0.00</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Avg. Per Day:</span>
+                            <span class="summary-value" id="monthlyAverage">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics -->
+                <div class="card">
+                    <h3>Analytics & Trends</h3>
+                    <div class="analytics-container">
+                        <div class="chart-wrapper">
+                            <h4>Spending by Category</h4>
+                            <canvas id="categoryChart" width="400" height="300"></canvas>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h4>Daily Spending Trend (Last 7 Days)</h4>
+                            <canvas id="trendChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="card export-section">
+                    <h3>Export Data</h3>
+                    <div class="export-buttons">
+                        <button onclick="exportToCSV()" class="export-btn">📥 Download CSV</button>
+                        <button onclick="printExpenses()" class="export-btn">🖨️ Print</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add/Edit Expense Modal -->
+    <div id="expenseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Expense</h2>
+                <button class="close-btn" onclick="closeAddExpenseModal()">&times;</button>
+            </div>
+            <form id="expenseForm" onsubmit="saveExpense(event)">
+                <div class="form-group">
+                    <label for="expenseAmount">Amount *</label>
+                    <input type="number" id="expenseAmount" required min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="expenseDate">Date *</label>
+                    <input type="date" id="expenseDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="expenseCategory">Category *</label>
+                    <select id="expenseCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="food">Food & Dining</option>
+                        <option value="transport">Transport</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="utilities">Utilities</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="health">Health & Fitness</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="expenseDescription">Description</label>
+                    <input type="text" id="expenseDescription" placeholder="e.g., Lunch at restaurant">
+                </div>
+                <div class="form-group">
+                    <label for="expenseNotes">Notes</label>
+                    <textarea id="expenseNotes" placeholder="Additional notes..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Expense</button>
+                    <button type="button" class="btn-secondary" onclick="closeAddExpenseModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

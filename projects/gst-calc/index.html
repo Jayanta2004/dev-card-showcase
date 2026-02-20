@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>clearGST · calculator (add & remove)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e0e8f0 0%, #cddae9 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .card {
+            max-width: 550px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 2.8rem;
+            padding: 2.5rem 2rem 2.8rem;
+            box-shadow: 0 30px 45px -20px #1a2e44, inset 0 1px 2px rgba(255,255,255,0.7);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.2s;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+        }
+
+        .brand h1 {
+            font-size: 2.2rem;
+            font-weight: 550;
+            letter-spacing: -1px;
+            color: #1c3c5b;
+        }
+
+        .brand span {
+            background: #2b4b6e;
+            color: white;
+            padding: 0.2rem 1.2rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .subhead {
+            font-size: 1.1rem;
+            color: #2d4b68;
+            margin-bottom: 2rem;
+            font-weight: 350;
+            border-left: 6px solid #3e7a9c;
+            padding-left: 1.2rem;
+        }
+
+        /* input group */
+        .input-group {
+            margin-bottom: 2rem;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            color: #1e3f59;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .amount-input {
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            font-size: 1.5rem;
+            border: none;
+            background: white;
+            border-radius: 50px;
+            box-shadow: inset 0 4px 8px #cdddea, 0 2px 4px #ffffff;
+            border: 1px solid #b6d0e2;
+            font-weight: 500;
+            color: #103247;
+            outline: none;
+            transition: 0.15s;
+        }
+
+        .amount-input:focus {
+            border-color: #4d8bb9;
+            box-shadow: 0 0 0 4px rgba(65, 125, 180, 0.2), inset 0 2px 6px #b3cfec;
+        }
+
+        /* GST slider + rate */
+        .gst-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            margin: 1.8rem 0 2.2rem;
+        }
+
+        .gst-rate-box {
+            background: #ebf3fa;
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            box-shadow: inset 0 2px 5px #b6c9db;
+            border: 1px solid #b0cde4;
+        }
+
+        .gst-rate-box label {
+            font-weight: 600;
+            color: #103e5c;
+            margin-right: 0.5rem;
+        }
+
+        #gstRateDisplay {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1f4c73;
+            min-width: 70px;
+            display: inline-block;
+        }
+
+        .slider-container {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, #6a9ac5, #003153);
+            border-radius: 20px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px #00315366;
+            border: 2px solid #1f547a;
+            cursor: pointer;
+            margin-top: -8px;
+        }
+
+        /* radio toggle */
+        .toggle-panel {
+            background: #e4eef9;
+            border-radius: 70px;
+            display: flex;
+            padding: 0.4rem;
+            margin: 2rem 0 2rem;
+            border: 1px solid #b2cfec;
+        }
+
+        .toggle-option {
+            flex: 1;
+            text-align: center;
+            padding: 1rem 0.5rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #274d6b;
+            cursor: pointer;
+            transition: 0.1s;
+            border: 1px solid transparent;
+        }
+
+        .toggle-option.active {
+            background: white;
+            border-color: #7eafd3;
+            box-shadow: 0 6px 12px #b0cde1;
+            color: #003057;
+            font-weight: 600;
+        }
+
+        /* results panel */
+        .result-panel {
+            background: #dae6f2;
+            border-radius: 2rem;
+            padding: 1.8rem 2rem;
+            box-shadow: inset 0 2px 6px #a5bed6, 0 10px 20px -12px #13293d;
+            margin: 2rem 0 1rem;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.3rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px dashed #7fa0c0;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-row .label {
+            font-weight: 400;
+            color: #173f5c;
+        }
+
+        .result-row .value {
+            font-weight: 700;
+            color: #003057;
+            font-size: 1.6rem;
+        }
+
+        .footnote {
+            color: #38658b;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .highlight {
+            background: #c7e0f5;
+            border-radius: 30px;
+            padding: 0.25rem 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="brand">
+            <h1>📊 clearGST</h1>
+            <span>calculator</span>
+        </div>
+        <div class="subhead">add or remove goods & services tax · inclusive / exclusive</div>
+
+        <!-- amount input -->
+        <div class="input-group">
+            <div class="label-row">
+                <span>💰 amount ($)</span>
+                <span class="highlight" id="placeholderHint">enter numeric</span>
+            </div>
+            <input type="number" id="amountInput" class="amount-input" value="1000" step="any" min="0" placeholder="0.00">
+        </div>
+
+        <!-- GST slider + rate indicator -->
+        <div class="gst-row">
+            <div class="gst-rate-box">
+                <label>GST</label>
+                <span id="gstRateDisplay">10%</span>
+            </div>
+            <div class="slider-container">
+                <input type="range" id="gstSlider" min="0" max="28" value="10" step="0.5">
+            </div>
+        </div>
+
+        <!-- toggle: exclusive / inclusive -->
+        <div class="toggle-panel" id="togglePanel">
+            <div class="toggle-option active" data-mode="exclusive">➕ add GST</div>
+            <div class="toggle-option" data-mode="inclusive">➖ remove GST</div>
+        </div>
+
+        <!-- dynamic results -->
+        <div class="result-panel" id="resultPanel">
+            <div class="result-row">
+                <span class="label">GST amount</span>
+                <span class="value" id="gstAmount">$100.00</span>
+            </div>
+            <div class="result-row">
+                <span class="label">total (incl. GST)</span>
+                <span class="value" id="totalIncGST">$1,100.00</span>
+            </div>
+            <div class="result-row">
+                <span class="label">base (excl. GST)</span>
+                <span class="value" id="baseExcl">$1,000.00</span>
+            </div>
+        </div>
+
+        <div class="footnote">
+            ⚡ slider adjusts 0–28% · 0.5% steps · interpreted instantly
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // DOM elements
+            const amountInput = document.getElementById('amountInput');
+            const gstSlider = document.getElementById('gstSlider');
+            const gstRateDisplay = document.getElementById('gstRateDisplay');
+            const gstAmountSpan = document.getElementById('gstAmount');
+            const totalIncGstSpan = document.getElementById('totalIncGST');
+            const baseExclSpan = document.getElementById('baseExcl');
+            const toggleOptions = document.querySelectorAll('.toggle-option');
+
+            // state
+            let currentMode = 'exclusive';   // 'exclusive' = add GST, 'inclusive' = remove GST
+
+            // ---------- helper: format as currency ----------
+            function formatMoney(value) {
+                return '$' + value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            }
+
+            // ---------- update displayed rate from slider ----------
+            function updateRateLabel() {
+                const ratePercent = parseFloat(gstSlider.value);
+                gstRateDisplay.textContent = ratePercent + '%';
+            }
+
+            // ---------- core calculation and render ----------
+            function calculateAndDisplay() {
+                // get amount as number (fallback to 0)
+                let rawAmount = parseFloat(amountInput.value);
+                if (isNaN(rawAmount) || rawAmount < 0) rawAmount = 0;
+                const amount = rawAmount;
+
+                const ratePercent = parseFloat(gstSlider.value);
+                const gstMultiplier = ratePercent / 100;
+
+                let gstValue = 0;
+                let baseExcl = 0;
+                let totalInc = 0;
+
+                if (currentMode === 'exclusive') {
+                    // exclusive: amount is base exclusive, we add GST
+                    baseExcl = amount;
+                    gstValue = baseExcl * gstMultiplier;
+                    totalInc = baseExcl + gstValue;
+                } else {
+                    // inclusive: amount is total inclusive, we need to extract GST and base
+                    // base = total / (1 + rate)
+                    totalInc = amount;
+                    baseExcl = totalInc / (1 + gstMultiplier);
+                    gstValue = totalInc - baseExcl;
+                }
+
+                // update DOM
+                gstAmountSpan.textContent = formatMoney(gstValue);
+                totalIncGstSpan.textContent = formatMoney(totalInc);
+                baseExclSpan.textContent = formatMoney(baseExcl);
+            }
+
+            // ---------- toggle active mode ----------
+            function setMode(mode) {
+                currentMode = mode;
+                // update active class on toggle
+                toggleOptions.forEach(opt => {
+                    const optMode = opt.dataset.mode;
+                    if (optMode === mode) {
+                        opt.classList.add('active');
+                    } else {
+                        opt.classList.remove('active');
+                    }
+                });
+                calculateAndDisplay(); // recalc with new mode
+            }
+
+            // ---------- event listeners ----------
+            amountInput.addEventListener('input', function() {
+                calculateAndDisplay();
+            });
+
+            gstSlider.addEventListener('input', function() {
+                updateRateLabel();
+                calculateAndDisplay();
+            });
+
+            // toggle click listeners
+            toggleOptions.forEach(opt => {
+                opt.addEventListener('click', function() {
+                    const mode = this.dataset.mode;
+                    setMode(mode);
+                });
+            });
+
+            // optional: initialize
+            updateRateLabel();
+            setMode('exclusive');  // ensures active class and calculation
+
+            // extra: ensure that on page load amount field shows formatted style (already value set)
+            calculateAndDisplay();
+
+            // handle negative or invalid via input validation: if user types negative, turn to 0
+            amountInput.addEventListener('blur', function() {
+                let val = parseFloat(amountInput.value);
+                if (isNaN(val) || val < 0) {
+                    amountInput.value = 0;
+                    calculateAndDisplay();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

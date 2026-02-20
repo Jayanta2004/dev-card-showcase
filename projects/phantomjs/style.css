@@ -1,0 +1,435 @@
+:root {
+    --term-green: #0f0;
+    --term-glow: #0f0;
+    --term-bg: #000;
+    --term-dim: #003300;
+    --glass-bg: rgba(0, 20, 0, 0.85);
+    --border-color: #0f0;
+    --header-height: 28px;
+    --taskbar-height: 40px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--term-bg);
+    color: var(--term-green);
+    font-family: 'Share Tech Mono', monospace;
+    /* More "tech" font */
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    user-select: none;
+    cursor: default;
+}
+
+/* --- CRT & Effects --- */
+#crt-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.4) 100%);
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
+}
+
+#scanline {
+    width: 100%;
+    height: 4px;
+    background: rgba(0, 255, 0, 0.1);
+    position: fixed;
+    top: -100px;
+    z-index: 10000;
+    pointer-events: none;
+    animation: scanline 6s linear infinite;
+}
+
+@keyframes scanline {
+    0% {
+        top: -10%
+    }
+
+    100% {
+        top: 110%
+    }
+}
+
+#matrix-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.15;
+}
+
+/* --- Boot Screen --- */
+#boot-screen {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 5000;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    font-size: 1.2rem;
+}
+
+/* --- Desktop Environment --- */
+#desktop {
+    position: absolute;
+    inset: 0;
+    display: none;
+    /* Hidden until boot finishes */
+    z-index: 1;
+}
+
+#desktop-icons {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.desktop-icon {
+    width: 80px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.desktop-icon:hover {
+    opacity: 1;
+    text-shadow: 0 0 8px var(--term-green);
+}
+
+.icon-img {
+    font-size: 32px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.icon-label {
+    font-size: 14px;
+}
+
+/* --- Window Manager --- */
+#window-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: var(--taskbar-height);
+    pointer-events: none;
+    /* Let clicks pass to desktop icons if not on window */
+}
+
+.window {
+    position: absolute;
+    min-width: 300px;
+    min-height: 200px;
+    background: var(--glass-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+    /* Re-enable clicks */
+    backdrop-filter: blur(4px);
+    transition: transform 0.1s, opacity 0.1s;
+    animation: windowOpen 0.2s ease-out;
+}
+
+@keyframes windowOpen {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.window-header {
+    height: var(--header-height);
+    background: rgba(0, 255, 0, 0.15);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    cursor: grab;
+}
+
+.window-header:active {
+    cursor: grabbing;
+}
+
+.window-title {
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.window-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.win-btn {
+    background: transparent;
+    border: 1px solid var(--term-green);
+    color: var(--term-green);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.win-btn:hover {
+    background: var(--term-green);
+    color: #000;
+}
+
+.win-btn.close:hover {
+    background: #f00;
+    border-color: #f00;
+    color: #fff;
+}
+
+.window-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    padding: 5px;
+}
+
+/* --- Taskbar --- */
+#taskbar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--taskbar-height);
+    background: rgba(0, 10, 0, 0.95);
+    border-top: 1px solid var(--term-green);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    z-index: 2000;
+}
+
+#start-btn {
+    border: 2px solid var(--term-green);
+    padding: 4px 12px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 20px;
+    background: rgba(0, 255, 0, 0.1);
+}
+
+#start-btn:hover {
+    background: var(--term-green);
+    color: #000;
+}
+
+#task-list {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+}
+
+.task-item {
+    padding: 4px 10px;
+    border: 1px solid var(--term-dim);
+    cursor: pointer;
+    min-width: 100px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task-item.active {
+    background: rgba(0, 255, 0, 0.2);
+    border-color: var(--term-green);
+    box-shadow: 0 0 5px var(--term-green);
+}
+
+#clock {
+    margin-left: auto;
+    font-size: 1.1rem;
+}
+
+/* --- App Specific Styles --- */
+/* TERMINAL */
+.app-terminal {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    color: #0f0;
+    padding: 5px;
+    overflow-y: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+}
+
+.app-terminal-input {
+    background: transparent;
+    border: none;
+    color: #0f0;
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+    width: 80%;
+}
+
+/* SYSMON */
+.app-sysmonitor {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 5px;
+}
+
+.sys-graph-container {
+    border: 1px solid var(--term-dim);
+    position: relative;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.sys-label {
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    font-size: 10px;
+    color: var(--term-green);
+}
+
+/* FILE MANAGER */
+.app-fileman {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.fm-toolbar {
+    padding: 5px;
+    border-bottom: 1px solid var(--term-dim);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.fm-path {
+    font-weight: bold;
+    color: var(--term-green);
+}
+
+.fm-grid {
+    flex: 1;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    overflow-y: auto;
+}
+
+.fm-item {
+    text-align: center;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.fm-item:hover {
+    background: rgba(0, 255, 0, 0.1);
+}
+
+.fm-icon {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.fm-label {
+    font-size: 12px;
+    word-break: break-all;
+}
+
+/* TEXT EDITOR */
+.app-textedit {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.te-toolbar {
+    padding: 5px;
+    border-bottom: 1px solid var(--term-dim);
+    display: flex;
+    gap: 5px;
+}
+
+.te-toolbar button {
+    background: transparent;
+    border: 1px solid var(--term-green);
+    color: var(--term-green);
+    cursor: pointer;
+}
+
+.te-toolbar button:hover {
+    background: var(--term-green);
+    color: #000;
+}
+
+.te-area {
+    flex: 1;
+    background: #000;
+    color: var(--term-green);
+    border: none;
+    padding: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    resize: none;
+    outline: none;
+}
+
+/* SETTINGS */
+.app-settings {
+    padding: 20px;
+    text-align: center;
+}
+
+.theme-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.theme-btn {
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--term-green);
+    color: var(--term-green);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1.1rem;
+}
+
+.theme-btn:hover {
+    background: var(--term-green);
+    color: #000;
+}
+
+/* UTILS */
+.scroll-hide::-webkit-scrollbar {
+    display: none;
+}

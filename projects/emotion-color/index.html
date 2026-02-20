@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion to Color Converter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 30px 30px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            font-weight: 300;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            min-height: 600px;
+        }
+
+        .input-section {
+            flex: 1;
+            min-width: 350px;
+            padding: 40px;
+            background-color: #f9f9f9;
+        }
+
+        .output-section {
+            flex: 1.5;
+            min-width: 450px;
+            padding: 40px;
+            background-color: white;
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #6a11cb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #6a11cb;
+        }
+
+        .input-container {
+            margin-bottom: 40px;
+        }
+
+        .emotion-input {
+            width: 100%;
+            padding: 18px 20px;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .emotion-input:focus {
+            outline: none;
+            border-color: #6a11cb;
+            box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+        }
+
+        .emotion-input::placeholder {
+            color: #aaa;
+        }
+
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .suggestion-tag {
+            background-color: #eef2ff;
+            color: #6a11cb;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .suggestion-tag:hover {
+            background-color: #6a11cb;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .suggestion-tag.active {
+            background-color: #6a11cb;
+            color: white;
+            border-color: #6a11cb;
+        }
+
+        .instructions {
+            background-color: #f0f7ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 30px;
+            border-left: 4px solid #2575fc;
+        }
+
+        .instructions h3 {
+            color: #2575fc;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions p {
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .color-palette {
+            display: flex;
+            height: 280px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .color-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .color-item:hover {
+            flex: 1.2;
+        }
+
+        .color-value {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #333;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        .color-name {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-weight: 600;
+            color: #333;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .palette-info {
+            background-color: #f9f9f9;
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 30px;
+        }
+
+        .palette-info h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .palette-name {
+            font-size: 1.8rem;
+            color: #6a11cb;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .palette-description {
+            font-size: 1.1rem;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        .emotion-history {
+            margin-top: 40px;
+        }
+
+        .history-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .history-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .history-item {
+            display: flex;
+            flex-direction: column;
+            width: 120px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .history-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .history-colors {
+            display: flex;
+            height: 60px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .history-color {
+            flex: 1;
+        }
+
+        .history-emotion {
+            text-align: center;
+            padding: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .clear-history {
+            background-color: transparent;
+            border: 2px solid #e74c3c;
+            color: #e74c3c;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clear-history:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background-color: #6a11cb;
+            color: white;
+            flex: 2;
+        }
+
+        .btn-primary:hover {
+            background-color: #5a0db3;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(106, 17, 203, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #2575fc;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            background-color: #1c65e0;
+            transform: translateY(-3px);
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            border-top: 1px solid #eee;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 900px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .color-palette {
+                height: 220px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 15px;
+            }
+            
+            header {
+                padding: 30px 20px;
+            }
+            
+            .input-section, .output-section {
+                padding: 25px;
+            }
+            
+            .color-palette {
+                height: 180px;
+            }
+            
+            .color-value {
+                padding: 8px 10px;
+                font-size: 1rem;
+            }
+        }
+
+        .copy-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #2ecc71;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-palette"></i> Emotion to Color Converter</h1>
+            <p class="subtitle">Type your feelings and emotions to generate a beautiful color palette that represents them</p>
+        </header>
+
+        <div class="content">
+            <section class="input-section">
+                <h2 class="section-title"><i class="fas fa-feather-alt"></i> Describe Your Emotion</h2>
+                
+                <div class="input-container">
+                    <input type="text" class="emotion-input" id="emotionInput" placeholder="Type an emotion like 'joyful', 'calm', 'energetic'...">
+                    
+                    <div class="suggestions" id="suggestions">
+                        <!-- Emotion suggestions will be added by JavaScript -->
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="convertBtn">
+                            <i class="fas fa-magic"></i> Convert to Colors
+                        </button>
+                        <button class="btn btn-secondary" id="randomBtn">
+                            <i class="fas fa-random"></i> Random
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <h3><i class="fas fa-lightbulb"></i> How It Works</h3>
+                    <p>• Type a single emotion or multiple feelings separated by commas</p>
+                    <p>• Use adjectives like "warm", "cool", "intense" to modify the colors</p>
+                    <p>• Click on suggested emotions for quick generation</p>
+                    <p>• Click on any color to copy its HEX code</p>
+                </div>
+            </section>
+
+            <section class="output-section">
+                <h2 class="section-title"><i class="fas fa-star"></i> Generated Color Palette</h2>
+                
+                <div class="color-palette" id="colorPalette">
+                    <!-- Color palette will be generated by JavaScript -->
+                </div>
+                
+                <div class="palette-info">
+                    <h3><i class="fas fa-info-circle"></i> Palette Information</h3>
+                    <div class="palette-name" id="paletteName">Joyful Harmony</div>
+                    <div class="palette-description" id="paletteDescription">This palette represents feelings of happiness, energy, and positivity with vibrant, warm colors that evoke joy and enthusiasm.</div>
+                </div>
+                
+                <div class="emotion-history">
+                    <div class="history-title">
+                        <h2 class="section-title"><i class="fas fa-history"></i> Recent Emotions</h2>
+                        <button class="clear-history" id="clearHistory">Clear History</button>
+                    </div>
+                    
+                    <div class="history-items" id="historyItems">
+                        <!-- History items will be added by JavaScript -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>Emotion to Color Converter &copy; 2026 | Transform feelings into visual expressions</p>
+            <p>Each emotion generates a unique 5-color palette based on psychological color associations</p>
+        </footer>
+    </div>
+
+    <div class="copy-notification" id="copyNotification">
+        <i class="fas fa-check-circle"></i>
+        <span>Color copied to clipboard!</span>
+    </div>
+
+    <script>
+        // Emotion to color mapping database
+        const emotionColors = {
+            // Basic emotions
+            "joy": ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#FF9A76"],
+            "happy": ["#FFD166", "#FF9A76", "#06D6A0", "#118AB2", "#EF476F"],
+            "sad": ["#6C757D", "#495057", "#ADB5BD", "#6C757D", "#343A40"],
+            "anger": ["#E63946", "#D90429", "#9D0208", "#FF5400", "#FF9E00"],
+            "fear": ["#4A4E69", "#22223B", "#9A8C98", "#C9ADA7", "#F2E9E4"],
+            "love": ["#FF6B8B", "#FF8E9E", "#FFAAA5", "#FFD3B6", "#FFE6E6"],
+            "calm": ["#A8DADC", "#457B9D", "#1D3557", "#F1FAEE", "#E9F5DB"],
+            "peace": ["#A8DADC", "#CCD5AE", "#E9EDC9", "#FEFAE0", "#FAEDCD"],
+            "energy": ["#FF5400", "#FF9E00", "#FFD166", "#06D6A0", "#118AB2"],
+            "excitement": ["#FF5400", "#FF9E00", "#FF006E", "#8338EC", "#3A86FF"],
+            
+            // Complex emotions
+            "nostalgia": ["#9B5DE5", "#F15BB5", "#FEE440", "#00BBF9", "#00F5D4"],
+            "hope": ["#FFD166", "#06D6A0", "#118AB2", "#073B4C", "#EF476F"],
+            "serenity": ["#A8DADC", "#CCD5AE", "#E9EDC9", "#FEFAE0", "#FAEDCD"],
+            "melancholy": ["#6D6875", "#B5838D", "#E5989B", "#FFB4A2", "#FFCDB2"],
+            "euphoria": ["#9B5DE5", "#F15BB5", "#00F5D4", "#00BBF9", "#FEE440"],
+            "anxiety": ["#6D6875", "#B5838D", "#E5989B", "#FFB4A2", "#FFCDB2"],
+            "gratitude": ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#FF9A76"],
+            "contentment": ["#CCD5AE", "#E9EDC9", "#FEFAE0", "#FAEDCD", "#D4A373"],
+            
+            // Descriptive emotions
+            "warm": ["#FF5400", "#FF9E00", "#FFD166", "#EF476F", "#FF9A76"],
+            "cool": ["#118AB2", "#073B4C", "#06D6A0", "#4CC9F0", "#4895EF"],
+            "vibrant": ["#FF006E", "#FFBE0B", "#FB5607", #8338EC", "#3A86FF"],
+            "soft": ["#FFCDB2", "#FFB4A2", "#E5989B", "#B5838D", #6D6875"],
+            "bright": ["#FFD166", "#06D6A0", "#118AB2", "#EF476F", "#FF9A76"],
+            "dark": ["#22223B", #4A4E69", "#9A8C98", "#C9ADA7", "#F2E9E4"],
+            "romantic": ["#FF6B8B", "#FF8E9E", "#FFAAA5", "#FFD3B6", "#FFE6E6"],
+            "mysterious": ["#560BAD", #480CA8", "#3A0CA3", "#3F37C9", "#4361EE"],
+        };
+
+        // Emotion descriptions
+        const emotionDescriptions = {
+            "joy": "A vibrant palette of warm yellows and energetic pinks that captures the essence of happiness and delight.",
+            "happy": "Bright, cheerful colors that radiate positivity and optimism, perfect for uplifting moments.",
+            "sad": "Muted, cool tones reflecting introspection and melancholy with subtle depth.",
+            "anger": "Intense reds and fiery oranges that convey passion, intensity, and strong emotion.",
+            "fear": "Dark, subdued shades that evoke tension and uncertainty with subtle contrasts.",
+            "love": "Soft pinks and warm peaches that embody affection, tenderness, and romance.",
+            "calm": "Cool blues and serene greens that promote relaxation and peaceful contemplation.",
+            "peace": "Soft, harmonious hues that create a sense of tranquility and balance.",
+            "energy": "Vibrant oranges and yellows that capture dynamism, enthusiasm, and vitality.",
+            "excitement": "A bold mix of electric colors that represent anticipation and high energy.",
+            "nostalgia": "A blend of retro-inspired colors that evoke memories and sentimental feelings.",
+            "hope": "Bright, optimistic colors that symbolize positivity and looking forward to the future.",
+            "serenity": "Soft, pastel tones that create a calming and peaceful atmosphere.",
+            "melancholy": "Muted, desaturated colors that reflect thoughtful introspection.",
+            "euphoria": "A vibrant, psychedelic palette representing intense happiness and elation.",
+            "anxiety": "Unsettling color combinations that reflect tension and unease.",
+            "gratitude": "Warm, appreciative colors that embody thankfulness and contentment.",
+            "contentment": "Comfortable, soothing hues that represent satisfaction and peace of mind.",
+            "warm": "Cozy, inviting colors that evoke feelings of comfort and familiarity.",
+            "cool": "Refreshing, tranquil shades that promote calmness and clarity.",
+            "vibrant": "Bold, saturated colors full of life and energy.",
+            "soft": "Gentle, muted tones that are easy on the eyes and soothing to the spirit.",
+            "bright": "Luminous, cheerful colors that uplift and energize.",
+            "dark": "Deep, mysterious shades that convey intensity and sophistication.",
+            "romantic": "Delicate, affectionate colors that speak of love and tenderness.",
+            "mysterious": "Deep, enigmatic hues that evoke curiosity and intrigue."
+        };
+
+        // Suggested emotions for quick selection
+        const suggestedEmotions = [
+            "joy", "calm", "energy", "love", "nostalgia", 
+            "peace", "excitement", "melancholy", "hope", "serenity"
+        ];
+
+        // DOM Elements
+        const emotionInput = document.getElementById('emotionInput');
+        const suggestionsContainer = document.getElementById('suggestions');
+        const convertBtn = document.getElementById('convertBtn');
+        const randomBtn = document.getElementById('randomBtn');
+        const colorPalette = document.getElementById('colorPalette');
+        const paletteName = document.getElementById('paletteName');
+        const paletteDescription = document.getElementById('paletteDescription');
+        const historyItems = document.getElementById('historyItems');
+        const clearHistoryBtn = document.getElementById('clearHistory');
+        const copyNotification = document.getElementById('copyNotification');
+
+        // App state
+        let emotionHistory = JSON.parse(localStorage.getItem('emotionHistory')) || [];
+        let currentEmotion = "joy";
+
+        // Initialize the app
+        function initApp() {
+            // Create suggestion tags
+            createSuggestionTags();
+            
+            // Generate initial palette
+            generatePalette(currentEmotion);
+            
+            // Load history
+            renderHistory();
+            
+            // Set up event listeners
+            convertBtn.addEventListener('click', handleConvert);
+            randomBtn.addEventListener('click', generateRandomPalette);
+            clearHistoryBtn.addEventListener('click', clearHistory);
+            emotionInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleConvert();
+            });
+            
+            // Set focus to input
+            emotionInput.focus();
+        }
+
+        // Create suggestion tags
+        function createSuggestionTags() {
+            suggestionsContainer.innerHTML = '';
+            
+            suggestedEmotions.forEach(emotion => {
+                const tag = document.createElement('div');
+                tag.className = 'suggestion-tag';
+                tag.textContent = emotion;
+                tag.addEventListener('click', () => {
+                    // Set the input value and generate palette
+                    emotionInput.value = emotion;
+                    generatePalette(emotion);
+                    
+                    // Highlight the selected tag
+                    document.querySelectorAll('.suggestion-tag').forEach(t => t.classList.remove('active'));
+                    tag.classList.add('active');
+                });
+                
+                suggestionsContainer.appendChild(tag);
+            });
+        }
+
+        // Handle convert button click
+        function handleConvert() {
+            const inputValue = emotionInput.value.trim().toLowerCase();
+            if (!inputValue) return;
+            
+            generatePalette(inputValue);
+            
+            // Add to history
+            addToHistory(inputValue);
+        }
+
+        // Generate color palette for a given emotion
+        function generatePalette(emotion) {
+            // Update current emotion
+            currentEmotion = emotion;
+            
+            // Get colors for emotion or generate random ones
+            let colors;
+            
+            if (emotionColors[emotion]) {
+                colors = [...emotionColors[emotion]];
+            } else {
+                // For unknown emotions, generate based on the emotion string
+                colors = generateColorsFromString(emotion);
+            }
+            
+            // Clear the palette
+            colorPalette.innerHTML = '';
+            
+            // Create color items
+            const colorNames = ["Primary", "Secondary", "Accent", "Background", "Highlight"];
+            
+            colors.forEach((color, index) => {
+                const colorItem = document.createElement('div');
+                colorItem.className = 'color-item';
+                colorItem.style.backgroundColor = color;
+                colorItem.setAttribute('data-color', color);
+                
+                const colorName = document.createElement('div');
+                colorName.className = 'color-name';
+                colorName.textContent = colorNames[index];
+                
+                const colorValue = document.createElement('div');
+                colorValue.className = 'color-value';
+                colorValue.textContent = color;
+                
+                colorItem.appendChild(colorName);
+                colorItem.appendChild(colorValue);
+                
+                // Add click to copy functionality
+                colorItem.addEventListener('click', () => copyToClipboard(color));
+                
+                colorPalette.appendChild(colorItem);
+            });
+            
+            // Update palette info
+            updatePaletteInfo(emotion, colors);
+        }
+
+        // Generate colors based on emotion string
+        function generateColorsFromString(emotion) {
+            // Create a hash from the emotion string
+            let hash = 0;
+            for (let i = 0; i < emotion.length; i++) {
+                hash = emotion.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            
+            // Generate 5 colors based on the hash
+            const colors = [];
+            for (let i = 0; i < 5; i++) {
+                // Adjust the hash for each color
+                const hue = (hash + i * 50) % 360;
+                const saturation = 60 + (hash % 30); // 60-90%
+                const lightness = 40 + ((hash + i * 20) % 30); // 40-70%
+                
+                colors.push(hslToHex(hue, saturation, lightness));
+            }
+            
+            return colors;
+        }
+
+        // Convert HSL to HEX color
+        function hslToHex(h, s, l) {
+            h /= 360;
+            s /= 100;
+            l /= 100;
+            
+            let r, g, b;
+            
+            if (s === 0) {
+                r = g = b = l; // achromatic
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            
+            const toHex = (x) => {
+                const hex = Math.round(x * 255).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            };
+            
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+        }
+
+        // Update palette information
+        function updatePaletteInfo(emotion, colors) {
+            // Format emotion name for display
+            const displayName = emotion.charAt(0).toUpperCase() + emotion.slice(1);
+            paletteName.textContent = `${displayName} Harmony`;
+            
+            // Get or generate description
+            if (emotionDescriptions[emotion]) {
+                paletteDescription.textContent = emotionDescriptions[emotion];
+            } else {
+                // Generate a description based on the colors
+                const isWarm = colors.some(color => {
+                    const hex = color.replace('#', '');
+                    const r = parseInt(hex.substr(0, 2), 16);
+                    const g = parseInt(hex.substr(2, 2), 16);
+                    const b = parseInt(hex.substr(4, 2), 16);
+                    
+                    // Calculate warmth (red/orange dominance)
+                    return r > g + 50 && r > b + 50;
+                });
+                
+                const isBright = colors.some(color => {
+                    const hex = color.replace('#', '');
+                    const r = parseInt(hex.substr(0, 2), 16);
+                    const g = parseInt(hex.substr(2, 2), 16);
+                    const b = parseInt(hex.substr(4, 2), 16);
+                    
+                    // Calculate brightness
+                    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                    return brightness > 180;
+                });
+                
+                const mood = isWarm ? "warm and inviting" : "cool and calming";
+                const energy = isBright ? "vibrant and energetic" : "subdued and thoughtful";
+                
+                paletteDescription.textContent = `This ${mood} palette represents the emotion of ${emotion} with ${energy} colors that uniquely express this feeling.`;
+            }
+        }
+
+        // Generate random palette
+        function generateRandomPalette() {
+            const emotions = Object.keys(emotionColors);
+            const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+            
+            emotionInput.value = randomEmotion;
+            generatePalette(randomEmotion);
+            addToHistory(randomEmotion);
+        }
+
+        // Add emotion to history
+        function addToHistory(emotion) {
+            // Check if already in history
+            const existingIndex = emotionHistory.findIndex(item => item.emotion === emotion);
+            
+            if (existingIndex !== -1) {
+                // Remove from current position
+                emotionHistory.splice(existingIndex, 1);
+            }
+            
+            // Add to beginning
+            emotionHistory.unshift({
+                emotion: emotion,
+                timestamp: Date.now(),
+                colors: emotionColors[emotion] || generateColorsFromString(emotion)
+            });
+            
+            // Keep only last 6 items
+            if (emotionHistory.length > 6) {
+                emotionHistory = emotionHistory.slice(0, 6);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('emotionHistory', JSON.stringify(emotionHistory));
+            
+            // Update history display
+            renderHistory();
+        }
+
+        // Render history items
+        function renderHistory() {
+            historyItems.innerHTML = '';
+            
+            emotionHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.setAttribute('data-emotion', item.emotion);
+                
+                const historyColors = document.createElement('div');
+                historyColors.className = 'history-colors';
+                
+                // Take first 3 colors for preview
+                const previewColors = item.colors.slice(0, 3);
+                previewColors.forEach(color => {
+                    const historyColor = document.createElement('div');
+                    historyColor.className = 'history-color';
+                    historyColor.style.backgroundColor = color;
+                    historyColors.appendChild(historyColor);
+                });
+                
+                const historyEmotion = document.createElement('div');
+                historyEmotion.className = 'history-emotion';
+                historyEmotion.textContent = item.emotion.charAt(0).toUpperCase() + item.emotion.slice(1);
+                
+                historyItem.appendChild(historyColors);
+                historyItem.appendChild(historyEmotion);
+                
+                // Add click event to load this palette
+                historyItem.addEventListener('click', () => {
+                    emotionInput.value = item.emotion;
+                    generatePalette(item.emotion);
+                });
+                
+                historyItems.appendChild(historyItem);
+            });
+        }
+
+        // Clear history
+        function clearHistory() {
+            emotionHistory = [];
+            localStorage.setItem('emotionHistory', JSON.stringify(emotionHistory));
+            renderHistory();
+        }
+
+        // Copy color to clipboard
+        function copyToClipboard(color) {
+            navigator.clipboard.writeText(color).then(() => {
+                // Show notification
+                copyNotification.style.display = 'flex';
+                setTimeout(() => {
+                    copyNotification.style.display = 'none';
+                }, 2000);
+            });
+        }
+
+        // Initialize the app when page loads
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

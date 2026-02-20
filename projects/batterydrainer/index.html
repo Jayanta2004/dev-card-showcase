@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Battery Drainer - An emotional battery level visualizer">
+    <title>Battery Drainer - Emotional Battery Visualizer</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🔋</text></svg>">
+</head>
+<body>
+    <!-- Background Gradient -->
+    <div class="background-gradient" id="backgroundGradient"></div>
+    
+    <!-- Particle System for Low Battery -->
+    <div class="particle-container" id="particleContainer"></div>
+    
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1 class="title">
+                <span class="title-icon">⚡</span>
+                Battery Drainer
+                <span class="title-icon">⚡</span>
+            </h1>
+            <p class="subtitle">Your battery's emotional journey</p>
+        </header>
+        
+        <!-- Battery Visualization Area -->
+        <main class="main-content">
+            <!-- Battery Container -->
+            <div class="battery-wrapper" id="batteryWrapper">
+                <!-- SVG Battery -->
+                <svg class="battery-svg" id="batterySvg" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Glow Filter -->
+                    <defs>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                        
+                        <!-- Charging Gradient -->
+                        <linearGradient id="chargingGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+                        </linearGradient>
+                        
+                        <!-- High Battery Gradient -->
+                        <linearGradient id="highGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+                        </linearGradient>
+                        
+                        <!-- Medium Battery Gradient -->
+                        <linearGradient id="mediumGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+                        </linearGradient>
+                        
+                        <!-- Low Battery Gradient -->
+                        <linearGradient id="lowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#ef4444;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#dc2626;stop-opacity:1" />
+                        </linearGradient>
+                        
+                        <!-- Critical Battery Gradient -->
+                        <linearGradient id="criticalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#991b1b;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#7f1d1d;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Battery Terminal (Top) -->
+                    <rect class="battery-terminal" id="batteryTerminal" 
+                          x="110" y="10" width="80" height="30" 
+                          rx="8" ry="8" fill="#6b7280"/>
+                    
+                    <!-- Battery Body Outline -->
+                    <rect class="battery-outline" id="batteryOutline"
+                          x="30" y="50" width="240" height="420"
+                          rx="20" ry="20" 
+                          fill="none" stroke="#4b5563" stroke-width="4"/>
+                    
+                    <!-- Battery Fill Container (Clip Path) -->
+                    <clipPath id="batteryClip">
+                        <rect x="40" y="60" width="220" height="400" rx="15" ry="15"/>
+                    </clipPath>
+                    
+                    <!-- Battery Fill -->
+                    <rect class="battery-fill" id="batteryFill"
+                          x="40" y="460" width="220" height="0"
+                          clip-path="url(#batteryClip)"
+                          fill="url(#highGradient)"/>
+                    
+                    <!-- Battery Shine Effect -->
+                    <rect class="battery-shine" id="batteryShine"
+                          x="45" y="65" width="60" height="390"
+                          rx="10" ry="10"
+                          fill="white" opacity="0.15"/>
+                    
+                    <!-- Face Group -->
+                    <g id="batteryFace" class="battery-face">
+                        <!-- Left Eye -->
+                        <circle class="eye left-eye" id="leftEye" 
+                                cx="110" cy="200" r="15" fill="#1f2937"/>
+                        <circle class="eye-pupil left-pupil" id="leftPupil"
+                                cx="110" cy="200" r="8" fill="#0f172a"/>
+                        
+                        <!-- Right Eye -->
+                        <circle class="eye right-eye" id="rightEye"
+                                cx="190" cy="200" r="15" fill="#1f2937"/>
+                        <circle class="eye-pupil right-pupil" id="rightPupil"
+                                cx="190" cy="200" r="8" fill="#0f172a"/>
+                        
+                        <!-- Mouth (Path for different expressions) -->
+                        <path class="mouth" id="batteryMouth"
+                              d="M 120 280 Q 150 310 180 280"
+                              fill="none" stroke="#1f2937" stroke-width="6"
+                              stroke-linecap="round"/>
+                    </g>
+                    
+                    <!-- Lightning Bolt (Charging Indicator) -->
+                    <g id="chargingBolt" class="charging-bolt" opacity="0">
+                        <path d="M 150 150 L 130 220 L 160 220 L 140 280 L 180 200 L 155 200 Z"
+                              fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+                    </g>
+                    
+                    <!-- Walking Legs -->
+                    <g id="batteryLegs" class="battery-legs">
+                        <!-- Left Leg -->
+                        <g id="leftLeg" class="leg left-leg">
+                            <ellipse cx="110" cy="475" rx="20" ry="8" fill="#4b5563" opacity="0.3"/>
+                            <rect x="100" y="465" width="20" height="35" rx="10" ry="10" fill="#6b7280"/>
+                            <circle cx="110" cy="490" r="12" fill="#4b5563"/>
+                        </g>
+                        
+                        <!-- Right Leg -->
+                        <g id="rightLeg" class="leg right-leg">
+                            <ellipse cx="190" cy="475" rx="20" ry="8" fill="#4b5563" opacity="0.3"/>
+                            <rect x="180" y="465" width="20" height="35" rx="10" ry="10" fill="#6b7280"/>
+                            <circle cx="190" cy="490" r="12" fill="#4b5563"/>
+                        </g>
+                    </g>
+                </svg>
+                
+                <!-- Battery Emotion Label -->
+                <div class="emotion-label" id="emotionLabel">
+                    <span class="emoji" id="emotionEmoji">😊</span>
+                    <span class="text" id="emotionText">Feeling Great!</span>
+                </div>
+            </div>
+            
+            <!-- Stats Panel -->
+            <div class="stats-panel" id="statsPanel">
+                <div class="stat-item">
+                    <div class="stat-label">Battery Level</div>
+                    <div class="stat-value" id="batteryPercent">100%</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-label">Status</div>
+                    <div class="stat-value" id="batteryStatus">Discharging</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-label">Time Remaining</div>
+                    <div class="stat-value" id="batteryTime">Calculating...</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-label">Emotional State</div>
+                    <div class="stat-value" id="emotionalState">Happy</div>
+                </div>
+            </div>
+            
+            <!-- Warning Messages -->
+            <div class="warning-container" id="warningContainer">
+                <div class="warning-message hidden" id="warningMessage">
+                    <span class="warning-icon">⚠️</span>
+                    <span class="warning-text" id="warningText">Low Battery Warning</span>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer / Info Section -->
+        <footer class="footer">
+            <div class="info-box" id="infoBox">
+                <p class="info-text">
+                    <span class="info-icon">ℹ️</span>
+                    Battery API provides real-time power status
+                </p>
+            </div>
+            
+            <!-- Browser Support Notice -->
+            <div class="browser-notice hidden" id="browserNotice">
+                <p class="notice-text">
+                    <span class="notice-icon">🚫</span>
+                    Battery Status API not supported in this browser. Using demo mode.
+                </p>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Fallback UI (No Battery API Support) -->
+    <div class="fallback-ui hidden" id="fallbackUI">
+        <div class="fallback-content">
+            <h2 class="fallback-title">⚡ Demo Mode ⚡</h2>
+            <p class="fallback-description">
+                Your browser doesn't support the Battery Status API.
+                Watch a simulated battery drain instead!
+            </p>
+            <button class="fallback-button" id="startDemoButton">
+                Start Demo
+            </button>
+        </div>
+    </div>
+    
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Connecting to Battery...</p>
+        </div>
+    </div>
+    
+    <!-- JavaScript Files -->
+    <script src="js/batteryAPI.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/ui.js"></script>
+</body>
+</html>

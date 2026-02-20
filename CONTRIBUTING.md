@@ -8,11 +8,18 @@ Whether you’re fixing a typo, improving UI, optimizing backend logic, or addin
 
 ## 📚 Table of Contents
 
-- [How You Can Contribute](#How-You-Can-Contribute)
-- [Issue Assignment](#issue-assignment)
-- [Tech Stack Overview](#tech-stack-overview)
-- [Getting Started](#getting-started)
-- [UI & UX Contributions](#ui--ux-contributions)
+- [🚀 How You Can Contribute](#-how-you-can-contribute)
+- [📌 Issue Assignment](#-issue-assignment)
+- [🛠 Tech Stack Overview](#-tech-stack-overview)
+  - [🗺 Contribution Map (File Responsibility Guide)](#-contribution-map-file-responsibility-guide)
+    - [🔹 Common Contribution Types \& Where to Edit](#-common-contribution-types--where-to-edit)
+    - [⚠️ Important Notes](#️-important-notes)
+  - [🧭 Where Should I Edit? (Quick Reference)](#-where-should-i-edit-quick-reference)
+- [📌 Issue Assignment](#-issue-assignment)
+- [🛠 Tech Stack Overview](#-tech-stack-overview)
+- [📦 Getting Started](#-getting-started)
+    - [🎨 UI \& UX Contributions](#-ui--ux-contributions)
+- [Questions?](#questions)
 
 
 # 🚀 How You Can Contribute
@@ -29,11 +36,40 @@ You can contribute in many ways:
 If you’re unsure where to start, check the Issues tab for:
 - good first issue
 - help wanted
+
 ---
+
+## 🧭 Where Should I Edit? (Quick Reference)
+
+Not sure which file to modify? Use the table below to quickly find the right place for your contribution:
+
+| Contribution Type | What You Want To Do | Files / Folders To Edit |
+|-------------------|-------------------|--------------------------|
+| Add Profile Card | Add your profile card | `index.html`, `images/` |
+| Add Project | Showcase a new project | `projects/`, `projects.json` |
+| UI / Styling Fix | Improve layout or visuals | `style.css`, `about.css`, `css/` |
+| JavaScript Logic | Add or fix interactivity | `tilt.js`, other `.js` files |
+| Documentation | Improve guides or instructions | `README.md`, `CONTRIBUTING.md` |
+| Bug Fix | Fix broken behavior | Relevant `.html`, `.css`, `.js` files |
+| New Feature | Add new functionality | Open an issue first |
+
+> ⚠️ **Important:** Please do not edit files unrelated to your contribution.  
+> If you’re unsure, ask in the issue or start a discussion before proceeding.
+
+---
+
 # 📌 Issue Assignment
 - Please comment on an issue before starting work.
 - Wait for a maintainer to assign the issue to you.
 - This helps avoid duplicate work and conflicts.
+
+## Contributor Identity & Ownership
+
+To maintain the integrity of the community showcase:
+
+- You may only add a profile card for yourself.
+- The GitHub profile linked in your card must match the GitHub account used to open the Pull Request.
+- Editing an existing contributor card is allowed only by the original contributor or project maintainers.
 
 # 🛠 Tech Stack Overview
 Before contributing, it helps to know what we’re working with:
@@ -41,7 +77,50 @@ Before contributing, it helps to know what we’re working with:
   - CSS3 – Styling, layout, responsiveness, and custom card designs
   - JavaScript (ES6) – Basic interactivity (if any enhancements are added)
   - Git & GitHub – Version control and open-source collaboration
+
 ---
+
+## 🗺 Contribution Map (File Responsibility Guide)
+
+This section helps contributors understand **which files and folders are responsible for what**, so you can make changes in the correct place without confusion.
+
+### 🔹 Common Contribution Types & Where to Edit
+
+- **Profile Cards**
+  - Modify: `index.html`
+  - Add images to: `images/`
+  - ⚠️ Follow the exact template and image rules
+
+- **Projects / Showcases**
+  - Modify: `projects/`
+  - Update metadata in: `projects.json`
+
+- **UI / Styling Fixes**
+  - Modify: `style.css` or files inside `css/`
+  - Do **not** change HTML unless absolutely necessary
+
+- **JavaScript / Interactivity**
+  - Modify relevant `.js` files (e.g., `tilt.js`)
+  - Keep changes minimal and well-documented
+
+- **Documentation**
+  - Modify: `README.md`, `CONTRIBUTING.md`
+  - Ideal for first-time contributors
+
+- **Bug Fixes**
+  - Modify only the files related to the bug
+  - Mention the affected files clearly in your PR description
+
+### ⚠️ Important Notes
+- Please **do not edit unrelated files**
+- Avoid modifying `index.html` unless your contribution specifically requires it
+- If you’re unsure where to make changes, **open an issue or ask maintainers first**
+
+This guide exists to reduce invalid PRs and make contributions smoother for everyone.
+
+---
+
+
 # 📦 Getting Started
 
 **1️⃣ Fork the Repository**
@@ -95,15 +174,24 @@ git push origin main
 - Avoid unnecessary animations
 - Ensure responsiveness across devices
 
-# Questions?
-If you have any questions about contributing, please:
+## ❓ Questions or Need Help?
 
-1.Check this guide and the README
+If you have any questions about contributing, please follow these steps:
 
-2.Search existing issues and discussions
+1. 📘 **Read the Contribution Guide and README**  
+   They cover most common questions and setup instructions.
 
-3.Create a new issue or discussion
+2. 🔍 **Search Existing Issues & Discussions**  
+   Your question may already be answered.
 
-4.Reach out to the maintainers
+3. 📝 **Open a New Issue or Start a Discussion**  
+   If you don’t find what you’re looking for, feel free to ask.
 
-Thank you for contributing to Dev-card-showcase! 🎉
+4. 🤝 **Reach Out to the Maintainers**  
+   We’re happy to help guide you.
+
+---
+
+Thank you for contributing to **Dev-card-showcase**! 🎉  
+Your support helps make this project better for everyone.
+

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Recall Flashcards - Spaced Repetition Study Tool</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Slab:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-brain"></i> Active Recall</h1>
+                <p class="subtitle">Spaced Repetition Flashcards</p>
+            </div>
+            
+            <div class="sidebar-menu">
+                <button class="nav-btn active" data-view="dashboard">
+                    <i class="fas fa-home"></i> Dashboard
+                </button>
+                <button class="nav-btn" data-view="study">
+                    <i class="fas fa-book-open"></i> Study
+                </button>
+                <button class="nav-btn" data-view="decks">
+                    <i class="fas fa-layer-group"></i> Decks
+                </button>
+                <button class="nav-btn" data-view="stats">
+                    <i class="fas fa-chart-line"></i> Statistics
+                </button>
+                <button class="nav-btn" data-view="create">
+                    <i class="fas fa-plus-circle"></i> Create Cards
+                </button>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-progress">
+                    <div class="progress-circle">
+                        <svg width="60" height="60">
+                            <circle class="progress-bg" cx="30" cy="30" r="25"></circle>
+                            <circle class="progress-fill" cx="30" cy="30" r="25"></circle>
+                        </svg>
+                        <span class="progress-percent">0%</span>
+                    </div>
+                    <div class="progress-text">
+                        <h4>Mastery Progress</h4>
+                        <p><span id="masteredCount">0</span> out of <span id="totalCardsCount">0</span> cards</p>
+                    </div>
+                </div>
+                <button id="exportBtn" class="btn secondary small">
+                    <i class="fas fa-download"></i> Export Data
+                </button>
+            </div>
+        </nav>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section id="dashboard" class="view active">
+                <div class="view-header">
+                    <h2><i class="fas fa-home"></i> Dashboard</h2>
+                    <p>Welcome to your personalized study space</p>
+                </div>
+                
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #4CAF50;">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalDecksCount">0</h3>
+                            <p>Total Decks</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #2196F3;">
+                            <i class="fas fa-copy"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="dashboardTotalCards">0</h3>
+                            <p>Total Cards</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #FF9800;">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="dashboardMastered">0</h3>
+                            <p>Cards Mastered</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #9C27B0;">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="streakDays">0</h3>
+                            <p>Day Streak</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-content">
+                    <div class="dashboard-section">
+                        <h3><i class="fas fa-history"></i> Recent Study Sessions</h3>
+                        <div class="sessions-list" id="sessionsList">
+                            <div class="empty-state">
+                                <i class="fas fa-clock"></i>
+                                <p>No study sessions yet. Start studying to see your history!</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-section">
+                        <h3><i class="fas fa-bolt"></i> Quick Study</h3>
+                        <div class="quick-study">
+                            <p>Jump right into studying with these options:</p>
+                            <div class="quick-options">
+                                <button id="quickAll" class="btn primary">
+                                    <i class="fas fa-random"></i> Study All Cards
+                                </button>
+                                <button id="quickHard" class="btn warning">
+                                    <i class="fas fa-exclamation-circle"></i> Study Hard Cards
+                                </button>
+                                <button id="quickDue" class="btn success">
+                                    <i class="fas fa-calendar-day"></i> Study Due Cards
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Study View -->
+            <section id="study" class="view">
+                <div class="view-header">
+                    <h2><i class="fas fa-book-open"></i> Study Mode</h2>
+                    <div class="study-controls">
+                        <div class="deck-selector">
+                            <label for="studyDeckSelect">Select Deck:</label>
+                            <select id="studyDeckSelect">
+                                <option value="all">All Decks</option>
+                            </select>
+                        </div>
+                        <div class="study-mode">
+                            <label for="studyModeSelect">Study Mode:</label>
+                            <select id="studyModeSelect">
+                                <option value="random">Random Shuffle</option>
+                                <option value="hard">Hard Cards Only</option>
+                                <option value="due">Due for Review</option>
+                                <option value="sequential">Sequential</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="study-area">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="studyProgress"></div>
+                    </div>
+                    <div class="progress-text">
+                        Card <span id="currentCardNum">0</span> of <span id="totalStudyCards">0</span>
+                    </div>
+                    
+                    <div class="card-container">
+                        <!-- 3D Flashcard -->
+                        <div class="flashcard" id="flashcard">
+                            <div class="card-front">
+                                <div class="card-content">
+                                    <div class="card-category" id="cardCategory">Category</div>
+                                    <h3 class="card-question" id="cardQuestion">Question will appear here</h3>
+                                    <div class="card-hint">
+                                        <i class="fas fa-lightbulb"></i> Click the card to reveal the answer
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button class="btn small" id="markHardBtn">
+                                        <i class="fas fa-exclamation-circle"></i> Mark as Hard
+                                    </button>
+                                    <button class="btn small" id="showAnswerBtn">
+                                        <i class="fas fa-eye"></i> Show Answer
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-back">
+                                <div class="card-content">
+                                    <div class="card-category" id="cardCategoryBack">Category</div>
+                                    <h3 class="card-question" id="cardQuestionBack">Question</h3>
+                                    <div class="card-answer" id="cardAnswer">Answer will appear here</div>
+                                    <div class="card-extra" id="cardExtra"></div>
+                                </div>
+                                <div class="card-footer">
+                                    <p>How well did you know this?</p>
+                                    <div class="recall-buttons">
+                                        <button class="btn recall-btn bad" data-rating="1">
+                                            <i class="fas fa-times"></i> Again
+                                        </button>
+                                        <button class="btn recall-btn hard" data-rating="2">
+                                            <i class="fas fa-exclamation-circle"></i> Hard
+                                        </button>
+                                        <button class="btn recall-btn good" data-rating="3">
+                                            <i class="fas fa-check"></i> Good
+                                        </button>
+                                        <button class="btn recall-btn easy" data-rating="4">
+                                            <i class="fas fa-star"></i> Easy
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="study-navigation">
+                            <button class="btn secondary" id="prevCardBtn">
+                                <i class="fas fa-arrow-left"></i> Previous
+                            </button>
+                            <button class="btn primary" id="nextCardBtn">
+                                Next Card <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="study-stats">
+                        <div class="stat">
+                            <span class="stat-value" id="cardsRemaining">0</span>
+                            <span class="stat-label">Cards Remaining</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value" id="cardsMasteredStudy">0</span>
+                            <span class="stat-label">Mastered This Session</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value" id="sessionTime">0:00</span>
+                            <span class="stat-label">Session Time</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Decks View -->
+            <section id="decks" class="view">
+                <div class="view-header">
+                    <h2><i class="fas fa-layer-group"></i> Deck Management</h2>
+                    <button id="createDeckBtn" class="btn primary">
+                        <i class="fas fa-plus"></i> Create New Deck
+                    </button>
+                </div>
+                
+                <div class="decks-grid" id="decksGrid">
+                    <!-- Decks will be dynamically added here -->
+                    <div class="empty-state">
+                        <i class="fas fa-layer-group"></i>
+                        <h3>No Decks Yet</h3>
+                        <p>Create your first deck to start studying!</p>
+                        <button id="emptyCreateDeckBtn" class="btn primary">
+                            <i class="fas fa-plus"></i> Create Your First Deck
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Statistics View -->
+            <section id="stats" class="view">
+                <div class="view-header">
+                    <h2><i class="fas fa-chart-line"></i> Study Statistics</h2>
+                    <div class="time-filter">
+                        <select id="statsPeriod">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="stats-content">
+                    <div class="stats-grid">
+                        <div class="stats-card wide">
+                            <h3><i class="fas fa-chart-bar"></i> Study Activity</h3>
+                            <div class="chart-container">
+                                <canvas id="studyActivityChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card">
+                            <h3><i class="fas fa-check-circle"></i> Mastery Distribution</h3>
+                            <div class="chart-container">
+                                <canvas id="masteryChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card">
+                            <h3><i class="fas fa-tachometer-alt"></i> Recall Performance</h3>
+                            <div class="performance-metrics">
+                                <div class="metric">
+                                    <span class="metric-value" id="avgRecallRate">0%</span>
+                                    <span class="metric-label">Average Recall</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-value" id="totalStudyTime">0h</span>
+                                    <span class="metric-label">Total Study Time</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-value" id="cardsPerSession">0</span>
+                                    <span class="metric-label">Cards/Session</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-table">
+                        <h3><i class="fas fa-table"></i> Deck Performance</h3>
+                        <table class="performance-table">
+                            <thead>
+                                <tr>
+                                    <th>Deck</th>
+                                    <th>Cards</th>
+                                    <th>Mastered</th>
+                                    <th>Avg. Score</th>
+                                    <th>Last Studied</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deckPerformanceTable">
+                                <!-- Will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Create Cards View -->
+            <section id="create" class="view">
+                <div class="view-header">
+                    <h2><i class="fas fa-plus-circle"></i> Create Flashcards</h2>
+                    <div class="create-controls">
+                        <button id="importCardsBtn" class="btn secondary">
+                            <i class="fas fa-file-import"></i> Import Cards
+                        </button>
+                        <button id="bulkAddBtn" class="btn secondary">
+                            <i class="fas fa-bulk"></i> Bulk Add
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="create-container">
+                    <div class="create-form">
+                        <div class="form-group">
+                            <label for="cardDeckSelect">Select Deck:</label>
+                            <select id="cardDeckSelect">
+                                <option value="">Create New Deck</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="newDeckName" class="hidden">New Deck Name:</label>
+                            <input type="text" id="newDeckName" placeholder="Enter new deck name (if creating new deck)">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cardQuestionInput">Question/Front:</label>
+                            <textarea id="cardQuestionInput" placeholder="Enter the question or term (front of the card)" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cardAnswerInput">Answer/Back:</label>
+                            <textarea id="cardAnswerInput" placeholder="Enter the answer or definition (back of the card)" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cardExtraInput">Extra Information (Optional):</label>
+                            <textarea id="cardExtraInput" placeholder="Enter additional context, examples, or notes" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cardTagsInput">Tags (comma separated):</label>
+                            <input type="text" id="cardTagsInput" placeholder="e.g., biology, chapter3, important">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Difficulty Level:</label>
+                            <div class="difficulty-selector">
+                                <button class="difficulty-btn easy" data-difficulty="easy">Easy</button>
+                                <button class="difficulty-btn medium active" data-difficulty="medium">Medium</button>
+                                <button class="difficulty-btn hard" data-difficulty="hard">Hard</button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button id="clearFormBtn" class="btn secondary">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                            <button id="saveCardBtn" class="btn primary">
+                                <i class="fas fa-save"></i> Save Card
+                            </button>
+                            <button id="saveAndNewBtn" class="btn success">
+                                <i class="fas fa-plus"></i> Save & New
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-preview">
+                        <h3><i class="fas fa-eye"></i> Card Preview</h3>
+                        <div class="preview-card">
+                            <div class="preview-front">
+                                <div class="preview-category">Preview</div>
+                                <h4 id="previewQuestion">Your question will appear here</h4>
+                                <div class="preview-hint">Click to flip</div>
+                            </div>
+                            <div class="preview-back">
+                                <div class="preview-category">Preview</div>
+                                <h4 id="previewQuestionBack">Your question will appear here</h4>
+                                <div class="preview-answer" id="previewAnswer">Your answer will appear here</div>
+                                <div class="preview-extra" id="previewExtra"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="recent-cards">
+                            <h4>Recently Added Cards</h4>
+                            <div class="recent-list" id="recentCardsList">
+                                <!-- Recent cards will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Modals -->
+    <div id="deckModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="deckModalTitle">Create New Deck</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="deckName">Deck Name</label>
+                    <input type="text" id="deckName" placeholder="e.g., Spanish Vocabulary, Biology Chapter 3">
+                </div>
+                <div class="form-group">
+                    <label for="deckDescription">Description (Optional)</label>
+                    <textarea id="deckDescription" placeholder="Describe what this deck contains" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="deckCategory">Category (Optional)</label>
+                    <input type="text" id="deckCategory" placeholder="e.g., Language, Science, History">
+                </div>
+                <div class="form-group">
+                    <label for="deckColor">Deck Color</label>
+                    <div class="color-selector">
+                        <div class="color-option" data-color="#4CAF50" style="background-color: #4CAF50;"></div>
+                        <div class="color-option" data-color="#2196F3" style="background-color: #2196F3;"></div>
+                        <div class="color-option" data-color="#FF9800" style="background-color: #FF9800;"></div>
+                        <div class="color-option" data-color="#9C27B0" style="background-color: #9C27B0;"></div>
+                        <div class="color-option" data-color="#F44336" style="background-color: #F44336;"></div>
+                        <div class="color-option" data-color="#607D8B" style="background-color: #607D8B;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary close-modal">Cancel</button>
+                <button id="saveDeckBtn" class="btn primary">Save Deck</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Import Cards</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="import-options">
+                    <div class="import-option active" data-type="text">
+                        <i class="fas fa-align-left"></i>
+                        <h4>Text Import</h4>
+                        <p>Paste cards in format: Question|Answer|Tags</p>
+                    </div>
+                    <div class="import-option" data-type="json">
+                        <i class="fas fa-code"></i>
+                        <h4>JSON Import</h4>
+                        <p>Import previously exported cards</p>
+                    </div>
+                </div>
+                
+                <div class="import-text" id="importTextSection">
+                    <div class="form-group">
+                        <label for="importText">Enter cards (one per line):</label>
+                        <textarea id="importText" placeholder="Question|Answer|Tags
+Example: What is the capital of France?|Paris|geography, capitals
+¿Cómo estás?|How are you?|spanish, greetings" rows="8"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="importDeckSelect">Import to Deck:</label>
+                        <select id="importDeckSelect">
+                            <!-- Options will be populated -->
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="import-json hidden" id="importJsonSection">
+                    <div class="form-group">
+                        <label for="importJson">Paste JSON data:</label>
+                        <textarea id="importJson" placeholder='[{"question":"...","answer":"..."}]' rows="8"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary close-modal">Cancel</button>
+                <button id="processImportBtn" class="btn primary">Import Cards</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="bulkAddModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Bulk Add Cards</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="bulkDeckSelect">Add to Deck:</label>
+                    <select id="bulkDeckSelect">
+                        <!-- Options will be populated -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="bulkCards">Enter cards (one per line in format: Front|Back|Tags):</label>
+                    <textarea id="bulkCards" placeholder="Front of card 1|Back of card 1|tag1, tag2
+Front of card 2|Back of card 2|tag3
+Front of card 3|Back of card 3" rows="10"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="bulkTags">Default Tags (applied to all cards):</label>
+                    <input type="text" id="bulkTags" placeholder="e.g., chapter1, vocabulary">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary close-modal">Cancel</button>
+                <button id="processBulkBtn" class="btn primary">Add Cards</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Toast -->
+    <div id="toast" class="toast hidden">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Card saved successfully!</span>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

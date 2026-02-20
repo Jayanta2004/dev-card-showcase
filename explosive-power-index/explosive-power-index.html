@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explosive Power Index - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .power-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .analyzer-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .power-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-group input {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .metric-group {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-title {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .metric-optional {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .power-index-display {
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            color: white;
+        }
+
+        .power-index-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .power-index-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .power-index-rating {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .power-chart {
+            margin-top: 1rem;
+            height: 400px;
+        }
+
+        .entries-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .entry-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .entry-info {
+            flex: 1;
+        }
+
+        .entry-date {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .entry-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .entry-metric {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .entry-power-index {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            align-self: flex-start;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .insights-section {
+            background: var(--bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .insight-item {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .insight-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-content {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .power-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .entry-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="zap"></i> Explosive Power Index</h1>
+            <p>Track and quantify your explosive athletic power through comprehensive metrics. Combine jump performance, sprint speed, and lifting velocity into a unified power index for sports training and performance monitoring.</p>
+        </header>
+
+        <div class="power-grid">
+            <!-- Power Logger -->
+            <section class="analyzer-section power-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Power Metrics</h2>
+                <form id="powerForm" class="power-form">
+                    <div class="form-group">
+                        <label for="sessionDate">Session Date</label>
+                        <input type="date" id="sessionDate" required>
+                    </div>
+
+                    <div class="metric-group">
+                        <div class="metric-header">
+                            <span class="metric-title">🏃 Sprint Performance</span>
+                            <span class="metric-optional">(at least one required)</span>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fortyYardDash">40-Yard Dash (seconds)</label>
+                                <input type="number" id="fortyYardDash" min="3.5" max="8.0" step="0.01" placeholder="4.5">
+                            </div>
+                            <div class="form-group">
+                                <label for="tenYardSplit">10-Yard Split (seconds)</label>
+                                <input type="number" id="tenYardSplit" min="1.4" max="2.5" step="0.01" placeholder="1.6">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-group">
+                        <div class="metric-header">
+                            <span class="metric-title">⬆️ Jump Performance</span>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="verticalJump">Vertical Jump (inches)</label>
+                                <input type="number" id="verticalJump" min="10" max="50" step="0.5" placeholder="28">
+                            </div>
+                            <div class="form-group">
+                                <label for="broadJump">Broad Jump (inches)</label>
+                                <input type="number" id="broadJump" min="60" max="150" step="1" placeholder="96">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-group">
+                        <div class="metric-header">
+                            <span class="metric-title">🏋️ Lifting Velocity</span>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cleanVelocity">Clean Velocity (m/s)</label>
+                                <input type="number" id="cleanVelocity" min="0.5" max="3.0" step="0.01" placeholder="1.8">
+                            </div>
+                            <div class="form-group">
+                                <label for="squatVelocity">Squat Velocity (m/s)</label>
+                                <input type="number" id="squatVelocity" min="0.3" max="2.0" step="0.01" placeholder="1.2">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes (optional)</label>
+                        <textarea id="notes" placeholder="Training conditions, fatigue level, equipment used, etc." rows="2"></textarea>
+                    </div>
+
+                    <div id="powerIndexPreview" class="power-index-display" style="display: none;">
+                        <div class="power-index-value" id="previewIndex">--</div>
+                        <div class="power-index-label">Power Index Preview</div>
+                        <div class="power-index-rating" id="previewRating">--</div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Log Session
+                    </button>
+                </form>
+            </section>
+
+            <!-- Power Dashboard -->
+            <section class="analyzer-section power-dashboard">
+                <h2><i data-lucide="bar-chart-3"></i> Power Analytics</h2>
+
+                <div id="currentPowerIndex" class="power-index-display">
+                    <div class="power-index-value">--</div>
+                    <div class="power-index-label">Current Power Index</div>
+                    <div class="power-index-rating">--</div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="bestPowerIndex">--</div>
+                        <div class="metric-label">Best Index</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgPowerIndex">--</div>
+                        <div class="metric-label">Average Index</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="powerTrend">--</div>
+                        <div class="metric-label">Trend</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="totalSessions">--</div>
+                        <div class="metric-label">Total Sessions</div>
+                    </div>
+                </div>
+
+                <div class="power-chart">
+                    <canvas id="powerChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Recent Sessions -->
+            <section class="analyzer-section recent-sessions">
+                <h2><i data-lucide="clock"></i> Recent Sessions</h2>
+                <div id="sessionsList" class="entries-list">
+                    <!-- Sessions will be populated here -->
+                </div>
+            </section>
+
+            <!-- Training Insights -->
+            <section class="analyzer-section training-insights">
+                <h2><i data-lucide="lightbulb"></i> Training Insights</h2>
+                <div id="insightsContent" class="insights-section">
+                    <div class="insight-item">
+                        <div class="insight-title">💪 Power Development</div>
+                        <div class="insight-content">Explosive power combines speed, strength, and technique. Focus on proper form and progressive overload to maximize gains.</div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-title">📊 Index Components</div>
+                        <div class="insight-content">The power index considers sprint speed, jump height/distance, and lifting velocity. Each component contributes to your overall explosive potential.</div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-title">🎯 Training Focus</div>
+                        <div class="insight-content">Identify weak areas in your power profile and target them specifically. Consistent testing helps track progress and adjust training programs.</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Include footer -->
+    <div id="footer-container"></div>
+
+    <script>
+        // Load navbar and footer
+        fetch('../navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+                lucide.createIcons();
+            });
+
+        fetch('../footer.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('footer-container').innerHTML = data;
+            });
+
+        // Initialize chart
+        let powerChart = null;
+
+        // Load data from localStorage
+        let sessions = JSON.parse(localStorage.getItem('powerSessions') || '[]');
+
+        // Power index calculation weights
+        const WEIGHTS = {
+            fortyYardDash: 0.25,    // Lower time = higher power
+            tenYardSplit: 0.15,     // Lower time = higher power
+            verticalJump: 0.20,     // Higher jump = higher power
+            broadJump: 0.20,        // Higher jump = higher power
+            cleanVelocity: 0.10,    // Higher velocity = higher power
+            squatVelocity: 0.10     // Higher velocity = higher power
+        };
+
+        // Baseline values for normalization (approximate athletic averages)
+        const BASELINES = {
+            fortyYardDash: 4.8,     // seconds
+            tenYardSplit: 1.8,      // seconds
+            verticalJump: 24,       // inches
+            broadJump: 90,          // inches
+            cleanVelocity: 1.5,     // m/s
+            squatVelocity: 1.0      // m/s
+        };
+
+        function calculatePowerIndex(metrics) {
+            let totalScore = 0;
+            let totalWeight = 0;
+
+            // Sprint metrics (lower time = better)
+            if (metrics.fortyYardDash) {
+                const score = Math.max(0, (BASELINES.fortyYardDash - metrics.fortyYardDash) / BASELINES.fortyYardDash);
+                totalScore += score * WEIGHTS.fortyYardDash;
+                totalWeight += WEIGHTS.fortyYardDash;
+            }
+
+            if (metrics.tenYardSplit) {
+                const score = Math.max(0, (BASELINES.tenYardSplit - metrics.tenYardSplit) / BASELINES.tenYardSplit);
+                totalScore += score * WEIGHTS.tenYardSplit;
+                totalWeight += WEIGHTS.tenYardSplit;
+            }
+
+            // Jump metrics (higher = better)
+            if (metrics.verticalJump) {
+                const score = metrics.verticalJump / BASELINES.verticalJump;
+                totalScore += score * WEIGHTS.verticalJump;
+                totalWeight += WEIGHTS.verticalJump;
+            }
+
+            if (metrics.broadJump) {
+                const score = metrics.broadJump / BASELINES.broadJump;
+                totalScore += score * WEIGHTS.broadJump;
+                totalWeight += WEIGHTS.broadJump;
+            }
+
+            // Velocity metrics (higher = better)
+            if (metrics.cleanVelocity) {
+                const score = metrics.cleanVelocity / BASELINES.cleanVelocity;
+                totalScore += score * WEIGHTS.cleanVelocity;
+                totalWeight += WEIGHTS.cleanVelocity;
+            }
+
+            if (metrics.squatVelocity) {
+                const score = metrics.squatVelocity / BASELINES.squatVelocity;
+                totalScore += score * WEIGHTS.squatVelocity;
+                totalWeight += WEIGHTS.squatVelocity;
+            }
+
+            if (totalWeight === 0) return 0;
+
+            // Scale to 0-100 range
+            return Math.round((totalScore / totalWeight) * 100);
+        }
+
+        function getPowerRating(index) {
+            if (index >= 90) return "Elite";
+            if (index >= 80) return "Excellent";
+            if (index >= 70) return "Very Good";
+            if (index >= 60) return "Good";
+            if (index >= 50) return "Average";
+            if (index >= 40) return "Below Average";
+            return "Needs Improvement";
+        }
+
+        // Update preview on form input
+        document.addEventListener('input', updatePreview);
+
+        function updatePreview() {
+            const metrics = {
+                fortyYardDash: parseFloat(document.getElementById('fortyYardDash').value) || null,
+                tenYardSplit: parseFloat(document.getElementById('tenYardSplit').value) || null,
+                verticalJump: parseFloat(document.getElementById('verticalJump').value) || null,
+                broadJump: parseFloat(document.getElementById('broadJump').value) || null,
+                cleanVelocity: parseFloat(document.getElementById('cleanVelocity').value) || null,
+                squatVelocity: parseFloat(document.getElementById('squatVelocity').value) || null
+            };
+
+            const hasData = Object.values(metrics).some(v => v !== null);
+            const previewDiv = document.getElementById('powerIndexPreview');
+
+            if (hasData) {
+                const index = calculatePowerIndex(metrics);
+                document.getElementById('previewIndex').textContent = index;
+                document.getElementById('previewRating').textContent = getPowerRating(index);
+                previewDiv.style.display = 'block';
+            } else {
+                previewDiv.style.display = 'none';
+            }
+        }
+
+        // Form submission
+        document.getElementById('powerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const sessionDate = document.getElementById('sessionDate').value;
+            const metrics = {
+                fortyYardDash: parseFloat(document.getElementById('fortyYardDash').value) || null,
+                tenYardSplit: parseFloat(document.getElementById('tenYardSplit').value) || null,
+                verticalJump: parseFloat(document.getElementById('verticalJump').value) || null,
+                broadJump: parseFloat(document.getElementById('broadJump').value) || null,
+                cleanVelocity: parseFloat(document.getElementById('cleanVelocity').value) || null,
+                squatVelocity: parseFloat(document.getElementById('squatVelocity').value) || null
+            };
+
+            const notes = document.getElementById('notes').value;
+            const powerIndex = calculatePowerIndex(metrics);
+
+            // Check if session already exists for this date
+            const existingSession = sessions.find(session => session.date === sessionDate);
+            if (existingSession) {
+                if (!confirm('A session already exists for this date. Do you want to update it?')) {
+                    return;
+                }
+                // Update existing session
+                existingSession.metrics = metrics;
+                existingSession.powerIndex = powerIndex;
+                existingSession.notes = notes;
+                existingSession.timestamp = new Date().toISOString();
+            } else {
+                const session = {
+                    id: Date.now(),
+                    date: sessionDate,
+                    metrics: metrics,
+                    powerIndex: powerIndex,
+                    notes: notes,
+                    timestamp: new Date().toISOString()
+                };
+                sessions.push(session);
+            }
+
+            localStorage.setItem('powerSessions', JSON.stringify(sessions));
+
+            // Reset form
+            this.reset();
+            document.getElementById('sessionDate').value = sessionDate; // Keep date
+            document.getElementById('powerIndexPreview').style.display = 'none';
+
+            updateDashboard();
+            updateSessionsList();
+        });
+
+        function updateDashboard() {
+            if (sessions.length === 0) {
+                document.querySelector('#currentPowerIndex .power-index-value').textContent = '--';
+                document.querySelector('#currentPowerIndex .power-index-rating').textContent = '--';
+                document.getElementById('bestPowerIndex').textContent = '--';
+                document.getElementById('avgPowerIndex').textContent = '--';
+                document.getElementById('powerTrend').textContent = '--';
+                document.getElementById('totalSessions').textContent = '--';
+                if (powerChart) powerChart.destroy();
+                return;
+            }
+
+            // Sort sessions by date
+            sessions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Current session (latest)
+            const latest = sessions[sessions.length - 1];
+            document.querySelector('#currentPowerIndex .power-index-value').textContent = latest.powerIndex;
+            document.querySelector('#currentPowerIndex .power-index-rating').textContent = getPowerRating(latest.powerIndex);
+
+            // Best index
+            const bestIndex = Math.max(...sessions.map(s => s.powerIndex));
+            document.getElementById('bestPowerIndex').textContent = bestIndex;
+
+            // Average index
+            const avgIndex = Math.round(sessions.reduce((sum, s) => sum + s.powerIndex, 0) / sessions.length);
+            document.getElementById('avgPowerIndex').textContent = avgIndex;
+
+            // Trend (last 3 sessions)
+            const recentSessions = sessions.slice(-3);
+            if (recentSessions.length >= 2) {
+                const trend = recentSessions[recentSessions.length - 1].powerIndex - recentSessions[0].powerIndex;
+                const trendSymbol = trend > 0 ? '↗' : trend < 0 ? '↘' : '→';
+                document.getElementById('powerTrend').innerHTML = `${trendSymbol} ${Math.abs(trend)}`;
+            } else {
+                document.getElementById('powerTrend').textContent = '--';
+            }
+
+            // Total sessions
+            document.getElementById('totalSessions').textContent = sessions.length;
+
+            // Update chart
+            const ctx = document.getElementById('powerChart').getContext('2d');
+            if (powerChart) powerChart.destroy();
+
+            powerChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sessions.map(s => new Date(s.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Power Index',
+                        data: sessions.map(s => s.powerIndex),
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#f59e0b',
+                        pointBorderColor: '#f59e0b',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Explosive Power Index Trends'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 0,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Power Index (0-100)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateSessionsList() {
+            const list = document.getElementById('sessionsList');
+            list.innerHTML = '';
+
+            // Show last 10 sessions
+            const recentSessions = sessions.slice(-10).reverse();
+
+            recentSessions.forEach(session => {
+                const item = document.createElement('div');
+                item.className = 'entry-item';
+
+                const metricsDisplay = [];
+                if (session.metrics.fortyYardDash) metricsDisplay.push(`40yd: ${session.metrics.fortyYardDash}s`);
+                if (session.metrics.tenYardSplit) metricsDisplay.push(`10yd: ${session.metrics.tenYardSplit}s`);
+                if (session.metrics.verticalJump) metricsDisplay.push(`VJ: ${session.metrics.verticalJump}"`);
+                if (session.metrics.broadJump) metricsDisplay.push(`BJ: ${session.metrics.broadJump}"`);
+                if (session.metrics.cleanVelocity) metricsDisplay.push(`Clean: ${session.metrics.cleanVelocity}m/s`);
+                if (session.metrics.squatVelocity) metricsDisplay.push(`Squat: ${session.metrics.squatVelocity}m/s`);
+
+                item.innerHTML = `
+                    <div class="entry-info">
+                        <div class="entry-date">${new Date(session.date).toLocaleDateString()}</div>
+                        <div class="entry-metrics">
+                            ${metricsDisplay.map(metric => `<div class="entry-metric">${metric}</div>`).join('')}
+                        </div>
+                        <div class="entry-power-index">Power Index: ${session.powerIndex} (${getPowerRating(session.powerIndex)})</div>
+                        ${session.notes ? `<div class="entry-notes" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">${session.notes}</div>` : ''}
+                    </div>
+                    <button class="delete-btn" onclick="deleteSession(${session.id})">Delete</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function deleteSession(id) {
+            sessions = sessions.filter(session => session.id !== id);
+            localStorage.setItem('powerSessions', JSON.stringify(sessions));
+            updateDashboard();
+            updateSessionsList();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('sessionDate').value = new Date().toISOString().split('T')[0];
+            updateDashboard();
+            updateSessionsList();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

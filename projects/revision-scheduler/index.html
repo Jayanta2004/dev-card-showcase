@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>revision scheduler · spaced repetition</title>
+    <!-- clean font & base -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>s
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #eaf0f6;
+            background: linear-gradient(145deg, #e2eaf1 0%, #f0f6fc 100%);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+            color: #1c3a47;
+        }
+
+        .scheduler-card {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 48px;
+            box-shadow: 0 30px 45px -20px #1a3b4870, 0 8px 20px -12px #122b36;
+            padding: 2.2rem 2.2rem 2.5rem;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 1.8rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #0a2c3c;
+        }
+
+        h1 span {
+            background: #264f61;
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 0.3rem 1rem;
+            border-radius: 60px;
+            margin-left: 0.5rem;
+        }
+
+        .badge {
+            background: #d0e2ee;
+            border-radius: 60px;
+            padding: 0.45rem 1.4rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1d5268;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            backdrop-filter: blur(4px);
+            border: 1px solid #b8d0dd;
+        }
+
+        /* input row — add new topic */
+        .add-section {
+            background: #ffffffd0;
+            border-radius: 100px;
+            padding: 0.5rem 0.5rem 0.5rem 1.8rem;
+            margin-bottom: 2.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.7rem;
+            border: 1px solid #d6e4ec;
+            box-shadow: 0 10px 18px -14px #143946;
+        }
+
+        .add-section input {
+            flex: 3 1 240px;
+            background: transparent;
+            border: none;
+            padding: 0.8rem 0.5rem;
+            font-size: 1rem;
+            font-weight: 450;
+            color: #072a37;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .add-section input::placeholder {
+            color: #6c93a5;
+            font-weight: 400;
+        }
+
+        .add-section button {
+            background: #1d4c60;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.15s;
+            border: 1px solid #ffffff50;
+            box-shadow: 0 4px 12px -6px #0f2f3b;
+            white-space: nowrap;
+        }
+
+        .add-section button:hover {
+            background: #256f88;
+        }
+
+        /* two column layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1.2fr 0.9fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 720px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+
+        /* upcoming tasks panel */
+        .panel {
+            background: #fafeffd0;
+            backdrop-filter: blur(6px);
+            border-radius: 36px;
+            padding: 1.6rem 1.6rem 1.8rem;
+            border: 1px solid #c9deea;
+            box-shadow: 0 8px 20px -14px #142730;
+        }
+
+        .panel h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #194d5e;
+            margin-bottom: 1.2rem;
+            border-bottom: 2px dashed #b1d2e0;
+            padding-bottom: 0.6rem;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .task-item {
+            background: white;
+            border-radius: 24px;
+            padding: 1rem 1.2rem 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            border-left: 6px solid #78b5c9;
+            box-shadow: 0 6px 12px -10px #1b4959;
+            transition: all 0.1s;
+        }
+
+        .task-item.overdue {
+            border-left-color: #c95a4b;
+            background: #fff5f0;
+        }
+
+        .task-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .task-title {
+            font-weight: 650;
+            font-size: 1.1rem;
+            color: #04313e;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 1.2rem;
+            font-size: 0.8rem;
+            color: #3b6d80;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+        }
+
+        .pill {
+            background: #d9ecf3;
+            border-radius: 40px;
+            padding: 0.4rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1c5a6b;
+        }
+
+        .btn-icon {
+            background: #e0edf5;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.1s;
+            color: #154c5e;
+            font-weight: 600;
+            border: 1px solid #bcd3e0;
+        }
+
+        .btn-icon:hover {
+            background: #c7deec;
+            transform: scale(1.04);
+        }
+
+        .btn-icon.done {
+            background: #a0d3e4;
+        }
+
+        /* library (all topics) */
+        .topic-item {
+            background: white;
+            border-radius: 20px;
+            padding: 0.9rem 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.6rem;
+            border: 1px solid #d3e3ec;
+        }
+
+        .topic-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .topic-name {
+            font-weight: 600;
+            color: #0d3e4f;
+        }
+
+        .interval-badge {
+            background: #dcebf3;
+            border-radius: 100px;
+            padding: 0.3rem 0.9rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #20576b;
+        }
+
+        .reset-interval {
+            background: none;
+            border: 1.5px solid #a5c2d0;
+            border-radius: 40px;
+            padding: 0.3rem 1.1rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #175065;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .reset-interval:hover {
+            background: #c3ddee;
+        }
+
+        .empty-state {
+            color: #577d8b;
+            padding: 2rem;
+            text-align: center;
+            font-style: italic;
+            background: #eaf3f8;
+            border-radius: 32px;
+        }
+
+        /* spaced repetition logic */
+        .footer-note {
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: #3d7285;
+            background: #eef5f9;
+            padding: 0.7rem 1.8rem;
+            border-radius: 60px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="scheduler-card">
+        <div class="header">
+            <h1>
+                📅 revision scheduler
+                <span>spaced</span>
+            </h1>
+            <div class="badge" id="nextBadge">🔔 next: --</div>
+        </div>
+
+        <!-- input field to add new topic -->
+        <div class="add-section">
+            <input type="text" id="newTopicInput" placeholder="e.g. 'Photosynthesis', 'French verbs', 'CSS Grid'...">
+            <button id="addTopicBtn">➕ add topic</button>
+        </div>
+
+        <!-- main dashboard two columns -->
+        <div class="dashboard">
+            <!-- LEFT: upcoming revisions -->
+            <div class="panel">
+                <h2>📋 upcoming revisions</h2>
+                <div id="taskListContainer" class="task-list">
+                    <!-- dynamic injected via js -->
+                </div>
+                <div style="text-align:right; color:#1c5a6b; font-size:0.85rem;" id="dueCountDisplay"></div>
+            </div>
+
+            <!-- RIGHT: topic library (manage intervals) -->
+            <div class="panel">
+                <h2>📚 topic library</h2>
+                <div id="topicLibraryContainer">
+                    <!-- dynamic list of all topics with reset option -->
+                </div>
+                <div class="footer-note" style="margin-top:1.2rem;">
+                    <span>⚡ after review → click ✓</span>
+                    <span>↻ reset interval back to 1d</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- extra status line (spacing info) -->
+        <div class="footer-note" style="margin-top:1.8rem;">
+            <span>🧠 spaced repetition: 1d → 3d → 7d → 14d → 30d</span>
+            <span id="totalTopics">0 topics</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---- revision scheduler state (local storage could be added, but keep in memory for demo) ----
+            let topics = [];
+
+            // predefined intervals (days) for spaced repetition
+            const INTERVALS = [1, 3, 7, 14, 30];  // days
+
+            // ---- helper: generate a new due date based on current stage ----
+            function getDueDateFromStage(stageIndex) {
+                if (stageIndex >= INTERVALS.length) stageIndex = INTERVALS.length - 1;
+                const days = INTERVALS[stageIndex];
+                const now = new Date();
+                now.setDate(now.getDate() + days);
+                return now;
+            }
+
+            // format date: YYYY-MM-DD (sortable, short)
+            function formatDate(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+
+            // ---- default seed topics (for demo) ----
+            function createDefaultTopics() {
+                const now = new Date();
+                const today = new Date(now);
+                const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+                const inThree = new Date(now); inThree.setDate(inThree.getDate() + 3);
+                const lastWeek = new Date(now); lastWeek.setDate(lastWeek.getDate() - 2); // overdue example
+
+                return [
+                    { id: 't1', name: 'Photosynthesis', stage: 0, dueDate: tomorrow, created: new Date() },
+                    { id: 't2', name: 'French irregular verbs', stage: 1, dueDate: inThree, created: new Date() },
+                    { id: 't3', name: 'CSS Flexbox', stage: 2, dueDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7), created: new Date() },
+                    { id: 't4', name: 'WWII dates', stage: 0, dueDate: lastWeek, created: new Date() }, // overdue
+                    { id: 't5', name: 'Organic chemistry', stage: 1, dueDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2), created: new Date() },
+                ];
+            }
+
+            // initialize with defaults
+            topics = createDefaultTopics();
+
+            // ----- DOM elements -----
+            const taskContainer = document.getElementById('taskListContainer');
+            const libraryContainer = document.getElementById('topicLibraryContainer');
+            const dueCountSpan = document.getElementById('dueCountDisplay');
+            const nextBadge = document.getElementById('nextBadge');
+            const totalTopicsSpan = document.getElementById('totalTopics');
+            const addBtn = document.getElementById('addTopicBtn');
+            const newInput = document.getElementById('newTopicInput');
+
+            // ----- helper: generate unique id (simple) -----
+            function generateId() {
+                return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            }
+
+            // ----- add new topic (stage 0, due tomorrow) -----
+            function addNewTopic(name) {
+                if (!name.trim()) return;
+                const now = new Date();
+                const due = new Date(now);
+                due.setDate(due.getDate() + INTERVALS[0]); // +1 day
+
+                const newTopic = {
+                    id: generateId(),
+                    name: name.trim(),
+                    stage: 0,
+                    dueDate: due,
+                    created: new Date()
+                };
+                topics.push(newTopic);
+                renderAll();
+            }
+
+            // ----- mark topic as reviewed (move to next stage) -----
+            function markDone(topicId) {
+                const topic = topics.find(t => t.id === topicId);
+                if (!topic) return;
+
+                // move to next stage (if not already at max)
+                if (topic.stage < INTERVALS.length - 1) {
+                    topic.stage += 1;
+                }
+                // else stay at max stage (30d)
+
+                // recalc due date based on new stage
+                const newDue = new Date();
+                newDue.setDate(newDue.getDate() + INTERVALS[topic.stage]);
+                topic.dueDate = newDue;
+
+                renderAll();
+            }
+
+            // ----- reset topic stage to 0 (1 day) -----
+            function resetInterval(topicId) {
+                const topic = topics.find(t => t.id === topicId);
+                if (!topic) return;
+                topic.stage = 0;
+                const newDue = new Date();
+                newDue.setDate(newDue.getDate() + INTERVALS[0]);
+                topic.dueDate = newDue;
+                renderAll();
+            }
+
+            // ----- render both panels -----
+            function renderAll() {
+                renderTaskList();
+                renderLibrary();
+                updateMeta();
+            }
+
+            // ----- render upcoming tasks (sorted by due date) -----
+            function renderTaskList() {
+                // sort topics by due date (ascending)
+                const sorted = [...topics].sort((a, b) => a.dueDate - b.dueDate);
+
+                if (sorted.length === 0) {
+                    taskContainer.innerHTML = `<div class="empty-state">✨ no topics — add one above</div>`;
+                    return;
+                }
+
+                let html = '';
+                const today = new Date();
+                today.setHours(0,0,0,0);
+
+                sorted.forEach(topic => {
+                    const due = new Date(topic.dueDate);
+                    const dueStr = formatDate(due);
+                    const isOverdue = due < today;
+
+                    // human friendly stage text
+                    const stageText = `stage ${topic.stage+1}/${INTERVALS.length}`;
+
+                    html += `<div class="task-item ${isOverdue ? 'overdue' : ''}">
+                        <div class="task-info">
+                            <span class="task-title">${topic.name}</span>
+                            <div class="task-meta">
+                                <span>📅 due: ${dueStr}</span>
+                                <span class="pill">${stageText} · next ${INTERVALS[topic.stage]}d</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn-icon done" data-id="${topic.id}" title="mark reviewed">✓</button>
+                        </div>
+                    </div>`;
+                });
+
+                taskContainer.innerHTML = html;
+
+                // attach event listeners to done buttons
+                document.querySelectorAll('.btn-icon.done').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = btn.dataset.id;
+                        markDone(id);
+                    });
+                });
+            }
+
+            // ----- render library with reset buttons -----
+            function renderLibrary() {
+                if (topics.length === 0) {
+                    libraryContainer.innerHTML = `<div class="empty-state">📌 no topics yet</div>`;
+                    return;
+                }
+
+                let libHtml = '';
+                topics.forEach(topic => {
+                    const dueStr = formatDate(new Date(topic.dueDate));
+                    libHtml += `<div class="topic-item">
+                        <div class="topic-left">
+                            <span class="topic-name">${topic.name}</span>
+                            <span class="interval-badge">stage ${topic.stage} · ${INTERVALS[topic.stage]}d</span>
+                            <span style="font-size:0.7rem; color:#366f83;">due ${dueStr}</span>
+                        </div>
+                        <button class="reset-interval" data-id="${topic.id}">↻ reset to 1d</button>
+                    </div>`;
+                });
+
+                libraryContainer.innerHTML = libHtml;
+
+                // attach reset listeners
+                document.querySelectorAll('.reset-interval').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = btn.dataset.id;
+                        resetInterval(id);
+                    });
+                });
+            }
+
+            // ----- update footer and badge (next due)-----
+            function updateMeta() {
+                totalTopicsSpan.innerText = topics.length + ' topics';
+
+                if (topics.length === 0) {
+                    nextBadge.innerText = '🔔 next: —';
+                    dueCountSpan.innerText = '';
+                    return;
+                }
+
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const upcoming = topics.filter(t => new Date(t.dueDate) >= today);
+                const overdue = topics.filter(t => new Date(t.dueDate) < today);
+
+                const sorted = [...topics].sort((a,b) => a.dueDate - b.dueDate);
+                const next = sorted[0];
+                const nextDate = formatDate(new Date(next.dueDate));
+                nextBadge.innerText = `🔔 next: ${next.name} (${nextDate})`;
+
+                dueCountSpan.innerText = `📌 overdue: ${overdue.length}  |  upcoming: ${upcoming.length}`;
+            }
+
+            // ----- event listener: add topic -----
+            addBtn.addEventListener('click', () => {
+                addNewTopic(newInput.value);
+                newInput.value = '';
+            });
+
+            newInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addNewTopic(newInput.value);
+                    newInput.value = '';
+                }
+            });
+
+            // initial render
+            renderAll();
+
+            // (optional) expose for debugging
+            window.__scheduler = { topics, addNewTopic, markDone, resetInterval };
+        })();
+    </script>
+
+    <!-- subtle watermark -->
+    <div style="position: fixed; bottom: 14px; left: 24px; color: #4d7f92; background: #cde1ec70; padding: 6px 18px; border-radius: 60px; font-size: 0.7rem; backdrop-filter: blur(4px);">⏱️ revision scheduler · spaced repetition</div>
+</body>
+</html>

@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Emotion Guesser 🎮</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeInDown 1s ease;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #FFD700, #FF8C00);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .emoji-display {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            width: 100%;
+            min-height: 200px;
+            animation: pulse 2s infinite alternate;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .emoji-display::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        .emoji {
+            font-size: 5rem;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
+            animation: bounce 2s infinite;
+            transition: transform 0.3s;
+        }
+        
+        .emoji:hover {
+            transform: scale(1.2) rotate(10deg);
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .options-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .option {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            animation: fadeInUp 0.5s ease backwards;
+        }
+        
+        .option:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .option.correct {
+            background: rgba(46, 204, 113, 0.7);
+            animation: correctPulse 0.5s;
+        }
+        
+        .option.wrong {
+            background: rgba(231, 76, 60, 0.7);
+            animation: shake 0.5s;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            animation: fadeIn 1s ease 0.5s backwards;
+        }
+        
+        .stat-box {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: block;
+            color: #FFD700;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .feedback {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .correct-feedback {
+            color: #2ecc71;
+            text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+        
+        .wrong-feedback {
+            color: #e74c3c;
+            text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .next-btn {
+            background: linear-gradient(to right, #FF416C, #FF4B2B);
+            color: white;
+        }
+        
+        .next-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 65, 108, 0.3);
+        }
+        
+        .hint-btn {
+            background: linear-gradient(to right, #36D1DC, #5B86E5);
+            color: white;
+        }
+        
+        .hint-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(91, 134, 229, 0.3);
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            animation: fadeIn 1s ease 1s backwards;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .emoji-count {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0.3;
+            animation: float 10s infinite linear;
+        }
+        
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1);
+            }
+            100% {
+                box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
+            }
+        }
+        
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        @keyframes correctPulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            10%, 30%, 50%, 70%, 90% {
+                transform: translateX(-5px);
+            }
+            20%, 40%, 60%, 80% {
+                transform: translateX(5px);
+            }
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+        .delay-4 { animation-delay: 0.8s; }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <div class="emoji-count" id="emojiCount">Round: 1/10</div>
+        
+        <div class="header">
+            <h1><i class="fas fa-gamepad"></i> Emoji Emotion Guesser</h1>
+            <p>Can you decode the emotion or situation represented by these emoji combinations? Test your emotional intelligence in this playful game!</p>
+        </div>
+        
+        <div class="game-area">
+            <div class="emoji-display" id="emojiDisplay">
+                <!-- Emojis will be dynamically inserted here -->
+            </div>
+            
+            <div class="feedback" id="feedback"></div>
+            
+            <div class="options-container" id="optionsContainer">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <span class="stat-value" id="score">0</span>
+                <span class="stat-label">Score</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value" id="accuracy">0%</span>
+                <span class="stat-label">Accuracy</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value" id="streak">0</span>
+                <span class="stat-label">Current Streak</span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="next-btn" id="nextBtn">
+                <i class="fas fa-forward"></i> Next Combination
+            </button>
+            <button class="hint-btn" id="hintBtn">
+                <i class="fas fa-lightbulb"></i> Get Hint
+            </button>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-info-circle"></i> How to Play</h3>
+            <ul>
+                <li>Look at the combination of emojis displayed above</li>
+                <li>Choose the emotion or situation you think they represent</li>
+                <li>Get instant feedback on your selection</li>
+                <li>Try to achieve the highest score and accuracy</li>
+                <li>Use hints if you're stuck (limited to 3 per game)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Game data - emoji combinations and their meanings
+        const emojiCombinations = [
+            { emojis: ["😭", "🎂"], emotion: "Birthday sadness", hint: "It's your special day but you're feeling emotional" },
+            { emojis: ["🔥", "📚"], emotion: "Burning passion for learning", hint: "Studying intensely" },
+            { emojis: ["😴", "☕"], emotion: "Need caffeine to wake up", hint: "Morning routine" },
+            { emojis: ["💔", "🍨"], emotion: "Heartbreak comfort eating", hint: "Consoling oneself after a breakup" },
+            { emojis: ["🎉", "🕺"], emotion: "Celebratory dancing", hint: "Party time!" },
+            { emojis: ["😱", "🕷️"], emotion: "Fear of spiders", hint: "Arachnophobia" },
+            { emojis: ["💸", "🛍️"], emotion: "Shopping spree", hint: "Spending money freely" },
+            { emojis: ["🤔", "🔍"], emotion: "Investigating or researching", hint: "Looking for answers" },
+            { emojis: ["🥵", "🏖️"], emotion: "Hot day at the beach", hint: "Summer vacation" },
+            { emojis: ["😤", "💻"], emotion: "Frustration with technology", hint: "Computer problems" },
+            { emojis: ["🤩", "🎬"], emotion: "Starstruck at a movie premiere", hint: "Meeting a celebrity" },
+            { emojis: ["🥶", "☃️"], emotion: "Freezing cold weather", hint: "Winter conditions" },
+            { emojis: ["🤯", "💡"], emotion: "Mind-blowing idea", hint: "Sudden inspiration" },
+            { emojis: ["🤢", "🚗"], emotion: "Motion sickness", hint: "Car ride problems" },
+            { emojis: ["😍", "🐶"], emotion: "Love for puppies", hint: "Adoring a pet" }
+        ];
+        
+        // Other possible emotions for multiple choice (distractors)
+        const otherEmotions = [
+            "Romantic dinner", "Winning a competition", "Morning exercise", 
+            "Cooking disaster", "Surprise party", "Job interview nerves",
+            "Long distance relationship", "Food poisoning", "Getting lost",
+            "All-nighter studying", "Traffic jam stress", "Finding money"
+        ];
+        
+        // Game state
+        let currentRound = 0;
+        let score = 0;
+        let correctAnswers = 0;
+        let totalAttempts = 0;
+        let currentStreak = 0;
+        let maxStreak = 0;
+        let hintsUsed = 0;
+        const maxRounds = 10;
+        let currentCorrectAnswer = "";
+        let gameActive = true;
+        let selectedOption = null;
+        
+        // DOM elements
+        const emojiDisplay = document.getElementById('emojiDisplay');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const feedback = document.getElementById('feedback');
+        const scoreElement = document.getElementById('score');
+        const accuracyElement = document.getElementById('accuracy');
+        const streakElement = document.getElementById('streak');
+        const nextBtn = document.getElementById('nextBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const emojiCount = document.getElementById('emojiCount');
+        
+        // Initialize game
+        function initGame() {
+            currentRound = 0;
+            score = 0;
+            correctAnswers = 0;
+            totalAttempts = 0;
+            currentStreak = 0;
+            hintsUsed = 0;
+            gameActive = true;
+            updateStats();
+            generateParticles();
+            nextRound();
+        }
+        
+        // Generate a new round
+        function nextRound() {
+            if (currentRound >= maxRounds) {
+                endGame();
+                return;
+            }
+            
+            currentRound++;
+            emojiCount.textContent = `Round: ${currentRound}/${maxRounds}`;
+            feedback.innerHTML = "";
+            feedback.className = "feedback";
+            
+            // Get a random emoji combination
+            const randomIndex = Math.floor(Math.random() * emojiCombinations.length);
+            const combination = emojiCombinations[randomIndex];
+            currentCorrectAnswer = combination.emotion;
+            
+            // Display emojis with animation
+            emojiDisplay.innerHTML = "";
+            combination.emojis.forEach((emoji, index) => {
+                const emojiElement = document.createElement('div');
+                emojiElement.className = `emoji delay-${index}`;
+                emojiElement.textContent = emoji;
+                emojiDisplay.appendChild(emojiElement);
+            });
+            
+            // Generate options (1 correct + 3 random)
+            const options = [combination.emotion];
+            while (options.length < 4) {
+                const randomEmotion = otherEmotions[Math.floor(Math.random() * otherEmotions.length)];
+                if (!options.includes(randomEmotion)) {
+                    options.push(randomEmotion);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Display options
+            optionsContainer.innerHTML = "";
+            options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = `option delay-${index}`;
+                optionElement.innerHTML = `<i class="far fa-circle"></i> ${option}`;
+                optionElement.addEventListener('click', () => selectOption(option, optionElement));
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Reset selected option
+            selectedOption = null;
+            
+            // Update button states
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = "0.5";
+            hintBtn.disabled = false;
+            hintBtn.style.opacity = "1";
+        }
+        
+        // Select an option
+        function selectOption(option, element) {
+            if (!gameActive || selectedOption !== null) return;
+            
+            selectedOption = option;
+            totalAttempts++;
+            
+            // Disable all options
+            const allOptions = document.querySelectorAll('.option');
+            allOptions.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+            });
+            
+            // Check if correct
+            const isCorrect = option === currentCorrectAnswer;
+            
+            // Update UI based on correctness
+            if (isCorrect) {
+                element.classList.add('correct');
+                feedback.textContent = "Correct! 🎉 Well done!";
+                feedback.className = "feedback correct-feedback";
+                score += 10;
+                correctAnswers++;
+                currentStreak++;
+                maxStreak = Math.max(maxStreak, currentStreak);
+                
+                // Bonus for streak
+                if (currentStreak >= 3) {
+                    score += 5;
+                    feedback.textContent += ` +5 bonus for ${currentStreak} in a row! 🔥`;
+                }
+            } else {
+                element.classList.add('wrong');
+                feedback.textContent = `Not quite! The answer was: ${currentCorrectAnswer}`;
+                feedback.className = "feedback wrong-feedback";
+                currentStreak = 0;
+                
+                // Highlight correct answer
+                allOptions.forEach(opt => {
+                    if (opt.textContent.includes(currentCorrectAnswer)) {
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+            
+            // Update stats
+            updateStats();
+            
+            // Enable next button
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = "1";
+        }
+        
+        // Update game statistics
+        function updateStats() {
+            scoreElement.textContent = score;
+            const accuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : 0;
+            accuracyElement.textContent = `${accuracy}%`;
+            streakElement.textContent = currentStreak;
+        }
+        
+        // End game
+        function endGame() {
+            gameActive = false;
+            emojiDisplay.innerHTML = `<div style="font-size: 4rem; text-align: center;">🎮 Game Complete! 🏆</div>`;
+            optionsContainer.innerHTML = "";
+            
+            let message = `Your final score: ${score}<br>`;
+            message += `Accuracy: ${Math.round((correctAnswers / totalAttempts) * 100)}%<br>`;
+            message += `Best streak: ${maxStreak}`;
+            
+            feedback.innerHTML = message;
+            feedback.className = "feedback correct-feedback";
+            
+            nextBtn.innerHTML = `<i class="fas fa-redo"></i> Play Again`;
+            nextBtn.onclick = initGame;
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = "1";
+            hintBtn.style.display = "none";
+        }
+        
+        // Provide hint
+        function provideHint() {
+            if (hintsUsed >= 3 || selectedOption !== null) return;
+            
+            hintsUsed++;
+            
+            // Find the correct combination for the current round
+            const currentEmojis = Array.from(emojiDisplay.querySelectorAll('.emoji'))
+                .map(e => e.textContent)
+                .join('');
+                
+            const combination = emojiCombinations.find(c => 
+                c.emojis.join('') === currentEmojis
+            );
+            
+            if (combination) {
+                feedback.textContent = `Hint: ${combination.hint}`;
+                feedback.className = "feedback";
+                
+                // Animate the hint button to show remaining hints
+                hintBtn.innerHTML = `<i class="fas fa-lightbulb"></i> Hint (${3 - hintsUsed} left)`;
+                hintBtn.style.animation = "pulse 0.5s";
+                setTimeout(() => {
+                    hintBtn.style.animation = "";
+                }, 500);
+                
+                // Disable hint button if no hints left
+                if (hintsUsed >= 3) {
+                    hintBtn.disabled = true;
+                    hintBtn.style.opacity = "0.5";
+                }
+            }
+        }
+        
+        // Utility function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Create floating particles for background
+        function generateParticles() {
+            const particlesContainer = document.getElementById('particles');
+            particlesContainer.innerHTML = '';
+            
+            const emojis = ["😀", "😎", "🤔", "😍", "🥳", "😭", "🤯", "🥶", "🤢", "😴"];
+            
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                
+                // Random position and animation
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.fontSize = `${Math.random() * 1.5 + 1}rem`;
+                particle.style.animationDuration = `${Math.random() * 10 + 10}s`;
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        // Event listeners
+        nextBtn.addEventListener('click', () => {
+            if (nextBtn.disabled) return;
+            if (currentRound >= maxRounds) {
+                initGame();
+            } else {
+                nextRound();
+            }
+        });
+        
+        hintBtn.addEventListener('click', provideHint);
+        
+        // Initialize the game
+        initGame();
+        
+        // Add some instruction animations on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                feedback.textContent = "Select an option to begin! Good luck! 🍀";
+                feedback.className = "feedback";
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

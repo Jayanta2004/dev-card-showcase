@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commit Genius | AI Git Commit Message Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+   <linK rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-code-branch text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold bg-gradient-to-r from-green-400 to-purple-400 bg-clip-text text-transparent">CommitGenius</h1>
+                        <p class="text-xs text-gray-400">AI-Powered Commit Messages</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-800 transition-colors">
+                        <i class="fas fa-moon text-gray-400"></i>
+                    </button>
+                    <button id="tutorialBtn" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fas fa-graduation-cap mr-2"></i>Tutorial
+                    </button>
+                    <button id="exportBtn" class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fas fa-download mr-2"></i>Export History
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Input & Controls -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold mb-2">Generate Perfect Commit Messages</h2>
+                    <p class="text-gray-400">AI-powered suggestions based on your code changes</p>
+                </div>
+
+                <!-- Input Section -->
+                <div class="commit-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold flex items-center">
+                            <i class="fas fa-code mr-3 text-green-400"></i>Describe Your Changes
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-400">Language:</span>
+                            <select id="languageSelect" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-sm">
+                                <option value="any">Any Language</option>
+                                <option value="javascript">JavaScript/TypeScript</option>
+                                <option value="python">Python</option>
+                                <option value="java">Java</option>
+                                <option value="cpp">C/C++</option>
+                                <option value="php">PHP</option>
+                                <option value="ruby">Ruby</option>
+                                <option value="go">Go</option>
+                                <option value="rust">Rust</option>
+                                <option value="swift">Swift</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Diff Input -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            <i class="fas fa-file-code mr-2"></i>Paste Your Code Changes (Optional)
+                        </label>
+                        <div class="relative">
+                            <textarea 
+                                id="diffInput" 
+                                rows="8" 
+                                class="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 font-mono text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                placeholder="Paste your git diff here, or describe what you changed..."
+                            ></textarea>
+                            <div class="absolute bottom-3 right-3 flex space-x-2">
+                                <button id="clearDiffBtn" class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors" title="Clear">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button id="exampleBtn" class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors" title="Load Example">
+                                    <i class="fas fa-lightbulb"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description Input -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            <i class="fas fa-comment-dots mr-2"></i>Describe Changes in Plain English
+                        </label>
+                        <div class="prompt-bubble p-4">
+                            <textarea 
+                                id="descriptionInput" 
+                                rows="3" 
+                                class="w-full bg-transparent border-none resize-none focus:ring-0 focus:outline-none placeholder-gray-500"
+                                placeholder="Example: Fixed login bug where users couldn't reset password, added validation for email format..."
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Commit Type Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-300 mb-3">
+                            <i class="fas fa-tag mr-2"></i>Commit Type
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                            <button data-type="feat" class="commit-type-btn tag-feat py-3 rounded-lg text-center hover:scale-105 transition-all">
+                                <div class="text-lg mb-1">✨</div>
+                                <div class="font-medium">feat</div>
+                                <div class="text-xs text-gray-400">New feature</div>
+                            </button>
+                            <button data-type="fix" class="commit-type-btn tag-fix py-3 rounded-lg text-center hover:scale-105 transition-all">
+                                <div class="text-lg mb-1">🐛</div>
+                                <div class="font-medium">fix</div>
+                                <div class="text-xs text-gray-400">Bug fix</div>
+                            </button>
+                            <button data-type="docs" class="commit-type-btn tag-docs py-3 rounded-lg text-center hover:scale-105 transition-all">
+                                <div class="text-lg mb-1">📚</div>
+                                <div class="font-medium">docs</div>
+                                <div class="text-xs text-gray-400">Documentation</div>
+                            </button>
+                            <button data-type="refactor" class="commit-type-btn tag-refactor py-3 rounded-lg text-center hover:scale-105 transition-all">
+                                <div class="text-lg mb-1">♻️</div>
+                                <div class="font-medium">refactor</div>
+                                <div class="text-xs text-gray-400">Code refactor</div>
+                            </button>
+                            <button data-type="test" class="commit-type-btn tag-test py-3 rounded-lg text-center hover:scale-105 transition-all">
+                                <div class="text-lg mb-1">✅</div>
+                                <div class="font-medium">test</div>
+                                <div class="text-xs text-gray-400">Tests</div>
+                            </button>
+                            <button data-type="chore" class="commit-type-btn tag-chore py-3 rounded-lg text-center hover:scale-105 transition-all">
+                                <div class="text-lg mb-1">🔧</div>
+                                <div class="font-medium">chore</div>
+                                <div class="text-xs text-gray-400">Maintenance</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-sm font-medium text-gray-300">
+                                <i class="fas fa-sliders-h mr-2"></i>Advanced Options
+                            </label>
+                            <button id="toggleAdvanced" class="text-sm text-green-400 hover:text-green-300 transition-colors">
+                                <i class="fas fa-chevron-down mr-1"></i>Show
+                            </button>
+                        </div>
+                        <div id="advancedOptions" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Emoji Style</label>
+                                <select id="emojiStyle" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+                                    <option value="github">GitHub Style</option>
+                                    <option value="gitmoji">GitMoji Style</option>
+                                    <option value="none">No Emoji</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Format Style</label>
+                                <select id="formatStyle" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+                                    <option value="conventional">Conventional Commits</option>
+                                    <option value="simple">Simple</option>
+                                    <option value="detailed">Detailed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Max Length</label>
+                                <div class="flex items-center space-x-3">
+                                    <input type="range" id="maxLength" min="50" max="200" value="100" class="w-full">
+                                    <span id="maxLengthValue" class="text-sm font-mono">100</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Tone</label>
+                                <select id="toneSelect" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+                                    <option value="neutral">Neutral</option>
+                                    <option value="formal">Formal</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="humorous">Humorous</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center space-x-4">
+                            <button id="emojiPickerBtn" class="p-3 bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors" title="Add Emoji">
+                                <i class="fas fa-smile text-yellow-400"></i>
+                            </button>
+                            <div class="relative">
+                                <div id="emojiPicker" class="emoji-picker"></div>
+                            </div>
+                            <div class="text-sm text-gray-400">
+                                <i class="fas fa-lightbulb mr-1"></i>
+                                <span id="suggestionCount">0 suggestions available</span>
+                            </div>
+                        </div>
+                        <button id="generateBtn" class="px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 rounded-xl font-semibold text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center min-w-[200px]">
+                            <i class="fas fa-magic mr-3"></i>
+                            <span>Generate Commit</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="resultsSection" class="commit-card rounded-2xl p-6 hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold flex items-center">
+                            <i class="fas fa-star mr-3 text-yellow-400"></i>Generated Commit Messages
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                            <button id="regenerateBtn" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm transition-colors">
+                                <i class="fas fa-redo mr-2"></i>Regenerate
+                            </button>
+                            <button id="saveAllBtn" class="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-sm transition-colors">
+                                <i class="fas fa-save mr-2"></i>Save All
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- AI Thinking -->
+                    <div id="aiThinking" class="hidden mb-6">
+                        <div class="prompt-bubble p-6">
+                            <div class="ai-thinking justify-center mb-4">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <p class="text-center text-gray-300" id="aiStatus">Analyzing your code changes...</p>
+                            <div class="mt-4 w-full bg-gray-800 rounded-full h-2">
+                                <div id="aiProgress" class="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generated Messages -->
+                    <div id="generatedMessages" class="space-y-4">
+                        <!-- Messages will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Tutorial Overlay -->
+                <div id="tutorialOverlay" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
+                    <div class="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div class="p-8">
+                            <div class="flex items-center justify-between mb-8">
+                                <h3 class="text-2xl font-bold">How to Use CommitGenius</h3>
+                                <button id="closeTutorial" class="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                            <div class="tutorial-step active" data-step="1">
+                                <div class="flex items-start space-x-4 mb-8">
+                                    <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span class="font-bold">1</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xl font-semibold mb-2">Describe Your Changes</h4>
+                                        <p class="text-gray-400 mb-4">Paste your git diff or describe what you changed in plain English. The more detail you provide, the better the results.</p>
+                                        <div class="bg-gray-800 rounded-lg p-4 font-mono text-sm">
+                                            // Example: Fixed null pointer exception in user profile loading
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tutorial-step" data-step="2">
+                                <div class="flex items-start space-x-4 mb-8">
+                                    <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span class="font-bold">2</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xl font-semibold mb-2">Select Commit Type</h4>
+                                        <p class="text-gray-400 mb-4">Choose the appropriate commit type based on Conventional Commits specification.</p>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <div class="tag-feat p-3 rounded-lg">
+                                                <div class="font-medium">feat</div>
+                                                <div class="text-xs text-gray-400">New features</div>
+                                            </div>
+                                            <div class="tag-fix p-3 rounded-lg">
+                                                <div class="font-medium">fix</div>
+                                                <div class="text-xs text-gray-400">Bug fixes</div>
+                                            </div>
+                                            <div class="tag-docs p-3 rounded-lg">
+                                                <div class="font-medium">docs</div>
+                                                <div class="text-xs text-gray-400">Documentation</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tutorial-step" data-step="3">
+                                <div class="flex items-start space-x-4 mb-8">
+                                    <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span class="font-bold">3</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xl font-semibold mb-2">Generate & Refine</h4>
+                                        <p class="text-gray-400 mb-4">Generate multiple commit message options, copy your favorite, or regenerate for more variations.</p>
+                                        <div class="bg-gray-800 rounded-lg p-4">
+                                            <div class="font-mono text-sm mb-2">✨ feat(auth): add password reset functionality</div>
+                                            <div class="flex space-x-2">
+                                                <button class="px-3 py-1 bg-green-600 rounded text-sm">Copy</button>
+                                                <button class="px-3 py-1 bg-gray-700 rounded text-sm">Edit</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center pt-6 border-t border-gray-800">
+                                <button id="prevStep" class="px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i class="fas fa-arrow-left mr-2"></i>Previous
+                                </button>
+                                <div class="flex space-x-2">
+                                    <div class="w-2 h-2 bg-green-600 rounded-full"></div>
+                                    <div class="w-2 h-2 bg-gray-700 rounded-full"></div>
+                                    <div class="w-2 h-2 bg-gray-700 rounded-full"></div>
+                                </div>
+                                <button id="nextStep" class="px-6 py-2 bg-green-600 hover:bg-green-500 rounded-lg transition-colors">
+                                    Next <i class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - History & Stats -->
+            <div class="space-y-8">
+                <!-- Statistics -->
+                <div class="commit-card rounded-2xl p-6">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class="fas fa-chart-line mr-3 text-blue-400"></i>Your Stats
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-gray-900 rounded-xl p-4 text-center">
+                            <div class="text-3xl font-bold text-green-400 mb-1" id="totalCommits">0</div>
+                            <div class="text-sm text-gray-400">Total Generated</div>
+                        </div>
+                        <div class="bg-gray-900 rounded-xl p-4 text-center">
+                            <div class="text-3xl font-bold text-blue-400 mb-1" id="savedCommits">0</div>
+                            <div class="text-sm text-gray-400">Saved</div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-400">Most Used Types</span>
+                                <span class="font-medium" id="topType">-</span>
+                            </div>
+                            <div class="w-full bg-gray-800 rounded-full h-2">
+                                <div id="typeBar" class="bg-green-500 h-2 rounded-full" style="width: 50%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-400">Avg. Length</span>
+                                <span class="font-medium" id="avgLength">-</span>
+                            </div>
+                            <div class="w-full bg-gray-800 rounded-full h-2">
+                                <div id="lengthBar" class="bg-blue-500 h-2 rounded-full" style="width: 60%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="commit-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold flex items-center">
+                            <i class="fas fa-history mr-3 text-purple-400"></i>Recent History
+                        </h3>
+                        <button id="clearHistory" class="text-sm text-gray-400 hover:text-white transition-colors">
+                            <i class="fas fa-trash mr-1"></i>Clear
+                        </button>
+                    </div>
+                    <div id="historyList" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                        <!-- History items will be inserted here -->
+                        <div class="text-center py-8 text-gray-500" id="emptyHistory">
+                            <i class="fas fa-history text-3xl mb-3"></i>
+                            <p>No history yet</p>
+                            <p class="text-sm mt-1">Generated commits will appear here</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Templates -->
+                <div class="commit-card rounded-2xl p-6">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class="fas fa-bolt mr-3 text-yellow-400"></i>Quick Templates
+                    </h3>
+                    <div class="space-y-3">
+                        <button class="template-btn w-full text-left p-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors text-sm" data-template="bugfix">
+                            <div class="font-medium mb-1">🐛 Bug Fix</div>
+                            <div class="text-gray-400 text-xs">Fixed issue where...</div>
+                        </button>
+                        <button class="template-btn w-full text-left p-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors text-sm" data-template="feature">
+                            <div class="font-medium mb-1">✨ New Feature</div>
+                            <div class="text-gray-400 text-xs">Added ability to...</div>
+                        </button>
+                        <button class="template-btn w-full text-left p-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors text-sm" data-template="refactor">
+                            <div class="font-medium mb-1">♻️ Code Refactor</div>
+                            <div class="text-gray-400 text-xs">Improved performance of...</div>
+                        </button>
+                        <button class="template-btn w-full text-left p-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors text-sm" data-template="docs">
+                            <div class="font-medium mb-1">📚 Documentation</div>
+                            <div class="text-gray-400 text-xs">Updated README with...</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Copy Command -->
+                <div class="commit-card rounded-2xl p-6">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-terminal mr-3 text-gray-400"></i>Quick Copy
+                    </h3>
+                    <div class="terminal-effect rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-xs text-gray-400">git commit -m</div>
+                            <button id="copyCmdBtn" class="text-xs text-green-400 hover:text-green-300 transition-colors">
+                                <i class="fas fa-copy mr-1"></i>Copy
+                            </button>
+                        </div>
+                        <div id="copyCommand" class="font-mono text-sm text-gray-300 whitespace-nowrap overflow-x-auto py-2">
+                            <span class="text-green-400">git commit -m</span> <span class="text-yellow-200">""</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 mt-12 py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-code-branch text-white"></i>
+                        </div>
+                        <span class="font-bold">CommitGenius</span>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-2">AI-powered commit messages for better development workflow</p>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <button id="feedbackBtn" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm transition-colors">
+                        <i class="fas fa-comment mr-2"></i>Feedback
+                    </button>
+                </div>
+            </div>
+            <div class="text-center text-gray-500 text-sm mt-8 pt-6 border-t border-gray-800">
+                <p>100% client-side processing • No data sent to servers • Uses browser's localStorage</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Success Toast -->
+    <div id="successToast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-xl shadow-xl transform translate-y-full transition-transform duration-300 z-50 flex items-center space-x-3 max-w-sm">
+        <i class="fas fa-check-circle text-xl"></i>
+        <div>
+            <div class="font-medium" id="toastTitle">Copied to clipboard!</div>
+            <div class="text-sm text-green-100" id="toastMessage">Commit message copied successfully</div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
+        <div class="bg-gray-900 rounded-2xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold">Send Feedback</h3>
+                <button id="closeFeedback" class="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">How can we improve?</label>
+                    <textarea id="feedbackInput" rows="4" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all" placeholder="Your suggestions..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Email (optional)</label>
+                    <input type="email" id="feedbackEmail" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all" placeholder="you@example.com">
+                </div>
+                <button id="submitFeedback" class="w-full py-3 bg-green-600 hover:bg-green-500 rounded-lg font-medium transition-colors">
+                    Send Feedback
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emoji Data -->
+  <script src="script.js"></script>
+</body>
+</html>

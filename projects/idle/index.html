@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head >
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ idle civilization · clicker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1e2f3a, #14303e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            width: 100%;
+            background: #142c38d0;
+            backdrop-filter: blur(16px);
+            border: 2px solid #5fa6c0;
+            border-radius: 60px;
+            padding: 2rem 2rem 2.2rem;
+            box-shadow: 0 35px 40px -15px black, inset 0 1px 6px #c0e8ff;
+        }
+
+        /* header / resources */
+        .res-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            background: #0f2733e0;
+            border-radius: 120px;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid #4797b9;
+            box-shadow: 0 8px 0 #063142;
+        }
+
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fffbdd;
+            text-shadow: 0 3px 0 #1a5a75;
+        }
+        .resource span {
+            font-size: 2rem;
+            background: #1e4d61;
+            padding: 0.2rem 1.2rem;
+            border-radius: 60px;
+            border: 2px solid #ade4ff;
+            color: #fef9d7;
+            min-width: 120px;
+            text-align: center;
+        }
+        .per-second {
+            font-size: 1.1rem;
+            color: #b5e6ff;
+            background: #0e3f51;
+            border-radius: 30px;
+            padding: 0.4rem 1.3rem;
+            border: 1px solid #aae0fc;
+        }
+
+        .main-panel {
+            display: grid;
+            grid-template-columns: 1.2fr 0.9fr;
+            gap: 1.8rem;
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 700px) {
+            .main-panel { grid-template-columns: 1fr; }
+        }
+
+        /* left: clicker area & prestige */
+        .clicker-zone {
+            background: #0e2d3c;
+            border-radius: 48px;
+            border: 2px solid #499bbd;
+            padding: 2rem 1.8rem;
+            box-shadow: inset 0 -6px 0 #042433, 0 15px 20px -5px black;
+        }
+
+        .click-btn {
+            width: 100%;
+            background: radial-gradient(circle at 30% 20%, #ffd966, #e09b32);
+            border: none;
+            border-radius: 120px;
+            padding: 2rem 0.5rem;
+            font-size: 4rem;
+            font-weight: 700;
+            color: #1f2f1c;
+            text-shadow: 0 4px 0 #b0732e;
+            border-bottom: 10px solid #9f6328;
+            border-left: 3px solid #ffe49e;
+            border-right: 3px solid #ffe49e;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: 0.06s linear;
+            box-shadow: 0 15px 0 #7b4d1f;
+        }
+        .click-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 7px 0 #7b4d1f;
+            border-bottom-width: 5px;
+        }
+
+        .prestige-area {
+            background: #153e4e;
+            border-radius: 36px;
+            padding: 1.4rem 1.2rem;
+            border: 2px solid #72bedb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .prestige-btn {
+            background: #d48d3c;
+            border: none;
+            border-radius: 50px;
+            padding: 0.7rem 1.8rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #141f1c;
+            border-bottom: 5px solid #8a5825;
+            box-shadow: 0 7px 0 #5e3b19;
+            cursor: pointer;
+            transition: 0.05s;
+        }
+        .prestige-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #5e3b19;
+        }
+
+        /* right: upgrades */
+        .upgrades-panel {
+            background: #0c2a37;
+            border-radius: 48px;
+            border: 2px solid #489cc2;
+            padding: 1.8rem 1.5rem;
+            box-shadow: inset 0 -4px 0 #0b3342;
+        }
+
+        .upgrades-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 18px;
+            max-height: 370px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+        .upgrade-item {
+            background: #194b5e;
+            border-radius: 100px;
+            padding: 1rem 1.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 2px solid #88d1f0;
+            box-shadow: 0 6px 0 #0a2d38;
+        }
+        .upgrade-info {
+            color: #fffbee;
+        }
+        .upgrade-name {
+            font-weight: 600;
+            font-size: 1.3rem;
+        }
+        .upgrade-desc {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .upgrade-cost {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ffd966;
+        }
+        .buy-btn {
+            background: #58a542;
+            border: none;
+            border-radius: 50px;
+            padding: 0.6rem 1.6rem;
+            font-weight: 600;
+            font-size: 1.3rem;
+            border-bottom: 5px solid #2f6b21;
+            box-shadow: 0 5px 0 #1f4a15;
+            cursor: pointer;
+            color: white;
+            transition: 0.05s;
+        }
+        .buy-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #1f4a15;
+        }
+        .buy-btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(0.7);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.8rem;
+            color: #c7e3f0;
+            font-size: 1.1rem;
+            background: #10313f;
+            padding: 0.9rem 2rem;
+            border-radius: 60px;
+            border: 2px solid #479bbd;
+        }
+
+        footer {
+            text-align: center;
+            color: #85b9cf;
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- resources top bar -->
+        <div class="res-top">
+            <div class="resource">
+                💎 <span id="resourceAmount">150</span>
+            </div>
+            <div class="per-second" id="persecDisplay">⚡ +12.3 /s</div>
+            <div class="resource" style="font-size: 1.6rem;">
+                🔮 prestige <span id="prestigeChips">0</span>
+            </div>
+        </div>
+
+        <!-- main two columns -->
+        <div class="main-panel">
+            <!-- left: click & prestige -->
+            <div class="clicker-zone">
+                <button class="click-btn" id="clickButton">⚡CLICK⚡</button>
+                <div class="prestige-area">
+                    <span style="color:#fee3b5; font-size: 1.5rem;">✨ prestige bonus: <span id="prestigeBonus">1.0</span>x</span>
+                    <button class="prestige-btn" id="prestigeBtn">🌀 PRESTIGE</button>
+                </div>
+                <div style="margin-top: 1rem; color:#a7daf5; display: flex; justify-content: center; gap: 30px;">
+                    <span>👆 clicks: <span id="totalClicks">0</span></span>
+                    <span>🏆 level: <span id="prestigeLevel">0</span></span>
+                </div>
+            </div>
+
+            <!-- right: upgrades -->
+            <div class="upgrades-panel">
+                <h2 style="color:#e9f7ff; font-size: 2rem; margin-left: 10px;">🔨 upgrades</h2>
+                <div class="upgrades-list" id="upgradeList">
+                    <!-- dynamically filled by js -->
+                </div>
+            </div>
+        </div>
+
+        <!-- stats & save -->
+        <div class="stat-row">
+            <span>💠 total generated: <span id="totalGenerated">0</span></span>
+            <span>⏱️ time: <span id="playTime">00:00</span></span>
+            <span>💾 auto-save</span>
+        </div>
+        <footer>
+            ⚙️ idle civilization · each upgrade gives +production
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- game state ----------
+            let resource = 150.0;                // current crystals
+            let totalGenerated = 150.0;           // all-time earn (for stats)
+            let clickPower = 1.0;                 // base per click
+            let prestigeChips = 0;                 // prestige currency
+            let prestigeMultiplier = 1.0;           // from chips (each chip +0.2)
+            let totalClicks = 0;
+
+            // upgrades array
+            let upgrades = [
+                { id: 'pickaxe', name: '⛏️ auto-pick', desc: '+0.8/s', basePrice: 30, price: 30, quantity: 0, income: 0.8, type: 'income' },
+                { id: 'drill', name: '🔩 drill', desc: '+3/s', basePrice: 120, price: 120, quantity: 0, income: 3.0, type: 'income' },
+                { id: 'mine', name: '🏭 deep mine', desc: '+12/s', basePrice: 550, price: 550, quantity: 0, income: 12, type: 'income' },
+                { id: 'clickUp', name: '🔨 power click', desc: '+1 per click', basePrice: 200, price: 200, quantity: 0, income: 1.0, type: 'click' }
+            ];
+
+            // DOM elements
+            const resourceSpan = document.getElementById('resourceAmount');
+            const persecSpan = document.getElementById('persecDisplay');
+            const prestigeChipsSpan = document.getElementById('prestigeChips');
+            const prestigeBonusSpan = document.getElementById('prestigeBonus');
+            const totalClicksSpan = document.getElementById('totalClicks');
+            const totalGeneratedSpan = document.getElementById('totalGenerated');
+            const prestigeLevelSpan = document.getElementById('prestigeLevel');
+            const playTimeSpan = document.getElementById('playTime');
+
+            const clickButton = document.getElementById('clickButton');
+            const prestigeBtn = document.getElementById('prestigeBtn');
+            const upgradeDiv = document.getElementById('upgradeList');
+
+            // time tracking
+            let gameSeconds = 0;
+            let lastUpdate = performance.now();
+
+            // helper: format time MM:SS
+            function formatTime(sec) {
+                let m = Math.floor(sec / 60);
+                let s = Math.floor(sec % 60);
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            // recalc multiplier from prestige chips (each gives +0.2)
+            function updatePrestigeMultiplier() {
+                prestigeMultiplier = 1 + prestigeChips * 0.2;
+                prestigeBonusSpan.innerText = prestigeMultiplier.toFixed(1);
+                prestigeLevelSpan.innerText = prestigeChips;
+            }
+
+            // total income per second (sum of income upgrades * multiplier)
+            function getIncomePerSecond() {
+                let base = 0;
+                upgrades.forEach(u => {
+                    if (u.type === 'income') base += u.quantity * u.income;
+                });
+                return base * prestigeMultiplier;
+            }
+
+            // total click power
+            function getClickPower() {
+                let bonus = 0;
+                upgrades.forEach(u => {
+                    if (u.type === 'click') bonus += u.quantity * u.income;
+                });
+                return (clickPower + bonus) * prestigeMultiplier;
+            }
+
+            // render upgrades list + update prices
+            function renderUpgrades() {
+                let html = '';
+                upgrades.forEach((up, idx) => {
+                    let canAfford = resource >= up.price;
+                    html += `<div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">${up.name}</span>
+                            <span class="upgrade-desc">${up.desc} · owned: ${up.quantity}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <span class="upgrade-cost">💎${Math.round(up.price)}</span>
+                            <button class="buy-btn" data-idx="${idx}" ${!canAfford ? 'disabled' : ''}>buy</button>
+                        </div>
+                    </div>`;
+                });
+                upgradeDiv.innerHTML = html;
+            }
+
+            // buy upgrade
+            function buyUpgrade(index) {
+                let up = upgrades[index];
+                if (resource < up.price) return;
+                resource -= up.price;
+                up.quantity++;
+
+                // increase price (standard idle curve)
+                up.price = Math.floor(up.basePrice * Math.pow(1.5, up.quantity));
+
+                // resource might go negative due to rounding, adjust
+                if (resource < 0) resource = 0;
+                updateUI();
+            }
+
+            // prestige: reset everything but increase chips based on totalGenerated
+            function performPrestige() {
+                if (totalGenerated < 500) {
+                    alert('need at least 500 total crystals to prestige');
+                    return;
+                }
+                // new chips = floor(sqrt(totalGenerated/20)) or something simple
+                let gain = Math.floor(Math.sqrt(totalGenerated / 25));
+                if (gain < 1) gain = 1;
+                prestigeChips += gain;
+
+                // reset everything
+                resource = 50;
+                totalGenerated = 50;
+                totalClicks = 0;
+                upgrades.forEach(u => {
+                    u.quantity = 0;
+                    u.price = u.basePrice;
+                });
+
+                updatePrestigeMultiplier();
+                updateUI();
+            }
+
+            // update all displays
+            function updateUI() {
+                resourceSpan.innerText = Math.floor(resource * 10) / 10;
+                persecSpan.innerText = `⚡ +${getIncomePerSecond().toFixed(1)}/s`;
+                prestigeChipsSpan.innerText = prestigeChips;
+                totalClicksSpan.innerText = totalClicks;
+                totalGeneratedSpan.innerText = Math.floor(totalGenerated);
+                updatePrestigeMultiplier();   // refresh multiplier display
+
+                renderUpgrades(); // also sets button states
+            }
+
+            // game tick (called every ~100ms)
+            function tick(deltaSec) {
+                if (deltaSec > 1) deltaSec = 0.5; // avoid huge jumps after tab inactive
+
+                let income = getIncomePerSecond() * deltaSec;
+                resource += income;
+                totalGenerated += income;
+
+                if (resource < 0) resource = 0;
+                updateUI();
+            }
+
+            // animation / time loop
+            function frame(now) {
+                let delta = (now - lastUpdate) / 1000; // seconds
+                if (delta > 0.05) { // cap at 50ms granularity
+                    tick(Math.min(delta, 0.5));
+                    gameSeconds += delta;
+                    playTimeSpan.innerText = formatTime(gameSeconds);
+                    lastUpdate = now;
+                }
+                requestAnimationFrame(frame);
+            }
+
+            // click handler
+            clickButton.addEventListener('click', () => {
+                let gain = getClickPower();
+                resource += gain;
+                totalGenerated += gain;
+                totalClicks++;
+                updateUI();
+            });
+
+            // upgrade event delegation
+            upgradeDiv.addEventListener('click', (e) => {
+                let btn = e.target.closest('.buy-btn');
+                if (!btn) return;
+                let idx = btn.dataset.idx;
+                if (idx !== undefined) buyUpgrade(parseInt(idx));
+            });
+
+            // prestige button
+            prestigeBtn.addEventListener('click', performPrestige);
+
+            // load dummy initial values and start
+            function initGame() {
+                // set starting prestige 0, but maybe some upgrades for demo
+                upgrades[0].quantity = 1;  // start with one auto-pick
+                upgrades[0].price = Math.floor(upgrades[0].basePrice * 1.5); // reflect owned
+                resource = 150;
+                totalGenerated = 150;
+                totalClicks = 0;
+                gameSeconds = 0;
+                updatePrestigeMultiplier();
+                updateUI();
+                lastUpdate = performance.now();
+                requestAnimationFrame(frame);
+            }
+
+            initGame();
+
+            // optional: save/load local storage? not needed for demo, but we can add simple auto-save later
+            // Add visibility change to avoid huge delta
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    lastUpdate = performance.now(); // reset timer when visible again
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Light & Vehicle Simulation System</title>
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="simulation-container">
+        <div class="header">
+            <h1><i class="fas fa-traffic-light"></i> Traffic Light Simulation</h1>
+            <p class="subtitle">Realistic Traffic Simulation based on Finite State Machine</p>
+        </div>
+
+        <div class="main-content">
+            <div class="intersection-container">
+                <div class="intersection" id="intersection">
+                    <!-- 道路网格 -->
+                    <div class="road horizontal" id="road-east"></div>
+                    <div class="road horizontal" id="road-west"></div>
+                    <div class="road vertical" id="road-north"></div>
+                    <div class="road vertical" id="road-south"></div>
+
+                    <!-- 交叉路口中心区域 -->
+                    <div class="intersection-center"></div>
+
+                    <!-- 交通灯容器 -->
+                    <div class="traffic-light-container north" data-direction="north">
+                        <div class="traffic-light">
+                            <div class="light red active" data-light="red"></div>
+                            <div class="light yellow" data-light="yellow"></div>
+                            <div class="light green" data-light="green"></div>
+                        </div>
+                    </div>
+
+                    <div class="traffic-light-container south" data-direction="south">
+                        <div class="traffic-light">
+                            <div class="light red active" data-light="red"></div>
+                            <div class="light yellow" data-light="yellow"></div>
+                            <div class="light green" data-light="green"></div>
+                        </div>
+                    </div>
+
+                    <div class="traffic-light-container east" data-direction="east">
+                        <div class="traffic-light">
+                            <div class="light red active" data-light="red"></div>
+                            <div class="light yellow" data-light="yellow"></div>
+                            <div class="light green" data-light="green"></div>
+                        </div>
+                    </div>
+
+                    <div class="traffic-light-container west" data-direction="west">
+                        <div class="traffic-light">
+                            <div class="light red active" data-light="red"></div>
+                            <div class="light yellow" data-light="yellow"></div>
+                            <div class="light green" data-light="green"></div>
+                        </div>
+                    </div>
+
+                    <!-- 车辆容器 -->
+                    <div class="vehicles-container" id="vehicles-container"></div>
+
+                    <!-- 网格线 -->
+                    <div class="grid-overlay" id="grid-overlay"></div>
+                </div>
+
+                <div class="simulation-info">
+                    <div class="info-card">
+                        <h3><i class="fas fa-info-circle"></i> Simulation Info</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Total Vehicles</span>
+                                <span class="info-value" id="vehicle-count">0</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Simulation Speed</span>
+                                <span class="info-value" id="simulation-speed">1.0x</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Runtime</span>
+                                <span class="info-value" id="simulation-time">0s</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Status</span>
+                                <span class="info-value status-paused" id="simulation-status">Paused</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 控制面板 -->
+            <div class="control-panel" id="control-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-sliders-h"></i> Control Panel</h3>
+                    <button class="panel-toggle" id="panel-toggle">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+
+                <div class="panel-content" id="panel-content">
+                    <!-- 模拟控制 -->
+                    <div class="control-group">
+                        <h4><i class="fas fa-play-circle"></i> Simulation Controls</h4>
+                        <div class="button-group">
+                            <button class="btn btn-primary" id="btn-start">
+                                <i class="fas fa-play"></i> Start
+                            </button>
+                            <button class="btn btn-secondary" id="btn-pause" disabled>
+                                <i class="fas fa-pause"></i> Pause
+                            </button>
+                            <button class="btn btn-warning" id="btn-reset">
+                                <i class="fas fa-redo"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 速度控制 -->
+                    <div class="control-group">
+                        <h4><i class="fas fa-tachometer-alt"></i> Simulation Speed</h4>
+                        <div class="slider-container">
+                            <div class="slider-labels">
+                                <span>0.5x</span>
+                                <span>1.0x</span>
+                                <span>1.5x</span>
+                                <span>2.0x</span>
+                                <span>3.0x</span>
+                            </div>
+                            <input type="range" min="0.5" max="3" step="0.1" value="1" class="custom-slider"
+                                id="speed-slider">
+                        </div>
+                    </div>
+
+                    <!-- 交通密度 -->
+                    <div class="control-group">
+                        <h4><i class="fas fa-car"></i> Vehicle Density</h4>
+                        <div class="slider-container">
+                            <div class="slider-labels">
+                                <span>Low</span>
+                                <span>Medium</span>
+                                <span>High</span>
+                            </div>
+                            <input type="range" min="1" max="10" step="1" value="5" class="custom-slider"
+                                id="density-slider">
+                        </div>
+                    </div>
+
+                    <!-- 信号灯定时 -->
+                    <div class="control-group">
+                        <h4><i class="fas fa-traffic-light"></i> Traffic Light Timings</h4>
+                        <div class="timing-controls">
+                            <div class="timing-group">
+                                <label>N-S Green</label>
+                                <div class="value-control">
+                                    <button class="btn-icon" data-direction="ns" data-light="green"
+                                        data-action="decrease">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <span class="timing-value" id="ns-green">5</span>s
+                                    <button class="btn-icon" data-direction="ns" data-light="green"
+                                        data-action="increase">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="timing-group">
+                                <label>N-S Yellow</label>
+                                <div class="value-control">
+                                    <button class="btn-icon" data-direction="ns" data-light="yellow"
+                                        data-action="decrease">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <span class="timing-value" id="ns-yellow">2</span>s
+                                    <button class="btn-icon" data-direction="ns" data-light="yellow"
+                                        data-action="increase">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="timing-group">
+                                <label>E-W Green</label>
+                                <div class="value-control">
+                                    <button class="btn-icon" data-direction="ew" data-light="green"
+                                        data-action="decrease">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <span class="timing-value" id="ew-green">5</span>s
+                                    <button class="btn-icon" data-direction="ew" data-light="green"
+                                        data-action="increase">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="timing-group">
+                                <label>E-W Yellow</label>
+                                <div class="value-control">
+                                    <button class="btn-icon" data-direction="ew" data-light="yellow"
+                                        data-action="decrease">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <span class="timing-value" id="ew-yellow">2</span>s
+                                    <button class="btn-icon" data-direction="ew" data-light="yellow"
+                                        data-action="increase">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Display Options -->
+                    <div class="control-group">
+                        <h4><i class="fas fa-eye"></i> Display Options</h4>
+                        <div class="toggle-group">
+                            <button class="toggle-btn active" id="toggle-grid">
+                                <i class="fas fa-th"></i> Grid
+                            </button>
+                            <button class="toggle-btn" id="toggle-paths">
+                                <i class="fas fa-route"></i> Paths
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Traffic Light Simulation System | FSM Based | Independent Vehicle Entities</p>
+        </div>
+    </div>
+
+    <script src="scripts/config.js"></script>
+    <script src="scripts/trafficLights.js"></script>
+    <script src="scripts/vehicles.js"></script>
+    <script src="scripts/simulation.js"></script>
+    <script src="scripts/controls.js"></script>
+</body>
+
+</html>

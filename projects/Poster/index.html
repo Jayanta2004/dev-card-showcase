@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PosturePal - Posture Reminder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #D4A76A;
+            --primary-dark: #B89158;
+            --secondary: #8B6F47;
+            --accent: #C97C5D;
+            --light: #F5E9D9;
+            --dark: #3E3A35;
+            --success: #7A9D54;
+            --warning: #D4A76A;
+            --danger: #C97C5D;
+            --gray: #A8A29E;
+            --white: #FFFDF9;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--white);
+            padding: 25px 0;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+        }
+
+        .logo h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+
+        .app-description {
+            margin-top: 10px;
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border-top: 5px solid var(--primary);
+        }
+
+        .card h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2 i {
+            color: var(--primary);
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--light);
+        }
+
+        .settings-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .slider-container {
+            width: 60%;
+        }
+
+        .slider {
+            width: 100%;
+            height: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--light);
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid var(--white);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .value-display {
+            background-color: var(--light);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: var(--secondary);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--gray);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--success);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background-color: #b86a4f;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background-color: #698a45;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-box {
+            background-color: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--dark);
+            margin-top: 5px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--white);
+            border-left: 5px solid var(--accent);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            width: 350px;
+            z-index: 1000;
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .notification-title {
+            font-weight: 700;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--gray);
+            cursor: pointer;
+        }
+
+        .posture-tips {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light);
+        }
+
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: rgba(212, 167, 106, 0.1);
+            border-radius: 10px;
+        }
+
+        .tip-icon {
+            background-color: var(--primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .time-slot {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 12px;
+            background-color: var(--light);
+            border-radius: 8px;
+        }
+
+        .time-range {
+            font-weight: 600;
+            color: var(--secondary);
+            min-width: 120px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px 0;
+            color: var(--secondary);
+            border-top: 1px solid rgba(139, 111, 71, 0.2);
+            margin-top: 30px;
+            font-size: 0.9rem;
+        }
+
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background-color: var(--light);
+            border-radius: 8px;
+            border-left: 4px solid var(--success);
+        }
+
+        .history-item.missed {
+            border-left-color: var(--danger);
+        }
+
+        .history-time {
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .history-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background-color: rgba(122, 157, 84, 0.2);
+            color: var(--success);
+        }
+
+        .status-missed {
+            background-color: rgba(201, 124, 93, 0.2);
+            color: var(--danger);
+        }
+
+        .current-status {
+            text-align: center;
+            padding: 25px;
+            background: linear-gradient(135deg, rgba(212, 167, 106, 0.1) 0%, rgba(139, 111, 71, 0.1) 100%);
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .status-icon {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .status-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        .next-reminder {
+            font-size: 1.1rem;
+            color: var(--dark);
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-user-md"></i>
+                    <div>
+                        <h1>PosturePal</h1>
+                        <p class="app-description">A gentle reminder app to maintain proper posture throughout your day</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="current-status">
+            <div class="status-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="status-text">Posture Monitoring Active</div>
+            <div class="next-reminder">Next reminder in: <span class="highlight" id="nextReminderTime">24 min</span></div>
+        </div>
+
+        <main>
+            <div class="left-column">
+                <div class="card">
+                    <h2><i class="fas fa-cog"></i> Reminder Settings</h2>
+                    
+                    <div class="settings-row">
+                        <div class="setting-label">
+                            <h3>Reminder Frequency</h3>
+                            <p>How often to remind you about posture</p>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" min="5" max="60" value="30" class="slider" id="frequencySlider">
+                        </div>
+                        <div class="value-display" id="frequencyValue">30 min</div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div class="setting-label">
+                            <h3>Reminder Duration</h3>
+                            <p>How long to maintain good posture</p>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" min="1" max="10" value="5" class="slider" id="durationSlider">
+                        </div>
+                        <div class="value-display" id="durationValue">5 min</div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div class="setting-label">
+                            <h3>Enable Notifications</h3>
+                            <p>Receive visual and sound reminders</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notificationToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div class="setting-label">
+                            <h3>Working Hours</h3>
+                            <p>Only send reminders during these hours</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="hoursToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-top: 25px; display: flex; gap: 15px;">
+                        <button class="btn btn-success" id="saveSettings">
+                            <i class="fas fa-save"></i> Save Settings
+                        </button>
+                        <button class="btn" id="testReminder">
+                            <i class="fas fa-bell"></i> Test Reminder
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-chart-line"></i> Today's Stats</h2>
+                    <div class="stats-container">
+                        <div class="stat-box">
+                            <div class="stat-value" id="remindersSent">12</div>
+                            <div class="stat-label">Reminders Sent</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="postureTime">48</div>
+                            <div class="stat-label">Minutes with Good Posture</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="complianceRate">83%</div>
+                            <div class="stat-label">Compliance Rate</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-history"></i> Recent History</h2>
+                    <div class="history-list" id="historyList">
+                        <!-- History items will be added by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-column">
+                <div class="card">
+                    <h2><i class="fas fa-user-clock"></i> Active Hours</h2>
+                    <p style="margin-bottom: 20px;">Set the hours when you want to receive posture reminders:</p>
+                    
+                    <div class="time-slot">
+                        <div class="time-range">9:00 AM - 12:00 PM</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="time-toggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="time-slot">
+                        <div class="time-range">1:00 PM - 5:00 PM</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="time-toggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="time-slot">
+                        <div class="time-range">7:00 PM - 9:00 PM</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="time-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <button class="btn" style="margin-top: 20px; width: 100%;">
+                        <i class="fas fa-plus"></i> Add Time Slot
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-lightbulb"></i> Posture Tips</h2>
+                    <div class="posture-tips">
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-chair"></i>
+                            </div>
+                            <div>
+                                <h3>Sit Up Straight</h3>
+                                <p>Keep your back straight, shoulders back, and buttocks touching the back of your chair.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-desktop"></i>
+                            </div>
+                            <div>
+                                <h3>Monitor at Eye Level</h3>
+                                <p>Position your monitor so the top of the screen is at or slightly below eye level.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-feet"></i>
+                            </div>
+                            <div>
+                                <h3>Keep Feet Flat</h3>
+                                <p>Place your feet flat on the floor or on a footrest, with knees at or below hip level.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-award"></i> Achievements</h2>
+                    <p style="margin-bottom: 15px;">Your posture improvement milestones:</p>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <div style="background-color: rgba(212, 167, 106, 0.2); padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-medal" style="color: var(--primary);"></i>
+                            <span>7-Day Streak</span>
+                        </div>
+                        <div style="background-color: rgba(212, 167, 106, 0.2); padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-clock" style="color: var(--primary);"></i>
+                            <span>10 Hours Total</span>
+                        </div>
+                        <div style="background-color: rgba(122, 157, 84, 0.2); padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-trophy" style="color: var(--success);"></i>
+                            <span>Perfect Week</span>
+                        </div>
+                    </div>
+                    <button class="btn" style="margin-top: 20px; width: 100%;">
+                        <i class="fas fa-chart-bar"></i> View Detailed Stats
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="postureNotification">
+        <div class="notification-header">
+            <div class="notification-title">
+                <i class="fas fa-exclamation-circle" style="color: var(--accent);"></i>
+                Posture Check!
+            </div>
+            <button class="notification-close" id="closeNotification">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p>It's time to check your posture. Sit up straight, relax your shoulders, and keep your screen at eye level.</p>
+        <p style="margin-top: 10px; font-weight: 600;">Maintain this for <span class="highlight" id="notificationDuration">5 minutes</span>.</p>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-success" id="acknowledgeBtn">
+                <i class="fas fa-check"></i> I'm Maintaining Good Posture
+            </button>
+            <button class="btn btn-danger" id="snoozeBtn">
+                <i class="fas fa-clock"></i> Snooze for 10 min
+            </button>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>PosturePal &copy; 2026 | Designed with warm earth tones for a calming experience</p>
+            <p style="margin-top: 10px; font-size: 0.8rem;">Remember: Good posture improves breathing, circulation, and reduces back pain.</p>
+        </div>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const frequencySlider = document.getElementById('frequencySlider');
+        const frequencyValue = document.getElementById('frequencyValue');
+        const durationSlider = document.getElementById('durationSlider');
+        const durationValue = document.getElementById('durationValue');
+        const notificationToggle = document.getElementById('notificationToggle');
+        const hoursToggle = document.getElementById('hoursToggle');
+        const saveSettingsBtn = document.getElementById('saveSettings');
+        const testReminderBtn = document.getElementById('testReminder');
+        const postureNotification = document.getElementById('postureNotification');
+        const closeNotificationBtn = document.getElementById('closeNotification');
+        const acknowledgeBtn = document.getElementById('acknowledgeBtn');
+        const snoozeBtn = document.getElementById('snoozeBtn');
+        const nextReminderTime = document.getElementById('nextReminderTime');
+        const historyList = document.getElementById('historyList');
+        const notificationDuration = document.getElementById('notificationDuration');
+        
+        // Stats elements
+        const remindersSent = document.getElementById('remindersSent');
+        const postureTime = document.getElementById('postureTime');
+        const complianceRate = document.getElementById('complianceRate');
+        
+        // Initialize app with default values
+        let reminderFrequency = 30; // minutes
+        let reminderDuration = 5; // minutes
+        let notificationsEnabled = true;
+        let workingHoursEnabled = true;
+        let remindersCount = 12;
+        let goodPostureMinutes = 48;
+        let compliancePercentage = 83;
+        let nextReminderMinutes = 24;
+        
+        // History data
+        const historyItems = [
+            { time: "2:45 PM", status: "completed" },
+            { time: "2:15 PM", status: "completed" },
+            { time: "1:45 PM", status: "missed" },
+            { time: "1:15 PM", status: "completed" },
+            { time: "12:45 PM", status: "completed" },
+            { time: "12:15 PM", status: "completed" },
+            { time: "11:45 AM", status: "completed" },
+            { time: "11:15 AM", status: "completed" },
+        ];
+        
+        // Initialize the app
+        function initApp() {
+            updateSliders();
+            updateStats();
+            updateHistoryList();
+            updateNextReminderTime();
+            
+            // Set up event listeners
+            frequencySlider.addEventListener('input', updateFrequencyValue);
+            durationSlider.addEventListener('input', updateDurationValue);
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            testReminderBtn.addEventListener('click', showTestNotification);
+            closeNotificationBtn.addEventListener('click', hideNotification);
+            acknowledgeBtn.addEventListener('click', acknowledgeReminder);
+            snoozeBtn.addEventListener('click', snoozeReminder);
+            
+            // Set up auto reminders simulation
+            setInterval(updateNextReminderTime, 60000); // Update every minute
+        }
+        
+        // Update slider values display
+        function updateFrequencyValue() {
+            reminderFrequency = parseInt(frequencySlider.value);
+            frequencyValue.textContent = `${reminderFrequency} min`;
+            updateNextReminderTime();
+        }
+        
+        function updateDurationValue() {
+            reminderDuration = parseInt(durationSlider.value);
+            durationValue.textContent = `${reminderDuration} min`;
+            notificationDuration.textContent = `${reminderDuration} minutes`;
+        }
+        
+        // Update all sliders
+        function updateSliders() {
+            frequencySlider.value = reminderFrequency;
+            frequencyValue.textContent = `${reminderFrequency} min`;
+            durationSlider.value = reminderDuration;
+            durationValue.textContent = `${reminderDuration} min`;
+            notificationDuration.textContent = `${reminderDuration} minutes`;
+            notificationToggle.checked = notificationsEnabled;
+            hoursToggle.checked = workingHoursEnabled;
+        }
+        
+        // Update statistics
+        function updateStats() {
+            remindersSent.textContent = remindersCount;
+            postureTime.textContent = goodPostureMinutes;
+            complianceRate.textContent = `${compliancePercentage}%`;
+        }
+        
+        // Update history list
+        function updateHistoryList() {
+            historyList.innerHTML = '';
+            
+            historyItems.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = `history-item ${item.status === 'missed' ? 'missed' : ''}`;
+                
+                const statusClass = item.status === 'completed' ? 'status-completed' : 'status-missed';
+                const statusText = item.status === 'completed' ? 'Completed' : 'Missed';
+                
+                historyItem.innerHTML = `
+                    <div class="history-time">${item.time}</div>
+                    <div class="history-status ${statusClass}">${statusText}</div>
+                `;
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // Update next reminder time
+        function updateNextReminderTime() {
+            // Simulate countdown
+            if (nextReminderMinutes > 0) {
+                nextReminderMinutes--;
+            } else {
+                nextReminderMinutes = reminderFrequency;
+                
+                // If notifications are enabled, show reminder
+                if (notificationsEnabled) {
+                    showNotification();
+                    
+                    // Add to history
+                    const now = new Date();
+                    const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    historyItems.unshift({ time: timeString, status: "pending" });
+                    
+                    // Update stats
+                    remindersCount++;
+                    updateStats();
+                    updateHistoryList();
+                }
+            }
+            
+            nextReminderTime.textContent = `${nextReminderMinutes} min`;
+        }
+        
+        // Save settings
+        function saveSettings() {
+            remindersCount = 12;
+            goodPostureMinutes = 48;
+            compliancePercentage = 83;
+            
+            notificationsEnabled = notificationToggle.checked;
+            workingHoursEnabled = hoursToggle.checked;
+            
+            // Show confirmation
+            alert('Settings saved successfully!');
+            
+            // Update stats
+            updateStats();
+        }
+        
+        // Show test notification
+        function showTestNotification() {
+            showNotification();
+        }
+        
+        // Show notification
+        function showNotification() {
+            postureNotification.style.display = 'block';
+            
+            // Auto hide after 30 seconds if not acknowledged
+            setTimeout(() => {
+                if (postureNotification.style.display === 'block') {
+                    hideNotification();
+                    
+                    // Mark as missed if not acknowledged
+                    const now = new Date();
+                    const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    // Find pending item and mark as missed
+                    const pendingIndex = historyItems.findIndex(item => item.status === "pending");
+                    if (pendingIndex !== -1) {
+                        historyItems[pendingIndex].status = "missed";
+                        updateHistoryList();
+                    }
+                }
+            }, 30000);
+        }
+        
+        // Hide notification
+        function hideNotification() {
+            postureNotification.style.display = 'none';
+        }
+        
+        // Acknowledge reminder
+        function acknowledgeReminder() {
+            hideNotification();
+            
+            // Find pending item and mark as completed
+            const pendingIndex = historyItems.findIndex(item => item.status === "pending");
+            if (pendingIndex !== -1) {
+                historyItems[pendingIndex].status = "completed";
+                updateHistoryList();
+                
+                // Update stats
+                goodPostureMinutes += reminderDuration;
+                const completedCount = historyItems.filter(item => item.status === "completed").length;
+                const totalCount = historyItems.length;
+                compliancePercentage = Math.round((completedCount / totalCount) * 100);
+                updateStats();
+            }
+            
+            // Reset next reminder time
+            nextReminderMinutes = reminderFrequency;
+            updateNextReminderTime();
+        }
+        
+        // Snooze reminder
+        function snoozeReminder() {
+            hideNotification();
+            
+            // Find pending item and mark as missed
+            const pendingIndex = historyItems.findIndex(item => item.status === "pending");
+            if (pendingIndex !== -1) {
+                historyItems[pendingIndex].status = "missed";
+                updateHistoryList();
+                
+                // Update stats
+                const completedCount = historyItems.filter(item => item.status === "completed").length;
+                const totalCount = historyItems.length;
+                compliancePercentage = Math.round((completedCount / totalCount) * 100);
+                updateStats();
+            }
+            
+            // Set next reminder to 10 minutes from now
+            nextReminderMinutes = 10;
+            updateNextReminderTime();
+        }
+        
+        // Initialize the app when page loads
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

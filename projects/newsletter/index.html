@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📧 newsletter builder · drag & drop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: #e1eaf0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .builder-container {
+            max-width: 1300px;
+            width: 100%;
+            background: #f5f9ff;
+            border-radius: 3rem 3rem 2.5rem 2.5rem;
+            box-shadow: 0 35px 45px -20px #1f3b4e, 0 0 0 1px #bed9f0 inset;
+            padding: 2rem 2rem 2.2rem;
+        }
+
+        /* header */
+        .builder-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 2rem;
+            font-weight: 600;
+            color: #1b4a6b;
+        }
+
+        .logo-area span {
+            background: #2575b0;
+            color: white;
+            padding: 0.2rem 1.2rem;
+            border-radius: 60px;
+            font-size: 1.2rem;
+        }
+
+        .export-btn {
+            background: #2575b0;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            padding: 0.8rem 2.2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid #a3d0ff;
+            box-shadow: 0 6px 0 #0b324b;
+            transition: 0.1s linear;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .export-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #0b324b;
+        }
+
+        /* main 2‑column layout */
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        /* left side: form */
+        .form-panel {
+            background: #ffffffde;
+            backdrop-filter: blur(3px);
+            border-radius: 2.5rem;
+            padding: 1.8rem 2rem;
+            box-shadow: 0 16px 24px -12px #87a9c4;
+            border: 1px solid #c7e0fc;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #17496e;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border-radius: 50px;
+            border: 2px solid #bfdbf5;
+            font-size: 1rem;
+            background: white;
+            transition: 0.15s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #1f70b0;
+            box-shadow: 0 0 0 3px #a4cbff;
+        }
+
+        textarea {
+            border-radius: 30px;
+            resize: vertical;
+        }
+
+        .row-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-row input[type="color"] {
+            width: 70px;
+            height: 50px;
+            border-radius: 20px;
+            padding: 3px;
+        }
+
+        /* block list */
+        .blocks-panel {
+            background: #ecf3fa;
+            border-radius: 2rem;
+            padding: 1.8rem;
+            border: 1px solid #bed3ea;
+        }
+
+        .blocks-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.2rem;
+            color: #103c59;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .block-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .block-item {
+            background: white;
+            border-radius: 60px;
+            padding: 0.8rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 2px solid #aac5e2;
+            cursor: move;
+            box-shadow: 0 4px 0 #8caac9;
+            transition: 0.1s;
+        }
+
+        .block-item:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #8caac9;
+        }
+
+        .block-emoji {
+            font-size: 2rem;
+            background: #eef5fc;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .block-content {
+            flex: 1;
+            font-weight: 500;
+            color: #113753;
+        }
+
+        .add-block-btn {
+            background: #2f7eb6;
+            border: none;
+            color: white;
+            padding: 0.8rem 1.2rem;
+            border-radius: 60px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #97ceff;
+            width: 100%;
+            box-shadow: 0 5px 0 #19415b;
+            transition: 0.1s;
+        }
+
+        .add-block-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #19415b;
+        }
+
+        /* preview pane */
+        .preview-panel {
+            grid-column: span 2;
+            background: #d2e5fc;
+            border-radius: 2rem;
+            padding: 2rem;
+            margin-top: 2rem;
+            border: 1px solid #b1d2f0;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        #emailPreview {
+            background: white;
+            border-radius: 2rem;
+            padding: 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+            border: 1px solid #c3d9f1;
+            font-family: Arial, sans-serif;
+        }
+
+        .preview-controls {
+            display: flex;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="builder-container">
+    <div class="builder-header">
+        <div class="logo-area">
+            📰 NEWSLETTER BUILDER <span>beta</span>
+        </div>
+        <button class="export-btn" id="exportHtmlBtn">📤 EXPORT HTML</button>
+    </div>
+
+    <!-- main editor grid -->
+    <div class="editor-grid">
+        <!-- left: settings form -->
+        <div class="form-panel">
+            <div class="form-group">
+                <div class="form-label"><span>📌</span> Newsletter name</div>
+                <input type="text" id="newsletterName" placeholder="e.g. Weekly Update" value="The Harbor Weekly">
+            </div>
+            <div class="form-group">
+                <div class="form-label"><span>✍️</span> Preheader text</div>
+                <input type="text" id="preheader" value="View in browser · January edition" placeholder="short preview text">
+            </div>
+            <div class="row-2col">
+                <div class="form-group">
+                    <div class="form-label">🎨 Background</div>
+                    <div class="color-row">
+                        <input type="color" id="bgColor" value="#f0f6ff">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="form-label">📄 Text color</div>
+                    <div class="color-row">
+                        <input type="color" id="textColor" value="#222222">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="form-label">🖋️ Font family</div>
+                <select id="fontSelect">
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Helvetica', sans-serif">Helvetica</option>
+                    <option value="'Times New Roman', serif">Times</option>
+                    <option value="'Verdana', sans-serif">Verdana</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- right: draggable blocks panel -->
+        <div class="blocks-panel">
+            <div class="blocks-title">📦 content blocks</div>
+            <div class="block-list" id="blockListContainer">
+                <!-- dynamic blocks will be injected via js -->
+            </div>
+            <button class="add-block-btn" id="addTextBlockBtn">➕ add text block</button>
+            <button class="add-block-btn" style="margin-top: 10px;" id="addImageBlockBtn">🖼️ add image block</button>
+            <button class="add-block-btn" style="margin-top: 10px;" id="addButtonBlockBtn">🔘 add button block</button>
+        </div>
+    </div>
+
+    <!-- live preview section -->
+    <div class="preview-panel">
+        <div class="preview-header">
+            <span style="font-weight: 600;">👀 live preview</span>
+            <div class="preview-controls">
+                <button id="refreshPreviewBtn" style="background: #2a6792; border: none; color:white; padding: 0.4rem 1.2rem; border-radius: 30px; cursor:pointer;">↻ refresh</button>
+            </div>
+        </div>
+        <div id="emailPreview">
+            <!-- preview dynamically filled -->
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- state: array of blocks ----------
+        let blocks = [
+            { type: 'text', content: 'Hello! This is your first newsletter article. You can edit this text.' },
+            { type: 'image', content: 'https://placehold.co/600x200/8fc9ff/ffffff?text=Your+Image' },
+            { type: 'button', content: 'Click here', url: 'https://example.com' }
+        ];
+
+        // DOM elements
+        const blockListEl = document.getElementById('blockListContainer');
+        const previewEl = document.getElementById('emailPreview');
+        const newsletterName = document.getElementById('newsletterName');
+        const preheader = document.getElementById('preheader');
+        const bgColor = document.getElementById('bgColor');
+        const textColor = document.getElementById('textColor');
+        const fontSelect = document.getElementById('fontSelect');
+        const addTextBtn = document.getElementById('addTextBlockBtn');
+        const addImageBtn = document.getElementById('addImageBlockBtn');
+        const addButtonBtn = document.getElementById('addButtonBlockBtn');
+        const exportBtn = document.getElementById('exportHtmlBtn');
+        const refreshBtn = document.getElementById('refreshPreviewBtn');
+
+        // Render block list (drag/drop with simple reorder via buttons? we implement move up/down for simplicity)
+        function renderBlockList() {
+            blockListEl.innerHTML = '';
+            blocks.forEach((block, index) => {
+                const blockDiv = document.createElement('div');
+                blockDiv.className = 'block-item';
+                blockDiv.dataset.index = index;
+
+                // emoji based on type
+                let emoji = '📄';
+                if (block.type === 'image') emoji = '🖼️';
+                if (block.type === 'button') emoji = '🔘';
+
+                // content summary
+                let summary = block.content.substring(0, 20) + (block.content.length > 20 ? '…' : '');
+                if (block.type === 'image') summary = 'image url: ' + block.content.substring(0, 15) + '…';
+                if (block.type === 'button') summary = `button: ${block.content} → ${block.url || '#'}`;
+
+                blockDiv.innerHTML = `
+                    <div class="block-emoji">${emoji}</div>
+                    <div class="block-content">${summary}</div>
+                    <div style="display: flex; gap:6px;">
+                        <button class="move-up" data-index="${index}" style="background:#568fc2; border:none; color:white; border-radius:30px; padding:4px 10px;">⬆</button>
+                        <button class="move-down" data-index="${index}" style="background:#568fc2; border:none; color:white; border-radius:30px; padding:4px 10px;">⬇</button>
+                        <button class="edit-block" data-index="${index}" style="background:#2f7d42; border:none; color:white; border-radius:30px; padding:4px 10px;">✎</button>
+                        <button class="delete-block" data-index="${index}" style="background:#b13e3e; border:none; color:white; border-radius:30px; padding:4px 10px;">🗑️</button>
+                    </div>
+                `;
+                blockListEl.appendChild(blockDiv);
+            });
+
+            // attach event listeners to buttons
+            document.querySelectorAll('.move-up').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    if (idx > 0) {
+                        [blocks[idx - 1], blocks[idx]] = [blocks[idx], blocks[idx - 1]];
+                        renderBlockList();
+                        updatePreview();
+                    }
+                });
+            });
+            document.querySelectorAll('.move-down').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    if (idx < blocks.length - 1) {
+                        [blocks[idx], blocks[idx + 1]] = [blocks[idx + 1], blocks[idx]];
+                        renderBlockList();
+                        updatePreview();
+                    }
+                });
+            });
+            document.querySelectorAll('.delete-block').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    blocks.splice(idx, 1);
+                    renderBlockList();
+                    updatePreview();
+                });
+            });
+            document.querySelectorAll('.edit-block').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    editBlock(idx);
+                });
+            });
+        }
+
+        // simple edit prompt (for demo)
+        function editBlock(index) {
+            const block = blocks[index];
+            if (block.type === 'text') {
+                const newText = prompt('Edit text content:', block.content);
+                if (newText !== null) blocks[index].content = newText;
+            } else if (block.type === 'image') {
+                const newUrl = prompt('Image URL:', block.content);
+                if (newUrl !== null) blocks[index].content = newUrl;
+            } else if (block.type === 'button') {
+                const newLabel = prompt('Button label:', block.content);
+                if (newLabel !== null) {
+                    blocks[index].content = newLabel;
+                    const newUrl = prompt('Button link URL:', block.url || 'https://example.com');
+                    if (newUrl !== null) blocks[index].url = newUrl;
+                }
+            }
+            renderBlockList();
+            updatePreview();
+        }
+
+        // Add block functions
+        addTextBtn.addEventListener('click', () => {
+            blocks.push({ type: 'text', content: 'New text paragraph. Click edit to change.' });
+            renderBlockList();
+            updatePreview();
+        });
+        addImageBtn.addEventListener('click', () => {
+            blocks.push({ type: 'image', content: 'https://placehold.co/600x200/9bbdf0/ffffff?text=New+Image' });
+            renderBlockList();
+            updatePreview();
+        });
+        addButtonBtn.addEventListener('click', () => {
+            blocks.push({ type: 'button', content: 'Call to action', url: 'https://example.com' });
+            renderBlockList();
+            updatePreview();
+        });
+
+        // Build preview HTML based on state + styling
+        function generatePreviewHTML() {
+            const name = newsletterName.value || 'Newsletter';
+            const pre = preheader.value || '';
+            const bg = bgColor.value || '#f0f6ff';
+            const color = textColor.value || '#222222';
+            const font = fontSelect.value || 'Arial, sans-serif';
+
+            let blocksHTML = '';
+            blocks.forEach(block => {
+                if (block.type === 'text') {
+                    blocksHTML += `<div style="margin: 20px 0; font-size: 16px; line-height:1.5;">${block.content.replace(/\\n/g, '<br>')}</div>`;
+                } else if (block.type === 'image') {
+                    blocksHTML += `<div style="margin: 20px 0;"><img src="${block.content}" style="max-width:100%; height:auto; border-radius: 16px;" alt="newsletter image"></div>`;
+                } else if (block.type === 'button') {
+                    const url = block.url || '#';
+                    blocksHTML += `<div style="margin: 30px 0; text-align:center;"><a href="${url}" style="background: #2a7faa; color: white; padding: 14px 28px; border-radius: 60px; text-decoration: none; font-weight: 600; display: inline-block;">${block.content}</a></div>`;
+                }
+            });
+
+            return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${name}</title>
+</head>
+<body style="margin:0; padding:20px; background:#eaf2f9; font-family: ${font};">
+    <div style="max-width: 600px; margin:0 auto; background: ${bg}; color: ${color}; padding: 30px 25px; border-radius: 30px; border: 1px solid #cde1f5;">
+        <!-- preheader -->
+        <div style="font-size: 13px; color: #8aa5c2; margin-bottom: 20px; text-align: center;">${pre}</div>
+        <h1 style="margin-top:0; color: #144a6f;">${name}</h1>
+        ${blocksHTML}
+        <div style="margin-top: 40px; font-size: 12px; color: #6f8fb2; text-align: center; border-top: 1px solid #c7ddfa; padding-top: 20px;">
+            <p>you’re receiving this because you signed up · <a href="#" style="color: #2a6792;">unsubscribe</a></p>
+        </div>
+    </div>
+</body>
+</html>`;
+        }
+
+        function updatePreview() {
+            const fullHtml = generatePreviewHTML();
+            // Render inside preview div (we only render inner content, but we can embed)
+            // To show same styling, we'll set inner html to a div mimicking.
+            const name = newsletterName.value;
+            const pre = preheader.value;
+            const bg = bgColor.value;
+            const color = textColor.value;
+            const font = fontSelect.value;
+            let blocksHTML = '';
+            blocks.forEach(block => {
+                if (block.type === 'text') {
+                    blocksHTML += `<div style="margin: 20px 0; font-size: 16px; line-height:1.5;">${block.content.replace(/\\n/g, '<br>')}</div>`;
+                } else if (block.type === 'image') {
+                    blocksHTML += `<div style="margin: 20px 0;"><img src="${block.content}" style="max-width:100%; height:auto; border-radius: 16px;" alt="newsletter image"></div>`;
+                } else if (block.type === 'button') {
+                    blocksHTML += `<div style="margin: 30px 0; text-align:center;"><a href="${block.url || '#'}" style="background: #2a7faa; color: white; padding: 14px 28px; border-radius: 60px; text-decoration: none; font-weight: 600; display: inline-block;">${block.content}</a></div>`;
+                }
+            });
+            previewEl.innerHTML = `
+                <div style="max-width: 600px; margin:0 auto; background: ${bg}; color: ${color}; padding: 30px 25px; border-radius: 30px; border: 1px solid #cde1f5; font-family: ${font};">
+                    <div style="font-size: 13px; color: #8aa5c2; margin-bottom: 20px; text-align: center;">${pre}</div>
+                    <h1 style="margin-top:0; color: #144a6f;">${name}</h1>
+                    ${blocksHTML}
+                    <div style="margin-top: 40px; font-size: 12px; color: #6f8fb2; text-align: center; border-top: 1px solid #c7ddfa; padding-top: 20px;">
+                        <p>you’re receiving this because you signed up · <a href="#" style="color: #2a6792;">unsubscribe</a></p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Export full HTML file
+        function exportHTML() {
+            const fullHtml = generatePreviewHTML();
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (newsletterName.value || 'newsletter').replace(/\\s+/g, '_') + '.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // event listeners
+        newsletterName.addEventListener('input', updatePreview);
+        preheader.addEventListener('input', updatePreview);
+        bgColor.addEventListener('input', updatePreview);
+        textColor.addEventListener('input', updatePreview);
+        fontSelect.addEventListener('change', updatePreview);
+        refreshBtn.addEventListener('click', updatePreview);
+        exportBtn.addEventListener('click', exportHTML);
+
+        // initial render
+        renderBlockList();
+        updatePreview();
+    })();
+</script>
+</body>
+</html>

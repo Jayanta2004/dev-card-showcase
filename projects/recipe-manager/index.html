@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Manager - Meal Planning & Cooking Guide</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🍳 Recipe Manager</h1>
+                <p class="subtitle">Plan meals, organize recipes, generate shopping lists</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-primary" onclick="openRecipeModal()">+ New Recipe</button>
+                <button class="btn-secondary" onclick="openMealPlannerModal()">📅 Meal Plan</button>
+            </div>
+        </header>
+
+        <!-- Search & Filters Bar -->
+        <div class="search-bar">
+            <div class="search-input-wrapper">
+                <input type="text" id="recipeSearch" placeholder="Search recipes..." onkeyup="filterRecipes()">
+                <span class="search-icon">🔍</span>
+            </div>
+            <div class="filter-controls">
+                <select id="cuisineFilter" onchange="filterRecipes()">
+                    <option value="">All Cuisines</option>
+                    <option value="Italian">Italian</option>
+                    <option value="Asian">Asian</option>
+                    <option value="Mexican">Mexican</option>
+                    <option value="Indian">Indian</option>
+                    <option value="American">American</option>
+                    <option value="Mediterranean">Mediterranean</option>
+                    <option value="French">French</option>
+                </select>
+                <select id="mealTypeFilter" onchange="filterRecipes()">
+                    <option value="">All Meals</option>
+                    <option value="Breakfast">Breakfast</option>
+                    <option value="Lunch">Lunch</option>
+                    <option value="Dinner">Dinner</option>
+                    <option value="Snack">Snack</option>
+                    <option value="Dessert">Dessert</option>
+                </select>
+                <select id="difficultyFilter" onchange="filterRecipes()">
+                    <option value="">All Levels</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                </select>
+                <select id="dietaryFilter" onchange="filterRecipes()">
+                    <option value="">All Diets</option>
+                    <option value="Vegan">Vegan</option>
+                    <option value="Vegetarian">Vegetarian</option>
+                    <option value="GlutenFree">Gluten-Free</option>
+                    <option value="DairyFree">Dairy-Free</option>
+                    <option value="LowCarb">Low Carb</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('recipes')">My Recipes</button>
+            <button class="tab-btn" onclick="showTab('mealPlan')">Meal Plan</button>
+            <button class="tab-btn" onclick="showTab('shoppingList')">Shopping List</button>
+            <button class="tab-btn" onclick="showTab('pantry')">Pantry</button>
+            <button class="tab-btn" onclick="showTab('favorites')">⭐ Favorites</button>
+        </div>
+
+        <!-- Recipes Tab -->
+        <div id="recipesTab" class="tab-content active">
+            <div class="recipes-grid" id="recipesContainer"></div>
+        </div>
+
+        <!-- Meal Plan Tab -->
+        <div id="mealPlanTab" class="tab-content">
+            <div class="card">
+                <h2>Weekly Meal Plan</h2>
+                <div class="meal-plan-header">
+                    <button class="nav-btn" onclick="previousWeek()">← Previous Week</button>
+                    <h3 id="weekTitle"></h3>
+                    <button class="nav-btn" onclick="nextWeek()">Next Week →</button>
+                </div>
+                <div class="meal-plan-grid" id="mealPlanContainer"></div>
+                <div class="meal-plan-actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="btn-primary" onclick="generateShoppingListFromMealPlan()">Generate Shopping List</button>
+                    <button class="btn-secondary" onclick="exportMealPlan()">Export Plan</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shopping List Tab -->
+        <div id="shoppingListTab" class="tab-content">
+            <div class="card">
+                <h2>Shopping List</h2>
+                <div class="shopping-list-view">
+                    <div class="shopping-list-controls" style="margin-bottom: 20px;">
+                        <button class="btn-primary" onclick="clearShoppingList()">Clear List</button>
+                        <button class="btn-secondary" onclick="exportShoppingList('pdf')">📄 Export PDF</button>
+                        <button class="btn-secondary" onclick="exportShoppingList('print')">🖨️ Print</button>
+                    </div>
+                    <div class="shopping-sections" id="shoppingListContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pantry Tab -->
+        <div id="pantryTab" class="tab-content">
+            <div class="card">
+                <h2>Pantry Inventory</h2>
+                <div class="pantry-header">
+                    <input type="text" id="pantryItemInput" placeholder="Add pantry item..." style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; width: 300px;">
+                    <button class="btn-primary" onclick="addPantryItem()">Add Item</button>
+                </div>
+                <div class="pantry-list" id="pantryContainer"></div>
+            </div>
+        </div>
+
+        <!-- Favorites Tab -->
+        <div id="favoritesTab" class="tab-content">
+            <div class="recipes-grid" id="favoritesContainer"></div>
+        </div>
+
+        <!-- Recipe Detail View (Modal) -->
+        <div id="recipeDetailModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="recipeTitle"></h2>
+                    <button class="close-btn" onclick="closeRecipeDetail()">✕</button>
+                </div>
+                <div class="recipe-detail-body">
+                    <div class="recipe-image-container">
+                        <img id="recipeImage" src="" alt="Recipe" class="recipe-image">
+                    </div>
+                    <div class="recipe-meta-row">
+                        <span class="meta-badge" id="cuisineTag"></span>
+                        <span class="meta-badge" id="mealTypeTag"></span>
+                        <span class="meta-badge" id="difficultyTag"></span>
+                    </div>
+                    <div class="recipe-stats">
+                        <div class="stat">
+                            <span class="stat-icon">⏱️</span>
+                            <span id="prepTime"></span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-icon">🔥</span>
+                            <span id="cookTime"></span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-icon">🍽️</span>
+                            <span id="servings"></span>
+                        </div>
+                    </div>
+
+                    <!-- Nutrition Info -->
+                    <div class="nutrition-section">
+                        <h3>Nutrition Per Serving</h3>
+                        <div class="nutrition-grid" id="nutritionInfo"></div>
+                    </div>
+
+                    <!-- Servings Scaler -->
+                    <div class="scaler-section">
+                        <h3>Adjust Servings</h3>
+                        <div class="scaler-control">
+                            <button onclick="decreaseServings()">-</button>
+                            <input type="number" id="servingsScaler" min="1" value="1" onchange="updateIngredientsForServings()">
+                            <button onclick="increaseServings()">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Ingredients -->
+                    <div class="ingredients-section">
+                        <h3>Ingredients</h3>
+                        <ul class="ingredients-list" id="ingredientsList"></ul>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="instructions-section">
+                        <h3>Instructions</h3>
+                        <ol class="instructions-list" id="instructionsList"></ol>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="notes-section">
+                        <h3>Notes</h3>
+                        <p id="recipeNotes"></p>
+                    </div>
+
+                    <!-- Rating -->
+                    <div class="rating-section">
+                        <h3>Your Rating</h3>
+                        <div class="star-rating">
+                            <span class="star" onclick="rateRecipe(1)">★</span>
+                            <span class="star" onclick="rateRecipe(2)">★</span>
+                            <span class="star" onclick="rateRecipe(3)">★</span>
+                            <span class="star" onclick="rateRecipe(4)">★</span>
+                            <span class="star" onclick="rateRecipe(5)">★</span>
+                        </div>
+                        <p id="recipeRating"></p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="recipe-detail-actions">
+                        <button class="btn-primary" onclick="toggleFavorite(currentRecipeId)">❤️ Add to Favorites</button>
+                        <button class="btn-secondary" onclick="addRecipeToMealPlan(currentRecipeId)">📅 Add to Meal Plan</button>
+                        <button class="btn-secondary" onclick="editRecipe(currentRecipeId)">✏️ Edit</button>
+                        <button class="btn-secondary danger" onclick="deleteRecipe(currentRecipeId)">🗑️ Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipe Creation/Edit Modal -->
+        <div id="recipeModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Add New Recipe</h2>
+                    <button class="close-btn" onclick="closeRecipeModal()">✕</button>
+                </div>
+                <form id="recipeForm" onsubmit="saveRecipe(event)">
+                    <!-- Basic Info -->
+                    <div class="form-section">
+                        <h3>Recipe Details</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Recipe Name *</label>
+                                <input type="text" id="recipeName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <input type="text" id="recipeDescription">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Cuisine</label>
+                                <select id="recipeCuisine">
+                                    <option>Italian</option>
+                                    <option>Asian</option>
+                                    <option>Mexican</option>
+                                    <option>Indian</option>
+                                    <option>American</option>
+                                    <option>Mediterranean</option>
+                                    <option>French</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Meal Type</label>
+                                <select id="recipeMealType">
+                                    <option>Breakfast</option>
+                                    <option>Lunch</option>
+                                    <option>Dinner</option>
+                                    <option>Snack</option>
+                                    <option>Dessert</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Difficulty</label>
+                                <select id="recipeDifficulty">
+                                    <option>Easy</option>
+                                    <option>Medium</option>
+                                    <option>Hard</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Prep Time (minutes)</label>
+                                <input type="number" id="recipePrepTime" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Cook Time (minutes)</label>
+                                <input type="number" id="recipeCookTime" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Servings</label>
+                                <input type="number" id="recipeServings" min="1" value="1">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Recipe Image</label>
+                            <input type="file" id="recipeImage" accept="image/*" onchange="previewRecipeImage()">
+                            <img id="imagePreview" style="max-width: 200px; margin-top: 10px; display: none;">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Dietary Tags</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" value="Vegan"> Vegan</label>
+                                <label><input type="checkbox" value="Vegetarian"> Vegetarian</label>
+                                <label><input type="checkbox" value="GlutenFree"> Gluten-Free</label>
+                                <label><input type="checkbox" value="DairyFree"> Dairy-Free</label>
+                                <label><input type="checkbox" value="LowCarb"> Low Carb</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nutrition Info -->
+                    <div class="form-section">
+                        <h3>Nutrition (per serving)</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Calories</label>
+                                <input type="number" id="recipeCalories" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Protein (g)</label>
+                                <input type="number" id="recipeProtein" min="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Carbs (g)</label>
+                                <input type="number" id="recipeCarbs" min="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Fat (g)</label>
+                                <input type="number" id="recipeFat" min="0" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ingredients -->
+                    <div class="form-section">
+                        <h3>Ingredients</h3>
+                        <div id="ingredientsInputContainer"></div>
+                        <button type="button" class="btn-secondary" onclick="addIngredientInput()">+ Add Ingredient</button>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="form-section">
+                        <h3>Instructions</h3>
+                        <div id="instructionsInputContainer"></div>
+                        <button type="button" class="btn-secondary" onclick="addInstructionInput()">+ Add Step</button>
+                    </div>
+
+                    <!-- Additional Info -->
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <textarea id="recipeNotes" placeholder="Tips, variations, storage instructions..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeRecipeModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Recipe</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Meal Planner Modal -->
+        <div id="mealPlannerModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add Recipe to Meal Plan</h2>
+                    <button class="close-btn" onclick="closeMealPlannerModal()">✕</button>
+                </div>
+                <div class="meal-planner-body">
+                    <div class="form-group">
+                        <label>Select Recipe</label>
+                        <select id="mealPlanRecipeSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Select Day</label>
+                        <select id="mealPlanDay">
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Meal Type</label>
+                        <select id="mealPlanMealType">
+                            <option value="Breakfast">Breakfast</option>
+                            <option value="Lunch">Lunch</option>
+                            <option value="Dinner">Dinner</option>
+                            <option value="Snack">Snack</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-secondary" onclick="closeMealPlannerModal()">Cancel</button>
+                        <button class="btn-primary" onclick="addToMealPlan()">Add to Plan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Sprint Planner</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1><i class="fas fa-brain"></i> Learning Sprint Planner</h1>
+                <div class="header-info">
+                    <span id="currentStreak" class="streak-badge">
+                        <i class="fas fa-fire"></i> 0 day streak
+                    </span>
+                    <span id="totalHours" class="study-hours-badge">
+                        <i class="fas fa-clock"></i> 0 hours studied
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+        <div class="container">
+            <button class="nav-tab active" data-tab="dashboard">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </button>
+            <button class="nav-tab" data-tab="goals">
+                <i class="fas fa-bullseye"></i> Study Goals
+            </button>
+            <button class="nav-tab" data-tab="topics">
+                <i class="fas fa-book"></i> Topics
+            </button>
+            <button class="nav-tab" data-tab="sessions">
+                <i class="fas fa-timer"></i> Study Sessions
+            </button>
+            <button class="nav-tab" data-tab="progress">
+                <i class="fas fa-chart-area"></i> Progress
+            </button>
+            <button class="nav-tab" data-tab="quiz">
+                <i class="fas fa-question-circle"></i> Quiz Analytics
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Dashboard Section -->
+        <section class="tab-content active" id="dashboard-section">
+            <div class="dashboard-header">
+                <h2>Learning Dashboard</h2>
+                <span id="dashDate" class="dash-date"></span>
+            </div>
+
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <div class="card-content">
+                        <h3 id="activeGoals">0</h3>
+                        <p>Active Goals</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="card-icon"><i class="fas fa-clock"></i></div>
+                    <div class="card-content">
+                        <h3 id="todayStudyTime">0h</h3>
+                        <p>Today's Study Time</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="card-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="card-content">
+                        <h3 id="completedTopics">0</h3>
+                        <p>Topics Completed</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="card-icon"><i class="fas fa-star"></i></div>
+                    <div class="card-content">
+                        <h3 id="avgQuizScore">-</h3>
+                        <p>Avg Quiz Score</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-session">
+                <h3><i class="fas fa-play-circle"></i> Start a Study Session</h3>
+                <div class="session-selector">
+                    <select id="sessionTopicSelect">
+                        <option value="">Select a topic...</option>
+                    </select>
+                    <input type="number" id="sessionDuration" min="5" max="120" value="25" placeholder="Duration (min)">
+                    <button class="btn btn-primary btn-large" id="startSessionBtn">
+                        <i class="fas fa-play"></i> Start Session
+                    </button>
+                </div>
+            </div>
+
+            <div class="study-timer" id="studyTimer" style="display: none;">
+                <div class="timer-display">
+                    <div class="timer-circle">
+                        <svg viewBox="0 0 200 200">
+                            <circle cx="100" cy="100" r="90" class="timer-bg"></circle>
+                            <circle cx="100" cy="100" r="90" class="timer-progress" id="timerProgress"></circle>
+                        </svg>
+                        <div class="timer-text">
+                            <span id="timerMinutes">25</span>:<span id="timerSeconds">00</span>
+                        </div>
+                    </div>
+                    <div class="timer-controls">
+                        <button class="btn btn-secondary" id="pauseResumeBtn">
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        <button class="btn btn-secondary" id="stopSessionBtn">
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="this-week-overview">
+                <h3><i class="fas fa-calendar-week"></i> This Week's Overview</h3>
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Study Goals Section -->
+        <section class="tab-content" id="goals-section">
+            <div class="section-header">
+                <h2><i class="fas fa-bullseye"></i> Study Goals</h2>
+                <button class="btn btn-primary" id="addGoalBtn">
+                    <i class="fas fa-plus"></i> Add Goal
+                </button>
+            </div>
+
+            <div class="goals-list">
+                <div id="goalsList"></div>
+            </div>
+        </section>
+
+        <!-- Topics Section -->
+        <section class="tab-content" id="topics-section">
+            <div class="section-header">
+                <h2><i class="fas fa-book"></i> Study Topics</h2>
+                <button class="btn btn-primary" id="addTopicBtn">
+                    <i class="fas fa-plus"></i> Add Topic
+                </button>
+            </div>
+
+            <div class="topics-grid">
+                <div id="topicsList"></div>
+            </div>
+        </section>
+
+        <!-- Study Sessions Section -->
+        <section class="tab-content" id="sessions-section">
+            <div class="section-header">
+                <h2><i class="fas fa-timer"></i> Study Sessions</h2>
+                <button class="btn btn-primary" id="newSessionBtn">
+                    <i class="fas fa-plus"></i> New Session
+                </button>
+            </div>
+
+            <div class="sessions-filters">
+                <select id="sessionFilter" class="filter-select">
+                    <option value="all">All Sessions</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                </select>
+            </div>
+
+            <div class="sessions-list">
+                <div id="sessionsList"></div>
+            </div>
+        </section>
+
+        <!-- Progress Section -->
+        <section class="tab-content" id="progress-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-area"></i> Learning Progress</h2>
+                <select id="progressPeriod" class="filter-select">
+                    <option value="month">This Month</option>
+                    <option value="quarter">This Quarter</option>
+                    <option value="year">This Year</option>
+                </select>
+            </div>
+
+            <div class="progress-overview">
+                <div class="progress-stat">
+                    <h3>Total Study Hours</h3>
+                    <p id="totalStudyHours">0</p>
+                </div>
+                <div class="progress-stat">
+                    <h3>Average Session</h3>
+                    <p id="avgSessionTime">0 min</p>
+                </div>
+                <div class="progress-stat">
+                    <h3>Topics Mastered</h3>
+                    <p id="masteredTopics">0</p>
+                </div>
+                <div class="progress-stat">
+                    <h3>Streak</h3>
+                    <p id="currentStreakStat">0 days</p>
+                </div>
+            </div>
+
+            <div class="heatmap-container">
+                <h3>Study Activity Heatmap</h3>
+                <div class="heatmap" id="heatmap"></div>
+            </div>
+
+            <div class="progress-charts">
+                <div class="chart-card">
+                    <h3>Study Time by Topic</h3>
+                    <canvas id="topicChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Daily Study Duration</h3>
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Analytics Section -->
+        <section class="tab-content" id="quiz-section">
+            <div class="section-header">
+                <h2><i class="fas fa-question-circle"></i> Quiz Analytics</h2>
+                <button class="btn btn-primary" id="addQuizBtn">
+                    <i class="fas fa-plus"></i> Record Quiz
+                </button>
+            </div>
+
+            <div class="quiz-stats">
+                <div class="quiz-stat-card">
+                    <i class="fas fa-check-double"></i>
+                    <h3 id="totalQuizzes">0</h3>
+                    <p>Total Quizzes</p>
+                </div>
+                <div class="quiz-stat-card">
+                    <i class="fas fa-percentage"></i>
+                    <h3 id="avgScore">0%</h3>
+                    <p>Average Score</p>
+                </div>
+                <div class="quiz-stat-card">
+                    <i class="fas fa-medal"></i>
+                    <h3 id="bestScore">0%</h3>
+                    <p>Best Score</p>
+                </div>
+                <div class="quiz-stat-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3 id="scoreImprovement">+0%</h3>
+                    <p>Improvement</p>
+                </div>
+            </div>
+
+            <div class="quiz-results">
+                <div id="quizList"></div>
+            </div>
+
+            <div class="quiz-charts">
+                <div class="chart-card">
+                    <h3>Score Distribution</h3>
+                    <canvas id="scoreChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Quiz Performance Trend</h3>
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add Goal Modal -->
+    <div class="modal" id="goalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Study Goal</h2>
+                <button class="close-btn" id="closeGoalModal"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="goalForm">
+                <div class="form-group">
+                    <label for="goalTitle">Goal Title</label>
+                    <input type="text" id="goalTitle" placeholder="e.g., Master Data Structures" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="goalDescription">Description</label>
+                    <textarea id="goalDescription" rows="3" placeholder="What do you want to achieve?"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="goalTarget">Target Hours</label>
+                        <input type="number" id="goalTarget" min="1" value="20" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="goalDeadline">Deadline</label>
+                        <input type="date" id="goalDeadline" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="goalCategory">Category</label>
+                    <select id="goalCategory" required>
+                        <option value="">Select category...</option>
+                        <option value="programming">Programming</option>
+                        <option value="language">Language</option>
+                        <option value="science">Science</option>
+                        <option value="math">Math</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelGoalBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Goal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Topic Modal -->
+    <div class="modal" id="topicModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Study Topic</h2>
+                <button class="close-btn" id="closeTopicModal"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="topicForm">
+                <div class="form-group">
+                    <label for="topicName">Topic Name</label>
+                    <input type="text" id="topicName" placeholder="e.g., Binary Trees" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="topicDescription">Description</label>
+                    <textarea id="topicDescription" rows="3" placeholder="What is this topic about?"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="topicDifficulty">Difficulty</label>
+                        <select id="topicDifficulty" required>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="topicTarget">Target Hours</label>
+                        <input type="number" id="topicTarget" min="1" value="10" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="topicGoal">Associated Goal</label>
+                    <select id="topicGoal">
+                        <option value="">None</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelTopicBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Topic</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Quiz Modal -->
+    <div class="modal" id="quizModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Record Quiz Result</h2>
+                <button class="close-btn" id="closeQuizModal"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="quizForm">
+                <div class="form-group">
+                    <label for="quizTopic">Topic</label>
+                    <select id="quizTopic" required>
+                        <option value="">Select topic...</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="quizScore">Score (%)</label>
+                        <input type="number" id="quizScore" min="0" max="100" value="80" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="quizDate">Date</label>
+                        <input type="date" id="quizDate" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="quizCorrect">Questions Correct</label>
+                        <input type="number" id="quizCorrect" min="0" value="8" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="quizTotal">Total Questions</label>
+                        <input type="number" id="quizTotal" min="1" value="10" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="quizNotes">Notes</label>
+                    <textarea id="quizNotes" rows="2" placeholder="Any observations or areas to improve?"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelQuizBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Quiz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success!</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
