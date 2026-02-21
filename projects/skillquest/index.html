@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillQuest · track skills & progress</title>
+    <!-- Font Awesome 6 (free) for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f6f9fc 0%, #e9f1f8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .quest-card {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 45px -12px rgba(0,30,50,0.3), 0 2px 8px rgba(0,0,0,0.05);
+            padding: 2rem 2rem 2.5rem 2rem;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .header h1 {
+            font-size: 2.4rem;
+            font-weight: 650;
+            background: linear-gradient(135deg, #1a3b5d, #2c5a7a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .header h1 i {
+            background: none;
+            -webkit-text-fill-color: #2c5a7a; /* keep icon solid */
+            color: #2c5a7a;
+            font-size: 2.2rem;
+        }
+        .stats-badge {
+            margin-left: auto;
+            background: rgba(44, 90, 122, 0.12);
+            backdrop-filter: blur(4px);
+            padding: 0.7rem 1.4rem;
+            border-radius: 60px;
+            border: 1px solid rgba(44,90,122,0.2);
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            color: #1a3b5d;
+        }
+        .stat-item i {
+            font-size: 1.2rem;
+            color: #2c7da0;
+        }
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.4rem;
+            background: #ffffffb0;
+            padding: 0.1rem 0.6rem;
+            border-radius: 30px;
+            color: #0b2a41;
+        }
+
+        .add-skill-section {
+            background: #ffffffd6;
+            border-radius: 40px;
+            padding: 0.3rem 0.3rem 0.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 8px 18px -8px rgba(0,50,70,0.15);
+            border: 1px solid rgba(255,255,255,0.9);
+        }
+        .add-skill-section input {
+            flex: 2 1 200px;
+            border: none;
+            padding: 0.9rem 0.2rem;
+            font-size: 1rem;
+            background: transparent;
+            outline: none;
+            color: #0b2a41;
+            font-weight: 500;
+        }
+        .add-skill-section input::placeholder {
+            color: #7c9bb0;
+            font-weight: 400;
+            font-style: italic;
+        }
+        .progress-slider-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex: 1 1 240px;
+        }
+        .progress-slider-wrap label {
+            font-weight: 600;
+            color: #235c7c;
+            font-size: 0.9rem;
+        }
+        .progress-slider-wrap input[type=range] {
+            width: 140px;
+            height: 6px;
+            background: #cbdbe8;
+            border-radius: 10px;
+            -webkit-appearance: none;
+        }
+        .progress-slider-wrap input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px #1f4e6f33;
+            border: 2px solid #1f5e83;
+            cursor: pointer;
+        }
+        .slider-value {
+            min-width: 2.5rem;
+            font-weight: 700;
+            color: #1f5e83;
+        }
+        .add-btn {
+            background: #1f5e83;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.8rem 2rem;
+            border-radius: 40px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 12px -6px #104469;
+            border: 1px solid #ffffff40;
+            letter-spacing: 0.3px;
+        }
+        .add-btn:hover {
+            background: #154b6b;
+            transform: scale(1.02);
+            box-shadow: 0 10px 18px -8px #0c3b55;
+        }
+        .add-btn i {
+            font-size: 1.1rem;
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.2rem;
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        /* custom scrollbar */
+        .skills-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+        .skills-grid::-webkit-scrollbar-track {
+            background: #cbdbe8;
+            border-radius: 12px;
+        }
+        .skills-grid::-webkit-scrollbar-thumb {
+            background: #1f5e83;
+            border-radius: 12px;
+            border: 2px solid #e3eef8;
+        }
+
+        .skill-item {
+            background: white;
+            border-radius: 50px;
+            padding: 0.6rem 1rem 0.6rem 1.5rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem 1rem;
+            box-shadow: 0 6px 14px rgba(0, 30, 50, 0.08);
+            border: 1px solid #ffffff;
+            transition: all 0.2s;
+        }
+        .skill-item:hover {
+            border-color: #9dc6e7;
+            box-shadow: 0 12px 22px -14px #235c7c;
+        }
+
+        .skill-name {
+            font-weight: 650;
+            font-size: 1.2rem;
+            color: #103a52;
+            min-width: 140px;
+            word-break: break-word;
+            flex: 1 1 150px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .skill-name i {
+            color: #1f5e83;
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
+        .progress-bar-container {
+            flex: 2 1 240px;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .progress-bg {
+            background: #e3ecf3;
+            height: 12px;
+            flex: 1;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 4px #9bb7cf;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3993b3, #1f5e83);
+            border-radius: 30px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 0 1px #ffffff70;
+        }
+        .skill-percent {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #175873;
+            min-width: 3.2rem;
+            text-align: right;
+        }
+
+        .skill-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            margin-left: auto;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            padding: 0.5rem 0.7rem;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #406e8c;
+            transition: all 0.15s;
+            width: 2.8rem;
+        }
+        .icon-btn:hover {
+            background: #d7e6f1;
+            color: #1b4b68;
+        }
+        .icon-btn.delete-btn:hover {
+            background: #ffe1de;
+            color: #b13e3e;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: #ebf5fa;
+            border-radius: 80px;
+            color: #386582;
+            font-style: italic;
+            border: 2px dashed #9ebfd6;
+            font-size: 1.2rem;
+        }
+        .empty-message i {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.7;
+        }
+
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #386f92;
+            font-weight: 400;
+        }
+        hr {
+            border: 1px solid #bed8ec;
+            margin: 1rem 0 0.5rem 0;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="quest-card">
+        <div class="header">
+            <h1>
+                <i class="fas fa-scroll"></i> 
+                SkillQuest
+            </h1>
+            <div class="stats-badge" id="statsPanel">
+                <span class="stat-item"><i class="fas fa-layer-group"></i> total <span id="totalSkills" class="stat-value">0</span></span>
+                <span class="stat-item"><i class="fas fa-star"></i> avg <span id="avgProgress" class="stat-value">0%</span></span>
+            </div>
+        </div>
+
+        <!-- add skill row -->
+        <div class="add-skill-section">
+            <input type="text" id="skillNameInput" placeholder="New skill (e.g. React, Piano, ...)" maxlength="40">
+            <div class="progress-slider-wrap">
+                <label for="progressSlider"><i class="fas fa-gem"></i></label>
+                <input type="range" id="progressSlider" min="0" max="100" value="40" step="1">
+                <span id="sliderDisplay" class="slider-value">40%</span>
+            </div>
+            <button class="add-btn" id="addSkillBtn"><i class="fas fa-plus-circle"></i> Add quest</button>
+        </div>
+
+        <!-- skills list -->
+        <div id="skillsContainer" class="skills-grid">
+            <!-- dynamic content from js -->
+        </div>
+
+        <hr>
+        <footer>
+            <i class="fas fa-code-branch"></i> track, learn, level up · progress is saved in browser
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // ----- core data -----
+            let skills = [];   // each skill = { id: string, name: string, progress: number }
+
+            // ----- DOM elements -----
+            const skillNameInput = document.getElementById('skillNameInput');
+            const progressSlider = document.getElementById('progressSlider');
+            const sliderDisplay = document.getElementById('sliderDisplay');
+            const addBtn = document.getElementById('addSkillBtn');
+            const skillsContainer = document.getElementById('skillsContainer');
+            const totalSpan = document.getElementById('totalSkills');
+            const avgSpan = document.getElementById('avgProgress');
+
+            // slider live display
+            progressSlider.addEventListener('input', function() {
+                sliderDisplay.textContent = progressSlider.value + '%';
+            });
+
+            // ----- helpers / storage -----
+            const STORAGE_KEY = 'skillquest_data';
+
+            function loadFromStorage() {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        if (Array.isArray(parsed)) {
+                            // simple sanitize: ensure each has id, name, progress (number)
+                            skills = parsed.filter(s => s && typeof s === 'object')
+                                .map(s => ({
+                                    id: s.id || crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random(),
+                                    name: s.name || 'untitled',
+                                    progress: typeof s.progress === 'number' ? Math.min(100, Math.max(0, s.progress)) : 0
+                                }));
+                        }
+                    } catch (e) {}
+                }
+                if (!skills.length) {
+                    // seed some demo skills
+                    skills = [
+                        { id: '1', name: 'JavaScript', progress: 75 },
+                        { id: '2', name: 'UI Design', progress: 40 },
+                        { id: '3', name: 'Public speaking', progress: 20 },
+                        { id: '4', name: 'Data Analysis', progress: 90 },
+                    ];
+                }
+            }
+
+            function saveToStorage() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(skills));
+            }
+
+            // ------ render skill list + stats -----
+            function renderAll() {
+                if (!skillsContainer) return;
+
+                // stats update
+                const total = skills.length;
+                totalSpan.textContent = total;
+                let avg = 0;
+                if (total > 0) {
+                    const sum = skills.reduce((acc, s) => acc + (s.progress || 0), 0);
+                    avg = Math.round(sum / total);
+                }
+                avgSpan.textContent = avg + '%';
+
+                if (total === 0) {
+                    skillsContainer.innerHTML = `<div class="empty-message">
+                        <i class="fa-regular fa-compass"></i><br>
+                        No skills yet. Start your quest above ✦
+                    </div>`;
+                    return;
+                }
+
+                // build html
+                let htmlString = '';
+                skills.forEach(skill => {
+                    const progress = skill.progress ?? 0;
+                    // use an icon hint based on progress (just for delight)
+                    let icon = 'fa-solid fa-code'; // default
+                    if (progress >= 80) icon = 'fa-solid fa-crown';
+                    else if (progress >= 40) icon = 'fa-solid fa-rocket';
+                    else icon = 'fa-solid fa-seedling';
+
+                    htmlString += `
+                        <div class="skill-item" data-id="${skill.id}">
+                            <span class="skill-name">
+                                <i class="${icon}"></i> 
+                                ${escapeHtml(skill.name)}
+                            </span>
+                            <div class="progress-bar-container">
+                                <div class="progress-bg">
+                                    <div class="progress-fill" style="width: ${progress}%;"></div>
+                                </div>
+                                <span class="skill-percent">${progress}%</span>
+                            </div>
+                            <div class="skill-actions">
+                                <button class="icon-btn up-btn" title="increase +5"><i class="fas fa-arrow-up"></i></button>
+                                <button class="icon-btn down-btn" title="decrease -5"><i class="fas fa-arrow-down"></i></button>
+                                <button class="icon-btn delete-btn" title="delete skill"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                skillsContainer.innerHTML = htmlString;
+
+                // attach event listeners to each row's buttons (using container delegation would be lighter, but we attach per button for clarity)
+                document.querySelectorAll('.skill-item').forEach(item => {
+                    const id = item.dataset.id;
+                    const upBtn = item.querySelector('.up-btn');
+                    const downBtn = item.querySelector('.down-btn');
+                    const deleteBtn = item.querySelector('.delete-btn');
+
+                    if (upBtn) {
+                        upBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            adjustProgress(id, 5);
+                        });
+                    }
+                    if (downBtn) {
+                        downBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            adjustProgress(id, -5);
+                        });
+                    }
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            deleteSkill(id);
+                        });
+                    }
+                });
+            }
+
+            // simple escape to prevent XSS from user input
+            function escapeHtml(unsafe) {
+                return unsafe.replace(/[&<>"']/g, function(m) {
+                    if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;';
+                    if(m === '"') return '&quot;'; if(m === "'") return '&#039;';
+                    return m;
+                });
+            }
+
+            // ----- actions -----
+            function adjustProgress(id, delta) {
+                const skill = skills.find(s => s.id === id);
+                if (skill) {
+                    let newVal = (skill.progress || 0) + delta;
+                    newVal = Math.min(100, Math.max(0, newVal));
+                    skill.progress = newVal;
+                    saveToStorage();
+                    renderAll();
+                }
+            }
+
+            function deleteSkill(id) {
+                skills = skills.filter(s => s.id !== id);
+                saveToStorage();
+                renderAll();
+            }
+
+            function addNewSkill() {
+                const rawName = skillNameInput.value.trim();
+                if (rawName === '') {
+                    alert('Please enter a skill name.');
+                    return;
+                }
+                const progress = parseInt(progressSlider.value, 10) || 0;
+                const newSkill = {
+                    id: crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36),
+                    name: rawName,
+                    progress: progress
+                };
+                skills.push(newSkill);
+                saveToStorage();
+                renderAll();
+
+                // reset input & slider to default
+                skillNameInput.value = '';
+                progressSlider.value = 40;
+                sliderDisplay.textContent = '40%';
+                // focus back to input
+                skillNameInput.focus();
+            }
+
+            // event listener for add button
+            addBtn.addEventListener('click', addNewSkill);
+            // allow enter in input field
+            skillNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addNewSkill();
+                }
+            });
+
+            // initialise
+            loadFromStorage();
+            renderAll();
+
+            // (optional) if you want to update avg/total live after any change, it's already inside render
+            // but we also need to reflect slider initial value
+            sliderDisplay.textContent = progressSlider.value + '%';
+        })();
+    </script>
+</body>
+</html>
