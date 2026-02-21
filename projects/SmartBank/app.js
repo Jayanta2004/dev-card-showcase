@@ -21,7 +21,7 @@ if(signupForm){
         };
         localStorage.setItem("user",JSON.stringify(user));
         alert("Account Created!");
-        window.location.href="login.html";
+        window.location.href="index.html";
     });
 }
 
