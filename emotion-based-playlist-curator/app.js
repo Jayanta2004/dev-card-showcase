@@ -51,20 +51,44 @@ function renderPlaylist(playlist) {
     });
 }
 
+const STORAGE_KEY = 'last_selected_mood';
+
 document.querySelectorAll('.emoji-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function () {
         document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         document.getElementById('mood-input').value = btn.dataset.mood;
     });
 });
 
-document.getElementById('generate').addEventListener('click', function() {
+document.getElementById('generate').addEventListener('click', function () {
     const mood = document.getElementById('mood-input').value.trim();
     if (!mood) {
         alert('Please select or enter a mood!');
         return;
     }
+
+    // Save the mood
+    if (typeof TrackerStorage !== 'undefined') {
+        TrackerStorage.save(STORAGE_KEY, mood);
+    }
+
     const playlist = getPlaylistForMood(mood);
     renderPlaylist(playlist);
+});
+
+// Load previously saved mood
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof TrackerStorage !== 'undefined') {
+        const savedMood = TrackerStorage.load(STORAGE_KEY);
+        if (savedMood) {
+            document.getElementById('mood-input').value = savedMood;
+
+            // Programmatically click the associated button to show selection state
+            const btn = document.querySelector(`.emoji-btn[data-mood="${savedMood}"]`);
+            if (btn) {
+                btn.click();
+            }
+        }
+    }
 });

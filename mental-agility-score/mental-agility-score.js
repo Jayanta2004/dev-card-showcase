@@ -255,12 +255,64 @@ function calculateAgilityScore() {
 
     scoreBreakdown.innerHTML = `
         <strong>Breakdown:</strong><br>
-        Task 1 (Color-Word): ${task1Accuracy.toFixed(2)*100}% accuracy, ${(task1AvgTime/1000).toFixed(1)}s avg time<br>
-        Task 2 (Number Ops): ${task2Accuracy.toFixed(2)*100}% accuracy, ${(task2AvgTime/1000).toFixed(1)}s avg time<br>
-        Task 3 (Categories): ${task3Accuracy.toFixed(2)*100}% accuracy, ${(task3AvgTime/1000).toFixed(1)}s avg time<br>
+        Task 1 (Color-Word): ${task1Accuracy.toFixed(2) * 100}% accuracy, ${(task1AvgTime / 1000).toFixed(1)}s avg time<br>
+        Task 2 (Number Ops): ${task2Accuracy.toFixed(2) * 100}% accuracy, ${(task2AvgTime / 1000).toFixed(1)}s avg time<br>
+        Task 3 (Categories): ${task3Accuracy.toFixed(2) * 100}% accuracy, ${(task3AvgTime / 1000).toFixed(1)}s avg time<br>
         <br>
         <em>Score = (Accuracy × 0.6 + Speed × 0.4) × 10</em>
     `;
 
     scoreDisplay.style.display = 'block';
+
+    // Save to LocalStorage
+    saveScore(agilityScore.toFixed(1), label);
 }
+
+// Persistent Storage Logic
+const STORAGE_KEY = 'mental_agility_history';
+let scoreHistory = typeof TrackerStorage !== 'undefined' ? TrackerStorage.load(STORAGE_KEY, []) : [];
+
+function saveScore(score, label) {
+    const entry = {
+        date: new Date().toLocaleString(),
+        score: score,
+        label: label
+    };
+    scoreHistory.push(entry);
+
+    // Keep last 10
+    if (scoreHistory.length > 10) {
+        scoreHistory = scoreHistory.slice(-10);
+    }
+
+    if (typeof TrackerStorage !== 'undefined') {
+        TrackerStorage.save(STORAGE_KEY, scoreHistory);
+    }
+
+    renderHistory();
+}
+
+function renderHistory() {
+    const historyContainer = document.getElementById('historyContainer');
+    if (!historyContainer) {
+        // Create history UI if it doesn't exist
+        const container = document.createElement('div');
+        container.id = 'historyContainer';
+        container.className = 'history-section';
+        container.innerHTML = '<h2>Score History</h2><ul id="historyList"></ul>';
+        document.querySelector('.container').appendChild(container);
+    }
+
+    const list = document.getElementById('historyList');
+    if (list) {
+        list.innerHTML = '';
+        scoreHistory.slice().reverse().forEach(entry => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${entry.score}</strong> (${entry.label}) - <em>${entry.date}</em>`;
+            list.appendChild(li);
+        });
+    }
+}
+
+// Render history on load
+document.addEventListener('DOMContentLoaded', renderHistory);
