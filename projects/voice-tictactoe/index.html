@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗣️ Voice Tic-Tac-Toe · speak to play</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e3c4f, #0f2a38);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .game-container {
+            background: #2c4e62;
+            padding: 2.5rem 2rem;
+            border-radius: 4rem;
+            box-shadow: 0 30px 35px -10px #00000080, inset 0 -3px 0 #1d3643, inset 0 2px 10px #8ab3cf80;
+            border: 2px solid #5790b0;
+        }
+        h1 {
+            text-align: center;
+            margin: 0 0 0.5rem 0;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: #fde49b;
+            text-shadow: 0 4px 0 #8b6f3c, 0 8px 10px black;
+        }
+        .sub {
+            text-align: center;
+            color: #c0e1ff;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 120px);
+            grid-template-rows: repeat(3, 120px);
+            gap: 15px;
+            background: #1c3b4a;
+            padding: 20px;
+            border-radius: 50px;
+            box-shadow: inset 0 0 0 3px #0f2a33, 0 20px 25px black;
+            margin-bottom: 2rem;
+        }
+        .cell {
+            background: #2f637b;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 5px 0 #1a3b47, 0 8px 10px black;
+            box-shadow: 0 8px 0 #15323f, 0 10px 15px black;
+            transition: 0.07s ease;
+            cursor: pointer;
+            border: 2px solid #7fb7d4;
+        }
+        .cell:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #15323f, 0 5px 12px black;
+        }
+        .cell.taken {
+            cursor: not-allowed;
+            filter: brightness(0.9);
+        }
+        .cell.win {
+            background: #45b07a;
+            box-shadow: 0 0 25px #a5ffcf, 0 8px 0 #1b6943;
+        }
+        .voice-panel {
+            background: #1d3e4f;
+            border-radius: 4rem;
+            padding: 1.2rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            border: 2px solid #4383a8;
+            box-shadow: inset 0 2px 8px #0c212b;
+        }
+        .mic-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .mic-btn {
+            background: #385f73;
+            border: none;
+            font-size: 2.3rem;
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 0 #1e3643, 0 10px 18px black;
+            transition: 0.07s;
+            cursor: pointer;
+            border: 2px solid #8fc5e7;
+            color: white;
+        }
+        .mic-btn.active {
+            background: #3aa86a;
+            transform: translateY(5px);
+            box-shadow: 0 3px 0 #166d3a, 0 8px 15px black;
+            border-color: #c8ffb0;
+        }
+        .status {
+            background: #102c38;
+            padding: 0.8rem 1.8rem;
+            border-radius: 3rem;
+            color: #c3edff;
+            font-weight: 600;
+            font-size: 1.3rem;
+            border: 1px solid #4e93b9;
+            min-width: 200px;
+            text-align: center;
+        }
+        .command-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .cmd-badge {
+            background: #233e4b;
+            padding: 0.6rem 1.2rem;
+            border-radius: 3rem;
+            color: #fedd9e;
+            font-weight: 600;
+            font-size: 1.2rem;
+            border: 1px solid #a3c6e0;
+            box-shadow: inset 0 -2px 0 #14232d;
+        }
+        .turn-indicator {
+            font-size: 1.8rem;
+            font-weight: 800;
+            text-align: center;
+            margin: 0.5rem 0 1.2rem;
+            padding: 0.5rem;
+            background: #1d3a45;
+            border-radius: 5rem;
+            color: #ffe88b;
+        }
+        .reset-btn {
+            background: #6441a5;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            padding: 0.8rem 2rem;
+            border-radius: 3rem;
+            font-weight: 700;
+            box-shadow: 0 5px 0 #371f5a;
+            cursor: pointer;
+            transition: 0.07s;
+            border: 1px solid #b499f0;
+        }
+        .reset-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #371f5a;
+        }
+        .last-command {
+            background: #00000040;
+            padding: 0.5rem 1.5rem;
+            border-radius: 3rem;
+            font-size: 1.2rem;
+            color: #b3e4ff;
+        }
+        .footer {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1>🎤 TIC·TAC·VOICE</h1>
+    <div class="sub">say a cell · "top left" · "center" · "bottom right"</div>
+
+    <div class="turn-indicator" id="turnDisplay">Player X · your turn</div>
+
+    <div class="board" id="board">
+        <!-- cells will be injected by js -->
+    </div>
+
+    <div class="voice-panel">
+        <div class="mic-control">
+            <button class="mic-btn" id="micButton" title="click to speak">🎤</button>
+            <span class="status" id="listeningStatus">⚪ idle</span>
+        </div>
+        <div class="command-grid">
+            <span class="cmd-badge">⬆️ top left</span>
+            <span class="cmd-badge">⬆️ top center</span>
+            <span class="cmd-badge">⬆️ top right</span>
+            <span class="cmd-badge">⬅️ middle left</span>
+            <span class="cmd-badge">🎯 center</span>
+            <span class="cmd-badge">➡️ middle right</span>
+            <span class="cmd-badge">⬇️ bottom left</span>
+            <span class="cmd-badge">⬇️ bottom center</span>
+            <span class="cmd-badge">⬇️ bottom right</span>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
+        <div class="last-command" id="lastCommandLog">🕹️ last: —</div>
+        <button class="reset-btn" id="resetGame">⟲ new game</button>
+    </div>
+    <div class="footer">
+        <span style="color:#9fc9e5;">✨ also try: "place at top left", "move center", "reset"</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- TIC TAC TOE CORE ----------
+        const boardEl = document.getElementById('board');
+        const turnDisplay = document.getElementById('turnDisplay');
+        const lastCommandLog = document.getElementById('lastCommandLog');
+        const micBtn = document.getElementById('micButton');
+        const listeningStatus = document.getElementById('listeningStatus');
+        
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';   // X always starts
+        let gameActive = true;
+        let winCells = [];         // indices of winning line
+
+        // mapping voice commands to board indices
+        const positionMap = {
+            // top row
+            'top left': 0, 'top-left': 0, 'topleft': 0, 'top left corner': 0,
+            'top center': 1, 'top-center': 1, 'topcenter': 1, 'top middle': 1,
+            'top right': 2, 'top-right': 2, 'topright': 2, 'top right corner': 2,
+            // middle row
+            'middle left': 3, 'middle-left': 3, 'middleleft': 3, 'center left': 3,
+            'center': 4, 'middle': 4, 'centre': 4, 'middle center': 4, 'middle-centre': 4,
+            'middle right': 5, 'middle-right': 5, 'middleright': 5, 'center right': 5,
+            // bottom row
+            'bottom left': 6, 'bottom-left': 6, 'bottomleft': 6, 'bottom left corner': 6,
+            'bottom center': 7, 'bottom-center': 7, 'bottomcenter': 7, 'bottom middle': 7,
+            'bottom right': 8, 'bottom-right': 8, 'bottomright': 8, 'bottom right corner': 8
+        };
+
+        // extra aliases for numbers
+        const numberMap = {
+            '1': 0, 'one': 0, 'first': 0,
+            '2': 1, 'two': 1, 'second': 1,
+            '3': 2, 'three': 2, 'third': 2,
+            '4': 3, 'four': 3, 'fourth': 3,
+            '5': 4, 'five': 4, 'fifth': 4,
+            '6': 5, 'six': 5, 'sixth': 5,
+            '7': 6, 'seven': 6, 'seventh': 6,
+            '8': 7, 'eight': 7, 'eighth': 7,
+            '9': 8, 'nine': 8, 'ninth': 8
+        };
+
+        // render board dynamically
+        function renderBoard() {
+            let html = '';
+            for (let i = 0; i < 9; i++) {
+                let cellClass = 'cell';
+                if (board[i] !== '') cellClass += ' taken';
+                if (winCells.includes(i)) cellClass += ' win';
+                html += `<div class="${cellClass}" data-index="${i}">${board[i]}</div>`;
+            }
+            boardEl.innerHTML = html;
+
+            // update turn message
+            if (!gameActive) {
+                if (winCells.length > 0) {
+                    turnDisplay.innerText = `🏆 Player ${currentPlayer === 'X' ? 'O' : 'X'} wins!`;
+                } else {
+                    turnDisplay.innerText = `🤝 It's a draw!`;
+                }
+            } else {
+                turnDisplay.innerText = `Player ${currentPlayer} · your turn`;
+            }
+        }
+
+        // check winner
+        function checkWinner() {
+            const winPatterns = [
+                [0,1,2],[3,4,5],[6,7,8], // rows
+                [0,3,6],[1,4,7],[2,5,8], // cols
+                [0,4,8],[2,4,6]          // diags
+            ];
+
+            for (let pattern of winPatterns) {
+                const [a,b,c] = pattern;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    winCells = [a,b,c];
+                    return board[a]; // X or O
+                }
+            }
+            if (board.every(cell => cell !== '')) return 'draw';
+            return null;
+        }
+
+        // handle move
+        function makeMove(index) {
+            if (!gameActive) return false;
+            if (index < 0 || index > 8) return false;
+            if (board[index] !== '') return false;
+
+            // place mark
+            board[index] = currentPlayer;
+            
+            const winner = checkWinner();
+            if (winner) {
+                gameActive = false;
+                if (winner === 'draw') {
+                    winCells = [];
+                }
+            } else {
+                // switch player
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            }
+            
+            renderBoard();
+            return true;
+        }
+
+        // reset game
+        function resetGame() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            gameActive = true;
+            winCells = [];
+            renderBoard();
+            lastCommandLog.innerText = '🕹️ last: —';
+        }
+
+        // ---------- VOICE RECOGNITION ----------
+        let recognition = null;
+        let isListening = false;
+        let forcedStop = false;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            listeningStatus.innerHTML = '❌ not supported';
+            micBtn.style.opacity = '0.5';
+        } else {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event) => {
+                const last = event.results[event.results.length - 1];
+                if (last.isFinal) {
+                    const transcript = last[0].transcript.trim().toLowerCase();
+                    processVoiceCommand(transcript);
+                }
+            };
+
+            recognition.onend = () => {
+                if (isListening && !forcedStop) {
+                    try { recognition.start(); } catch (e) {}
+                } else {
+                    isListening = false;
+                    updateMicUI();
+                }
+            };
+
+            recognition.onerror = (e) => {
+                console.warn(e.error);
+                if (e.error === 'not-allowed') {
+                    listeningStatus.innerHTML = '🔇 blocked';
+                    isListening = false;
+                } else if (e.error === 'no-speech') {
+                    // ignore
+                } else {
+                    isListening = false;
+                }
+                updateMicUI();
+            };
+        }
+
+        function updateMicUI() {
+            if (isListening) {
+                micBtn.classList.add('active');
+                listeningStatus.innerHTML = '🎙️ listening...';
+            } else {
+                micBtn.classList.remove('active');
+                listeningStatus.innerHTML = '⚪ idle';
+            }
+        }
+
+        function toggleListening() {
+            if (!recognition) {
+                alert('Speech recognition not available. Use Chrome/Edge.');
+                return;
+            }
+
+            if (isListening) {
+                forcedStop = false;
+                isListening = false;
+                try { recognition.stop(); } catch (e) {}
+            } else {
+                forcedStop = false;
+                isListening = true;
+                try { recognition.start(); } catch (e) {
+                    isListening = false;
+                }
+            }
+            updateMicUI();
+        }
+
+        function forceStopListening() {
+            forcedStop = true;
+            if (recognition && isListening) {
+                try { recognition.stop(); } catch (e) {}
+            }
+            isListening = false;
+            updateMicUI();
+        }
+
+        // ---------- PROCESS VOICE COMMAND ----------
+        function processVoiceCommand(text) {
+            lastCommandLog.innerText = `🗣️ "${text}"`;
+            
+            // reset command
+            if (text.includes('reset') || text.includes('new game') || text.includes('restart')) {
+                resetGame();
+                return;
+            }
+
+            if (!gameActive) {
+                // if game over, maybe reset on 'play again' etc, but we can ignore
+                return;
+            }
+
+            // try to find a position
+            let index = -1;
+
+            // 1. check named positions
+            for (let [key, value] of Object.entries(positionMap)) {
+                if (text.includes(key)) {
+                    index = value;
+                    break;
+                }
+            }
+
+            // 2. if not found, try number mapping
+            if (index === -1) {
+                for (let [key, value] of Object.entries(numberMap)) {
+                    if (text.includes(key)) {
+                        index = value;
+                        break;
+                    }
+                }
+            }
+
+            // 3. also try patterns like "cell 5" "move 3"
+            if (index === -1) {
+                const match = text.match(/\b([1-9])\b/);
+                if (match) {
+                    index = parseInt(match[1]) - 1;
+                }
+            }
+
+            // 4. check for "place at ..." patterns (already covered by includes)
+
+            if (index !== -1) {
+                const success = makeMove(index);
+                if (success) {
+                    // flash mic feedback
+                    micBtn.style.backgroundColor = '#6acd90';
+                    setTimeout(() => micBtn.style.backgroundColor = '', 150);
+                } else {
+                    lastCommandLog.innerText += ' ❌ cell taken';
+                }
+            } else {
+                lastCommandLog.innerText += ' 🤔 not understood';
+            }
+        }
+
+        // ---------- EVENT LISTENERS ----------
+        micBtn.addEventListener('click', toggleListening);
+
+        document.getElementById('resetGame').addEventListener('click', () => {
+            resetGame();
+            forceStopListening(); // optional, but nice to stop voice
+        });
+
+        // board click fallback (manual)
+        boardEl.addEventListener('click', (e) => {
+            const cell = e.target.closest('.cell');
+            if (!cell) return;
+            const index = cell.dataset.index;
+            if (index !== undefined) {
+                const success = makeMove(parseInt(index));
+                if (success) {
+                    forceStopListening(); // stop listening after manual move (optional)
+                }
+            }
+        });
+
+        // initial render
+        renderBoard();
+        updateMicUI();
+
+        // cleanup
+        window.addEventListener('beforeunload', () => {
+            if (recognition && isListening) {
+                try { recognition.stop(); } catch (e) {}
+            }
+        });
+    })();
+</script>
+</body>
+</html>
