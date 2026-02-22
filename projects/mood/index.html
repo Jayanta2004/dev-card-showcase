@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Weaver - Interactive Emotion Board</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .mood-container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            color: #a0a0ff;
+            font-size: 1.2rem;
+        }
+
+        .mood-input-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mood-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1.1rem;
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .mood-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .mood-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .analyze-btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .mood-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .mood-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+            animation: floatIn 0.6s ease-out;
+        }
+
+        @keyframes floatIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mood-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .mood-emoji {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            text-align: center;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.3));
+        }
+
+        .mood-title {
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .mood-colors {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .color-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            transition: transform 0.3s;
+        }
+
+        .color-dot:hover {
+            transform: scale(1.2);
+        }
+
+        .mood-quote {
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+            text-align: center;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .current-mood-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .mood-visualization {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .mood-sphere {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            animation: pulse 3s infinite;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% {
+                transform: scale(1.1);
+                filter: brightness(1.2);
+            }
+        }
+
+        .mood-metrics {
+            color: white;
+            font-size: 1.2rem;
+            text-align: left;
+        }
+
+        .metric {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .metric-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .metric-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 5px;
+            transition: width 0.5s;
+        }
+
+        .suggestions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .suggestion-chip {
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .suggestion-chip:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="mood-container">
+        <div class="header">
+            <h1>🎭 Mood Weaver</h1>
+            <p>Describe your feeling and watch the colors dance</p>
+        </div>
+
+        <div class="mood-input-section">
+            <input type="text" class="mood-input" id="moodInput" 
+                   placeholder="How are you feeling? (e.g., 'ocean calm', 'electric excitement', 'dreamy sunset')">
+            <button class="analyze-btn" onclick="analyzeMood()">Weave Mood</button>
+        </div>
+
+        <div class="mood-board" id="moodBoard">
+            <!-- Mood cards will be dynamically inserted here -->
+        </div>
+
+        <div class="current-mood-display" id="currentMoodDisplay">
+            <div class="mood-visualization">
+                <div class="mood-sphere" id="moodSphere"></div>
+                <div class="mood-metrics" id="moodMetrics">
+                    <div class="metric">
+                        <span>Energy Level</span>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="energyFill" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <span>Calmness</span>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="calmFill" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <span>Creativity</span>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="creativityFill" style="width: 50%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="suggestions" id="suggestions"></div>
+        </div>
+    </div>
+
+    <script>
+        const moodDatabase = {
+            happy: {
+                emoji: '😊',
+                colors: ['#FFD700', '#FFA500', '#FF69B4'],
+                quote: 'Happiness is not something ready-made. It comes from your own actions.',
+                energy: 90,
+                calm: 60,
+                creativity: 80
+            },
+            calm: {
+                emoji: '😌',
+                colors: ['#87CEEB', '#98FB98', '#DDA0DD'],
+                quote: 'Calmness is the cradle of power.',
+                energy: 30,
+                calm: 95,
+                creativity: 70
+            },
+            energetic: {
+                emoji: '⚡',
+                colors: ['#FF4500', '#FF8C00', '#FFD700'],
+                quote: 'Energy and persistence conquer all things.',
+                energy: 95,
+                calm: 20,
+                creativity: 85
+            },
+            dreamy: {
+                emoji: '🌙',
+                colors: ['#4B0082', '#8A2BE2', '#9370DB'],
+                quote: 'Dream as if you\'ll live forever, live as if you\'ll die today.',
+                energy: 40,
+                calm: 80,
+                creativity: 95
+            },
+            ocean: {
+                emoji: '🌊',
+                colors: ['#006994', '#40E0D0', '#7FFFD4'],
+                quote: 'Be like water, my friend.',
+                energy: 60,
+                calm: 85,
+                creativity: 75
+            },
+            sunset: {
+                emoji: '🌅',
+                colors: ['#FF6B6B', '#FFE66D', '#FF8C42'],
+                quote: 'Every sunset brings the promise of a new dawn.',
+                energy: 70,
+                calm: 75,
+                creativity: 90
+            },
+            mysterious: {
+                emoji: '🌫️',
+                colors: ['#2C3E50', '#8E44AD', '#34495E'],
+                quote: 'The most beautiful thing we can experience is the mysterious.',
+                energy: 50,
+                calm: 70,
+                creativity: 85
+            },
+            romantic: {
+                emoji: '❤️',
+                colors: ['#FF1493', '#FF69B4', '#FFB6C1'],
+                quote: 'Love is composed of a single soul inhabiting two bodies.',
+                energy: 75,
+                calm: 65,
+                creativity: 80
+            }
+        };
+
+        function analyzeMood() {
+            const input = document.getElementById('moodInput').value.toLowerCase();
+            
+            if (!input) {
+                alert('Please describe your mood first!');
+                return;
+            }
+
+            // Simple mood analysis based on keywords
+            let detectedMoods = [];
+            let primaryMood = null;
+
+            // Check for mood keywords
+            for (let [mood, data] of Object.entries(moodDatabase)) {
+                if (input.includes(mood)) {
+                    detectedMoods.push({mood, ...data});
+                    if (!primaryMood) primaryMood = mood;
+                }
+            }
+
+            // If no direct match, do fuzzy matching
+            if (detectedMoods.length === 0) {
+                const words = input.split(' ');
+                for (let word of words) {
+                    for (let [mood, data] of Object.entries(moodDatabase)) {
+                        if (mood.includes(word) || word.includes(mood)) {
+                            detectedMoods.push({mood, ...data});
+                            if (!primaryMood) primaryMood = mood;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // If still no match, assign random mood
+            if (detectedMoods.length === 0) {
+                const moods = Object.keys(moodDatabase);
+                primaryMood = moods[Math.floor(Math.random() * moods.length)];
+                detectedMoods = [{
+                    mood: primaryMood,
+                    ...moodDatabase[primaryMood]
+                }];
+            }
+
+            // Add complementary moods
+            if (detectedMoods.length === 1) {
+                const complementaryMoods = getComplementaryMoods(primaryMood);
+                complementaryMoods.forEach(mood => {
+                    if (!detectedMoods.find(m => m.mood === mood)) {
+                        detectedMoods.push({
+                            mood: mood,
+                            ...moodDatabase[mood]
+                        });
+                    }
+                });
+            }
+
+            // Limit to 3 moods
+            detectedMoods = detectedMoods.slice(0, 3);
+            
+            renderMoodBoard(detectedMoods);
+            updateCurrentMood(detectedMoods[0]);
+            generateSuggestions(input);
+        }
+
+        function getComplementaryMoods(mood) {
+            const moodPairs = {
+                happy: ['energetic', 'romantic'],
+                calm: ['dreamy', 'ocean'],
+                energetic: ['happy', 'sunset'],
+                dreamy: ['mysterious', 'calm'],
+                ocean: ['calm', 'mysterious'],
+                sunset: ['romantic', 'happy'],
+                mysterious: ['dreamy', 'ocean'],
+                romantic: ['sunset', 'happy']
+            };
+            return moodPairs[mood] || ['calm', 'happy'];
+        }
+
+        function renderMoodBoard(moods) {
+            const board = document.getElementById('moodBoard');
+            
+            board.innerHTML = moods.map(mood => `
+                <div class="mood-card" onclick="selectMood('${mood.mood}')">
+                    <div class="mood-emoji">${mood.emoji}</div>
+                    <div class="mood-title">${mood.mood.charAt(0).toUpperCase() + mood.mood.slice(1)}</div>
+                    <div class="mood-colors">
+                        ${mood.colors.map(color => 
+                            `<div class="color-dot" style="background: ${color}"></div>`
+                        ).join('')}
+                    </div>
+                    <div class="mood-quote">"${mood.quote}"</div>
+                </div>
+            `).join('');
+        }
+
+        function selectMood(mood) {
+            updateCurrentMood({
+                mood,
+                ...moodDatabase[mood]
+            });
+        }
+
+        function updateCurrentMood(mood) {
+            // Update sphere color with gradient
+            const sphere = document.getElementById('moodSphere');
+            const gradient = `linear-gradient(135deg, ${mood.colors[0]}, ${mood.colors[1]})`;
+            sphere.style.background = gradient;
+
+            // Update metrics
+            document.getElementById('energyFill').style.width = `${mood.energy}%`;
+            document.getElementById('calmFill').style.width = `${mood.calm}%`;
+            document.getElementById('creativityFill').style.width = `${mood.creativity}%`;
+
+            // Animate sphere
+            sphere.style.animation = 'none';
+            sphere.offsetHeight; // Trigger reflow
+            sphere.style.animation = 'pulse 3s infinite';
+        }
+
+        function generateSuggestions(input) {
+            const suggestions = [
+                'Play some lo-fi music',
+                'Take a deep breath',
+                'Write in your journal',
+                'Go for a walk',
+                'Call a friend',
+                'Draw something',
+                'Meditate for 5 minutes',
+                'Drink some water',
+                'Stretch your body',
+                'Listen to ocean sounds'
+            ];
+
+            // Shuffle and pick 4 random suggestions
+            const shuffled = suggestions.sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, 4);
+
+            const suggestionsContainer = document.getElementById('suggestions');
+            suggestionsContainer.innerHTML = selected.map(suggestion => 
+                `<div class="suggestion-chip" onclick="alert('Great idea! ${suggestion}')">${suggestion}</div>`
+            ).join('');
+        }
+
+        // Add some example moods as placeholders
+        const exampleMoods = ['happy', 'calm', 'energetic'];
+        renderMoodBoard(exampleMoods.map(mood => ({
+            mood,
+            ...moodDatabase[mood]
+        })));
+
+        // Allow Enter key to submit
+        document.getElementById('moodInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeMood();
+            }
+        });
+
+        // Add floating particles effect
+        function createParticles() {
+            const container = document.querySelector('.mood-container');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = '5px';
+                particle.style.height = '5px';
+                particle.style.background = 'rgba(255, 255, 255, 0.3)';
+                particle.style.borderRadius = '50%';
+                particle.style.pointerEvents = 'none';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animation = `float ${5 + Math.random() * 10}s infinite`;
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // Add float animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0%, 100% {
+                    transform: translateY(0) translateX(0);
+                    opacity: 0.3;
+                }
+                25% {
+                    transform: translateY(-20px) translateX(10px);
+                    opacity: 0.6;
+                }
+                50% {
+                    transform: translateY(-30px) translateX(-10px);
+                    opacity: 0.8;
+                }
+                75% {
+                    transform: translateY(-20px) translateX(10px);
+                    opacity: 0.6;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize particles
+        createParticles();
+    </script>
+</body>
+</html>
