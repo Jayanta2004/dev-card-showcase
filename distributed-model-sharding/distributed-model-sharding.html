@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributed Model Sharding</title>
+    <link rel="stylesheet" href="distributed-model-sharding.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-network-wired"></i> Distributed Model Sharding</h1>
+            <p>Visualize and simulate distributed model sharding strategies for large-scale machine learning</p>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-button active" data-tab="sharding">Sharding</button>
+            <button class="tab-button" data-tab="simulation">Simulation</button>
+            <button class="tab-button" data-tab="analysis">Analysis</button>
+            <button class="tab-button" data-tab="optimization">Optimization</button>
+        </nav>
+
+        <div id="sharding-tab" class="tab-content active">
+            <div class="sharding-controls">
+                <div class="control-group">
+                    <label>Model Architecture</label>
+                    <select id="modelType">
+                        <option value="transformer">Transformer</option>
+                        <option value="cnn">CNN</option>
+                        <option value="rnn">RNN</option>
+                        <option value="mlp">MLP</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Sharding Strategy</label>
+                    <select id="shardingStrategy">
+                        <option value="tensor-parallel">Tensor Parallelism</option>
+                        <option value="pipeline-parallel">Pipeline Parallelism</option>
+                        <option value="zero-dp">ZeRO-DP</option>
+                        <option value="megatron-lm">Megatron-LM</option>
+                        <option value="deepSpeed">DeepSpeed</option>
+                        <option value="fairscale">FairScale</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Number of Devices</label>
+                    <input type="range" id="numDevices" min="2" max="64" value="8">
+                    <span id="numDevicesValue">8</span>
+                </div>
+
+                <div class="control-group">
+                    <label>Model Size (Billion Parameters)</label>
+                    <input type="range" id="modelSize" min="1" max="1000" value="175">
+                    <span id="modelSizeValue">175B</span>
+                </div>
+
+                <button id="applySharding" class="btn-primary">
+                    <i class="fas fa-play"></i> Apply Sharding
+                </button>
+            </div>
+
+            <div class="sharding-visualization">
+                <div class="model-overview">
+                    <h3>Model Architecture Overview</h3>
+                    <div id="modelDiagram" class="model-diagram"></div>
+                </div>
+
+                <div class="sharding-layout">
+                    <h3>Sharding Layout</h3>
+                    <div id="shardingDiagram" class="sharding-diagram"></div>
+                </div>
+
+                <div class="device-distribution">
+                    <h3>Device Distribution</h3>
+                    <div id="deviceGrid" class="device-grid"></div>
+                </div>
+            </div>
+
+            <div class="sharding-details">
+                <div class="detail-panel">
+                    <h4>Sharding Parameters</h4>
+                    <div id="shardingParams" class="params-list"></div>
+                </div>
+
+                <div class="detail-panel">
+                    <h4>Memory Distribution</h4>
+                    <div id="memoryChart" class="memory-chart"></div>
+                </div>
+
+                <div class="detail-panel">
+                    <h4>Communication Overhead</h4>
+                    <div id="communicationChart" class="communication-chart"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="simulation-tab" class="tab-content">
+            <div class="simulation-controls">
+                <div class="control-group">
+                    <label>Batch Size</label>
+                    <input type="number" id="batchSize" min="1" max="10000" value="32">
+                </div>
+
+                <div class="control-group">
+                    <label>Sequence Length</label>
+                    <input type="number" id="seqLength" min="1" max="8192" value="2048">
+                </div>
+
+                <div class="control-group">
+                    <label>Network Bandwidth (GB/s)</label>
+                    <input type="number" id="networkBandwidth" min="1" max="1000" value="100" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label>Enable Gradient Accumulation</label>
+                    <input type="checkbox" id="gradientAccumulation" checked>
+                </div>
+
+                <button id="runSimulation" class="btn-primary">
+                    <i class="fas fa-rocket"></i> Run Simulation
+                </button>
+
+                <button id="stopSimulation" class="btn-danger" disabled>
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+            </div>
+
+            <div class="simulation-results">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h4>Training Throughput</h4>
+                        <div class="metric-value">
+                            <span id="throughputValue">0</span>
+                            <span class="metric-unit">samples/s</span>
+                        </div>
+                        <div class="metric-chart">
+                            <canvas id="throughputChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h4>Memory Usage</h4>
+                        <div class="metric-value">
+                            <span id="memoryValue">0</span>
+                            <span class="metric-unit">GB</span>
+                        </div>
+                        <div class="metric-chart">
+                            <canvas id="memoryUsageChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h4>Communication Time</h4>
+                        <div class="metric-value">
+                            <span id="commTimeValue">0</span>
+                            <span class="metric-unit">ms</span>
+                        </div>
+                        <div class="metric-chart">
+                            <canvas id="commTimeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h4>Load Balance</h4>
+                        <div class="metric-value">
+                            <span id="loadBalanceValue">0</span>
+                            <span class="metric-unit">%</span>
+                        </div>
+                        <div class="metric-chart">
+                            <canvas id="loadBalanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="simulation-timeline">
+                    <h3>Simulation Timeline</h3>
+                    <div class="timeline-container">
+                        <canvas id="timelineCanvas"></canvas>
+                        <div class="timeline-controls">
+                            <button id="playTimeline" class="btn-secondary">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button id="pauseTimeline" class="btn-secondary">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            <input type="range" id="timelineProgress" min="0" max="100" value="0">
+                            <span id="timelineTime">00:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottleneck-analysis">
+                    <h3>Bottleneck Analysis</h3>
+                    <div id="bottleneckList" class="bottleneck-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="analysis-tab" class="tab-content">
+            <div class="analysis-controls">
+                <div class="control-group">
+                    <label>Analysis Type</label>
+                    <select id="analysisType">
+                        <option value="scalability">Scalability Analysis</option>
+                        <option value="efficiency">Efficiency Analysis</option>
+                        <option value="cost">Cost Analysis</option>
+                        <option value="fault-tolerance">Fault Tolerance</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Comparison Mode</label>
+                    <input type="checkbox" id="comparisonMode">
+                </div>
+
+                <button id="runAnalysis" class="btn-primary">
+                    <i class="fas fa-chart-line"></i> Run Analysis
+                </button>
+
+                <button id="exportAnalysis" class="btn-secondary">
+                    <i class="fas fa-download"></i> Export Results
+                </button>
+            </div>
+
+            <div class="analysis-results">
+                <div class="analysis-charts">
+                    <div class="chart-container">
+                        <canvas id="scalabilityChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="efficiencyChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="analysis-insights">
+                    <h3>Key Insights</h3>
+                    <div id="insightsPanel" class="insights-panel"></div>
+                </div>
+
+                <div class="comparison-table">
+                    <h3>Strategy Comparison</h3>
+                    <table id="comparisonTable">
+                        <thead>
+                            <tr>
+                                <th>Strategy</th>
+                                <th>Throughput</th>
+                                <th>Memory</th>
+                                <th>Communication</th>
+                                <th>Efficiency</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="optimization-tab" class="tab-content">
+            <div class="optimization-controls">
+                <div class="control-group">
+                    <label>Optimization Goal</label>
+                    <select id="optimizationGoal">
+                        <option value="throughput">Maximize Throughput</option>
+                        <option value="memory">Minimize Memory</option>
+                        <option value="communication">Minimize Communication</option>
+                        <option value="balance">Optimal Balance</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Constraints</label>
+                    <div class="constraints">
+                        <label>
+                            <input type="checkbox" id="memoryConstraint" checked>
+                            Memory Limit
+                        </label>
+                        <label>
+                            <input type="checkbox" id="bandwidthConstraint" checked>
+                            Bandwidth Limit
+                        </label>
+                        <label>
+                            <input type="checkbox" id="latencyConstraint">
+                            Latency Limit
+                        </label>
+                    </div>
+                </div>
+
+                <button id="runOptimization" class="btn-primary">
+                    <i class="fas fa-magic"></i> Optimize
+                </button>
+
+                <button id="resetOptimization" class="btn-secondary">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+            </div>
+
+            <div class="optimization-results">
+                <div class="recommended-config">
+                    <h3>Recommended Configuration</h3>
+                    <div id="recommendedConfig" class="config-panel"></div>
+                </div>
+
+                <div class="optimization-metrics">
+                    <h3>Optimization Metrics</h3>
+                    <div class="metrics-comparison">
+                        <div class="metric-comparison">
+                            <h4>Before Optimization</h4>
+                            <div id="beforeMetrics" class="metric-values"></div>
+                        </div>
+                        <div class="metric-comparison">
+                            <h4>After Optimization</h4>
+                            <div id="afterMetrics" class="metric-values"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tradeoff-analysis">
+                    <h3>Trade-off Analysis</h3>
+                    <div class="tradeoff-chart">
+                        <canvas id="tradeoffChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div id="configModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Advanced Configuration</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="config-sections">
+                        <div class="config-section">
+                            <h4>Model Parameters</h4>
+                            <label>
+                                <span>Hidden Size</span>
+                                <input type="number" id="hiddenSize" value="4096">
+                            </label>
+                            <label>
+                                <span>Number of Layers</span>
+                                <input type="number" id="numLayers" value="96">
+                            </label>
+                            <label>
+                                <span>Attention Heads</span>
+                                <input type="number" id="numHeads" value="128">
+                            </label>
+                        </div>
+
+                        <div class="config-section">
+                            <h4>Sharding Parameters</h4>
+                            <label>
+                                <span>Tensor Parallel Size</span>
+                                <input type="number" id="tensorParallelSize" value="8">
+                            </label>
+                            <label>
+                                <span>Pipeline Parallel Size</span>
+                                <input type="number" id="pipelineParallelSize" value="4">
+                            </label>
+                            <label>
+                                <span>Data Parallel Size</span>
+                                <input type="number" id="dataParallelSize" value="2">
+                            </label>
+                        </div>
+
+                        <div class="config-section">
+                            <h4>Hardware Parameters</h4>
+                            <label>
+                                <span>Device Memory (GB)</span>
+                                <input type="number" id="deviceMemory" value="80" step="0.1">
+                            </label>
+                            <label>
+                                <span>Inter-connect Bandwidth (GB/s)</span>
+                                <input type="number" id="interConnectBW" value="600" step="0.1">
+                            </label>
+                            <label>
+                                <span>Intra-connect Bandwidth (GB/s)</span>
+                                <input type="number" id="intraConnectBW" value="900" step="0.1">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveConfig" class="btn-primary">Save Configuration</button>
+                    <button id="resetConfig" class="btn-secondary">Reset to Defaults</button>
+                    <button class="close-modal btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="exportModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Export Results</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="export-options">
+                        <label>
+                            <input type="checkbox" id="exportConfig" checked>
+                            Configuration
+                        </label>
+                        <label>
+                            <input type="checkbox" id="exportMetrics" checked>
+                            Performance Metrics
+                        </label>
+                        <label>
+                            <input type="checkbox" id="exportCharts" checked>
+                            Charts & Visualizations
+                        </label>
+                        <label>
+                            <input type="checkbox" id="exportAnalysis">
+                            Analysis Results
+                        </label>
+                    </div>
+                    <div class="export-format">
+                        <label>
+                            <span>Export Format</span>
+                            <select id="exportFormat">
+                                <option value="json">JSON</option>
+                                <option value="csv">CSV</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="performExport" class="btn-primary">Export</button>
+                    <button class="close-modal btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Action Button -->
+        <button id="fab" class="fab">
+            <i class="fas fa-cog"></i>
+        </button>
+
+        <script src="distributed-model-sharding.js"></script>
+    </div>
+</body>
+</html>

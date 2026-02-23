@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temporal Trend Analysis Engine</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Temporal Trend Analysis Engine</h1>
+            <p>Advanced temporal data analysis system for trend detection, forecasting, and anomaly identification across multiple time series.</p>
+        </header>
+
+        <div class="main-controls">
+            <button id="startAnalysisBtn" class="btn btn-primary">Start Analysis</button>
+            <button id="stopAnalysisBtn" class="btn btn-danger">Stop Analysis</button>
+            <button id="loadSampleDataBtn" class="btn btn-secondary">Load Sample Data</button>
+            <button id="exportResultsBtn" class="btn btn-success">Export Results</button>
+            <button id="clearAnalysisBtn" class="btn btn-warning">Clear Analysis</button>
+        </div>
+
+        <div class="analysis-dashboard">
+            <div class="status-panel">
+                <div class="status-card">
+                    <h3>Analysis Status</h3>
+                    <div class="status-indicator" id="analysisStatus">
+                        <span class="status-dot stopped"></span>
+                        <span class="status-text">Stopped</span>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <h3>Data Points</h3>
+                    <div class="metric-value" id="dataPointsCount">0</div>
+                </div>
+                <div class="status-card">
+                    <h3>Time Series</h3>
+                    <div class="metric-value" id="timeSeriesCount">0</div>
+                </div>
+                <div class="status-card">
+                    <h3>Last Update</h3>
+                    <div class="metric-value" id="lastUpdateTime">--:--:--</div>
+                </div>
+            </div>
+
+            <div class="trend-overview">
+                <h3>Trend Overview</h3>
+                <div class="trend-metrics">
+                    <div class="metric-card">
+                        <h4>Overall Trend</h4>
+                        <div class="trend-display" id="overallTrend">Neutral</div>
+                        <div class="trend-strength" id="overallTrendStrength">0.00</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Seasonality Strength</h4>
+                        <div class="seasonality-display" id="seasonalityStrength">0.00</div>
+                        <div class="seasonality-bar">
+                            <div class="seasonality-fill" id="seasonalityBar"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Forecast Accuracy</h4>
+                        <div class="accuracy-display" id="forecastAccuracy">0.00%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" id="accuracyBar"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Anomaly Count</h4>
+                        <div class="anomaly-display" id="anomalyCount">0</div>
+                        <div class="anomaly-level" id="anomalyLevel">Low</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Data Configuration</h3>
+                    <div class="data-controls">
+                        <div class="control-group">
+                            <label for="dataSourceSelect">Data Source:</label>
+                            <select id="dataSourceSelect">
+                                <option value="upload">File Upload</option>
+                                <option value="api">API Endpoint</option>
+                                <option value="realtime">Real-time Stream</option>
+                                <option value="database">Database</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="dataFormatSelect">Data Format:</label>
+                            <select id="dataFormatSelect">
+                                <option value="csv">CSV</option>
+                                <option value="json">JSON</option>
+                                <option value="xml">XML</option>
+                                <option value="timeseries">Time Series</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="timeColumn">Time Column:</label>
+                            <input type="text" id="timeColumn" placeholder="timestamp">
+                        </div>
+                        <div class="control-group">
+                            <label for="valueColumn">Value Column:</label>
+                            <input type="text" id="valueColumn" placeholder="value">
+                        </div>
+                        <button id="loadDataBtn" class="btn btn-primary">Load Data</button>
+                        <button id="validateDataBtn" class="btn btn-secondary">Validate Data</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Analysis Parameters</h3>
+                    <div class="analysis-params">
+                        <div class="param-group">
+                            <label for="analysisType">Analysis Type:</label>
+                            <select id="analysisType">
+                                <option value="trend">Trend Analysis</option>
+                                <option value="seasonal">Seasonal Decomposition</option>
+                                <option value="forecast">Forecasting</option>
+                                <option value="anomaly">Anomaly Detection</option>
+                                <option value="correlation">Correlation Analysis</option>
+                                <option value="comprehensive">Comprehensive</option>
+                            </select>
+                        </div>
+                        <div class="param-group">
+                            <label for="timeGranularity">Time Granularity:</label>
+                            <select id="timeGranularity">
+                                <option value="second">Second</option>
+                                <option value="minute">Minute</option>
+                                <option value="hour">Hour</option>
+                                <option value="day">Day</option>
+                                <option value="week">Week</option>
+                                <option value="month">Month</option>
+                            </select>
+                        </div>
+                        <div class="param-group">
+                            <label for="windowSize">Analysis Window:</label>
+                            <input type="number" id="windowSize" min="10" max="10000" value="100">
+                        </div>
+                        <div class="param-group">
+                            <label for="forecastHorizon">Forecast Horizon:</label>
+                            <input type="number" id="forecastHorizon" min="1" max="1000" value="30">
+                        </div>
+                        <div class="param-group">
+                            <label><input type="checkbox" id="detectAnomalies" checked> Detect Anomalies</label>
+                        </div>
+                        <div class="param-group">
+                            <label><input type="checkbox" id="seasonalDecomp" checked> Seasonal Decomposition</label>
+                        </div>
+                        <div class="param-group">
+                            <label><input type="checkbox" id="autoUpdate" checked> Auto Update</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Statistical Methods</h3>
+                    <div class="stat-methods">
+                        <label><input type="checkbox" id="movingAverage" checked> Moving Average</label>
+                        <label><input type="checkbox" id="exponentialSmoothing"> Exponential Smoothing</label>
+                        <label><input type="checkbox" id="arima" checked> ARIMA</label>
+                        <label><input type="checkbox" id="prophet"> Facebook Prophet</label>
+                        <label><input type="checkbox" id="linearRegression"> Linear Regression</label>
+                        <label><input type="checkbox" id="polynomialRegression"> Polynomial Regression</label>
+                        <label><input type="checkbox" id="fft"> FFT Analysis</label>
+                        <label><input type="checkbox" id="wavelet"> Wavelet Transform</label>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Anomaly Detection</h3>
+                    <div class="anomaly-settings">
+                        <div class="setting-group">
+                            <label for="anomalyThreshold">Threshold:</label>
+                            <input type="range" id="anomalyThreshold" min="1" max="5" step="0.1" value="2.5">
+                            <span id="anomalyThresholdValue">2.5</span>
+                        </div>
+                        <div class="setting-group">
+                            <label for="anomalyMethod">Method:</label>
+                            <select id="anomalyMethod">
+                                <option value="zscore">Z-Score</option>
+                                <option value="iqr">IQR</option>
+                                <option value="isolation">Isolation Forest</option>
+                                <option value="lof">Local Outlier Factor</option>
+                                <option value="autoencoder">Autoencoder</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label><input type="checkbox" id="realTimeAnomalies" checked> Real-time Detection</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-panel">
+                <div class="tabs-container">
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="timeseries">Time Series</button>
+                        <button class="tab-btn" data-tab="trends">Trends</button>
+                        <button class="tab-btn" data-tab="forecast">Forecast</button>
+                        <button class="tab-btn" data-tab="anomalies">Anomalies</button>
+                        <button class="tab-btn" data-tab="seasonal">Seasonal</button>
+                        <button class="tab-btn" data-tab="correlation">Correlation</button>
+                    </div>
+
+                    <div class="tab-content">
+                        <div id="timeseriesTab" class="tab-pane active">
+                            <div class="timeseries-view">
+                                <div class="chart-controls">
+                                    <select id="chartType">
+                                        <option value="line">Line Chart</option>
+                                        <option value="area">Area Chart</option>
+                                        <option value="scatter">Scatter Plot</option>
+                                        <option value="bar">Bar Chart</option>
+                                    </select>
+                                    <select id="timeRange">
+                                        <option value="all">All Data</option>
+                                        <option value="1h">Last Hour</option>
+                                        <option value="24h">Last 24 Hours</option>
+                                        <option value="7d">Last 7 Days</option>
+                                        <option value="30d">Last 30 Days</option>
+                                    </select>
+                                    <button id="zoomInBtn" class="btn btn-small">Zoom In</button>
+                                    <button id="zoomOutBtn" class="btn btn-small">Zoom Out</button>
+                                    <button id="resetZoomBtn" class="btn btn-small">Reset Zoom</button>
+                                </div>
+                                <div class="main-chart">
+                                    <canvas id="timeseriesChart"></canvas>
+                                </div>
+                                <div class="chart-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Mean:</span>
+                                        <span class="stat-value" id="meanValue">0.00</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Std Dev:</span>
+                                        <span class="stat-value" id="stdDevValue">0.00</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Min:</span>
+                                        <span class="stat-value" id="minValue">0.00</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Max:</span>
+                                        <span class="stat-value" id="maxValue">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="trendsTab" class="tab-pane">
+                            <div class="trends-analysis">
+                                <div class="trend-charts">
+                                    <div class="chart-container">
+                                        <h3>Trend Components</h3>
+                                        <canvas id="trendComponentsChart"></canvas>
+                                    </div>
+                                    <div class="chart-container">
+                                        <h3>Trend Strength</h3>
+                                        <canvas id="trendStrengthChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="trend-details">
+                                    <h3>Trend Analysis Results</h3>
+                                    <div id="trendAnalysisResults"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="forecastTab" class="tab-pane">
+                            <div class="forecast-analysis">
+                                <div class="forecast-controls">
+                                    <select id="forecastModel">
+                                        <option value="arima">ARIMA</option>
+                                        <option value="exponential">Exponential Smoothing</option>
+                                        <option value="linear">Linear Regression</option>
+                                        <option value="polynomial">Polynomial</option>
+                                        <option value="prophet">Prophet</option>
+                                    </select>
+                                    <button id="generateForecastBtn" class="btn btn-primary">Generate Forecast</button>
+                                    <button id="compareModelsBtn" class="btn btn-secondary">Compare Models</button>
+                                </div>
+                                <div class="forecast-chart">
+                                    <canvas id="forecastChart"></canvas>
+                                </div>
+                                <div class="forecast-metrics">
+                                    <h3>Forecast Metrics</h3>
+                                    <div id="forecastMetrics"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="anomaliesTab" class="tab-pane">
+                            <div class="anomalies-analysis">
+                                <div class="anomaly-summary">
+                                    <h3>Anomaly Detection Summary</h3>
+                                    <div class="anomaly-stats">
+                                        <div class="stat-card">
+                                            <span class="stat-label">Total Anomalies:</span>
+                                            <span class="stat-value" id="totalAnomalies">0</span>
+                                        </div>
+                                        <div class="stat-card">
+                                            <span class="stat-label">Detection Rate:</span>
+                                            <span class="stat-value" id="detectionRate">0.00%</span>
+                                        </div>
+                                        <div class="stat-card">
+                                            <span class="stat-label">False Positives:</span>
+                                            <span class="stat-value" id="falsePositives">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="anomaly-chart">
+                                    <canvas id="anomalyChart"></canvas>
+                                </div>
+                                <div class="anomaly-list">
+                                    <h3>Detected Anomalies</h3>
+                                    <div id="anomalyList"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="seasonalTab" class="tab-pane">
+                            <div class="seasonal-analysis">
+                                <div class="seasonal-charts">
+                                    <div class="chart-container">
+                                        <h3>Seasonal Decomposition</h3>
+                                        <canvas id="seasonalDecompChart"></canvas>
+                                    </div>
+                                    <div class="chart-container">
+                                        <h3>Periodogram</h3>
+                                        <canvas id="periodogramChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="seasonal-insights">
+                                    <h3>Seasonal Insights</h3>
+                                    <div id="seasonalInsights"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="correlationTab" class="tab-pane">
+                            <div class="correlation-analysis">
+                                <div class="correlation-matrix">
+                                    <h3>Correlation Matrix</h3>
+                                    <div id="correlationMatrix"></div>
+                                </div>
+                                <div class="correlation-charts">
+                                    <canvas id="correlationChart"></canvas>
+                                </div>
+                                <div class="correlation-insights">
+                                    <h3>Correlation Insights</h3>
+                                    <div id="correlationInsights"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-results">
+            <h3>Analysis Results</h3>
+            <div class="results-panels">
+                <div class="result-panel">
+                    <h4>Statistical Summary</h4>
+                    <div id="statisticalSummary"></div>
+                </div>
+                <div class="result-panel">
+                    <h4>Model Performance</h4>
+                    <div id="modelPerformance"></div>
+                </div>
+                <div class="result-panel">
+                    <h4>Key Insights</h4>
+                    <div id="keyInsights"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="recommendations-panel">
+            <h3>Recommendations</h3>
+            <div id="recommendationsList"></div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Temporal Trend Analysis Engine. Advanced time series analysis and forecasting system.</p>
+        </footer>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="fileInput" accept=".csv,.json,.xml,.txt" style="display: none;">
+
+    <!-- Data Preview Modal -->
+    <div id="dataPreviewModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Data Preview</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="data-preview">
+                    <div class="preview-controls">
+                        <button id="refreshPreviewBtn" class="btn btn-small">Refresh</button>
+                        <button id="acceptDataBtn" class="btn btn-primary">Accept Data</button>
+                        <button id="rejectDataBtn" class="btn btn-secondary">Reject</button>
+                    </div>
+                    <div id="dataTable"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Advanced Settings</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="settings-sections">
+                    <div class="settings-section">
+                        <h4>Analysis Settings</h4>
+                        <div class="setting-item">
+                            <label for="updateFrequency">Update Frequency (ms):</label>
+                            <input type="number" id="updateFrequency" min="100" max="60000" value="5000">
+                        </div>
+                        <div class="setting-item">
+                            <label for="maxDataPoints">Max Data Points:</label>
+                            <input type="number" id="maxDataPoints" min="1000" max="100000" value="50000">
+                        </div>
+                        <div class="setting-item">
+                            <label><input type="checkbox" id="enableCaching"> Enable Caching</label>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Visualization Settings</h4>
+                        <div class="setting-item">
+                            <label for="chartTheme">Chart Theme:</label>
+                            <select id="chartTheme">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label><input type="checkbox" id="showGridlines" checked> Show Gridlines</label>
+                        </div>
+                        <div class="setting-item">
+                            <label><input type="checkbox" id="enableAnimations" checked> Enable Animations</label>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Export Settings</h4>
+                        <div class="setting-item">
+                            <label for="exportFormat">Default Export Format:</label>
+                            <select id="exportFormat">
+                                <option value="json">JSON</option>
+                                <option value="csv">CSV</option>
+                                <option value="pdf">PDF</option>
+                                <option value="png">PNG</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label><input type="checkbox" id="includeMetadata" checked> Include Metadata</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+                <button id="resetSettingsBtn" class="btn btn-secondary">Reset to Defaults</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

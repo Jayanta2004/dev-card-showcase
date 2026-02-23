@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmileSync · happiness tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #fef9e7 0%, #fbe9d2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        /* main card — warm, happy glow */
+        .smilesync-app {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 250, 240, 0.8);
+            backdrop-filter: blur(18px) saturate(160%);
+            -webkit-backdrop-filter: blur(18px) saturate(160%);
+            border-radius: 3.5rem 3.5rem 3rem 3rem;
+            box-shadow: 0 30px 50px -25px rgba(150, 80, 20, 0.3), 0 0 0 1px #ffe7c4 inset, 0 8px 20px rgba(250, 180, 60, 0.2);
+            border: 1px solid #ffddb0;
+            padding: 2.2rem 2rem;
+        }
+
+        /* header with smile */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+        }
+        .smile-icon {
+            font-size: 3.2rem;
+            filter: drop-shadow(0 6px 8px #f5b34280);
+            animation: subtleWobble 4s infinite;
+        }
+        @keyframes subtleWobble {
+            0%,100%{ transform: rotate(0deg); }
+            25%{ transform: rotate(5deg); }
+            75%{ transform: rotate(-3deg); }
+        }
+        .title {
+            font-size: 2.3rem;
+            font-weight: 700;
+            background: linear-gradient(150deg, #d46b1f, #c5478a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            margin-right: auto;
+        }
+        .greeting {
+            background: #ffebc0;
+            border-radius: 40px;
+            padding: 0.5rem 1.8rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #a3480b;
+            border: 1px solid #ffbe76;
+        }
+
+        /* today's mood card */
+        .today-card {
+            background: rgba(255, 255, 245, 0.7);
+            border-radius: 3rem;
+            padding: 2rem 2rem 1.8rem;
+            margin-bottom: 2.5rem;
+            border: 2px solid #ffc896;
+            box-shadow: 0 18px 25px -18px #ffa726;
+            backdrop-filter: blur(6px);
+        }
+        .today-label {
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            color: #c0671b;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .mood-question {
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: #4f3300;
+            margin-bottom: 1.8rem;
+        }
+
+        /* smile selector — emoji rating */
+        .mood-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem 1.5rem;
+            justify-content: center;
+            margin: 2rem 0 2.5rem;
+        }
+        .mood-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            padding: 0.5rem 0.2rem;
+            border-radius: 40px;
+            min-width: 70px;
+        }
+        .mood-option.selected {
+            background: #ffeac2;
+            transform: scale(1.1);
+            box-shadow: 0 10px 18px #fcaa5e50;
+        }
+        .mood-emoji {
+            font-size: 3rem;
+            filter: drop-shadow(2px 5px 4px #d7853a);
+            transition: 0.1s;
+        }
+        .mood-label {
+            font-weight: 600;
+            color: #77501f;
+            font-size: 0.9rem;
+        }
+
+        .note-area {
+            margin: 1.5rem 0 0.8rem;
+        }
+        .note-input {
+            width: 100%;
+            background: #fffcf0;
+            border: 2px solid #fecd91;
+            border-radius: 2.5rem;
+            padding: 1.2rem 1.8rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #4f3800;
+            resize: vertical;
+            outline: none;
+            transition: 0.15s;
+        }
+        .note-input:focus {
+            border-color: #ff9f4b;
+            box-shadow: 0 0 0 5px #ffe6b380;
+            background: #fffff5;
+        }
+
+        .save-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            align-items: center;
+        }
+        .btn-primary {
+            background: #fec165;
+            border: none;
+            border-radius: 60px;
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #4a2e00;
+            box-shadow: 0 10px 22px -10px #ffa047;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            border: 1px solid #ffc800;
+        }
+        .btn-primary:hover {
+            background: #ffb644;
+            transform: scale(1.02);
+            box-shadow: 0 16px 24px -10px #f9781e;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #feb15c;
+            border-radius: 60px;
+            padding: 0.9rem 2rem;
+            font-weight: 600;
+            color: #995c29;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+        .btn-outline:hover {
+            background: #ffeac1;
+        }
+
+        /* history section */
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin: 2.2rem 0 1rem;
+        }
+        .history-header h3 {
+            font-size: 1.5rem;
+            color: #7a4c1d;
+            font-weight: 550;
+        }
+        .clear-btn {
+            background: #ffdbb5;
+            border: 1px solid #e6994e;
+            padding: 0.4rem 1.4rem;
+            border-radius: 50px;
+            color: #8e5116;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .entries-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .history-item {
+            background: #fffcf0;
+            border-radius: 2rem;
+            padding: 1rem 1.6rem;
+            border-left: 10px solid #febe7e;
+            box-shadow: 0 4px 10px #fee2b380;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            backdrop-filter: blur(4px);
+            transition: 0.1s;
+        }
+        .history-item:hover {
+            background: #fffff0;
+        }
+        .item-emoji {
+            font-size: 2rem;
+            background: #fff1da;
+            border-radius: 50%;
+            width: 3.2rem;
+            height: 3.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fdc28c;
+        }
+        .item-content {
+            flex: 3 1 200px;
+        }
+        .item-date {
+            font-size: 0.8rem;
+            color: #b4713a;
+            font-weight: 500;
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+        }
+        .item-note {
+            color: #4b3a1e;
+            font-style: italic;
+            margin-top: 0.2rem;
+            word-break: break-word;
+        }
+        .item-mood-label {
+            background: #feeac2;
+            border-radius: 30px;
+            padding: 0.3rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #9a4e1a;
+            white-space: nowrap;
+        }
+        .empty-history {
+            text-align: center;
+            color: #d99f62;
+            background: #fff4e0;
+            padding: 2rem;
+            border-radius: 4rem;
+            font-size: 1rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #b98853;
+            font-size: 0.8rem;
+            border-top: 1px dashed #fdc896;
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="smilesync-app" id="smileSyncApp">
+        <!-- header -->
+        <div class="header">
+            <span class="smile-icon">😊🫶</span>
+            <span class="title">SmileSync</span>
+            <span class="greeting" id="greetingMsg">hello!</span>
+        </div>
+
+        <!-- today's log -->
+        <div class="today-card">
+            <div class="today-label">📅 today's smile</div>
+            <div class="mood-question">how are you feeling right now?</div>
+
+            <!-- mood picker -->
+            <div class="mood-selector" id="moodSelector">
+                <!-- will be populated with JS, but static fallback works -->
+            </div>
+
+            <!-- optional note -->
+            <div class="note-area">
+                <textarea id="moodNote" class="note-input" rows="2" placeholder="add a note (optional) ..."></textarea>
+            </div>
+
+            <div class="save-row">
+                <button class="btn-primary" id="saveMoodBtn"><span>💾</span> log happiness</button>
+                <button class="btn-outline" id="resetMoodBtn">reset</button>
+            </div>
+        </div>
+
+        <!-- history section -->
+        <div class="history-header">
+            <h3>📖 happiness history</h3>
+            <button class="clear-btn" id="clearHistoryBtn">clear all</button>
+        </div>
+        <div id="historyList" class="entries-list">
+            <!-- dynamic -->
+        </div>
+
+        <footer>
+            ✨ smile sync · your daily glow ✨
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // ---- mood data ----
+            const moodLevels = [
+                { emoji: '😢', label: 'sad', value: 1, color: '#a3bbd9' },
+                { emoji: '😐', label: 'okay', value: 2, color: '#f1cf98' },
+                { emoji: '🙂', label: 'good', value: 3, color: '#ffe1a0' },
+                { emoji: '😊', label: 'happy', value: 4, color: '#ffc97a' },
+                { emoji: '😁', label: 'radiant', value: 5, color: '#ffac4d' }
+            ];
+
+            // ---- storage key ----
+            const STORAGE_KEY = 'smilesync_entries';
+
+            // ---- state ----
+            let entries = [];               // array of { dateISO, displayDate, moodEmoji, moodLabel, moodValue, note }
+            let selectedMood = moodLevels[2];  // default 'good'
+
+            // ---- DOM elements ----
+            const moodSelectorDiv = document.getElementById('moodSelector');
+            const moodNote = document.getElementById('moodNote');
+            const saveBtn = document.getElementById('saveMoodBtn');
+            const resetBtn = document.getElementById('resetMoodBtn');
+            const historyDiv = document.getElementById('historyList');
+            const clearBtn = document.getElementById('clearHistoryBtn');
+            const greetingSpan = document.getElementById('greetingMsg');
+
+            // ---- helper: format today ----
+            const today = new Date();
+            const todayISO = today.toISOString().split('T')[0];
+            const todayDisplay = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+            // set greeting
+            const hour = today.getHours();
+            if (hour < 12) greetingSpan.textContent = '🌅 good morning';
+            else if (hour < 18) greetingSpan.textContent = '☀️ good afternoon';
+            else greetingSpan.textContent = '🌙 good evening';
+
+            // ---- render mood options ----
+            function renderMoodOptions() {
+                let html = '';
+                moodLevels.forEach(m => {
+                    const selectedClass = (selectedMood && m.value === selectedMood.value) ? 'selected' : '';
+                    html += `
+                        <div class="mood-option ${selectedClass}" data-value="${m.value}" data-emoji="${m.emoji}" data-label="${m.label}">
+                            <span class="mood-emoji">${m.emoji}</span>
+                            <span class="mood-label">${m.label}</span>
+                        </div>
+                    `;
+                });
+                moodSelectorDiv.innerHTML = html;
+
+                // attach click listeners
+                document.querySelectorAll('.mood-option').forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        const val = parseInt(opt.dataset.value, 10);
+                        const newMood = moodLevels.find(m => m.value === val);
+                        if (newMood) {
+                            selectedMood = newMood;
+                            renderMoodOptions();  // re-render with new selected
+                        }
+                    });
+                });
+            }
+            renderMoodOptions();
+
+            // ---- load entries from localStorage ----
+            function loadEntries() {
+                try {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    if (stored) {
+                        entries = JSON.parse(stored);
+                        if (!Array.isArray(entries)) entries = [];
+                    } else {
+                        entries = [];
+                    }
+                } catch (e) {
+                    entries = [];
+                }
+                // sort newest first
+                entries.sort((a, b) => (a.dateISO < b.dateISO ? 1 : -1));
+            }
+
+            // ---- save entries ----
+            function saveEntries() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+            }
+
+            // ---- render history ----
+            function renderHistory() {
+                if (entries.length === 0) {
+                    historyDiv.innerHTML = '<div class="empty-history">😌 no smiles logged yet · today is a fresh start</div>';
+                    return;
+                }
+
+                let html = '';
+                entries.slice(0, 8).forEach(entry => {  // show last 8
+                    let notePreview = entry.note ? (entry.note.length > 35 ? entry.note.substring(0,35)+'…' : entry.note) : '✨';
+                    html += `
+                        <div class="history-item">
+                            <div class="item-emoji">${entry.moodEmoji}</div>
+                            <div class="item-content">
+                                <div class="item-date">
+                                    <span>${entry.displayDate || entry.dateISO}</span>
+                                    <span class="item-mood-label">${entry.moodLabel}</span>
+                                </div>
+                                <div class="item-note">${notePreview}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                historyDiv.innerHTML = html;
+            }
+
+            // ---- check if already logged today ----
+            function prefillToday() {
+                const todaysEntry = entries.find(e => e.dateISO === todayISO);
+                if (todaysEntry) {
+                    // prefill mood
+                    const foundMood = moodLevels.find(m => m.label === todaysEntry.moodLabel);
+                    if (foundMood) selectedMood = foundMood;
+                    moodNote.value = todaysEntry.note || '';
+                    renderMoodOptions();   // update highlight
+                } else {
+                    // no entry: default to 'good' and empty note
+                    selectedMood = moodLevels[2]; // good
+                    moodNote.value = '';
+                    renderMoodOptions();
+                }
+            }
+
+            // initial load
+            loadEntries();
+            renderHistory();
+            prefillToday();
+
+            // ---- save button ----
+            saveBtn.addEventListener('click', () => {
+                const noteText = moodNote.value.trim();
+
+                // find existing index
+                const existingIndex = entries.findIndex(e => e.dateISO === todayISO);
+
+                const newEntry = {
+                    dateISO: todayISO,
+                    displayDate: todayDisplay,
+                    moodEmoji: selectedMood.emoji,
+                    moodLabel: selectedMood.label,
+                    moodValue: selectedMood.value,
+                    note: noteText || ''   // even if empty, store empty string
+                };
+
+                if (existingIndex !== -1) {
+                    // update
+                    entries[existingIndex] = newEntry;
+                } else {
+                    entries.push(newEntry);
+                }
+
+                // sort & save
+                entries.sort((a, b) => (a.dateISO < b.dateISO ? 1 : -1));
+                saveEntries();
+                renderHistory();
+
+                // visual feedback
+                saveBtn.style.background = '#c7e6b5';
+                setTimeout(() => saveBtn.style.background = '', 200);
+            });
+
+            // ---- reset button (clear today's unsaved but keep saved untouched) ----
+            resetBtn.addEventListener('click', () => {
+                // reset to default mood 'good'
+                selectedMood = moodLevels[2];
+                moodNote.value = '';
+                renderMoodOptions();
+
+                // but if there is a saved entry, we should maybe reload it after reset? 
+                // better: prefill again from storage (but keep reset as revert)
+                // we can simply call prefillToday() to reload saved version
+                prefillToday();   // reloads from entries (if exists)
+            });
+
+            // ---- clear all history (with confirm) ----
+            clearBtn.addEventListener('click', () => {
+                if (entries.length === 0) return;
+                const ok = confirm('Delete all happiness history? This cannot be undone.');
+                if (ok) {
+                    entries = [];
+                    saveEntries();
+                    renderHistory();
+                    // reset today's prefill
+                    selectedMood = moodLevels[2];
+                    moodNote.value = '';
+                    renderMoodOptions();
+                }
+            });
+
+            // ---- listen to storage events (multi-tab sync) ----
+            window.addEventListener('storage', (e) => {
+                if (e.key === STORAGE_KEY) {
+                    loadEntries();
+                    renderHistory();
+                    prefillToday();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

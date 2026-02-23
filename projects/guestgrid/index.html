@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuestGrid · guest list manager</title>
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #283b4c;  /* deep navy */
+            background: radial-gradient(circle at 10% 20%, #3e5f77, #1b3140);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .grid-container {
+            max-width: 1150px;
+            width: 100%;
+            background: #fcf7f0;  /* warm off-white */
+            border-radius: 3rem 3rem 2.5rem 2.5rem;
+            box-shadow: 0 35px 50px -15px #0e1f2b, inset 0 1px 8px #fffdf8;
+            border: 5px solid #e0cfb9;
+            padding: 2rem 2.2rem 2.2rem 2.2rem;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: #f1e7db;
+            padding: 0.5rem 2rem 0.5rem 2.5rem;
+            border-radius: 60px;
+            border: 3px solid #decbb4;
+            box-shadow: 0 10px 18px -8px #6f5f4c;
+        }
+
+        .header h1 {
+            font-size: 2.6rem;
+            font-weight: 700;
+            color: #344e5c;
+            text-shadow: 3px 3px 0 #d4c1aa;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 i {
+            color: #bf9f7a;
+            text-shadow: 2px 2px 0 #ecdac8;
+        }
+
+        .event-badge {
+            background: #3c5a6b;
+            border-radius: 50px;
+            padding: 0.4rem 2rem;
+            border: 3px solid #e1c9ad;
+            color: #fcf3e2;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .event-badge i {
+            color: #f5cf9f;
+            margin-right: 6px;
+        }
+
+        /* stats row */
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            background: #fffaf2;
+            padding: 0.7rem 2rem;
+            border-radius: 50px;
+            border: 3px solid #dac4ab;
+            margin-bottom: 2rem;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #2d4a58;
+            font-weight: 500;
+        }
+
+        .stat-item i {
+            color: #b58d67;
+            font-size: 1.2rem;
+        }
+
+        .stat-value {
+            background: white;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            font-weight: 700;
+            color: #1c3b48;
+            border: 2px solid #ecd7bb;
+        }
+
+        .attending-bar {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: #e6f0e6;
+            padding: 0.3rem 1.8rem;
+            border-radius: 60px;
+        }
+
+        /* add guest form */
+        .add-panel {
+            background: #fffcf5;
+            border-radius: 3rem;
+            padding: 1.2rem 2rem 1.8rem 2rem;
+            margin-bottom: 2.2rem;
+            border: 4px solid #ebd6be;
+            box-shadow: inset 0 2px 8px #fffbf0, 0 16px 24px -14px #6f5e4a;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .field {
+            flex: 1 1 180px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #7b6247;
+            margin-bottom: 0.2rem;
+        }
+
+        .field input, .field select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 3px solid #f0dec9;
+            border-radius: 50px;
+            font-size: 1rem;
+            background: white;
+            outline: none;
+            transition: 0.1s;
+        }
+
+        .field input:focus, .field select:focus {
+            border-color: #a88865;
+            box-shadow: 0 0 0 4px #fbebd6;
+        }
+
+        .add-btn {
+            background: #5b7e8f;
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.9rem 2.5rem;
+            border-radius: 60px;
+            font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #2e4b5a, 0 8px 18px #56707e;
+            transition: 0.08s linear;
+            border: 3px solid #cfdbe3;
+            margin-top: 0.5rem;
+        }
+
+        .add-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #2e4b5a, 0 8px 18px #56707e;
+        }
+
+        /* filter & search */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem 2rem;
+            background: #f5eadc;
+            padding: 0.7rem 2rem;
+            border-radius: 60px;
+            border: 3px solid #dbc6ad;
+            margin-bottom: 1.8rem;
+        }
+
+        .status-filter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #fffcf5;
+            padding: 0.2rem 1.5rem 0.2rem 2rem;
+            border-radius: 50px;
+        }
+
+        .status-filter label {
+            font-weight: 600;
+            color: #456473;
+        }
+
+        .status-filter select {
+            background: white;
+            border: 2px solid #bda78b;
+            border-radius: 40px;
+            padding: 0.4rem 1rem;
+            font-weight: 500;
+            outline: none;
+        }
+
+        .search-box {
+            flex: 2 1 240px;
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 60px;
+            padding: 0.2rem 0.2rem 0.2rem 1.8rem;
+            border: 3px solid #ddccb5;
+        }
+
+        .search-box i {
+            color: #ab8f71;
+        }
+
+        .search-box input {
+            border: none;
+            padding: 0.6rem 0.5rem;
+            width: 100%;
+            background: transparent;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .reset-filter {
+            background: #9f8771;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.4rem 2rem;
+            border-radius: 60px;
+            cursor: pointer;
+            border: 2px solid #f1ddc7;
+        }
+
+        /* guest grid (table style) */
+        .guest-table {
+            background: #fffcf5;
+            border-radius: 2.5rem;
+            padding: 0.2rem 0.2rem 0.8rem 0.2rem;
+            border: 4px solid #f1ddc6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .guest-table::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .guest-table::-webkit-scrollbar-track {
+            background: #e2d2be;
+            border-radius: 20px;
+        }
+
+        .guest-table::-webkit-scrollbar-thumb {
+            background: #8b745c;
+            border-radius: 20px;
+            border: 3px solid #f4e2cf;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #cfbaa2;
+            color: #2a3e4a;
+            font-weight: 700;
+            padding: 1rem 1rem 1rem 1.8rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 4px solid #f5e7d6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 1rem 1rem 1rem 1.8rem;
+            border-bottom: 2px solid #faeadb;
+            color: #2c3f4a;
+            font-weight: 500;
+        }
+
+        .guest-name {
+            font-weight: 700;
+            color: #1d3e4f;
+            font-size: 1.1rem;
+        }
+
+        .guest-email {
+            color: #6f624f;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: #f2f0e6;
+            border: 2px solid white;
+        }
+
+        .status-confirmed { background: #cfe4d4; color: #1b6b4c; }
+        .status-pending { background: #fdedc9; color: #aa7328; }
+        .status-declined { background: #f8dbd4; color: #aa3a3a; }
+
+        .action-btns {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            padding: 0.4rem;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #7f6b56;
+            transition: 0.1s;
+            width: 2.4rem;
+            height: 2.4rem;
+        }
+
+        .action-btn:hover {
+            background: #ecdccb;
+            color: #3f5563;
+        }
+
+        .delete-btn:hover {
+            background: #fbd1c2;
+            color: #b13e3e;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 3rem;
+            color: #8f7963;
+            font-size: 1.2rem;
+            background: #fcf2e4;
+            border-radius: 4rem;
+        }
+
+        footer {
+            margin-top: 1.8rem;
+            text-align: center;
+            color: #7d6b58;
+            font-weight: 400;
+        }
+
+        hr {
+            border: 3px solid #dbcbb5;
+            margin: 1rem 0 0.2rem;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-container">
+        <div class="header">
+            <h1>
+                <i class="fas fa-table-cells"></i> 
+                GuestGrid
+            </h1>
+            <div class="event-badge"><i class="fa-regular fa-calendar"></i> event planner</div>
+        </div>
+
+        <!-- stats summary -->
+        <div class="stats-row">
+            <span class="stat-item"><i class="fa-regular fa-user"></i> total <span id="totalGuests" class="stat-value">0</span></span>
+            <span class="stat-item"><i class="fa-regular fa-check-circle"></i> confirmed <span id="confirmedCount" class="stat-value">0</span></span>
+            <span class="stat-item"><i class="fa-regular fa-clock"></i> pending <span id="pendingCount" class="stat-value">0</span></span>
+            <span class="stat-item"><i class="fa-regular fa-circle-xmark"></i> declined <span id="declinedCount" class="stat-value">0</span></span>
+            <div class="attending-bar"><i class="fa-regular fa-utensils"></i> attending: <span id="attendingPercent">0%</span></div>
+        </div>
+
+        <!-- add guest form -->
+        <div class="add-panel">
+            <div class="form-row">
+                <div class="field">
+                    <label><i class="fa-regular fa-user"></i> full name</label>
+                    <input type="text" id="guestNameInput" placeholder="Alex Rivera" maxlength="50">
+                </div>
+                <div class="field">
+                    <label><i class="fa-regular fa-envelope"></i> email</label>
+                    <input type="email" id="guestEmailInput" placeholder="alex@example.com" maxlength="60">
+                </div>
+                <div class="field" style="flex: 0.8 1 140px;">
+                    <label><i class="fa-regular fa-flag"></i> status</label>
+                    <select id="guestStatusSelect">
+                        <option value="pending">⏳ pending</option>
+                        <option value="confirmed" selected>✅ confirmed</option>
+                        <option value="declined">❌ declined</option>
+                    </select>
+                </div>
+                <button class="add-btn" id="addGuestBtn"><i class="fa-regular fa-plus"></i> add guest</button>
+            </div>
+        </div>
+
+        <!-- filter controls -->
+        <div class="filter-bar">
+            <div class="status-filter">
+                <label><i class="fa-regular fa-filter"></i> show:</label>
+                <select id="statusFilterSelect">
+                    <option value="all">all guests</option>
+                    <option value="confirmed">confirmed</option>
+                    <option value="pending">pending</option>
+                    <option value="declined">declined</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <i class="fa-regular fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="search by name or email...">
+            </div>
+            <button class="reset-filter" id="resetFilterBtn"><i class="fa-regular fa-rotate-right"></i> reset</button>
+        </div>
+
+        <!-- guest list table -->
+        <div class="guest-table">
+            <table id="guestTable">
+                <thead>
+                    <tr>
+                        <th>name</th>
+                        <th>email</th>
+                        <th>status</th>
+                        <th>actions</th>
+                    </tr>
+                </thead>
+                <tbody id="guestTableBody">
+                    <!-- dynamic rows -->
+                </tbody>
+            </table>
+        </div>
+
+        <hr>
+        <footer>
+            <i class="fa-regular fa-clipboard"></i> manage your event · guest list saved locally
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // ---- data model ----
+            let guests = [];            // { id, name, email, status }
+            let statusFilter = 'all';
+            let searchQuery = '';
+
+            // DOM elements
+            const nameInput = document.getElementById('guestNameInput');
+            const emailInput = document.getElementById('guestEmailInput');
+            const statusSelect = document.getElementById('guestStatusSelect');
+            const addBtn = document.getElementById('addGuestBtn');
+            const tableBody = document.getElementById('guestTableBody');
+            const statusFilterSelect = document.getElementById('statusFilterSelect');
+            const searchInput = document.getElementById('searchInput');
+            const resetFilterBtn = document.getElementById('resetFilterBtn');
+
+            // stats spans
+            const totalSpan = document.getElementById('totalGuests');
+            const confirmedSpan = document.getElementById('confirmedCount');
+            const pendingSpan = document.getElementById('pendingCount');
+            const declinedSpan = document.getElementById('declinedCount');
+            const attendingPercentSpan = document.getElementById('attendingPercent');
+
+            const STORAGE_KEY = 'guestgrid_data';
+
+            // ---- load initial / seed ----
+            function loadFromStorage() {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        if (Array.isArray(parsed)) {
+                            guests = parsed.map(g => ({
+                                id: g.id || crypto.randomUUID ? crypto.randomUUID() : 'guest_' + Date.now() + '_' + Math.random(),
+                                name: g.name || 'Unknown',
+                                email: g.email || 'noemail@example.com',
+                                status: g.status || 'pending'
+                            }));
+                        }
+                    } catch (e) {}
+                }
+
+                if (!guests.length) {
+                    // seed data
+                    guests = [
+                        { id: 'g1', name: 'Elena Martinez', email: 'elena.m@example.com', status: 'confirmed' },
+                        { id: 'g2', name: 'James Carter', email: 'j.carter@example.com', status: 'pending' },
+                        { id: 'g3', name: 'Priya Kapoor', email: 'priya.k@example.com', status: 'confirmed' },
+                        { id: 'g4', name: 'Liam O’Connor', email: 'liam.o@example.com', status: 'declined' },
+                        { id: 'g5', name: 'Zara Hassan', email: 'zara.h@example.com', status: 'confirmed' },
+                        { id: 'g6', name: 'Miguel Santos', email: 'm.santos@example.com', status: 'pending' },
+                    ];
+                }
+            }
+
+            function saveToStorage() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(guests));
+            }
+
+            // ---- filtered guests based on statusFilter and searchQuery ----
+            function getFilteredGuests() {
+                return guests.filter(guest => {
+                    if (statusFilter !== 'all' && guest.status !== statusFilter) return false;
+                    if (searchQuery.trim() !== '') {
+                        const q = searchQuery.toLowerCase();
+                        return guest.name.toLowerCase().includes(q) || guest.email.toLowerCase().includes(q);
+                    }
+                    return true;
+                });
+            }
+
+            // ---- render table and stats ----
+            function renderGrid() {
+                const filtered = getFilteredGuests();
+
+                // update stats (from full list, not filtered)
+                const total = guests.length;
+                const confirmed = guests.filter(g => g.status === 'confirmed').length;
+                const pending = guests.filter(g => g.status === 'pending').length;
+                const declined = guests.filter(g => g.status === 'declined').length;
+                const attendingPercent = total ? Math.round((confirmed / total) * 100) : 0;
+
+                totalSpan.textContent = total;
+                confirmedSpan.textContent = confirmed;
+                pendingSpan.textContent = pending;
+                declinedSpan.textContent = declined;
+                attendingPercentSpan.textContent = attendingPercent + '%';
+
+                if (filtered.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="4" class="empty-message">✨ no guests match the filter</td></tr>`;
+                    return;
+                }
+
+                let rows = '';
+                filtered.forEach(guest => {
+                    const statusClass = 
+                        guest.status === 'confirmed' ? 'status-confirmed' : 
+                        guest.status === 'pending' ? 'status-pending' : 'status-declined';
+                    
+                    rows += `
+                        <tr data-id="${guest.id}">
+                            <td class="guest-name">${escapeHtml(guest.name)}</td>
+                            <td class="guest-email">${escapeHtml(guest.email)}</td>
+                            <td>
+                                <span class="status-badge ${statusClass}">${guest.status}</span>
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="action-btn confirm-btn" title="mark confirmed"><i class="fa-regular fa-check"></i></button>
+                                    <button class="action-btn pending-btn" title="mark pending"><i class="fa-regular fa-clock"></i></button>
+                                    <button class="action-btn decline-btn" title="mark declined"><i class="fa-regular fa-xmark"></i></button>
+                                    <button class="action-btn delete-btn" title="delete guest"><i class="fa-regular fa-trash-can"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tableBody.innerHTML = rows;
+
+                // attach event listeners to each row's buttons
+                document.querySelectorAll('tr[data-id]').forEach(row => {
+                    const id = row.dataset.id;
+                    const confirmBtn = row.querySelector('.confirm-btn');
+                    const pendingBtn = row.querySelector('.pending-btn');
+                    const declineBtn = row.querySelector('.decline-btn');
+                    const deleteBtn = row.querySelector('.delete-btn');
+
+                    if (confirmBtn) confirmBtn.addEventListener('click', (e) => { e.stopPropagation(); updateStatus(id, 'confirmed'); });
+                    if (pendingBtn) pendingBtn.addEventListener('click', (e) => { e.stopPropagation(); updateStatus(id, 'pending'); });
+                    if (declineBtn) declineBtn.addEventListener('click', (e) => { e.stopPropagation(); updateStatus(id, 'declined'); });
+                    if (deleteBtn) deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteGuest(id); });
+                });
+            }
+
+            // escape helper
+            function escapeHtml(unsafe) {
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            // update status
+            function updateStatus(id, newStatus) {
+                const guest = guests.find(g => g.id === id);
+                if (guest) {
+                    guest.status = newStatus;
+                    saveToStorage();
+                    renderGrid();
+                }
+            }
+
+            // delete guest
+            function deleteGuest(id) {
+                guests = guests.filter(g => g.id !== id);
+                saveToStorage();
+                renderGrid();
+            }
+
+            // add new guest
+            function addGuest() {
+                const name = nameInput.value.trim();
+                const email = emailInput.value.trim();
+                const status = statusSelect.value;
+
+                if (!name) {
+                    alert('Please enter guest name.');
+                    return;
+                }
+                if (!email) {
+                    alert('Email is required.');
+                    return;
+                }
+                // basic email pattern check (simple)
+                if (!email.includes('@') || !email.includes('.')) {
+                    alert('Enter a valid email address.');
+                    return;
+                }
+
+                const newGuest = {
+                    id: crypto.randomUUID ? crypto.randomUUID() : 'guest_' + Date.now() + '_' + Math.random().toString(36),
+                    name: name,
+                    email: email,
+                    status: status
+                };
+
+                guests.push(newGuest);
+                saveToStorage();
+
+                // clear inputs, keep status as default?
+                nameInput.value = '';
+                emailInput.value = '';
+                statusSelect.value = 'confirmed';   // default
+                renderGrid();
+                nameInput.focus();
+            }
+
+            // reset filters
+            function resetFilters() {
+                statusFilter = 'all';
+                searchQuery = '';
+                statusFilterSelect.value = 'all';
+                searchInput.value = '';
+                renderGrid();
+            }
+
+            // ---- event listeners ----
+            addBtn.addEventListener('click', addGuest);
+            // Enter in fields? (optional but handy)
+            nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addGuest(); });
+            emailInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addGuest(); });
+
+            statusFilterSelect.addEventListener('change', (e) => {
+                statusFilter = e.target.value;
+                renderGrid();
+            });
+
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value;
+                renderGrid();
+            });
+
+            resetFilterBtn.addEventListener('click', resetFilters);
+
+            // initialize
+            loadFromStorage();
+            renderGrid();
+        })();
+    </script>
+</body>
+</html>

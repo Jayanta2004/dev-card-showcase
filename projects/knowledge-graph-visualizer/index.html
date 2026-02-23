@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Knowledge Graph Visualizer</h1>
+            <p>Interactive visualization and analysis of knowledge graphs with advanced graph algorithms and real-time collaboration features.</p>
+        </header>
+
+        <div class="main-controls">
+            <button id="newGraphBtn" class="btn btn-primary">New Graph</button>
+            <button id="loadGraphBtn" class="btn btn-secondary">Load Graph</button>
+            <button id="saveGraphBtn" class="btn btn-success">Save Graph</button>
+            <button id="exportGraphBtn" class="btn btn-info">Export</button>
+            <button id="importGraphBtn" class="btn btn-secondary">Import</button>
+            <button id="clearGraphBtn" class="btn btn-danger">Clear</button>
+        </div>
+
+        <div class="graph-workspace">
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Graph Controls</h3>
+                    <div class="control-group">
+                        <button id="addNodeBtn" class="btn btn-primary btn-small">Add Node</button>
+                        <button id="addEdgeBtn" class="btn btn-secondary btn-small">Add Edge</button>
+                        <button id="deleteSelectedBtn" class="btn btn-danger btn-small">Delete Selected</button>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="nodeTypeSelect">Node Type:</label>
+                        <select id="nodeTypeSelect">
+                            <option value="concept">Concept</option>
+                            <option value="entity">Entity</option>
+                            <option value="attribute">Attribute</option>
+                            <option value="relation">Relation</option>
+                            <option value="event">Event</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="edgeTypeSelect">Edge Type:</label>
+                        <select id="edgeTypeSelect">
+                            <option value="is-a">Is-A</option>
+                            <option value="has-a">Has-A</option>
+                            <option value="related-to">Related-To</option>
+                            <option value="causes">Causes</option>
+                            <option value="affects">Affects</option>
+                            <option value="part-of">Part-Of</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Node Properties</h3>
+                    <div id="nodeProperties">
+                        <div class="property-group">
+                            <label for="nodeLabel">Label:</label>
+                            <input type="text" id="nodeLabel" placeholder="Node label">
+                        </div>
+                        <div class="property-group">
+                            <label for="nodeDescription">Description:</label>
+                            <textarea id="nodeDescription" placeholder="Node description"></textarea>
+                        </div>
+                        <div class="property-group">
+                            <label for="nodeColor">Color:</label>
+                            <input type="color" id="nodeColor" value="#3498db">
+                        </div>
+                        <div class="property-group">
+                            <label for="nodeSize">Size:</label>
+                            <input type="range" id="nodeSize" min="10" max="50" value="20">
+                            <span id="nodeSizeValue">20</span>
+                        </div>
+                        <div class="property-group">
+                            <label for="nodeShape">Shape:</label>
+                            <select id="nodeShape">
+                                <option value="circle">Circle</option>
+                                <option value="square">Square</option>
+                                <option value="triangle">Triangle</option>
+                                <option value="diamond">Diamond</option>
+                                <option value="star">Star</option>
+                            </select>
+                        </div>
+                        <button id="updateNodeBtn" class="btn btn-primary btn-small">Update Node</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Edge Properties</h3>
+                    <div id="edgeProperties">
+                        <div class="property-group">
+                            <label for="edgeLabel">Label:</label>
+                            <input type="text" id="edgeLabel" placeholder="Edge label">
+                        </div>
+                        <div class="property-group">
+                            <label for="edgeWeight">Weight:</label>
+                            <input type="range" id="edgeWeight" min="1" max="10" value="1">
+                            <span id="edgeWeightValue">1</span>
+                        </div>
+                        <div class="property-group">
+                            <label for="edgeColor">Color:</label>
+                            <input type="color" id="edgeColor" value="#7f8c8d">
+                        </div>
+                        <div class="property-group">
+                            <label for="edgeStyle">Style:</label>
+                            <select id="edgeStyle">
+                                <option value="solid">Solid</option>
+                                <option value="dashed">Dashed</option>
+                                <option value="dotted">Dotted</option>
+                            </select>
+                        </div>
+                        <button id="updateEdgeBtn" class="btn btn-primary btn-small">Update Edge</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Search & Filter</h3>
+                    <div class="search-group">
+                        <input type="text" id="searchInput" placeholder="Search nodes...">
+                        <button id="searchBtn" class="btn btn-info btn-small">Search</button>
+                    </div>
+                    <div class="filter-group">
+                        <label><input type="checkbox" id="filterConcepts"> Concepts</label>
+                        <label><input type="checkbox" id="filterEntities"> Entities</label>
+                        <label><input type="checkbox" id="filterAttributes"> Attributes</label>
+                        <label><input type="checkbox" id="filterRelations"> Relations</label>
+                        <label><input type="checkbox" id="filterEvents"> Events</label>
+                    </div>
+                    <button id="applyFilterBtn" class="btn btn-secondary btn-small">Apply Filter</button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Layout Options</h3>
+                    <div class="layout-group">
+                        <button id="forceLayoutBtn" class="btn btn-secondary btn-small">Force Layout</button>
+                        <button id="circularLayoutBtn" class="btn btn-secondary btn-small">Circular Layout</button>
+                        <button id="hierarchicalLayoutBtn" class="btn btn-secondary btn-small">Hierarchical</button>
+                        <button id="radialLayoutBtn" class="btn btn-secondary btn-small">Radial Layout</button>
+                    </div>
+                    <div class="control-group">
+                        <label for="attractionForce">Attraction:</label>
+                        <input type="range" id="attractionForce" min="-100" max="100" value="-50">
+                        <span id="attractionForceValue">-50</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="repulsionForce">Repulsion:</label>
+                        <input type="range" id="repulsionForce" min="0" max="1000" value="200">
+                        <span id="repulsionForceValue">200</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="graph-canvas">
+                <div class="canvas-toolbar">
+                    <div class="zoom-controls">
+                        <button id="zoomInBtn" class="btn btn-small">Zoom In</button>
+                        <button id="zoomOutBtn" class="btn btn-small">Zoom Out</button>
+                        <button id="fitToScreenBtn" class="btn btn-small">Fit to Screen</button>
+                        <button id="resetViewBtn" class="btn btn-small">Reset View</button>
+                    </div>
+                    <div class="view-controls">
+                        <button id="toggleLabelsBtn" class="btn btn-small">Toggle Labels</button>
+                        <button id="toggleEdgesBtn" class="btn btn-small">Toggle Edges</button>
+                        <button id="showStatsBtn" class="btn btn-small">Show Stats</button>
+                    </div>
+                </div>
+                <div id="graphContainer">
+                    <svg id="graphSvg"></svg>
+                </div>
+                <div class="minimap">
+                    <svg id="minimapSvg"></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-panel">
+            <div class="analysis-tabs">
+                <button class="tab-btn active" data-tab="overview">Overview</button>
+                <button class="tab-btn" data-tab="centrality">Centrality</button>
+                <button class="tab-btn" data-tab="communities">Communities</button>
+                <button class="tab-btn" data-tab="paths">Paths</button>
+                <button class="tab-btn" data-tab="statistics">Statistics</button>
+            </div>
+
+            <div class="tab-content">
+                <div id="overviewTab" class="tab-pane active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>Nodes</h4>
+                            <div class="stat-value" id="nodeCount">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Edges</h4>
+                            <div class="stat-value" id="edgeCount">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Density</h4>
+                            <div class="stat-value" id="graphDensity">0.00</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Components</h4>
+                            <div class="stat-value" id="connectedComponents">0</div>
+                        </div>
+                    </div>
+                    <div class="graph-preview">
+                        <h4>Graph Preview</h4>
+                        <div id="graphPreview"></div>
+                    </div>
+                </div>
+
+                <div id="centralityTab" class="tab-pane">
+                    <div class="centrality-controls">
+                        <select id="centralityAlgorithm">
+                            <option value="degree">Degree Centrality</option>
+                            <option value="betweenness">Betweenness Centrality</option>
+                            <option value="closeness">Closeness Centrality</option>
+                            <option value="eigenvector">Eigenvector Centrality</option>
+                        </select>
+                        <button id="calculateCentralityBtn" class="btn btn-primary">Calculate</button>
+                    </div>
+                    <div class="centrality-results">
+                        <div id="centralityChart"></div>
+                        <div id="centralityList"></div>
+                    </div>
+                </div>
+
+                <div id="communitiesTab" class="tab-pane">
+                    <div class="community-controls">
+                        <select id="communityAlgorithm">
+                            <option value="louvain">Louvain Method</option>
+                            <option value="girvan-newman">Girvan-Newman</option>
+                            <option value="label-propagation">Label Propagation</option>
+                        </select>
+                        <button id="detectCommunitiesBtn" class="btn btn-primary">Detect Communities</button>
+                    </div>
+                    <div class="community-results">
+                        <div id="communityChart"></div>
+                        <div id="communityList"></div>
+                    </div>
+                </div>
+
+                <div id="pathsTab" class="tab-pane">
+                    <div class="path-controls">
+                        <select id="sourceNode"></select>
+                        <select id="targetNode"></select>
+                        <select id="pathAlgorithm">
+                            <option value="dijkstra">Dijkstra</option>
+                            <option value="bellman-ford">Bellman-Ford</option>
+                            <option value="floyd-warshall">Floyd-Warshall</option>
+                        </select>
+                        <button id="findPathBtn" class="btn btn-primary">Find Path</button>
+                    </div>
+                    <div class="path-results">
+                        <div id="pathVisualization"></div>
+                        <div id="pathDetails"></div>
+                    </div>
+                </div>
+
+                <div id="statisticsTab" class="tab-pane">
+                    <div class="statistics-content">
+                        <div class="stat-section">
+                            <h4>Degree Distribution</h4>
+                            <div id="degreeDistributionChart"></div>
+                        </div>
+                        <div class="stat-section">
+                            <h4>Clustering Coefficient</h4>
+                            <div class="stat-value-large" id="clusteringCoefficient">0.000</div>
+                        </div>
+                        <div class="stat-section">
+                            <h4>Average Path Length</h4>
+                            <div class="stat-value-large" id="averagePathLength">0.000</div>
+                        </div>
+                        <div class="stat-section">
+                            <h4>Graph Diameter</h4>
+                            <div class="stat-value-large" id="graphDiameter">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="collaboration-panel">
+            <h3>Collaboration</h3>
+            <div class="collaboration-controls">
+                <button id="shareGraphBtn" class="btn btn-info">Share Graph</button>
+                <button id="collaborateBtn" class="btn btn-success">Start Collaboration</button>
+                <button id="exportSessionBtn" class="btn btn-secondary">Export Session</button>
+            </div>
+            <div class="collaboration-status">
+                <div id="activeUsers">Active Users: 1</div>
+                <div id="collaborationLog"></div>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+            <h3>Settings</h3>
+            <div class="settings-grid">
+                <div class="setting-group">
+                    <label for="animationSpeed">Animation Speed:</label>
+                    <input type="range" id="animationSpeed" min="0" max="2000" value="500">
+                    <span id="animationSpeedValue">500ms</span>
+                </div>
+                <div class="setting-group">
+                    <label for="nodeSpacing">Node Spacing:</label>
+                    <input type="range" id="nodeSpacing" min="50" max="200" value="100">
+                    <span id="nodeSpacingValue">100px</span>
+                </div>
+                <div class="setting-group">
+                    <label for="edgeThickness">Edge Thickness:</label>
+                    <input type="range" id="edgeThickness" min="1" max="10" value="2">
+                    <span id="edgeThicknessValue">2px</span>
+                </div>
+                <div class="setting-group">
+                    <label><input type="checkbox" id="showGrid"> Show Grid</label>
+                </div>
+                <div class="setting-group">
+                    <label><input type="checkbox" id="snapToGrid"> Snap to Grid</label>
+                </div>
+                <div class="setting-group">
+                    <label><input type="checkbox" id="autoSave"> Auto Save</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-panel">
+            <h3>Graph History</h3>
+            <div class="history-controls">
+                <button id="undoBtn" class="btn btn-secondary btn-small">Undo</button>
+                <button id="redoBtn" class="btn btn-secondary btn-small">Redo</button>
+                <button id="clearHistoryBtn" class="btn btn-danger btn-small">Clear History</button>
+            </div>
+            <div id="historyList"></div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Knowledge Graph Visualizer. Advanced graph visualization and analysis tool.</p>
+        </footer>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="fileInput" accept=".json,.csv,.graphml" style="display: none;">
+
+    <!-- Context menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" data-action="add-node">Add Node</div>
+        <div class="context-menu-item" data-action="add-edge">Add Edge</div>
+        <div class="context-menu-item" data-action="delete">Delete</div>
+        <div class="context-menu-item" data-action="duplicate">Duplicate</div>
+        <div class="context-menu-item" data-action="properties">Properties</div>
+    </div>
+
+    <!-- Modal dialogs -->
+    <div id="nodeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add/Edit Node</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="nodeForm">
+                    <div class="form-group">
+                        <label for="modalNodeLabel">Label:</label>
+                        <input type="text" id="modalNodeLabel" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalNodeType">Type:</label>
+                        <select id="modalNodeType">
+                            <option value="concept">Concept</option>
+                            <option value="entity">Entity</option>
+                            <option value="attribute">Attribute</option>
+                            <option value="relation">Relation</option>
+                            <option value="event">Event</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalNodeDescription">Description:</label>
+                        <textarea id="modalNodeDescription"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalNodeX">X Position:</label>
+                        <input type="number" id="modalNodeX" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="modalNodeY">Y Position:</label>
+                        <input type="number" id="modalNodeY" step="0.1">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveNodeBtn" class="btn btn-primary">Save</button>
+                <button id="cancelNodeBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edgeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add/Edit Edge</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="edgeForm">
+                    <div class="form-group">
+                        <label for="modalEdgeSource">Source Node:</label>
+                        <select id="modalEdgeSource" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalEdgeTarget">Target Node:</label>
+                        <select id="modalEdgeTarget" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalEdgeLabel">Label:</label>
+                        <input type="text" id="modalEdgeLabel">
+                    </div>
+                    <div class="form-group">
+                        <label for="modalEdgeType">Type:</label>
+                        <select id="modalEdgeType">
+                            <option value="is-a">Is-A</option>
+                            <option value="has-a">Has-A</option>
+                            <option value="related-to">Related-To</option>
+                            <option value="causes">Causes</option>
+                            <option value="affects">Affects</option>
+                            <option value="part-of">Part-Of</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalEdgeWeight">Weight:</label>
+                        <input type="number" id="modalEdgeWeight" min="1" max="10" value="1">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveEdgeBtn" class="btn btn-primary">Save</button>
+                <button id="cancelEdgeBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

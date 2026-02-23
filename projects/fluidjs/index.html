@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluidPlay - Interactive Fluid Simulation</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="effects.css">
+</head>
+<body>
+    <canvas id="fluidCanvas"></canvas>
+    
+    <div class="overlay">
+        <div class="title-container">
+            <h1 class="title">FluidPlay</h1>
+            <p class="subtitle">Interactive Fluid Simulation</p>
+        </div>
+        
+        <div class="stats-panel" id="statsPanel">
+            <div class="stat-row">
+                <span class="stat-label">FPS:</span>
+                <span class="stat-value" id="fpsValue">60</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Particles:</span>
+                <span class="stat-value" id="particleCount">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Resolution:</span>
+                <span class="stat-value" id="resValue">128</span>
+            </div>
+        </div>
+        
+        <div class="action-bar">
+            <button class="action-btn" id="helpBtn" title="Help">?</button>
+            <button class="action-btn" id="screenshotBtn" title="Screenshot">📷</button>
+            <button class="action-btn" id="resetBtn" title="Reset All">↻</button>
+        </div>
+        
+        <div class="controls-panel">
+            <div class="panel-header">
+                <h3>Controls</h3>
+                <button class="toggle-btn" id="togglePanel">−</button>
+            </div>
+            
+            <div class="panel-content" id="panelContent">
+                <div class="control-group">
+                    <label>Fluid Density</label>
+                    <input type="range" id="densitySlider" min="0.1" max="3" step="0.1" value="1">
+                    <span id="densityValue">1.0</span>
+                </div>
+                
+                <div class="control-group">
+                    <label>Viscosity</label>
+                    <input type="range" id="viscositySlider" min="0" max="1" step="0.05" value="0.2">
+                    <span id="viscosityValue">0.2</span>
+                </div>
+                
+                <div class="control-group">
+                    <label>Brush Size</label>
+                    <input type="range" id="brushSlider" min="1" max="8" step="1" value="3">
+                    <span id="brushValue">3</span>
+                </div>
+                
+                <div class="control-group">
+                    <label>Fade Speed</label>
+                    <input type="range" id="fadeSlider" min="0.9" max="0.999" step="0.001" value="0.98">
+                    <span id="fadeValue">0.98</span>
+                </div>
+                
+                <div class="control-group">
+                    <label>Diffusion</label>
+                    <input type="range" id="diffusionSlider" min="0" max="0.001" step="0.0001" value="0.0001">
+                    <span id="diffusionValue">0.0001</span>
+                </div>
+                
+                <div class="control-group">
+                    <label>Color Mode</label>
+                    <select id="colorMode">
+                        <option value="rainbow">Rainbow</option>
+                        <option value="blue">Ocean Blue</option>
+                        <option value="fire">Fire</option>
+                        <option value="purple">Purple Haze</option>
+                        <option value="green">Neon Green</option>
+                        <option value="cyan">Cyan Dream</option>
+                        <option value="mono">Monochrome</option>
+                        <option value="custom">Custom Blend</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Presets</label>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" data-preset="smoke">💨 Smoke</button>
+                        <button class="preset-btn" data-preset="water">💧 Water</button>
+                        <button class="preset-btn" data-preset="lava">🌋 Lava</button>
+                        <button class="preset-btn" data-preset="neon">✨ Neon</button>
+                    </div>
+                </div>
+                
+                <div class="control-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="particlesToggle" checked>
+                        <span>Particle Effects</span>
+                    </label>
+                </div>
+                
+                <div class="control-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="velocityToggle">
+                        <span>Show Velocity Field</span>
+                    </label>
+                </div>
+                
+                <div class="control-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="performanceToggle">
+                        <span>Performance Mode</span>
+                    </label>
+                </div>
+                
+                <div class="control-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="bloomToggle" checked>
+                        <span>Bloom Effect</span>
+                    </label>
+                </div>
+                
+                <div class="control-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="trailToggle">
+                        <span>Trail Mode</span>
+                    </label>
+                </div>
+                
+                <div class="button-group">
+                    <button id="clearBtn" class="btn">Clear</button>
+                    <button id="pauseBtn" class="btn">Pause</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <p>Move your mouse to create flowing effects</p>
+            <p>Click and drag for more intensity</p>
+        </div>
+        
+        <div class="help-overlay" id="helpOverlay">
+            <div class="help-content">
+                <button class="close-btn" id="closeHelp">×</button>
+                <h2>How to Use FluidPlay</h2>
+                
+                <div class="help-section">
+                    <h3>🎨 Creating Fluid</h3>
+                    <p><strong>Mouse Movement:</strong> Move your cursor to inject fluid</p>
+                    <p><strong>Click & Drag:</strong> Hold mouse button for intense effects</p>
+                    <p><strong>Touch:</strong> Swipe on mobile devices</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>⚙️ Controls</h3>
+                    <p><strong>Density:</strong> Amount of fluid injected</p>
+                    <p><strong>Viscosity:</strong> Fluid thickness (0=water, 1=honey)</p>
+                    <p><strong>Brush Size:</strong> Area affected by cursor</p>
+                    <p><strong>Fade Speed:</strong> How quickly fluid dissipates</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>⌨️ Shortcuts</h3>
+                    <p><strong>Space:</strong> Pause/Resume simulation</p>
+                    <p><strong>C:</strong> Clear canvas</p>
+                    <p><strong>H:</strong> Toggle this help</p>
+                    <p><strong>P:</strong> Toggle particle effects</p>
+                    <p><strong>S:</strong> Take screenshot</p>
+                    <p><strong>R:</strong> Reset to defaults</p>
+                    <p><strong>1-4:</strong> Apply presets</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>💡 Tips</h3>
+                    <p>• Try different color modes for unique aesthetics</p>
+                    <p>• Lower fade speed for persistent trails</p>
+                    <p>• Enable velocity field to see flow patterns</p>
+                    <p>• Performance mode reduces quality for speed</p>
+                    <p>• Use presets for quick configuration</p>
+                    <p>• Bloom effect adds glow to fluid</p>
+                    <p>• Trail mode creates persistent streaks</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="fluid.js"></script>
+    <script src="app.js"></script>
+    <script src="ui.js"></script>
+</body>
+</html>

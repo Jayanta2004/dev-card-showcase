@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Style Transfer - Artistic Camera</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+        }
+
+        #camera-feed {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 20;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+            cursor: pointer;
+        }
+
+        #camera-feed:hover {
+            opacity: 1;
+        }
+
+        #camera-feed video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+
+        #main-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #style-panel {
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 300px;
+            background: rgba(20, 20, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            z-index: 30;
+            transition: transform 0.3s;
+        }
+
+        #style-panel:hover {
+            transform: translateY(-50%) scale(1.02);
+        }
+
+        .panel-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .panel-header h2 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .panel-header p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .style-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .style-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .style-card.active {
+            border-color: #4ecdc4;
+            box-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+        }
+
+        .style-preview {
+            width: 100%;
+            height: 100px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .style-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .style-artist {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        .control-section {
+            margin-bottom: 20px;
+        }
+
+        .control-section h3 {
+            color: #4ecdc4;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .slider-group {
+            margin-bottom: 15px;
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4ecdc4;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px #4ecdc4;
+        }
+
+        .value-badge {
+            background: rgba(78, 205, 196, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            color: #4ecdc4;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .stats-panel {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(20, 20, 30, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 30;
+            min-width: 200px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .stat-value {
+            color: #4ecdc4;
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            transition: opacity 0.5s;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(78, 205, 196, 0.3);
+            border-top-color: #4ecdc4;
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #fff;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .fps-counter {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #4ecdc4;
+            z-index: 40;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .recording-indicator {
+            position: absolute;
+            top: 20px;
+            right: 240px;
+            width: 12px;
+            height: 12px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+            display: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading Neural Networks</div>
+            <div class="loading-subtext" id="loading-status">Initializing style transfer models...</div>
+        </div>
+    </div>
+
+    <div id="container">
+        <div id="canvas-container">
+            <canvas id="main-canvas"></canvas>
+        </div>
+
+        <div id="camera-feed">
+            <video id="video" autoplay playsinline></video>
+        </div>
+
+        <div id="style-panel">
+            <div class="panel-header">
+                <h2>🎨 Neural Style Transfer</h2>
+                <p>Transform your camera feed into art</p>
+            </div>
+
+            <div class="style-grid" id="style-grid">
+                <div class="style-card active" onclick="selectStyle('starry')">
+                    <div class="style-preview" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzIyMjI0NCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iMzAiIHI9IjEwIiBmaWxsPSIjZmZkNzAwIi8+PGNpcmNsZSBjeD0iMjAiIGN5PSI1MCIgcj0iNSIgZmlsbD0iI2ZmZSIvPjxjaXJjbGUgY3g9IjYwIiBjeT0iNjAiIHI9IjgiIGZpbGw9IiNmZmU1MDAiLz48Y2lyY2xlIGN4PSI3MCIgY3k9IjIwIiByPSI2IiBmaWxsPSIjZmZkNDAwIi8+PC9zdmc+')"></div>
+                    <div class="style-name">Starry Night</div>
+                    <div class="style-artist">Van Gogh</div>
+                </div>
+                <div class="style-card" onclick="selectStyle('monet')">
+                    <div class="style-preview" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzUwODU5OSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjE1IiBmaWxsPSIjODRiYzVhIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI0MCIgcj0iMTIiIGZpbGw9IiM0Y2FhNTgiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjUwIiByPSIxMCIgZmlsbD0iIzY2YjU2MCIvPjwvc3ZnPg==')"></div>
+                    <div class="style-name">Water Lilies</div>
+                    <div class="style-artist">Monet</div>
+                </div>
+                <div class="style-card" onclick="selectStyle('picasso')">
+                    <div class="style-preview" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzhjNTY0MiIvPjxwb2x5Z29uIHBvaW50cz0iMjAsMjAgNjAsMjAgNDAsNTAiIGZpbGw9IiM5YzZjNTgiLz48cG9seWdvbiBwb2ludHM9IjUwLDMwIDcwLDUwIDQwLDUwIiBmaWxsPSIjYmQ4YTVhIi8+PC9zdmc+')"></div>
+                    <div class="style-name">Cubism</div>
+                    <div class="style-artist">Picasso</div>
+                </div>
+                <div class="style-card" onclick="selectStyle('munch')">
+                    <div class="style-preview" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2ZmOTUwMCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjI1IiBmaWxsPSIjZmZjYzAwIi8+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMTUiIGZpbGw9IiNmZjAwMDAiLz48cG9seWdvbiBwb2ludHM9IjUwLDUwIDcwLDcwIDUwLDcwIiBmaWxsPSIjMDAwIi8+PC9zdmc+')"></div>
+                    <div class="style-name">The Scream</div>
+                    <div class="style-artist">Munch</div>
+                </div>
+                <div class="style-card" onclick="selectStyle('kandinsky')">
+                    <div class="style-preview" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2ZmZmZmZiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjEwIiBmaWxsPSIjZmYwMDAwIi8+PHJlY3QgeD0iNDAiIHk9IjQwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIGZpbGw9IiMwMDBmZmYiLz48cG9seWdvbiBwb2ludHM9IjUwLDEwIDYwLDMwIDQwLDMwIiBmaWxsPSIjZmZmZjAwIi8+PC9zdmc+')"></div>
+                    <div class="style-name">Composition</div>
+                    <div class="style-artist">Kandinsky</div>
+                </div>
+                <div class="style-card" onclick="selectStyle('hokusai')">
+                    <div class="style-preview" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzAwN2JiZiIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNTAiIHI9IjMwIiBmaWxsPSIjZmZmZmZmIi8+PHBvbHlnb24gcG9pbnRzPSIxMCwzMCA3MCwzMCA0MCw3MCIgZmlsbD0iI2ZmZGRkZCIvPjwvc3ZnPg==')"></div>
+                    <div class="style-name">The Wave</div>
+                    <div class="style-artist">Hokusai</div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>🎛️ STYLE STRENGTH</h3>
+                <div class="slider-group">
+                    <label>
+                        Style Intensity
+                        <span class="value-badge" id="styleIntensityVal">0.7</span>
+                    </label>
+                    <input type="range" class="slider" id="styleIntensity" min="0" max="1" step="0.05" value="0.7">
+                </div>
+                <div class="slider-group">
+                    <label>
+                        Detail Preservation
+                        <span class="value-badge" id="detailPreservationVal">0.5</span>
+                    </label>
+                    <input type="range" class="slider" id="detailPreservation" min="0" max="1" step="0.05" value="0.5">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="action-btn" onclick="captureFrame()">📸 Capture</button>
+                <button class="action-btn secondary" onclick="toggleRecording()" id="recordBtn">⏺️ Record</button>
+                <button class="action-btn secondary" onclick="downloadArt()">💾 Save</button>
+                <button class="action-btn secondary" onclick="resetStyle()">🔄 Reset</button>
+            </div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-item">
+                <span>FPS:</span>
+                <span class="stat-value" id="fps">30</span>
+            </div>
+            <div class="stat-item">
+                <span>Style:</span>
+                <span class="stat-value" id="currentStyle">Starry Night</span>
+            </div>
+            <div class="stat-item">
+                <span>Resolution:</span>
+                <span class="stat-value" id="resolution">640x480</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="processingProgress" style="width: 0%"></div>
+            </div>
+            <div class="stat-item" style="margin-top: 10px;">
+                <span>Processing:</span>
+                <span class="stat-value" id="processingTime">0ms</span>
+            </div>
+        </div>
+
+        <div class="recording-indicator" id="recordingIndicator"></div>
+        <div class="fps-counter" id="fpsCounter">FPS: 30</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+    <script>
+        class StyleTransfer {
+            constructor() {
+                this.canvas = document.getElementById('main-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.video = document.getElementById('video');
+                this.stream = null;
+                
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+                
+                this.style = 'starry';
+                this.styleIntensity = 0.7;
+                this.detailPreservation = 0.5;
+                this.recording = false;
+                this.recordedFrames = [];
+                this.frameCount = 0;
+                this.lastTime = performance.now();
+                this.fps = 30;
+                
+                this.models = {};
+                this.modelLoaded = false;
+                
+                this.initCamera();
+                this.initModels();
+                this.animate();
+                this.setupResize();
+            }
+
+            async initCamera() {
+                try {
+                    this.stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            width: { ideal: 640 },
+                            height: { ideal: 480 },
+                            facingMode: 'user'
+                        } 
+                    });
+                    this.video.srcObject = this.stream;
+                    
+                    // Hide loading overlay after camera is ready
+                    setTimeout(() => {
+                        document.getElementById('loading-overlay').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('loading-overlay').style.display = 'none';
+                        }, 500);
+                    }, 2000);
+                    
+                } catch (err) {
+                    console.error('Camera error:', err);
+                    document.getElementById('loading-status').textContent = 
+                        '❌ Camera access denied. Using demo mode.';
+                }
+            }
+
+            async initModels() {
+                document.getElementById('loading-status').textContent = 
+                    'Loading style transfer models...';
+                
+                // Simulate model loading (in real implementation, you'd load actual TF models)
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                document.getElementById('loading-status').textContent = 
+                    'Initializing neural networks...';
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                this.modelLoaded = true;
+                
+                // In a real implementation, you would load actual TensorFlow.js models:
+                // this.models.starry = await tf.loadLayersModel('path/to/starry_model.json');
+            }
+
+            applyStyle(frame) {
+                if (!this.modelLoaded) return frame;
+                
+                // This is a simplified style transfer simulation
+                // In reality, you'd run the frame through a neural network
+                
+                const imageData = frame.data;
+                const width = frame.width;
+                const height = frame.height;
+                
+                // Create a new ImageData for the stylized output
+                const output = new ImageData(width, height);
+                
+                // Apply style effects based on selected style
+                for (let i = 0; i < imageData.length; i += 4) {
+                    let r = imageData[i];
+                    let g = imageData[i + 1];
+                    let b = imageData[i + 2];
+                    let a = imageData[i + 3];
+                    
+                    // Apply style-specific color transformations
+                    switch(this.style) {
+                        case 'starry':
+                            // Van Gogh style: increased contrast, swirling colors
+                            r = Math.min(255, r * 1.2 + 20);
+                            g = Math.min(255, g * 1.1 + 10);
+                            b = Math.min(255, b * 1.3 + 30);
+                            
+                            // Add some swirl based on position
+                            const x = (i / 4) % width;
+                            const y = Math.floor((i / 4) / width);
+                            const swirl = Math.sin(x * 0.01) * Math.cos(y * 0.01) * 20;
+                            
+                            r = Math.min(255, Math.max(0, r + swirl));
+                            g = Math.min(255, Math.max(0, g + swirl * 0.5));
+                            b = Math.min(255, Math.max(0, b - swirl * 0.3));
+                            break;
+                            
+                        case 'monet':
+                            // Impressionist style: softer, pastel colors
+                            r = r * 0.9 + 30;
+                            g = g * 0.9 + 40;
+                            b = b * 0.9 + 50;
+                            break;
+                            
+                        case 'picasso':
+                            // Cubist style: geometric color blocking
+                            const blockSize = 20;
+                            const blockX = Math.floor((i / 4) % width / blockSize);
+                            const blockY = Math.floor(Math.floor((i / 4) / width) / blockSize);
+                            
+                            if ((blockX + blockY) % 3 === 0) {
+                                r = Math.min(255, r * 1.5);
+                            } else if ((blockX + blockY) % 3 === 1) {
+                                g = Math.min(255, g * 1.5);
+                            } else {
+                                b = Math.min(255, b * 1.5);
+                            }
+                            break;
+                            
+                        case 'munch':
+                            // Expressionist style: high contrast, distorted
+                            const gray = (r + g + b) / 3;
+                            r = gray * 1.5;
+                            g = gray * 0.8;
+                            b = gray * 1.2;
+                            
+                            // Add distortion waves
+                            const waveY = Math.floor((i / 4) / width);
+                            if (Math.sin(waveY * 0.1) > 0.5) {
+                                r = Math.min(255, r * 1.2);
+                            }
+                            break;
+                            
+                        case 'kandinsky':
+                            // Abstract style: bold colors, geometric patterns
+                            const patternX = (i / 4) % width;
+                            const patternY = Math.floor((i / 4) / width);
+                            
+                            if (Math.sin(patternX * 0.05) * Math.cos(patternY * 0.05) > 0) {
+                                r = 255;
+                                g = 0;
+                                b = 0;
+                            } else {
+                                r = 0;
+                                g = 0;
+                                b = 255;
+                            }
+                            break;
+                            
+                        case 'hokusai':
+                            // Ukiyo-e style: blue tones, high contrast
+                            const blueGray = (r + g + b) / 3;
+                            r = blueGray * 0.7;
+                            g = blueGray * 0.8;
+                            b = blueGray * 1.5;
+                            
+                            // Add wave patterns
+                            const waveX = (i / 4) % width;
+                            const waveY = Math.floor((i / 4) / width);
+                            const wave = Math.sin(waveX * 0.02) * Math.cos(waveY * 0.02) * 30;
+                            
+                            b = Math.min(255, b + wave);
+                            break;
+                    }
+                    
+                    // Mix original and stylized based on intensity
+                    const intensity = this.styleIntensity;
+                    output.data[i] = r * intensity + imageData[i] * (1 - intensity);
+                    output.data[i + 1] = g * intensity + imageData[i + 1] * (1 - intensity);
+                    output.data[i + 2] = b * intensity + imageData[i + 2] * (1 - intensity);
+                    output.data[i + 3] = a;
+                }
+                
+                return output;
+            }
+
+            processFrame() {
+                if (!this.video.readyState) return;
+                
+                const startTime = performance.now();
+                
+                // Create temporary canvas to capture video frame
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = this.video.videoWidth;
+                tempCanvas.height = this.video.videoHeight;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(this.video, 0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // Get frame data
+                const frame = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // Apply style transfer
+                const stylized = this.applyStyle(frame);
+                
+                // Draw to main canvas (scaled to fit)
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                
+                // Calculate aspect ratio to fit
+                const scale = Math.max(
+                    this.width / stylized.width,
+                    this.height / stylized.height
+                );
+                
+                const x = (this.width - stylized.width * scale) / 2;
+                const y = (this.height - stylized.height * scale) / 2;
+                
+                // Create temporary canvas for the stylized frame
+                const stylizedCanvas = document.createElement('canvas');
+                stylizedCanvas.width = stylized.width;
+                stylizedCanvas.height = stylized.height;
+                stylizedCanvas.getContext('2d').putImageData(stylized, 0, 0);
+                
+                // Draw scaled
+                this.ctx.drawImage(
+                    stylizedCanvas, 
+                    0, 0, stylized.width, stylized.height,
+                    x, y, stylized.width * scale, stylized.height * scale
+                );
+                
+                // Update stats
+                const processingTime = performance.now() - startTime;
+                document.getElementById('processingTime').textContent = 
+                    Math.round(processingTime) + 'ms';
+                
+                // Update progress bar (simulated)
+                const progress = Math.min(100, (processingTime / 50) * 100);
+                document.getElementById('processingProgress').style.width = progress + '%';
+                
+                // Record if enabled
+                if (this.recording) {
+                    this.recordedFrames.push(stylized);
+                    if (this.recordedFrames.length > 30) {
+                        this.recordedFrames.shift();
+                    }
+                }
+            }
+
+            updateFPS() {
+                this.frameCount++;
+                const now = performance.now();
+                const delta = now - this.lastTime;
+                
+                if (delta >= 1000) {
+                    this.fps = this.frameCount;
+                    this.frameCount = 0;
+                    this.lastTime = now;
+                    
+                    document.getElementById('fps').textContent = this.fps;
+                    document.getElementById('fpsCounter').textContent = `FPS: ${this.fps}`;
+                }
+            }
+
+            animate() {
+                if (this.video.readyState === 4) {
+                    this.processFrame();
+                    this.updateFPS();
+                }
+                
+                requestAnimationFrame(() => this.animate());
+            }
+
+            setupResize() {
+                window.addEventListener('resize', () => {
+                    this.width = window.innerWidth;
+                    this.height = window.innerHeight;
+                    this.canvas.width = this.width;
+                    this.canvas.height = this.height;
+                });
+            }
+
+            captureFrame() {
+                const link = document.createElement('a');
+                link.download = `style-transfer-${this.style}-${Date.now()}.png`;
+                link.href = this.canvas.toDataURL();
+                link.click();
+            }
+
+            toggleRecording() {
+                this.recording = !this.recording;
+                const indicator = document.getElementById('recordingIndicator');
+                const btn = document.getElementById('recordBtn');
+                
+                if (this.recording) {
+                    indicator.style.display = 'block';
+                    btn.textContent = '⏹️ Stop';
+                    btn.style.background = 'linear-gradient(135deg, #ff6b6b, #ff4757)';
+                } else {
+                    indicator.style.display = 'none';
+                    btn.textContent = '⏺️ Record';
+                    btn.style.background = 'linear-gradient(135deg, #4ecdc4, #45b7d1)';
+                    
+                    // Save recording as GIF (simplified - would need actual GIF encoder)
+                    if (this.recordedFrames.length > 0) {
+                        alert(`Recorded ${this.recordedFrames.length} frames. In a full implementation, these would be saved as an animated GIF.`);
+                    }
+                }
+            }
+
+            downloadArt() {
+                this.captureFrame();
+            }
+
+            resetStyle() {
+                this.styleIntensity = 0.7;
+                this.detailPreservation = 0.5;
+                
+                document.getElementById('styleIntensity').value = '0.7';
+                document.getElementById('detailPreservation').value = '0.5';
+                document.getElementById('styleIntensityVal').textContent = '0.7';
+                document.getElementById('detailPreservationVal').textContent = '0.5';
+            }
+
+            setStyle(style) {
+                this.style = style;
+                
+                // Update active card
+                document.querySelectorAll('.style-card').forEach(card => {
+                    card.classList.remove('active');
+                });
+                event.currentTarget.classList.add('active');
+                
+                // Update style name in stats
+                const styleNames = {
+                    starry: 'Starry Night',
+                    monet: 'Water Lilies',
+                    picasso: 'Cubism',
+                    munch: 'The Scream',
+                    kandinsky: 'Composition',
+                    hokusai: 'The Wave'
+                };
+                document.getElementById('currentStyle').textContent = styleNames[style];
+            }
+        }
+
+        // Initialize style transfer
+        const styleTransfer = new StyleTransfer();
+
+        // Global control functions
+        function selectStyle(style) {
+            styleTransfer.setStyle(style);
+        }
+
+        function captureFrame() {
+            styleTransfer.captureFrame();
+        }
+
+        function toggleRecording() {
+            styleTransfer.toggleRecording();
+        }
+
+        function downloadArt() {
+            styleTransfer.downloadArt();
+        }
+
+        function resetStyle() {
+            styleTransfer.resetStyle();
+        }
+
+        // Slider controls
+        document.getElementById('styleIntensity').addEventListener('input', (e) => {
+            styleTransfer.styleIntensity = parseFloat(e.target.value);
+            document.getElementById('styleIntensityVal').textContent = e.target.value;
+        });
+
+        document.getElementById('detailPreservation').addEventListener('input', (e) => {
+            styleTransfer.detailPreservation = parseFloat(e.target.value);
+            document.getElementById('detailPreservationVal').textContent = e.target.value;
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'c' || e.key === 'C') {
+                styleTransfer.captureFrame();
+            } else if (e.key === 'r' || e.key === 'R') {
+                styleTransfer.toggleRecording();
+            } else if (e.key === 's' || e.key === 'S') {
+                styleTransfer.downloadArt();
+            }
+        });
+    </script>
+</body>
+</html>

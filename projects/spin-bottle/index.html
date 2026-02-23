@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin the Bottle Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        header {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+            color: #ffeb3b;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ffcc80;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .left-panel, .right-panel {
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .panel-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #ffcc00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .panel-title i {
+            color: #ff9800;
+        }
+        
+        /* Bottle spinning area */
+        .spin-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .bottle-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+        }
+        
+        .bottle {
+            position: absolute;
+            width: 60px;
+            height: 180px;
+            background: linear-gradient(to right, #4CAF50, #8BC34A, #4CAF50);
+            border-radius: 10px 10px 30px 30px;
+            top: 50%;
+            left: 50%;
+            transform-origin: center 160px;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s linear;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            z-index: 2;
+        }
+        
+        .bottle-neck {
+            position: absolute;
+            width: 25px;
+            height: 40px;
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            border-radius: 5px 5px 0 0;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .bottle-cap {
+            position: absolute;
+            width: 30px;
+            height: 10px;
+            background: linear-gradient(to right, #ff5722, #ff9800);
+            border-radius: 3px;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .spin-circle {
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            border: 5px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .spin-center {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #ff5722;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3;
+        }
+        
+        .players-circle {
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .player-marker {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: #2196F3;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            transform-origin: center 140px;
+            transition: all 0.3s;
+            border: 3px solid white;
+            z-index: 1;
+        }
+        
+        .player-marker.selected {
+            background-color: #FF5722;
+            transform: scale(1.2);
+            box-shadow: 0 0 20px #FF5722;
+            z-index: 4;
+        }
+        
+        .player-marker.target {
+            background-color: #FFC107;
+            transform: scale(1.3);
+            box-shadow: 0 0 25px #FFC107;
+            z-index: 4;
+        }
+        
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .spin-btn {
+            background: linear-gradient(to right, #FF5722, #FF9800);
+            color: white;
+            min-width: 180px;
+        }
+        
+        .spin-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 87, 34, 0.4);
+        }
+        
+        .spin-btn:active {
+            transform: translateY(0);
+        }
+        
+        .add-player-btn {
+            background: linear-gradient(to right, #2196F3, #03A9F4);
+            color: white;
+        }
+        
+        .reset-btn {
+            background: linear-gradient(to right, #9C27B0, #673AB7);
+            color: white;
+        }
+        
+        .dare-btn {
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            color: white;
+        }
+        
+        /* Players list */
+        .players-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .player-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .player-item.active {
+            background-color: rgba(33, 150, 243, 0.3);
+            border-left: 5px solid #2196F3;
+        }
+        
+        .player-item.selected {
+            background-color: rgba(255, 87, 34, 0.3);
+            border-left: 5px solid #FF5722;
+        }
+        
+        .player-item.target {
+            background-color: rgba(255, 193, 7, 0.3);
+            border-left: 5px solid #FFC107;
+        }
+        
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .player-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #2196F3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .player-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .player-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .icon-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        /* Result display */
+        .result-display {
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 30px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .result-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #ffcc00;
+        }
+        
+        .result-content {
+            font-size: 1.8rem;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+        
+        .player-pair {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .player-result {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .player-result-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .vs-text {
+            font-size: 2.5rem;
+            color: #FF5722;
+            font-weight: bold;
+        }
+        
+        .action-text {
+            font-size: 2rem;
+            color: #4CAF50;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        /* Dare list */
+        .dare-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 25px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .dare-item {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .dare-icon {
+            color: #FF5722;
+            font-size: 1.5rem;
+        }
+        
+        /* Instructions */
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .instructions h3 {
+            color: #ffcc00;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .instructions ol {
+            text-align: left;
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        /* Footer */
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffcc80;
+            font-size: 0.9rem;
+            width: 100%;
+            text-align: center;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .bottle-container {
+                width: 250px;
+                height: 250px;
+            }
+            
+            .spin-circle, .players-circle {
+                width: 230px;
+                height: 230px;
+            }
+            
+            .player-marker {
+                transform-origin: center 115px;
+            }
+            
+            .game-area {
+                flex-direction: column;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        /* Animation for spinning */
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(3600deg); }
+        }
+        
+        .spinning {
+            animation: spin 3s cubic-bezier(0.2, 0.8, 0.3, 1);
+        }
+        
+        /* Animation for winner */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 193, 7, 0.7);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 193, 7, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-wine-bottle"></i> Spin the Bottle</h1>
+            <p class="subtitle">The classic party game - spin the bottle and see who it points to!</p>
+        </header>
+        
+        <div class="game-area">
+            <div class="left-panel">
+                <h2 class="panel-title"><i class="fas fa-users"></i> Players</h2>
+                <div class="players-list" id="playersList">
+                    <!-- Player items will be added here -->
+                </div>
+                
+                <div class="controls" style="margin-top: 25px;">
+                    <button class="add-player-btn" id="addPlayerBtn">
+                        <i class="fas fa-user-plus"></i> Add Player
+                    </button>
+                    <button class="reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i> Reset Game
+                    </button>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <h2 class="panel-title"><i class="fas fa-cogs"></i> Game Controls</h2>
+                
+                <div class="spin-area">
+                    <div class="bottle-container">
+                        <div class="spin-circle"></div>
+                        <div class="players-circle" id="playersCircle">
+                            <!-- Player markers will be added here -->
+                        </div>
+                        <div class="bottle" id="bottle">
+                            <div class="bottle-neck"></div>
+                            <div class="bottle-cap"></div>
+                        </div>
+                        <div class="spin-center"></div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="spin-btn" id="spinBtn">
+                            <i class="fas fa-sync-alt"></i> SPIN THE BOTTLE!
+                        </button>
+                        <button class="dare-btn" id="dareBtn">
+                            <i class="fas fa-fire"></i> Random Dare
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="result-display">
+            <h2 class="result-title"><i class="fas fa-star"></i> Result</h2>
+            <div class="result-content" id="resultContent">
+                <p>Spin the bottle to see who it selects!</p>
+            </div>
+        </div>
+        
+        <div class="left-panel" style="margin-top: 30px;">
+            <h2 class="panel-title"><i class="fas fa-tasks"></i> Dare Ideas</h2>
+            <div class="dare-list" id="dareList">
+                <!-- Dare items will be added here -->
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-info-circle"></i> How to Play</h3>
+            <ol>
+                <li>Add players using the "Add Player" button or by clicking the + button next to existing players</li>
+                <li>Players will appear around the bottle in a circle</li>
+                <li>Click "SPIN THE BOTTLE!" to spin the bottle</li>
+                <li>The bottle will point to a player when it stops spinning</li>
+                <li>Use the "Random Dare" button to generate a fun dare for the selected players</li>
+                <li>Have fun and keep the dares friendly and appropriate!</li>
+            </ol>
+            <p style="text-align: center; font-style: italic; color: #ffcc80;">Remember: This is a game for fun. Always respect others' boundaries!</p>
+        </div>
+        
+        <footer>
+            <p>Spin the Bottle Game &copy; 2026 | All gameplay happens locally in your browser</p>
+        </footer>
+    </div>
+
+    <script src="script.js">
+
+    </script>
+</body>
+</html>

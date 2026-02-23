@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role-Based Access Segregator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Role-Based Access Segregator</h1>
+            <p>Advanced role-based access control system with policy enforcement, audit trails, and real-time monitoring.</p>
+            <div class="user-info">
+                <span id="currentUser">Not logged in</span>
+                <button id="loginBtn" class="btn btn-primary">Login</button>
+                <button id="logoutBtn" class="btn btn-secondary" style="display: none;">Logout</button>
+            </div>
+        </header>
+
+        <div class="main-controls">
+            <button id="createUserBtn" class="btn btn-primary">Create User</button>
+            <button id="createRoleBtn" class="btn btn-success">Create Role</button>
+            <button id="createPolicyBtn" class="btn btn-info">Create Policy</button>
+            <button id="runAccessCheckBtn" class="btn btn-warning">Run Access Check</button>
+            <button id="generateReportBtn" class="btn btn-secondary">Generate Report</button>
+            <button id="exportConfigBtn" class="btn btn-dark">Export Configuration</button>
+        </div>
+
+        <div class="dashboard">
+            <div class="stats-panel">
+                <div class="stat-card">
+                    <h3>Total Users</h3>
+                    <div class="stat-value" id="totalUsers">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Roles</h3>
+                    <div class="stat-value" id="activeRoles">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Policies</h3>
+                    <div class="stat-value" id="activePolicies">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Access Requests</h3>
+                    <div class="stat-value" id="accessRequests">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Security Alerts</h3>
+                    <div class="stat-value alert-count" id="securityAlerts">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>System Health</h3>
+                    <div class="health-indicator" id="systemHealth">Good</div>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <div class="action-buttons">
+                    <button id="bulkUserImportBtn" class="btn btn-small">Bulk User Import</button>
+                    <button id="roleTemplateBtn" class="btn btn-small">Role Templates</button>
+                    <button id="policyWizardBtn" class="btn btn-small">Policy Wizard</button>
+                    <button id="auditTrailBtn" class="btn btn-small">View Audit Trail</button>
+                    <button id="accessMatrixBtn" class="btn btn-small">Access Matrix</button>
+                    <button id="simulationBtn" class="btn btn-small">Access Simulation</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Navigation</h3>
+                    <nav class="nav-menu">
+                        <a href="#users" class="nav-link active" data-section="users">Users</a>
+                        <a href="#roles" class="nav-link" data-section="roles">Roles</a>
+                        <a href="#policies" class="nav-link" data-section="policies">Policies</a>
+                        <a href="#permissions" class="nav-link" data-section="permissions">Permissions</a>
+                        <a href="#resources" class="nav-link" data-section="resources">Resources</a>
+                        <a href="#audit" class="nav-link" data-section="audit">Audit Log</a>
+                        <a href="#reports" class="nav-link" data-section="reports">Reports</a>
+                        <a href="#settings" class="nav-link" data-section="settings">Settings</a>
+                    </nav>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>System Status</h3>
+                    <div class="status-indicators">
+                        <div class="status-item">
+                            <span class="status-label">Authentication:</span>
+                            <span class="status-value online">Online</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Policy Engine:</span>
+                            <span class="status-value online">Online</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Audit Service:</span>
+                            <span class="status-value online">Online</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Database:</span>
+                            <span class="status-value online">Online</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Recent Activity</h3>
+                    <div id="recentActivity" class="activity-feed">
+                        <!-- Activity items will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Users Section -->
+                <div id="usersSection" class="content-section active">
+                    <div class="section-header">
+                        <h2>User Management</h2>
+                        <div class="section-controls">
+                            <input type="text" id="userSearch" placeholder="Search users..." class="search-input">
+                            <select id="userFilter" class="filter-select">
+                                <option value="all">All Users</option>
+                                <option value="active">Active Only</option>
+                                <option value="inactive">Inactive Only</option>
+                                <option value="admin">Administrators</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="usersList" class="data-table">
+                        <!-- User table will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Roles Section -->
+                <div id="rolesSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Role Management</h2>
+                        <div class="section-controls">
+                            <input type="text" id="roleSearch" placeholder="Search roles..." class="search-input">
+                            <button id="createRoleFromTemplateBtn" class="btn btn-small">From Template</button>
+                        </div>
+                    </div>
+                    <div class="role-management">
+                        <div class="role-tree" id="roleTree">
+                            <!-- Role hierarchy will be displayed here -->
+                        </div>
+                        <div class="role-details" id="roleDetails">
+                            <div class="no-selection">Select a role to view details</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Policies Section -->
+                <div id="policiesSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Policy Management</h2>
+                        <div class="section-controls">
+                            <input type="text" id="policySearch" placeholder="Search policies..." class="search-input">
+                            <select id="policyTypeFilter" class="filter-select">
+                                <option value="all">All Types</option>
+                                <option value="access">Access Control</option>
+                                <option value="data">Data Protection</option>
+                                <option value="audit">Audit</option>
+                                <option value="compliance">Compliance</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="policiesList" class="policy-list">
+                        <!-- Policy list will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Permissions Section -->
+                <div id="permissionsSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Permission Matrix</h2>
+                        <div class="section-controls">
+                            <button id="refreshMatrixBtn" class="btn btn-small">Refresh Matrix</button>
+                            <button id="exportMatrixBtn" class="btn btn-small">Export Matrix</button>
+                        </div>
+                    </div>
+                    <div class="permission-matrix-container">
+                        <div id="permissionMatrix" class="permission-matrix">
+                            <!-- Permission matrix will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resources Section -->
+                <div id="resourcesSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Resource Management</h2>
+                        <div class="section-controls">
+                            <input type="text" id="resourceSearch" placeholder="Search resources..." class="search-input">
+                            <select id="resourceTypeFilter" class="filter-select">
+                                <option value="all">All Types</option>
+                                <option value="file">Files</option>
+                                <option value="database">Databases</option>
+                                <option value="api">APIs</option>
+                                <option value="network">Network</option>
+                                <option value="application">Applications</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="resourcesList" class="resource-grid">
+                        <!-- Resource grid will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Audit Section -->
+                <div id="auditSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Audit Trail</h2>
+                        <div class="section-controls">
+                            <input type="datetime-local" id="auditStartDate">
+                            <input type="datetime-local" id="auditEndDate">
+                            <select id="auditEventFilter" class="filter-select">
+                                <option value="all">All Events</option>
+                                <option value="access">Access Events</option>
+                                <option value="modification">Modifications</option>
+                                <option value="security">Security Events</option>
+                                <option value="policy">Policy Changes</option>
+                            </select>
+                            <button id="filterAuditBtn" class="btn btn-small">Filter</button>
+                        </div>
+                    </div>
+                    <div id="auditLog" class="audit-log">
+                        <!-- Audit log will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
+                <div id="reportsSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Reports & Analytics</h2>
+                        <div class="section-controls">
+                            <select id="reportType" class="filter-select">
+                                <option value="access">Access Report</option>
+                                <option value="security">Security Report</option>
+                                <option value="compliance">Compliance Report</option>
+                                <option value="usage">Usage Analytics</option>
+                            </select>
+                            <button id="generateCustomReportBtn" class="btn btn-primary">Generate Report</button>
+                        </div>
+                    </div>
+                    <div class="reports-container">
+                        <div class="chart-container">
+                            <h3>Access Patterns</h3>
+                            <canvas id="accessPatternsChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Role Distribution</h3>
+                            <canvas id="roleDistributionChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Security Incidents</h3>
+                            <canvas id="securityIncidentsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div id="settingsSection" class="content-section">
+                    <div class="section-header">
+                        <h2>System Settings</h2>
+                    </div>
+                    <div class="settings-container">
+                        <div class="settings-section">
+                            <h3>General Settings</h3>
+                            <div class="setting-item">
+                                <label for="sessionTimeout">Session Timeout (minutes):</label>
+                                <input type="number" id="sessionTimeout" min="5" max="480" value="60">
+                            </div>
+                            <div class="setting-item">
+                                <label for="maxLoginAttempts">Max Login Attempts:</label>
+                                <input type="number" id="maxLoginAttempts" min="3" max="10" value="5">
+                            </div>
+                            <div class="setting-item">
+                                <label><input type="checkbox" id="enableAuditLogging" checked> Enable Audit Logging</label>
+                            </div>
+                            <div class="setting-item">
+                                <label><input type="checkbox" id="enableRealTimeMonitoring" checked> Enable Real-time Monitoring</label>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Security Settings</h3>
+                            <div class="setting-item">
+                                <label for="passwordPolicy">Password Policy:</label>
+                                <select id="passwordPolicy">
+                                    <option value="basic">Basic (8+ chars)</option>
+                                    <option value="strong">Strong (12+ chars, mixed case, numbers, symbols)</option>
+                                    <option value="complex">Complex (16+ chars, advanced requirements)</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label><input type="checkbox" id="enableMFA" checked> Enable Multi-Factor Authentication</label>
+                            </div>
+                            <div class="setting-item">
+                                <label><input type="checkbox" id="enableEncryption" checked> Enable Data Encryption</label>
+                            </div>
+                            <div class="setting-item">
+                                <label for="encryptionAlgorithm">Encryption Algorithm:</label>
+                                <select id="encryptionAlgorithm">
+                                    <option value="AES256">AES-256</option>
+                                    <option value="AES128">AES-128</option>
+                                    <option value="3DES">3DES</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Policy Settings</h3>
+                            <div class="setting-item">
+                                <label for="defaultDeny">Default Access Policy:</label>
+                                <select id="defaultDeny">
+                                    <option value="allow">Allow by Default</option>
+                                    <option value="deny">Deny by Default</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label><input type="checkbox" id="enablePolicyCaching" checked> Enable Policy Caching</label>
+                            </div>
+                            <div class="setting-item">
+                                <label for="policyRefreshInterval">Policy Refresh Interval (seconds):</label>
+                                <input type="number" id="policyRefreshInterval" min="30" max="3600" value="300">
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+                            <button id="resetSettingsBtn" class="btn btn-secondary">Reset to Defaults</button>
+                            <button id="exportSettingsBtn" class="btn btn-info">Export Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div id="userModal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3 id="userModalTitle">Create User</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userUsername">Username:</label>
+                                <input type="text" id="userUsername" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="userEmail">Email:</label>
+                                <input type="email" id="userEmail" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userFirstName">First Name:</label>
+                                <input type="text" id="userFirstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="userLastName">Last Name:</label>
+                                <input type="text" id="userLastName" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userDepartment">Department:</label>
+                                <input type="text" id="userDepartment">
+                            </div>
+                            <div class="form-group">
+                                <label for="userManager">Manager:</label>
+                                <select id="userManager">
+                                    <option value="">Select Manager</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Roles:</label>
+                            <div id="userRolesSelection" class="checkbox-grid">
+                                <!-- Role checkboxes will be populated here -->
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" id="userActive"> Active</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveUserBtn" class="btn btn-primary">Save User</button>
+                    <button id="cancelUserBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="roleModal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3 id="roleModalTitle">Create Role</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="roleForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="roleName">Role Name:</label>
+                                <input type="text" id="roleName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="roleDescription">Description:</label>
+                                <textarea id="roleDescription" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="roleParent">Parent Role:</label>
+                                <select id="roleParent">
+                                    <option value="">No Parent</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="roleLevel">Security Level:</label>
+                                <select id="roleLevel">
+                                    <option value="1">Level 1 - Basic</option>
+                                    <option value="2">Level 2 - Standard</option>
+                                    <option value="3">Level 3 - Elevated</option>
+                                    <option value="4">Level 4 - High</option>
+                                    <option value="5">Level 5 - Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Permissions:</label>
+                            <div id="rolePermissionsSelection" class="checkbox-grid">
+                                <!-- Permission checkboxes will be populated here -->
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" id="roleActive"> Active</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveRoleBtn" class="btn btn-primary">Save Role</button>
+                    <button id="cancelRoleBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="policyModal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3 id="policyModalTitle">Create Policy</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="policyForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="policyName">Policy Name:</label>
+                                <input type="text" id="policyName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="policyType">Policy Type:</label>
+                                <select id="policyType">
+                                    <option value="access">Access Control</option>
+                                    <option value="data">Data Protection</option>
+                                    <option value="audit">Audit</option>
+                                    <option value="compliance">Compliance</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="policyDescription">Description:</label>
+                            <textarea id="policyDescription" rows="3"></textarea>
+                        </div>
+                        <div class="policy-rules">
+                            <h4>Policy Rules</h4>
+                            <div id="policyRulesContainer">
+                                <div class="policy-rule">
+                                    <select class="rule-subject">
+                                        <option value="user">User</option>
+                                        <option value="role">Role</option>
+                                        <option value="group">Group</option>
+                                    </select>
+                                    <select class="rule-operator">
+                                        <option value="equals">equals</option>
+                                        <option value="contains">contains</option>
+                                        <option value="matches">matches</option>
+                                    </select>
+                                    <input type="text" class="rule-value" placeholder="Value">
+                                    <select class="rule-action">
+                                        <option value="allow">Allow</option>
+                                        <option value="deny">Deny</option>
+                                        <option value="log">Log Only</option>
+                                    </select>
+                                    <button type="button" class="remove-rule btn btn-small btn-danger">Remove</button>
+                                </div>
+                            </div>
+                            <button type="button" id="addRuleBtn" class="btn btn-small">Add Rule</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="policyPriority">Priority:</label>
+                            <input type="number" id="policyPriority" min="1" max="100" value="50">
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" id="policyActive"> Active</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="savePolicyBtn" class="btn btn-primary">Save Policy</button>
+                    <button id="cancelPolicyBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="accessCheckModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Access Check Simulation</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="checkUser">User:</label>
+                        <select id="checkUser">
+                            <option value="">Select User</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="checkResource">Resource:</label>
+                        <select id="checkResource">
+                            <option value="">Select Resource</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="checkAction">Action:</label>
+                        <select id="checkAction">
+                            <option value="read">Read</option>
+                            <option value="write">Write</option>
+                            <option value="delete">Delete</option>
+                            <option value="execute">Execute</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div id="accessResult" class="access-result">
+                        <!-- Access check result will be displayed here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="runCheckBtn" class="btn btn-primary">Run Check</button>
+                    <button id="closeCheckBtn" class="btn btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Role-Based Access Segregator. Enterprise-grade access control and policy management system.</p>
+        </footer>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="fileInput" accept=".json,.csv" style="display: none;">
+
+    <script src="script.js"></script>
+</body>
+</html>

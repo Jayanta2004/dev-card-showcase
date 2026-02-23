@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Logic Trainer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(45, 212, 191, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(155, 81, 224, 0.1) 0%, transparent 50%);
+            z-index: 0;
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, #2dd4bf, #9b51e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .tagline {
+            font-size: 1.3rem;
+            color: #a8dadc;
+            margin-bottom: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #2dd4bf, #9b51e0);
+        }
+        
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #2dd4bf, #9b51e0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: white;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #2dd4bf;
+        }
+        
+        .card-value {
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 5px;
+        }
+        
+        .card-label {
+            font-size: 0.9rem;
+            color: #a8dadc;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 1100px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .training-area {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            min-height: 600px;
+        }
+        
+        .training-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .training-title {
+            font-size: 2rem;
+            color: #2dd4bf;
+        }
+        
+        .module-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .module-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #a8dadc;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .module-btn:hover {
+            background: rgba(45, 212, 191, 0.2);
+            color: white;
+        }
+        
+        .module-btn.active {
+            background: linear-gradient(to right, #2dd4bf, #9b51e0);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .concept-explanation {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #2dd4bf;
+        }
+        
+        .concept-title {
+            font-size: 1.5rem;
+            color: #2dd4bf;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .concept-text {
+            line-height: 1.6;
+            color: #e0f7fa;
+            margin-bottom: 20px;
+        }
+        
+        .concept-example {
+            background: rgba(45, 212, 191, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #2dd4bf;
+            font-style: italic;
+        }
+        
+        .exercise-area {
+            margin-top: 40px;
+        }
+        
+        .exercise-title {
+            font-size: 1.8rem;
+            color: #9b51e0;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .exercise-description {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 5px solid #9b51e0;
+        }
+        
+        .visualization-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            min-height: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .node {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #2dd4bf, #9b51e0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            z-index: 10;
+        }
+        
+        .node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(45, 212, 191, 0.7);
+        }
+        
+        .node-start {
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+        }
+        
+        .node-goal {
+            background: linear-gradient(135deg, #FF5722, #FF9800);
+        }
+        
+        .node-visited {
+            background: linear-gradient(135deg, #2196F3, #03A9F4);
+        }
+        
+        .edge {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            height: 4px;
+            transform-origin: 0 0;
+            z-index: 1;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #2dd4bf, #9b51e0);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-success {
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .progress-section, .concepts-section, .quiz-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #2dd4bf;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #2dd4bf, #9b51e0);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #a8dadc;
+        }
+        
+        .skill-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .skill-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .skill-item:hover {
+            background: rgba(45, 212, 191, 0.1);
+        }
+        
+        .skill-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .skill-level {
+            width: 100px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .skill-fill {
+            height: 100%;
+            background: linear-gradient(to right, #2dd4bf, #9b51e0);
+            border-radius: 4px;
+        }
+        
+        .concepts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .concept-item {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .concept-item:hover {
+            background: rgba(45, 212, 191, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .concept-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(45, 212, 191, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2dd4bf;
+        }
+        
+        .quiz-question {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .quiz-option {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        
+        .quiz-option:hover {
+            background: rgba(45, 212, 191, 0.1);
+        }
+        
+        .quiz-option.selected {
+            background: rgba(45, 212, 191, 0.2);
+            border-color: #2dd4bf;
+        }
+        
+        .quiz-option.correct {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4CAF50;
+        }
+        
+        .quiz-option.incorrect {
+            background: rgba(244, 67, 54, 0.2);
+            border-color: #F44336;
+        }
+        
+        .feedback-area {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .feedback-correct {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 5px solid #4CAF50;
+        }
+        
+        .feedback-incorrect {
+            background: rgba(244, 67, 54, 0.2);
+            border-left: 5px solid #F44336;
+        }
+        
+        .feedback-title {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feedback-text {
+            line-height: 1.5;
+        }
+        
+        .pathfinding-grid {
+            display: grid;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .grid-cell {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .grid-cell:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .grid-cell.start {
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+        }
+        
+        .grid-cell.goal {
+            background: linear-gradient(135deg, #FF5722, #FF9800);
+        }
+        
+        .grid-cell.wall {
+            background: #37474F;
+        }
+        
+        .grid-cell.path {
+            background: linear-gradient(135deg, #2196F3, #03A9F4);
+        }
+        
+        .grid-cell.visited {
+            background: rgba(33, 150, 243, 0.3);
+        }
+        
+        .logic-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .logic-table th, .logic-table td {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .logic-table th {
+            background: rgba(45, 212, 191, 0.2);
+            color: #2dd4bf;
+        }
+        
+        .logic-table tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #a8dadc;
+            margin-top: 40px;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+            
+            .training-header {
+                flex-direction: column;
+                gap: 20px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-brain"></i> AI Logic Trainer</h1>
+            <p class="tagline">Master fundamental AI concepts through interactive exercises, visualizations, and problem-solving challenges. Learn search algorithms, decision trees, logic systems, and neural networks.</p>
+        </header>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="card-title">Modules Completed</div>
+                <div class="card-value" id="modulesCompleted">0/6</div>
+                <div class="card-label">AI Concepts Mastered</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="card-title">Skill Level</div>
+                <div class="card-value" id="skillLevel">Beginner</div>
+                <div class="card-label">Current Proficiency</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="card-title">Exercises Solved</div>
+                <div class="card-value" id="exercisesSolved">0</div>
+                <div class="card-label">Problems Completed</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="card-title">Streak</div>
+                <div class="card-value" id="streakCount">0</div>
+                <div class="card-label">Consecutive Days</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="training-area">
+                <div class="training-header">
+                    <h2 class="training-title" id="moduleTitle">Search Algorithms</h2>
+                    <div class="module-selector">
+                        <button class="module-btn active" data-module="search">Search</button>
+                        <button class="module-btn" data-module="logic">Logic</button>
+                        <button class="module-btn" data-module="planning">Planning</button>
+                        <button class="module-btn" data-module="learning">Learning</button>
+                        <button class="module-btn" data-module="neural">Neural Nets</button>
+                        <button class="module-btn" data-module="ethics">AI Ethics</button>
+                    </div>
+                </div>
+                
+                <div class="concept-explanation" id="conceptExplanation">
+                    <h3 class="concept-title"><i class="fas fa-lightbulb"></i> Search Algorithms in AI</h3>
+                    <p class="concept-text">Search algorithms help AI systems navigate from an initial state to a goal state by exploring possible paths. They form the foundation of problem-solving in AI, used in everything from pathfinding to game playing.</p>
+                    <div class="concept-example">
+                        <strong>Example:</strong> A navigation app uses search algorithms to find the shortest route from your location to a destination, considering traffic, road closures, and travel time.
+                    </div>
+                </div>
+                
+                <div class="exercise-area" id="exerciseArea">
+                    <h3 class="exercise-title"><i class="fas fa-puzzle-piece"></i> Pathfinding Challenge</h3>
+                    
+                    <div class="exercise-description">
+                        <p>Find the shortest path from the start node (green) to the goal node (orange) using the A* search algorithm. Click to toggle walls (black cells). The algorithm will explore nodes (blue) and find the optimal path (light blue).</p>
+                        <p><strong>Instructions:</strong> Place walls by clicking on grid cells, then click "Find Path" to run the algorithm.</p>
+                    </div>
+                    
+                    <div class="visualization-area" id="visualizationArea">
+                        <!-- Grid will be generated here -->
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="btn-primary" id="runAlgorithmBtn">
+                            <i class="fas fa-play"></i> Run Algorithm
+                        </button>
+                        <button class="btn-secondary" id="resetGridBtn">
+                            <i class="fas fa-redo"></i> Reset Grid
+                        </button>
+                        <button class="btn-secondary" id="stepBtn">
+                            <i class="fas fa-step-forward"></i> Step Through
+                        </button>
+                        <button class="btn-success" id="checkSolutionBtn" style="display: none;">
+                            <i class="fas fa-check"></i> Check Solution
+                        </button>
+                    </div>
+                    
+                    <div class="feedback-area" id="feedbackArea">
+                        <!-- Feedback will appear here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="progress-section">
+                    <h3 class="section-title"><i class="fas fa-chart-line"></i> Your Progress</h3>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="overallProgress"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>Overall Progress</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    
+                    <div class="skill-list">
+                        <div class="skill-item">
+                            <div class="skill-name">
+                                <i class="fas fa-search"></i>
+                                <span>Search Algorithms</span>
+                            </div>
+                            <div class="skill-level">
+                                <div class="skill-fill" id="searchSkill" style="width: 20%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="skill-item">
+                            <div class="skill-name">
+                                <i class="fas fa-sitemap"></i>
+                                <span>Logical Reasoning</span>
+                            </div>
+                            <div class="skill-level">
+                                <div class="skill-fill" id="logicSkill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="skill-item">
+                            <div class="skill-name">
+                                <i class="fas fa-route"></i>
+                                <span>Planning</span>
+                            </div>
+                            <div class="skill-level">
+                                <div class="skill-fill" id="planningSkill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="skill-item">
+                            <div class="skill-name">
+                                <i class="fas fa-robot"></i>
+                                <span>Machine Learning</span>
+                            </div>
+                            <div class="skill-level">
+                                <div class="skill-fill" id="mlSkill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="concepts-section">
+                    <h3 class="section-title"><i class="fas fa-book-open"></i> AI Concepts</h3>
+                    
+                    <div class="concepts-list">
+                        <div class="concept-item" data-concept="bfs">
+                            <div class="concept-icon">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </div>
+                            <div>
+                                <div class="concept-name">Breadth-First Search</div>
+                                <div class="concept-desc">Explores all neighbors first</div>
+                            </div>
+                        </div>
+                        
+                        <div class="concept-item" data-concept="dfs">
+                            <div class="concept-icon">
+                                <i class="fas fa-long-arrow-alt-down"></i>
+                            </div>
+                            <div>
+                                <div class="concept-name">Depth-First Search</div>
+                                <div class="concept-desc">Explores as deep as possible first</div>
+                            </div>
+                        </div>
+                        
+                        <div class="concept-item" data-concept="astar">
+                            <div class="concept-icon">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <div>
+                                <div class="concept-name">A* Search</div>
+                                <div class="concept-desc">Uses heuristics to find optimal path</div>
+                            </div>
+                        </div>
+                        
+                        <div class="concept-item" data-concept="minimax">
+                            <div class="concept-icon">
+                                <i class="fas fa-chess-board"></i>
+                            </div>
+                            <div>
+                                <div class="concept-name">Minimax Algorithm</div>
+                                <div class="concept-desc">Decision-making in games</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quiz-section">
+                    <h3 class="section-title"><i class="fas fa-question-circle"></i> Quick Quiz</h3>
+                    
+                    <div class="quiz-question" id="quizQuestion">
+                        Which search algorithm is guaranteed to find the shortest path in an unweighted graph?
+                    </div>
+                    
+                    <div class="quiz-options" id="quizOptions">
+                        <div class="quiz-option" data-option="a">Depth-First Search</div>
+                        <div class="quiz-option" data-option="b">Breadth-First Search</div>
+                        <div class="quiz-option" data-option="c">Greedy Best-First Search</div>
+                        <div class="quiz-option" data-option="d">A* Search without admissible heuristic</div>
+                    </div>
+                    
+                    <button class="btn-primary" id="submitQuizBtn" style="margin-top: 20px; width: 100%;">
+                        <i class="fas fa-paper-plane"></i> Submit Answer
+                    </button>
+                    
+                    <div class="feedback-area" id="quizFeedback" style="margin-top: 20px;">
+                        <!-- Quiz feedback will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>AI Logic Trainer &copy; 2023 | Interactive platform for learning artificial intelligence concepts</p>
+            <p>Designed for educational purposes. Practice problems based on fundamental AI principles.</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const moduleTitle = document.getElementById('moduleTitle');
+        const conceptExplanation = document.getElementById('conceptExplanation');
+        const exerciseArea = document.getElementById('exerciseArea');
+        const visualizationArea = document.getElementById('visualizationArea');
+        const feedbackArea = document.getElementById('feedbackArea');
+        const runAlgorithmBtn = document.getElementById('runAlgorithmBtn');
+        const resetGridBtn = document.getElementById('resetGridBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        const checkSolutionBtn = document.getElementById('checkSolutionBtn');
+        const submitQuizBtn = document.getElementById('submitQuizBtn');
+        const quizFeedback = document.getElementById('quizFeedback');
+        const moduleButtons = document.querySelectorAll('.module-btn');
+        const conceptItems = document.querySelectorAll('.concept-item');
+        
+        // Stats elements
+        const modulesCompletedElement = document.getElementById('modulesCompleted');
+        const skillLevelElement = document.getElementById('skillLevel');
+        const exercisesSolvedElement = document.getElementById('exercisesSolved');
+        const streakCountElement = document.getElementById('streakCount');
+        const overallProgressElement = document.getElementById('overallProgress');
+        const progressPercentElement = document.getElementById('progressPercent');
+        
+        // Skill elements
+        const searchSkillElement = document.getElementById('searchSkill');
+        const logicSkillElement = document.getElementById('logicSkill');
+        const planningSkillElement = document.getElementById('planningSkill');
+        const mlSkillElement = document.getElementById('mlSkill');
+        
+        // Quiz elements
+        const quizQuestion = document.getElementById('quizQuestion');
+        const quizOptions = document.getElementById('quizOptions');
+        
+        // Game variables
+        let currentModule = 'search';
+        let exercisesSolved = 0;
+        let modulesCompleted = 0;
+        let streakCount = 0;
+        let skillLevel = 'Beginner';
+        
+        // Skill tracking
+        let searchSkill = 20;
+        let logicSkill = 0;
+        let planningSkill = 0;
+        let mlSkill = 0;
+        
+        // Grid variables
+        let grid = [];
+        let gridSize = 10;
+        let startCell = {x: 0, y: 0};
+        let goalCell = {x: 9, y: 9};
+        let walls = new Set();
+        let path = [];
+        let visited = new Set();
+        
+        // AI concepts data
+        const modules = {
+            search: {
+                title: "Search Algorithms",
+                explanation: {
+                    title: "Search Algorithms in AI",
+                    text: "Search algorithms help AI systems navigate from an initial state to a goal state by exploring possible paths. They form the foundation of problem-solving in AI, used in everything from pathfinding to game playing.",
+                    example: "A navigation app uses search algorithms to find the shortest route from your location to a destination, considering traffic, road closures, and travel time."
+                },
+                exercise: {
+                    title: "Pathfinding Challenge",
+                    description: "Find the shortest path from the start node (green) to the goal node (orange) using the A* search algorithm. Click to toggle walls (black cells). The algorithm will explore nodes (blue) and find the optimal path (light blue).",
+                    instructions: "Place walls by clicking on grid cells, then click 'Find Path' to run the algorithm."
+                }
+            },
+            logic: {
+                title: "Logical Reasoning",
+                explanation: {
+                    title: "Propositional Logic & Inference",
+                    text: "Logical reasoning allows AI systems to make deductions based on given facts and rules. Propositional logic deals with statements that can be true or false, and inference rules allow deriving new knowledge.",
+                    example: "An AI medical diagnosis system uses logical rules like 'If patient has fever AND cough, THEN possible flu' to suggest diagnoses based on symptoms."
+                },
+                exercise: {
+                    title: "Logic Puzzle",
+                    description: "Given the logical premises, determine what conclusions can be validly drawn. Use truth tables and inference rules to solve the puzzle.",
+                    instructions: "Select the correct conclusions that follow from the given premises."
+                }
+            },
+            planning: {
+                title: "Planning Systems",
+                explanation: {
+                    title: "AI Planning & Decision Making",
+                    text: "Planning involves generating sequences of actions to achieve goals. AI planning systems model the world as states and find action sequences that transform the initial state into a goal state.",
+                    example: "A robot vacuum cleaner plans its path to clean an entire room efficiently, avoiding obstacles while ensuring complete coverage."
+                },
+                exercise: {
+                    title: "Blocks World Planning",
+                    description: "Rearrange the blocks from the initial configuration to match the goal configuration using the fewest moves. Each move can only transfer one block at a time.",
+                    instructions: "Drag blocks to move them. Plan your moves to achieve the goal state efficiently."
+                }
+            },
+            learning: {
+                title: "Machine Learning",
+                explanation: {
+                    title: "Learning from Data",
+                    text: "Machine learning enables AI systems to improve their performance through experience. Instead of being explicitly programmed, ML algorithms learn patterns from data.",
+                    example: "A recommendation system learns your preferences from your viewing history and suggests new movies you might enjoy."
+                },
+                exercise: {
+                    title: "Classification Challenge",
+                    description: "Train a simple classifier to distinguish between two types of data points. Adjust the decision boundary to correctly classify as many points as possible.",
+                    instructions: "Click to add data points of two different classes, then adjust the boundary to separate them."
+                }
+            },
+            neural: {
+                title: "Neural Networks",
+                explanation: {
+                    title: "Artificial Neural Networks",
+                    text: "Neural networks are computing systems inspired by biological brains. They consist of interconnected nodes (neurons) that process information and learn to perform tasks.",
+                    example: "Image recognition systems use convolutional neural networks to identify objects in photos with human-like accuracy."
+                },
+                exercise: {
+                    title: "Neural Network Visualizer",
+                    description: "Explore how a neural network processes information. Adjust weights and see how the network's predictions change.",
+                    instructions: "Modify connection weights and observe how input signals propagate through the network to produce outputs."
+                }
+            },
+            ethics: {
+                title: "AI Ethics",
+                explanation: {
+                    title: "Ethical Considerations in AI",
+                    text: "As AI systems become more powerful, ethical considerations become crucial. Issues include bias, fairness, transparency, accountability, and the impact of AI on society.",
+                    example: "Ensuring facial recognition systems don't have racial bias, or that AI hiring tools don't discriminate against certain groups."
+                },
+                exercise: {
+                    title: "Ethical Dilemma",
+                    description: "Consider an AI system facing an ethical dilemma. Evaluate the options and determine the most ethically sound approach.",
+                    instructions: "Analyze the scenario and select the option that best addresses the ethical concerns."
+                }
+            }
+        };
+        
+        // Concept details
+        const concepts = {
+            bfs: {
+                name: "Breadth-First Search",
+                description: "Explores all neighbors at the present depth before moving on to nodes at the next depth level. Guaranteed to find the shortest path in unweighted graphs.",
+                algorithm: "Uses a queue data structure. Explores all possible paths uniformly outward from the start."
+            },
+            dfs: {
+                name: "Depth-First Search",
+                description: "Explores as far as possible along each branch before backtracking. Uses less memory than BFS but doesn't guarantee the shortest path.",
+                algorithm: "Uses a stack data structure (or recursion). Goes deep into one path before exploring others."
+            },
+            astar: {
+                name: "A* Search",
+                description: "Uses heuristics to guide search toward the goal. Optimal and complete when using an admissible heuristic.",
+                algorithm: "Evaluates nodes using f(n) = g(n) + h(n), where g(n) is cost from start, h(n) is heuristic estimate to goal."
+            },
+            minimax: {
+                name: "Minimax Algorithm",
+                description: "Used in two-player games to minimize possible loss while maximizing potential gain. Assumes both players play optimally.",
+                algorithm: "Recursively evaluates game states, alternating between maximizing (our move) and minimizing (opponent's move) players."
+            }
+        };
+        
+        // Quiz questions
+        const quizQuestions = [
+            {
+                question: "Which search algorithm is guaranteed to find the shortest path in an unweighted graph?",
+                options: [
+                    "Depth-First Search",
+                    "Breadth-First Search",
+                    "Greedy Best-First Search",
+                    "A* Search without admissible heuristic"
+                ],
+                correct: "b",
+                explanation: "Breadth-First Search explores all nodes at the current depth before moving deeper, guaranteeing the shortest path in unweighted graphs."
+            },
+            {
+                question: "In propositional logic, what does the expression P → Q mean?",
+                options: [
+                    "P is true if and only if Q is true",
+                    "If P is true, then Q is true",
+                    "P and Q are both true",
+                    "Either P is true or Q is true"
+                ],
+                correct: "b",
+                explanation: "P → Q is an implication meaning 'if P then Q'. It's false only when P is true and Q is false."
+            },
+            {
+                question: "What is the primary purpose of a heuristic function in A* search?",
+                options: [
+                    "To guarantee optimality",
+                    "To estimate cost to goal",
+                    "To avoid revisiting nodes",
+                    "To randomize search order"
+                ],
+                correct: "b",
+                explanation: "A heuristic function h(n) estimates the cost from node n to the goal, helping A* search focus on promising paths."
+            },
+            {
+                question: "Which machine learning type learns from labeled training data?",
+                options: [
+                    "Unsupervised Learning",
+                    "Supervised Learning",
+                    "Reinforcement Learning",
+                    "Self-supervised Learning"
+                ],
+                correct: "b",
+                explanation: "Supervised learning uses labeled data (input-output pairs) to learn a mapping from inputs to outputs."
+            }
+        ];
+        
+        // Initialize the trainer
+        function init() {
+            // Load saved progress
+            loadProgress();
+            
+            // Initialize grid
+            initGrid();
+            
+            // Render grid
+            renderGrid();
+            
+            // Update UI
+            updateStats();
+            updateSkills();
+            
+            // Set up first quiz
+            loadQuiz(0);
+        }
+        
+        // Initialize grid
+        function initGrid() {
+            grid = [];
+            walls.clear();
+            path = [];
+            visited.clear();
+            
+            // Create grid
+            for (let y = 0; y < gridSize; y++) {
+                grid[y] = [];
+                for (let x = 0; x < gridSize; x++) {
+                    grid[y][x] = {
+                        x: x,
+                        y: y,
+                        isStart: (x === startCell.x && y === startCell.y),
+                        isGoal: (x === goalCell.x && y === goalCell.y),
+                        isWall: false,
+                        isPath: false,
+                        isVisited: false,
+                        gCost: Infinity,
+                        hCost: 0,
+                        fCost: Infinity,
+                        parent: null
+                    };
+                }
+            }
+            
+            // Add some random walls
+            for (let i = 0; i < 15; i++) {
+                const x = Math.floor(Math.random() * gridSize);
+                const y = Math.floor(Math.random() * gridSize);
+                
+                // Don't place walls on start or goal
+                if (!(x === startCell.x && y === startCell.y) && 
+                    !(x === goalCell.x && y === goalCell.y)) {
+                    grid[y][x].isWall = true;
+                    walls.add(`${x},${y}`);
+                }
+            }
+        }
+        
+        // Render grid
+        function renderGrid() {
+            visualizationArea.innerHTML = '';
+            
+            // Create grid container
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'pathfinding-grid';
+            gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 40px)`;
+            gridContainer.style.justifyContent = 'center';
+            
+            // Create cells
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    
+                    const cellData = grid[y][x];
+                    
+                    if (cellData.isStart) {
+                        cell.classList.add('start');
+                        cell.innerHTML = '<i class="fas fa-play"></i>';
+                    } else if (cellData.isGoal) {
+                        cell.classList.add('goal');
+                        cell.innerHTML = '<i class="fas fa-flag-checkered"></i>';
+                    } else if (cellData.isWall) {
+                        cell.classList.add('wall');
+                    } else if (cellData.isPath) {
+                        cell.classList.add('path');
+                    } else if (cellData.isVisited) {
+                        cell.classList.add('visited');
+                    }
+                    
+                    // Add click event to toggle walls
+                    cell.addEventListener('click', () => toggleWall(x, y));
+                    
+                    // Add hover effect
+                    cell.addEventListener('mouseenter', () => {
+                        if (!cellData.isStart && !cellData.isGoal) {
+                            cell.style.transform = 'scale(1.1)';
+                        }
+                    });
+                    
+                    cell.addEventListener('mouseleave', () => {
+                        cell.style.transform = 'scale(1)';
+                    });
+                    
+                    gridContainer.appendChild(cell);
+                }
+            }
+            
+            visualizationArea.appendChild(gridContainer);
+        }
+        
+        // Toggle wall at position
+        function toggleWall(x, y) {
+            const cell = grid[y][x];
+            
+            // Don't toggle start or goal cells
+            if (cell.isStart || cell.isGoal) return;
+            
+            cell.isWall = !cell.isWall;
+            
+            if (cell.isWall) {
+                walls.add(`${x},${y}`);
+            } else {
+                walls.delete(`${x},${y}`);
+            }
+            
+            renderGrid();
+        }
+        
+        // Run A* algorithm
+        function runAStar() {
+            // Reset visited and path
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    grid[y][x].isVisited = false;
+                    grid[y][x].isPath = false;
+                    grid[y][x].gCost = Infinity;
+                    grid[y][x].fCost = Infinity;
+                    grid[y][x].parent = null;
+                }
+            }
+            
+            // Initialize open and closed sets
+            const openSet = [];
+            const closedSet = new Set();
+            
+            // Calculate heuristic (Manhattan distance)
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    grid[y][x].hCost = Math.abs(x - goalCell.x) + Math.abs(y - goalCell.y);
+                }
+            }
+            
+            // Add start node to open set
+            const startNode = grid[startCell.y][startCell.x];
+            startNode.gCost = 0;
+            startNode.fCost = startNode.hCost;
+            openSet.push(startNode);
+            
+            // A* algorithm
+            let pathFound = false;
+            const steps = [];
+            
+            while (openSet.length > 0) {
+                // Sort open set by fCost
+                openSet.sort((a, b) => a.fCost - b.fCost);
+                
+                // Get node with lowest fCost
+                const currentNode = openSet.shift();
+                
+                // Check if we reached the goal
+                if (currentNode.x === goalCell.x && currentNode.y === goalCell.y) {
+                    pathFound = true;
+                    reconstructPath(currentNode);
+                    break;
+                }
+                
+                // Add current node to closed set
+                closedSet.add(`${currentNode.x},${currentNode.y}`);
+                currentNode.isVisited = true;
+                
+                // Get neighbors
+                const neighbors = getNeighbors(currentNode.x, currentNode.y);
+                
+                for (const neighbor of neighbors) {
+                    // Skip if in closed set or is wall
+                    if (closedSet.has(`${neighbor.x},${neighbor.y}`) || neighbor.isWall) {
+                        continue;
+                    }
+                    
+                    // Calculate tentative gCost
+                    const tentativeGCost = currentNode.gCost + 1;
+                    
+                    // Check if this path is better
+                    if (tentativeGCost < neighbor.gCost) {
+                        neighbor.parent = currentNode;
+                        neighbor.gCost = tentativeGCost;
+                        neighbor.fCost = neighbor.gCost + neighbor.hCost;
+                        
+                        // Add to open set if not already there
+                        if (!openSet.includes(neighbor)) {
+                            openSet.push(neighbor);
+                        }
+                    }
+                }
+                
+                // Save step for visualization
+                steps.push({
+                    visited: new Set(closedSet),
+                    open: [...openSet].map(n => ({x: n.x, y: n.y}))
+                });
+            }
+            
+            // Animate the algorithm steps
+            if (steps.length > 0) {
+                animateAlgorithm(steps, pathFound);
+            }
+            
+            return pathFound;
+        }
+        
+        // Get valid neighbors for a cell
+        function getNeighbors(x, y) {
+            const neighbors = [];
+            const directions = [
+                {dx: 1, dy: 0},  // right
+                {dx: -1, dy: 0}, // left
+                {dx: 0, dy: 1},  // down
+                {dx: 0, dy: -1}  // up
+            ];
+            
+            for (const dir of directions) {
+                const newX = x + dir.dx;
+                const newY = y + dir.dy;
+                
+                // Check bounds
+                if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize) {
+                    neighbors.push(grid[newY][newX]);
+                }
+            }
+            
+            return neighbors;
+        }
+        
+        // Reconstruct path from goal to start
+        function reconstructPath(node) {
+            path = [];
+            let current = node;
+            
+            while (current !== null) {
+                path.unshift(current);
+                current.isPath = true;
+                current = current.parent;
+            }
+        }
+        
+        // Animate algorithm steps
+        function animateAlgorithm(steps, pathFound) {
+            let stepIndex = 0;
+            
+            function showNextStep() {
+                if (stepIndex >= steps.length) {
+                    // Algorithm finished, show path if found
+                    if (pathFound) {
+                        renderGrid();
+                        showFeedback("Path found successfully! The algorithm explored " + steps.length + " nodes.", true);
+                        checkSolutionBtn.style.display = 'flex';
+                        increaseSkill('search', 10);
+                    } else {
+                        showFeedback("No path found! Try removing some walls.", false);
+                    }
+                    return;
+                }
+                
+                const step = steps[stepIndex];
+                
+                // Update visited cells
+                step.visited.forEach(cellStr => {
+                    const [x, y] = cellStr.split(',').map(Number);
+                    grid[y][x].isVisited = true;
+                });
+                
+                renderGrid();
+                stepIndex++;
+                
+                // Continue animation
+                setTimeout(showNextStep, 50);
+            }
+            
+            showNextStep();
+        }
+        
+        // Show feedback
+        function showFeedback(message, isSuccess) {
+            feedbackArea.className = `feedback-area ${isSuccess ? 'feedback-correct' : 'feedback-incorrect'}`;
+            feedbackArea.style.display = 'block';
+            feedbackArea.innerHTML = `
+                <div class="feedback-title">
+                    <i class="fas fa-${isSuccess ? 'check-circle' : 'exclamation-circle'}"></i>
+                    ${isSuccess ? 'Success!' : 'Try Again'}
+                </div>
+                <div class="feedback-text">${message}</div>
+            `;
+        }
+        
+        // Update stats display
+        function updateStats() {
+            modulesCompletedElement.textContent = `${modulesCompleted}/6`;
+            skillLevelElement.textContent = skillLevel;
+            exercisesSolvedElement.textContent = exercisesSolved;
+            streakCountElement.textContent = streakCount;
+            
+            // Calculate overall progress
+            const totalSkills = searchSkill + logicSkill + planningSkill + mlSkill;
+            const maxSkills = 400; // 100 per skill
+            const progress = Math.round((totalSkills / maxSkills) * 100);
+            
+            overallProgressElement.style.width = `${progress}%`;
+            progressPercentElement.textContent = `${progress}%`;
+            
+            // Update skill level based on total skills
+            if (totalSkills >= 300) {
+                skillLevel = "Expert";
+            } else if (totalSkills >= 200) {
+                skillLevel = "Advanced";
+            } else if (totalSkills >= 100) {
+                skillLevel = "Intermediate";
+            } else {
+                skillLevel = "Beginner";
+            }
+            
+            skillLevelElement.textContent = skillLevel;
+        }
+        
+        // Update skills display
+        function updateSkills() {
+            searchSkillElement.style.width = `${searchSkill}%`;
+            logicSkillElement.style.width = `${logicSkill}%`;
+            planningSkillElement.style.width = `${planningSkill}%`;
+            mlSkillElement.style.width = `${mlSkill}%`;
+        }
+        
+        // Increase skill
+        function increaseSkill(skill, amount) {
+            switch(skill) {
+                case 'search':
+                    searchSkill = Math.min(100, searchSkill + amount);
+                    break;
+                case 'logic':
+                    logicSkill = Math.min(100, logicSkill + amount);
+                    break;
+                case 'planning':
+                    planningSkill = Math.min(100, planningSkill + amount);
+                    break;
+                case 'ml':
+                    mlSkill = Math.min(100, mlSkill + amount);
+                    break;
+            }
+            
+            updateSkills();
+            updateStats();
+            saveProgress();
+        }
+        
+        // Load quiz
+        function loadQuiz(index) {
+            const quiz = quizQuestions[index];
+            quizQuestion.textContent = quiz.question;
+            
+            quizOptions.innerHTML = '';
+            
+            const optionLetters = ['a', 'b', 'c', 'd'];
+            
+            quiz.options.forEach((option, i) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.dataset.option = optionLetters[i];
+                optionElement.textContent = option;
+                
+                optionElement.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    document.querySelectorAll('.quiz-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    optionElement.classList.add('selected');
+                });
+                
+                quizOptions.appendChild(optionElement);
+            });
+            
+            // Reset feedback
+            quizFeedback.style.display = 'none';
+        }
+        
+        // Submit quiz answer
+        function submitQuiz() {
+            const selectedOption = document.querySelector('.quiz-option.selected');
+            
+            if (!selectedOption) {
+                quizFeedback.className = 'feedback-area feedback-incorrect';
+                quizFeedback.style.display = 'block';
+                quizFeedback.innerHTML = `
+                    <div class="feedback-title">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Please select an answer
+                    </div>
+                `;
+                return;
+            }
+            
+            const selectedAnswer = selectedOption.dataset.option;
+            const currentQuiz = quizQuestions[0]; // For now, always first quiz
+            
+            // Show correct/incorrect
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'incorrect');
+                
+                if (opt.dataset.option === currentQuiz.correct) {
+                    opt.classList.add('correct');
+                } else if (opt.dataset.option === selectedAnswer && selectedAnswer !== currentQuiz.correct) {
+                    opt.classList.add('incorrect');
+                }
+            });
+            
+            // Show feedback
+            quizFeedback.className = `feedback-area ${selectedAnswer === currentQuiz.correct ? 'feedback-correct' : 'feedback-incorrect'}`;
+            quizFeedback.style.display = 'block';
+            quizFeedback.innerHTML = `
+                <div class="feedback-title">
+                    <i class="fas fa-${selectedAnswer === currentQuiz.correct ? 'check-circle' : 'exclamation-circle'}"></i>
+                    ${selectedAnswer === currentQuiz.correct ? 'Correct!' : 'Incorrect'}
+                </div>
+                <div class="feedback-text">${currentQuiz.explanation}</div>
+            `;
+            
+            // Increase skill if correct
+            if (selectedAnswer === currentQuiz.correct) {
+                increaseSkill('search', 5);
+                exercisesSolved++;
+                updateStats();
+                
+                // Load next quiz after delay
+                setTimeout(() => {
+                    // For demo, just reload same quiz
+                    loadQuiz(0);
+                }, 3000);
+            }
+        }
+        
+        // Change module
+        function changeModule(module) {
+            currentModule = module;
+            
+            // Update active button
+            moduleButtons.forEach(btn => {
+                if (btn.dataset.module === module) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Update content
+            const moduleData = modules[module];
+            moduleTitle.textContent = moduleData.title;
+            
+            // Update explanation
+            conceptExplanation.innerHTML = `
+                <h3 class="concept-title"><i class="fas fa-lightbulb"></i> ${moduleData.explanation.title}</h3>
+                <p class="concept-text">${moduleData.explanation.text}</p>
+                <div class="concept-example">
+                    <strong>Example:</strong> ${moduleData.explanation.example}
+                </div>
+            `;
+            
+            // Update exercise
+            exerciseArea.innerHTML = `
+                <h3 class="exercise-title"><i class="fas fa-puzzle-piece"></i> ${moduleData.exercise.title}</h3>
+                
+                <div class="exercise-description">
+                    <p>${moduleData.exercise.description}</p>
+                    <p><strong>Instructions:</strong> ${moduleData.exercise.instructions}</p>
+                </div>
+                
+                <div class="visualization-area" id="visualizationArea">
+                    <!-- Content will be generated by module-specific function -->
+                </div>
+                
+                <div class="controls">
+                    <button class="btn-primary" id="runAlgorithmBtn">
+                        <i class="fas fa-play"></i> Run Exercise
+                    </button>
+                    <button class="btn-secondary" id="resetGridBtn">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                    <button class="btn-success" id="checkSolutionBtn" style="display: none;">
+                        <i class="fas fa-check"></i> Check Solution
+                    </button>
+                </div>
+                
+                <div class="feedback-area" id="feedbackArea">
+                    <!-- Feedback will appear here -->
+                </div>
+            `;
+            
+            // Update visualization based on module
+            updateVisualizationForModule(module);
+        }
+        
+        // Update visualization for current module
+        function updateVisualizationForModule(module) {
+            const visualizationArea = document.getElementById('visualizationArea');
+            
+            switch(module) {
+                case 'search':
+                    initGrid();
+                    renderGrid();
+                    break;
+                case 'logic':
+                    visualizationArea.innerHTML = `
+                        <div style="text-align: center; padding: 30px;">
+                            <h3 style="color: #2dd4bf; margin-bottom: 20px;">Logic Puzzle</h3>
+                            <p>Given: If it rains (R), then the ground is wet (W). The ground is wet.</p>
+                            <p>What can we conclude?</p>
+                            
+                            <div style="margin-top: 30px;">
+                                <div class="quiz-option" style="margin-bottom: 10px;">It is raining</div>
+                                <div class="quiz-option" style="margin-bottom: 10px;">It might be raining</div>
+                                <div class="quiz-option" style="margin-bottom: 10px;">The ground is not dry</div>
+                                <div class="quiz-option">None of the above</div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'planning':
+                    visualizationArea.innerHTML = `
+                        <div style="text-align: center; padding: 30px;">
+                            <h3 style="color: #2dd4bf; margin-bottom: 20px;">Blocks World</h3>
+                            <div style="display: flex; justify-content: center; gap: 50px; margin: 30px 0;">
+                                <div>
+                                    <h4>Initial State</h4>
+                                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                                        <div style="background: #FF5722; width: 60px; height: 60px; margin: 10px auto;">A</div>
+                                        <div style="background: #4CAF50; width: 60px; height: 60px; margin: 10px auto;">B</div>
+                                        <div style="background: #2196F3; width: 60px; height: 60px; margin: 10px auto;">C</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4>Goal State</h4>
+                                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                                        <div style="background: #2196F3; width: 60px; height: 60px; margin: 10px auto;">C</div>
+                                        <div style="background: #FF5722; width: 60px; height: 60px; margin: 10px auto; position: relative; top: -30px;">A</div>
+                                        <div style="background: #4CAF50; width: 60px; height: 60px; margin: 10px auto; position: relative; top: -60px;">B</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p>Stack block C on A, and A on B to reach the goal state.</p>
+                        </div>
+                    `;
+                    break;
+                default:
+                    visualizationArea.innerHTML = `
+                        <div style="text-align: center; padding: 50px;">
+                            <i class="fas fa-cogs" style="font-size: 4rem; color: #2dd4bf; margin-bottom: 20px;"></i>
+                            <h3 style="color: #2dd4bf;">Module Under Development</h3>
+                            <p>This module is coming soon! Try the Search Algorithms module for now.</p>
+                        </div>
+                    `;
+            }
+        }
+        
+        // Save progress to localStorage
+        function saveProgress() {
+            const progress = {
+                exercisesSolved: exercisesSolved,
+                modulesCompleted: modulesCompleted,
+                streakCount: streakCount,
+                searchSkill: searchSkill,
+                logicSkill: logicSkill,
+                planningSkill: planningSkill,
+                mlSkill: mlSkill
+            };
+            
+            localStorage.setItem('aiLogicTrainerProgress', JSON.stringify(progress));
+        }
+        
+        // Load progress from localStorage
+        function loadProgress() {
+            const saved = localStorage.getItem('aiLogicTrainerProgress');
+            
+            if (saved) {
+                try {
+                    const progress = JSON.parse(saved);
+                    exercisesSolved = progress.exercisesSolved || 0;
+                    modulesCompleted = progress.modulesCompleted || 0;
+                    streakCount = progress.streakCount || 0;
+                    searchSkill = progress.searchSkill || 20;
+                    logicSkill = progress.logicSkill || 0;
+                    planningSkill = progress.planningSkill || 0;
+                    mlSkill = progress.mlSkill || 0;
+                } catch (e) {
+                    console.error("Failed to load progress:", e);
+                }
+            }
+        }
+        
+        // Event Listeners
+        runAlgorithmBtn.addEventListener('click', () => {
+            if (currentModule === 'search') {
+                runAStar();
+            } else {
+                showFeedback("Exercise completed! (This is a demo - full functionality coming soon)", true);
+                increaseSkill('logic', 5);
+                exercisesSolved++;
+                updateStats();
+            }
+        });
+        
+        resetGridBtn.addEventListener('click', () => {
+            if (currentModule === 'search') {
+                initGrid();
+                renderGrid();
+                feedbackArea.style.display = 'none';
+                checkSolutionBtn.style.display = 'none';
+            } else {
+                updateVisualizationForModule(currentModule);
+            }
+        });
+        
+        stepBtn.addEventListener('click', () => {
+            showFeedback("Step-by-step execution would show here. In the full version, you'd see each algorithm step.", false);
+        });
+        
+        submitQuizBtn.addEventListener('click', submitQuiz);
+        
+        // Module buttons
+        moduleButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                changeModule(btn.dataset.module);
+            });
+        });
+        
+        // Concept items
+        conceptItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const concept = item.dataset.concept;
+                const conceptData = concepts[concept];
+                
+                // Show concept details in feedback area
+                feedbackArea.className = 'feedback-area feedback-correct';
+                feedbackArea.style.display = 'block';
+                feedbackArea.innerHTML = `
+                    <div class="feedback-title">
+                        <i class="fas fa-info-circle"></i>
+                        ${conceptData.name}
+                    </div>
+                    <div class="feedback-text">
+                        <p><strong>Description:</strong> ${conceptData.description}</p>
+                        <p><strong>Algorithm:</strong> ${conceptData.algorithm}</p>
+                    </div>
+                `;
+            });
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Space to run algorithm
+            if (e.key === ' ' && e.target === document.body) {
+                e.preventDefault();
+                runAlgorithmBtn.click();
+            }
+            
+            // R to reset
+            if (e.key === 'r' || e.key === 'R') {
+                resetGridBtn.click();
+            }
+            
+            // 1-6 to switch modules
+            if (e.key >= '1' && e.key <= '6') {
+                const index = parseInt(e.key) - 1;
+                if (index < moduleButtons.length) {
+                    moduleButtons[index].click();
+                }
+            }
+        });
+        
+        // Add instructions for keyboard shortcuts
+        document.addEventListener('DOMContentLoaded', () => {
+            const tagline = document.querySelector('.tagline');
+            tagline.innerHTML += '<br><small>Press SPACE to run algorithm, R to reset, 1-6 to switch modules</small>';
+        });
+        
+        // Initialize the trainer
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaleTrail · story explorer</title>
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #1e2a3a;  /* deep midnight blue */
+            background: radial-gradient(circle at 10% 20%, #2c4058, #14212b);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .trail-container {
+            max-width: 1200px;
+            width: 100%;
+            background: #e8e2d4;  /* antique paper */
+            background: linear-gradient(145deg, #f3ecd9, #e3d8c0);
+            border-radius: 3.5rem 3.5rem 3rem 3rem;
+            box-shadow: 0 35px 60px -15px #0f1a1f, inset 0 1px 8px #fcf5e6;
+            border: 5px solid #d6c8ae;
+            padding: 2rem 2.2rem 2.2rem 2.2rem;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: #fbf3e3;
+            padding: 0.6rem 2rem 0.6rem 2.5rem;
+            border-radius: 60px;
+            border: 3px solid #cabda6;
+            box-shadow: 0 10px 18px -8px #847052;
+        }
+
+        .header h1 {
+            font-size: 2.6rem;
+            font-weight: 700;
+            color: #3a2f23;
+            text-shadow: 4px 4px 0 #d9cbad;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 i {
+            color: #aa7e5a;
+            text-shadow: 2px 2px 0 #f7e3c8;
+        }
+
+        .explore-badge {
+            background: #3f3a2e;
+            border-radius: 50px;
+            padding: 0.3rem 2rem 0.3rem 2rem;
+            border: 3px solid #cbb088;
+            color: #ffefd3;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .explore-badge i {
+            color: #f3c26b;
+            margin-right: 8px;
+        }
+
+        /* browse panel */
+        .browse-panel {
+            background: #fcf5e9;
+            border-radius: 3rem;
+            padding: 1rem 2rem 1.5rem 2rem;
+            margin-bottom: 2rem;
+            border: 4px solid #cfbea2;
+            box-shadow: inset 0 2px 8px #fffef7, 0 16px 28px -14px #5e4d38;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1.2rem 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .genre-filter {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: #e7d9c4;
+            padding: 0.3rem 1.5rem 0.3rem 2rem;
+            border-radius: 60px;
+        }
+
+        .genre-filter label {
+            font-weight: 700;
+            color: #4c3f2f;
+        }
+
+        .genre-filter select {
+            background: white;
+            border: 2px solid #b39d81;
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            font-weight: 500;
+            color: #2e261b;
+            outline: none;
+        }
+
+        .search-box {
+            flex: 2 1 260px;
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 60px;
+            padding: 0.2rem 0.2rem 0.2rem 1.8rem;
+            border: 3px solid #dacbb4;
+        }
+
+        .search-box i {
+            color: #b19573;
+            font-size: 1.2rem;
+        }
+
+        .search-box input {
+            border: none;
+            padding: 0.8rem 0.5rem;
+            width: 100%;
+            background: transparent;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .reset-search {
+            background: #aa8c6f;
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.5rem 1.8rem;
+            border-radius: 60px;
+            cursor: pointer;
+            border: 2px solid #f0dabf;
+        }
+
+        .story-stats {
+            display: flex;
+            gap: 2rem;
+            background: #fff7e9;
+            padding: 0.6rem 2rem;
+            border-radius: 50px;
+            border: 2px solid #bbaa91;
+            width: fit-content;
+        }
+
+        .story-stats span {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 500;
+            color: #2f271e;
+        }
+
+        .story-stats i {
+            color: #9f835f;
+        }
+
+        /* story grid */
+        .story-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.6rem;
+            max-height: 440px;
+            overflow-y: auto;
+            padding: 0.8rem 0.3rem 1.2rem 0.3rem;
+        }
+
+        .story-grid::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .story-grid::-webkit-scrollbar-track {
+            background: #d8cbb8;
+            border-radius: 20px;
+        }
+
+        .story-grid::-webkit-scrollbar-thumb {
+            background: #836e53;
+            border-radius: 20px;
+            border: 3px solid #f0deca;
+        }
+
+        .story-card {
+            background: #fffcf2;
+            border-radius: 2.5rem 2.5rem 2rem 2rem;
+            padding: 1.6rem 1.2rem 1.2rem 1.5rem;
+            border: 4px solid #fbebd2;
+            box-shadow: 0 18px 24px -16px #6b5841;
+            transition: transform 0.2s, border-color 0.15s;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .story-card:hover {
+            transform: translateY(-6px);
+            border-color: #dbbd9a;
+            box-shadow: 0 24px 30px -18px #4b3f30;
+        }
+
+        .story-genre {
+            display: inline-block;
+            background: #cfbda4;
+            border-radius: 30px;
+            padding: 0.2rem 1.2rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #1d1a14;
+            width: fit-content;
+            border: 2px solid #f3e5d4;
+            margin-bottom: 0.8rem;
+        }
+
+        .story-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #352d20;
+            line-height: 1.3;
+            margin-bottom: 0.3rem;
+        }
+
+        .story-author {
+            font-size: 0.9rem;
+            color: #7f684e;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 0.8rem;
+        }
+
+        .story-excerpt {
+            color: #5a4d3b;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            background: #faf0e1;
+            padding: 0.7rem;
+            border-radius: 18px;
+            border: 1px solid #efdbc6;
+            flex: 1;
+        }
+
+        .story-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 2px dashed #e7d2bb;
+            padding-top: 0.7rem;
+            font-size: 0.85rem;
+            color: #8d7257;
+        }
+
+        .story-footer i {
+            margin-right: 4px;
+        }
+
+        .empty-stories {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3.5rem 2rem;
+            background: #f5ecdd;
+            border-radius: 5rem;
+            color: #a3886c;
+            font-size: 1.3rem;
+            border: 5px dashed #cbb292;
+        }
+
+        /* detail modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #1f2c34e0;
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #fff9ee;
+            max-width: 550px;
+            width: 90%;
+            border-radius: 4rem 4rem 3rem 3rem;
+            padding: 2.2rem 2.2rem 2rem 2.5rem;
+            border: 8px solid #d6bfa0;
+            box-shadow: 0 40px 60px #0d1f2b;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem; right: 1.8rem;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #aa8866;
+        }
+
+        .modal-close:hover {
+            color: #633e1e;
+        }
+
+        .modal-story-genre {
+            background: #c9b18b;
+            padding: 0.3rem 1.8rem;
+            border-radius: 40px;
+            display: inline-block;
+            font-weight: 700;
+            color: #1d1a14;
+        }
+
+        .modal-story-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2f281d;
+            margin: 0.5rem 0 0.2rem;
+        }
+
+        .modal-author {
+            font-size: 1.1rem;
+            color: #866e53;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #f2ddc6;
+            padding-bottom: 0.7rem;
+        }
+
+        .modal-full-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #3c3225;
+            max-height: 280px;
+            overflow-y: auto;
+            background: #fdf3e3;
+            padding: 1rem 1.4rem;
+            border-radius: 2rem;
+            border: 2px solid #ecd7bb;
+            margin: 1rem 0;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1.2rem;
+            color: #866e56;
+        }
+
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: #73634a;
+            font-weight: 400;
+        }
+
+        hr {
+            border: 3px solid #cbb695;
+            margin: 1.2rem 0 0.2rem;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="trail-container">
+        <div class="header">
+            <h1>
+                <i class="fas fa-compass"></i> 
+                TaleTrail
+            </h1>
+            <div class="explore-badge"><i class="fa-regular fa-star"></i> story explorer</div>
+        </div>
+
+        <!-- browse controls -->
+        <div class="browse-panel">
+            <div class="filters">
+                <div class="genre-filter">
+                    <label><i class="fa-regular fa-bookmark"></i> genre</label>
+                    <select id="genreSelect">
+                        <option value="all">all</option>
+                        <option value="Fantasy">Fantasy</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Mystery">Mystery</option>
+                        <option value="Romance">Romance</option>
+                        <option value="Adventure">Adventure</option>
+                    </select>
+                </div>
+                <div class="search-box">
+                    <i class="fa-regular fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Search title or author...">
+                </div>
+                <button class="reset-search" id="resetBtn"><i class="fa-regular fa-rotate-right"></i> reset</button>
+            </div>
+            <div class="story-stats" id="stats">
+                <span><i class="fa-regular fa-book-open"></i> <span id="totalStories">0</span> tales</span>
+                <span><i class="fa-regular fa-feather"></i> <span id="totalAuthors">0</span> authors</span>
+            </div>
+        </div>
+
+        <!-- dynamic story grid -->
+        <div id="storyGrid" class="story-grid">
+            <!-- injected via js -->
+        </div>
+
+        <hr>
+        <footer>
+            <i class="fa-regular fa-tree"></i> follow the trail · explore stories
+        </footer>
+    </div>
+
+    <!-- modal detail view -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose"><i class="fa-regular fa-xmark"></i></button>
+            <div id="modalGenre" class="modal-story-genre">Fantasy</div>
+            <div id="modalTitle" class="modal-story-title">The Crystal Cave</div>
+            <div id="modalAuthor" class="modal-author"><i class="fa-regular fa-user"></i> by Eleanor Grey</div>
+            <div id="modalText" class="modal-full-text">Full story appears here...</div>
+            <div class="modal-footer">
+                <span id="modalDate"><i class="fa-regular fa-calendar"></i> 2026</span>
+                <span id="modalWords"><i class="fa-regular fa-file-lines"></i> ~2k words</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---- story library (immutable seed data) ----
+            const STORY_DATA = [
+                { id: 's1', title: 'The Crystal Cave', author: 'Eleanor Grey', genre: 'Fantasy', year: 2022, words: 2400, excerpt: 'Deep beneath the mountain, a hidden cave held secrets that could change the realm forever.', full: 'Lira had always been drawn to the mountain. The elders warned of spirits, but she found a cavern of luminescent crystals that hummed with ancient magic. There she met an entity of light, who spoke of an old pact—and a danger rising.' },
+                { id: 's2', title: 'Neptune’s Gambit', author: 'Arjun Mehta', genre: 'Sci-Fi', year: 2023, words: 3100, excerpt: 'On a mining colony around Neptune, a lone engineer discovers an alien signal no one believes.', full: 'The signal came from the methane ice. Engineer Kael ran diagnostics again—it was patterned. Soon, corporate security arrived to silence him, but a rogue AI on the station chose to help. Together they uncovered a derelict ship frozen for millennia.' },
+                { id: 's3', title: 'The Last Keeper', author: 'Sofia Rivera', genre: 'Mystery', year: 2021, words: 1900, excerpt: 'A lighthouse keeper on a remote island finds a logbook that predicts shipwrecks before they happen.', full: 'Every evening, Clara wound the clock and read the entries. But one log, dated tomorrow, detailed a wreck. When she woke, a ship was indeed foundering. She began to investigate the previous keeper—who had vanished years ago.' },
+                { id: 's4', title: 'Letters from Summer', author: 'James Chen', genre: 'Romance', year: 2020, words: 1600, excerpt: 'Two strangers exchange letters through a misdirected post, falling in love across the country.', full: 'Ella received the first letter meant for someone else. She almost tossed it, but the handwriting was beautiful. On a whim, she replied. For months, they shared stories—until she realized she wanted to meet.' },
+                { id: 's5', title: 'Jungle of Whispers', author: 'Maya Singh', genre: 'Adventure', year: 2024, words: 2800, excerpt: 'An expedition into the Amazon uncovers a lost city—and something that still lives there.', full: 'Dr. Vargas led the team using old Jesuit maps. They found the overgrown ziggurat, but the jungle itself seemed to watch them. At night, they heard whispers in a language none recognized. One by one, they felt they were being led somewhere.' },
+                { id: 's6', title: 'The Alchemist’s Diary', author: 'Theo Black', genre: 'Fantasy', year: 2019, words: 2200, excerpt: 'A modern historian discovers a diary that might contain the formula for the philosopher’s stone.', full: 'The diary was written in code. Dr. Hale spent years deciphering it, only to realize the alchemist was still alive—or something wearing his name. The formula required a sacrifice: one year of the reader’s life.' },
+                { id: 's7', title: 'Silent Orbit', author: 'Nadia Voss', genre: 'Sci-Fi', year: 2023, words: 2700, excerpt: 'A lone astronaut loses contact with Earth, but hears a haunting melody from the void.', full: 'Commander Park’s comms went dead after a solar flare. Then the music began—an orchestral piece that seemed to emanate from the hull. She followed the signal to a derelict satellite that held a message from the first mission to Mars.' },
+                { id: 's8', title: 'Murder at the Lighthouse', author: 'Sofia Rivera', genre: 'Mystery', year: 2022, words: 2100, excerpt: 'The lighthouse keeper is found dead—locked from the inside.', full: 'Inspector Rowe arrived to a sealed tower. The only key was inside with the body. Yet a single wet footprint led away from the door. A classic impossible crime with a twist: the killer used the tide.' },
+            ];
+
+            // ---- app state (filters) ----
+            let selectedGenre = 'all';
+            let searchQuery = '';
+
+            // DOM elements
+            const genreSelect = document.getElementById('genreSelect');
+            const searchInput = document.getElementById('searchInput');
+            const resetBtn = document.getElementById('resetBtn');
+            const storyGrid = document.getElementById('storyGrid');
+            const totalStoriesSpan = document.getElementById('totalStories');
+            const totalAuthorsSpan = document.getElementById('totalAuthors');
+            const modalOverlay = document.getElementById('modalOverlay');
+            const modalClose = document.getElementById('modalClose');
+            const modalGenre = document.getElementById('modalGenre');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalAuthor = document.getElementById('modalAuthor');
+            const modalText = document.getElementById('modalText');
+            const modalDate = document.getElementById('modalDate');
+            const modalWords = document.getElementById('modalWords');
+
+            // ---- helpers ----
+            function escapeHtml(unsafe) {
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            // get filtered stories
+            function getFilteredStories() {
+                return STORY_DATA.filter(story => {
+                    if (selectedGenre !== 'all' && story.genre !== selectedGenre) return false;
+                    if (searchQuery.trim() !== '') {
+                        const q = searchQuery.toLowerCase();
+                        return story.title.toLowerCase().includes(q) || story.author.toLowerCase().includes(q);
+                    }
+                    return true;
+                });
+            }
+
+            // update stats and grid
+            function renderGrid() {
+                const filtered = getFilteredStories();
+
+                // stats
+                totalStoriesSpan.textContent = filtered.length;
+                const uniqueAuthors = [...new Set(filtered.map(s => s.author))].length;
+                totalAuthorsSpan.textContent = uniqueAuthors;
+
+                if (filtered.length === 0) {
+                    storyGrid.innerHTML = `<div class="empty-stories"><i class="fa-regular fa-face-frown"></i><br>No tales match. Try another path.</div>`;
+                    return;
+                }
+
+                let html = '';
+                filtered.forEach(story => {
+                    html += `
+                        <div class="story-card" data-id="${story.id}">
+                            <span class="story-genre">${story.genre}</span>
+                            <div class="story-title">${escapeHtml(story.title)}</div>
+                            <div class="story-author"><i class="fa-regular fa-pen"></i> ${escapeHtml(story.author)}</div>
+                            <div class="story-excerpt">${escapeHtml(story.excerpt)}</div>
+                            <div class="story-footer">
+                                <span><i class="fa-regular fa-calendar"></i> ${story.year}</span>
+                                <span><i class="fa-regular fa-file-lines"></i> ${story.words} words</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                storyGrid.innerHTML = html;
+
+                // attach click listeners for each card (open modal)
+                document.querySelectorAll('.story-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        const id = card.dataset.id;
+                        const story = STORY_DATA.find(s => s.id === id);
+                        if (story) showModal(story);
+                    });
+                });
+            }
+
+            // show modal with full story
+            function showModal(story) {
+                modalGenre.textContent = story.genre;
+                modalTitle.textContent = story.title;
+                modalAuthor.innerHTML = `<i class="fa-regular fa-user"></i> by ${escapeHtml(story.author)}`;
+                modalText.textContent = story.full || story.excerpt + ' […]'; // fallback
+                modalDate.innerHTML = `<i class="fa-regular fa-calendar"></i> ${story.year}`;
+                modalWords.innerHTML = `<i class="fa-regular fa-file-lines"></i> ${story.words} words`;
+                modalOverlay.style.display = 'flex';
+            }
+
+            // close modal
+            function closeModal() {
+                modalOverlay.style.display = 'none';
+            }
+
+            // reset filters
+            function resetFilters() {
+                selectedGenre = 'all';
+                searchQuery = '';
+                genreSelect.value = 'all';
+                searchInput.value = '';
+                renderGrid();
+            }
+
+            // ---- event listeners ----
+            genreSelect.addEventListener('change', (e) => {
+                selectedGenre = e.target.value;
+                renderGrid();
+            });
+
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value;
+                renderGrid();
+            });
+
+            resetBtn.addEventListener('click', resetFilters);
+
+            modalClose.addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+
+            // initial render
+            renderGrid();
+
+            // close modal on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modalOverlay.style.display === 'flex') {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

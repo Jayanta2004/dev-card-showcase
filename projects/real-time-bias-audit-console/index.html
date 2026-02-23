@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Bias Audit Console</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Real-Time Bias Audit Console</h1>
+            <p>Advanced real-time monitoring and analysis system for detecting algorithmic and data bias across multiple dimensions.</p>
+        </header>
+
+        <div class="main-controls">
+            <button id="startAuditBtn" class="btn btn-primary">Start Real-Time Audit</button>
+            <button id="stopAuditBtn" class="btn btn-danger">Stop Audit</button>
+            <button id="loadDataBtn" class="btn btn-secondary">Load Test Data</button>
+            <button id="exportReportBtn" class="btn btn-success">Export Report</button>
+            <button id="clearConsoleBtn" class="btn btn-warning">Clear Console</button>
+        </div>
+
+        <div class="audit-dashboard">
+            <div class="status-panel">
+                <div class="status-card">
+                    <h3>Audit Status</h3>
+                    <div class="status-indicator" id="auditStatus">
+                        <span class="status-dot stopped"></span>
+                        <span class="status-text">Stopped</span>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <h3>Data Points Processed</h3>
+                    <div class="metric-value" id="dataPointsProcessed">0</div>
+                </div>
+                <div class="status-card">
+                    <h3>Active Alerts</h3>
+                    <div class="metric-value" id="activeAlerts">0</div>
+                </div>
+                <div class="status-card">
+                    <h3>Last Update</h3>
+                    <div class="metric-value" id="lastUpdateTime">--:--:--</div>
+                </div>
+            </div>
+
+            <div class="bias-overview">
+                <h3>Bias Overview</h3>
+                <div class="bias-metrics">
+                    <div class="metric-card">
+                        <h4>Overall Bias Score</h4>
+                        <div class="score-display" id="overallBiasScore">0.00</div>
+                        <div class="score-bar">
+                            <div class="score-fill" id="overallBiasBar"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Demographic Parity</h4>
+                        <div class="score-display" id="demographicParityScore">0.00</div>
+                        <div class="score-bar">
+                            <div class="score-fill" id="demographicParityBar"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Equal Opportunity</h4>
+                        <div class="score-display" id="equalOpportunityScore">0.00</div>
+                        <div class="score-bar">
+                            <div class="score-fill" id="equalOpportunityBar"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Disparate Impact</h4>
+                        <div class="score-display" id="disparateImpactScore">0.00</div>
+                        <div class="score-bar">
+                            <div class="score-fill" id="disparateImpactBar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Data Input</h3>
+                    <div class="input-controls">
+                        <div class="control-group">
+                            <label for="dataSourceSelect">Data Source:</label>
+                            <select id="dataSourceSelect">
+                                <option value="realtime">Real-Time Stream</option>
+                                <option value="file">File Upload</option>
+                                <option value="api">API Endpoint</option>
+                                <option value="database">Database</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="dataFormatSelect">Data Format:</label>
+                            <select id="dataFormatSelect">
+                                <option value="json">JSON</option>
+                                <option value="csv">CSV</option>
+                                <option value="xml">XML</option>
+                                <option value="parquet">Parquet</option>
+                            </select>
+                        </div>
+                        <button id="connectDataSourceBtn" class="btn btn-primary">Connect Source</button>
+                        <button id="disconnectDataSourceBtn" class="btn btn-secondary">Disconnect</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Bias Dimensions</h3>
+                    <div class="bias-dimensions">
+                        <label><input type="checkbox" id="genderBias" checked> Gender Bias</label>
+                        <label><input type="checkbox" id="racialBias" checked> Racial/Ethnic Bias</label>
+                        <label><input type="checkbox" id="ageBias" checked> Age Bias</label>
+                        <label><input type="checkbox" id="socioeconomicBias" checked> Socioeconomic Bias</label>
+                        <label><input type="checkbox" id="geographicBias"> Geographic Bias</label>
+                        <label><input type="checkbox" id="culturalBias"> Cultural Bias</label>
+                        <label><input type="checkbox" id="intersectionalBias"> Intersectional Bias</label>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Audit Settings</h3>
+                    <div class="audit-settings">
+                        <div class="setting-group">
+                            <label for="auditFrequency">Audit Frequency (ms):</label>
+                            <input type="range" id="auditFrequency" min="100" max="5000" value="1000">
+                            <span id="auditFrequencyValue">1000</span>
+                        </div>
+                        <div class="setting-group">
+                            <label for="biasThreshold">Bias Threshold:</label>
+                            <input type="range" id="biasThreshold" min="0.01" max="0.5" step="0.01" value="0.1">
+                            <span id="biasThresholdValue">0.10</span>
+                        </div>
+                        <div class="setting-group">
+                            <label for="sampleSize">Sample Size:</label>
+                            <input type="number" id="sampleSize" min="100" max="10000" value="1000">
+                        </div>
+                        <div class="setting-group">
+                            <label><input type="checkbox" id="autoAlerts" checked> Auto Alerts</label>
+                        </div>
+                        <div class="setting-group">
+                            <label><input type="checkbox" id="detailedLogging" checked> Detailed Logging</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Protected Attributes</h3>
+                    <div class="protected-attributes">
+                        <div class="attribute-group">
+                            <h4>Demographic</h4>
+                            <label><input type="checkbox" id="attrGender" checked> Gender</label>
+                            <label><input type="checkbox" id="attrAge" checked> Age</label>
+                            <label><input type="checkbox" id="attrRace" checked> Race/Ethnicity</label>
+                            <label><input type="checkbox" id="attrNationality"> Nationality</label>
+                        </div>
+                        <div class="attribute-group">
+                            <h4>Socioeconomic</h4>
+                            <label><input type="checkbox" id="attrIncome"> Income Level</label>
+                            <label><input type="checkbox" id="attrEducation"> Education</label>
+                            <label><input type="checkbox" id="attrOccupation"> Occupation</label>
+                            <label><input type="checkbox" id="attrZipCode"> ZIP Code</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-panel">
+                <div class="tabs-container">
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="realtime">Real-Time Monitor</button>
+                        <button class="tab-btn" data-tab="analysis">Analysis</button>
+                        <button class="tab-btn" data-tab="alerts">Alerts</button>
+                        <button class="tab-btn" data-tab="reports">Reports</button>
+                        <button class="tab-btn" data-tab="trends">Trends</button>
+                    </div>
+
+                    <div class="tab-content">
+                        <div id="realtimeTab" class="tab-pane active">
+                            <div class="realtime-monitor">
+                                <div class="monitor-header">
+                                    <h3>Live Data Stream</h3>
+                                    <div class="stream-controls">
+                                        <button id="pauseStreamBtn" class="btn btn-small">Pause</button>
+                                        <button id="resumeStreamBtn" class="btn btn-small">Resume</button>
+                                        <button id="resetStreamBtn" class="btn btn-small">Reset</button>
+                                    </div>
+                                </div>
+                                <div class="data-stream">
+                                    <div id="dataStreamContainer"></div>
+                                </div>
+                                <div class="stream-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Records/sec:</span>
+                                        <span class="stat-value" id="recordsPerSecond">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Total Records:</span>
+                                        <span class="stat-value" id="totalRecords">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Error Rate:</span>
+                                        <span class="stat-value" id="errorRate">0.00%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="analysisTab" class="tab-pane">
+                            <div class="analysis-content">
+                                <div class="chart-container">
+                                    <h3>Bias Distribution</h3>
+                                    <canvas id="biasDistributionChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <h3>Bias Over Time</h3>
+                                    <canvas id="biasOverTimeChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <h3>Attribute Correlation</h3>
+                                    <canvas id="attributeCorrelationChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <h3>Bias Heatmap</h3>
+                                    <div id="biasHeatmap"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="alertsTab" class="tab-pane">
+                            <div class="alerts-content">
+                                <div class="alerts-header">
+                                    <h3>Active Alerts</h3>
+                                    <div class="alert-controls">
+                                        <button id="acknowledgeAllBtn" class="btn btn-small">Acknowledge All</button>
+                                        <button id="clearAlertsBtn" class="btn btn-small">Clear All</button>
+                                    </div>
+                                </div>
+                                <div id="alertsList"></div>
+                                <div class="alert-summary">
+                                    <div class="summary-item">
+                                        <span class="summary-label">Critical:</span>
+                                        <span class="summary-value critical" id="criticalAlerts">0</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">High:</span>
+                                        <span class="summary-value high" id="highAlerts">0</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Medium:</span>
+                                        <span class="summary-value medium" id="mediumAlerts">0</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Low:</span>
+                                        <span class="summary-value low" id="lowAlerts">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="reportsTab" class="tab-pane">
+                            <div class="reports-content">
+                                <div class="report-controls">
+                                    <select id="reportType">
+                                        <option value="summary">Summary Report</option>
+                                        <option value="detailed">Detailed Analysis</option>
+                                        <option value="compliance">Compliance Report</option>
+                                        <option value="trends">Trend Analysis</option>
+                                    </select>
+                                    <select id="reportPeriod">
+                                        <option value="last-hour">Last Hour</option>
+                                        <option value="last-day">Last Day</option>
+                                        <option value="last-week">Last Week</option>
+                                        <option value="last-month">Last Month</option>
+                                        <option value="custom">Custom Range</option>
+                                    </select>
+                                    <button id="generateReportBtn" class="btn btn-primary">Generate Report</button>
+                                </div>
+                                <div id="reportViewer"></div>
+                            </div>
+                        </div>
+
+                        <div id="trendsTab" class="tab-pane">
+                            <div class="trends-content">
+                                <div class="trend-controls">
+                                    <select id="trendMetric">
+                                        <option value="overall-bias">Overall Bias</option>
+                                        <option value="demographic-parity">Demographic Parity</option>
+                                        <option value="equal-opportunity">Equal Opportunity</option>
+                                        <option value="disparate-impact">Disparate Impact</option>
+                                    </select>
+                                    <select id="trendTimeframe">
+                                        <option value="1h">1 Hour</option>
+                                        <option value="6h">6 Hours</option>
+                                        <option value="24h">24 Hours</option>
+                                        <option value="7d">7 Days</option>
+                                        <option value="30d">30 Days</option>
+                                    </select>
+                                    <button id="updateTrendsBtn" class="btn btn-primary">Update Trends</button>
+                                </div>
+                                <div class="trend-charts">
+                                    <canvas id="trendChart"></canvas>
+                                </div>
+                                <div class="trend-insights">
+                                    <h3>Trend Insights</h3>
+                                    <div id="trendInsights"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bias-details-panel">
+            <h3>Bias Detection Details</h3>
+            <div class="bias-details">
+                <div class="detail-section">
+                    <h4>Statistical Tests</h4>
+                    <div id="statisticalTests"></div>
+                </div>
+                <div class="detail-section">
+                    <h4>Machine Learning Metrics</h4>
+                    <div id="mlMetrics"></div>
+                </div>
+                <div class="detail-section">
+                    <h4>Fairness Metrics</h4>
+                    <div id="fairnessMetrics"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="recommendations-panel">
+            <h3>Recommendations</h3>
+            <div id="recommendationsList"></div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Real-Time Bias Audit Console. Advanced bias detection and monitoring system.</p>
+        </footer>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="fileInput" accept=".json,.csv,.xml,.parquet" style="display: none;">
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Bias Alert</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="alertDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="acknowledgeAlertBtn" class="btn btn-primary">Acknowledge</button>
+                <button id="dismissAlertBtn" class="btn btn-secondary">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Advanced Settings</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="settings-sections">
+                    <div class="settings-section">
+                        <h4>Algorithm Settings</h4>
+                        <div class="setting-item">
+                            <label for="algorithmType">Bias Detection Algorithm:</label>
+                            <select id="algorithmType">
+                                <option value="statistical">Statistical Tests</option>
+                                <option value="ml-fairness">ML Fairness Metrics</option>
+                                <option value="rule-based">Rule-Based Detection</option>
+                                <option value="hybrid">Hybrid Approach</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label for="confidenceLevel">Confidence Level:</label>
+                            <input type="range" id="confidenceLevel" min="0.8" max="0.99" step="0.01" value="0.95">
+                            <span id="confidenceLevelValue">0.95</span>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Alert Settings</h4>
+                        <div class="setting-item">
+                            <label><input type="checkbox" id="emailAlerts"> Email Alerts</label>
+                        </div>
+                        <div class="setting-item">
+                            <label><input type="checkbox" id="slackAlerts"> Slack Notifications</label>
+                        </div>
+                        <div class="setting-item">
+                            <label for="alertCooldown">Alert Cooldown (minutes):</label>
+                            <input type="number" id="alertCooldown" min="1" max="60" value="5">
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Data Processing</h4>
+                        <div class="setting-item">
+                            <label for="batchSize">Batch Size:</label>
+                            <input type="number" id="batchSize" min="10" max="1000" value="100">
+                        </div>
+                        <div class="setting-item">
+                            <label><input type="checkbox" id="dataAnonymization"> Data Anonymization</label>
+                        </div>
+                        <div class="setting-item">
+                            <label><input type="checkbox" id="realTimeProcessing"> Real-Time Processing</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+                <button id="resetSettingsBtn" class="btn btn-secondary">Reset to Defaults</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Learning Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .flashcard-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            perspective: 1000px;
+        }
+        
+        .flashcard {
+            width: 100%;
+            max-width: 600px;
+            height: 350px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            overflow: hidden;
+        }
+        
+        .card-front {
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+        
+        .card-back {
+            background: linear-gradient(45deg, #ff7e5f 0%, #feb47b 100%);
+            color: white;
+            transform: rotateY(180deg);
+        }
+        
+        .card-category {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .card-content {
+            font-size: 1.8rem;
+            text-align: center;
+            line-height: 1.4;
+            padding: 20px;
+        }
+        
+        .card-back .card-content {
+            font-size: 1.5rem;
+        }
+        
+        .card-hint {
+            position: absolute;
+            bottom: 20px;
+            font-style: italic;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary {
+            background-color: #ff7e5f;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #ff6b4a;
+            transform: translateY(-3px);
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-3px);
+        }
+        
+        .btn-flip {
+            background-color: #6a11cb;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+        }
+        
+        .btn-flip:hover {
+            background-color: #5a0db3;
+            transform: translateY(-3px);
+        }
+        
+        .progress-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .progress-text {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #444;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .card-set-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .set-btn {
+            padding: 10px 20px;
+            background-color: #fff;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .set-btn.active {
+            background-color: #ff7e5f;
+            color: white;
+            border-color: #ff7e5f;
+        }
+        
+        .set-btn:hover:not(.active) {
+            border-color: #6a11cb;
+            color: #6a11cb;
+        }
+        
+        .instructions {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #ff7e5f;
+        }
+        
+        .instructions h3 {
+            color: #ff7e5f;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 768px) {
+            .flashcard {
+                height: 300px;
+            }
+            
+            .card-content {
+                font-size: 1.5rem;
+            }
+            
+            .card-back .card-content {
+                font-size: 1.3rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .flashcard {
+                height: 250px;
+            }
+            
+            .card-content {
+                font-size: 1.3rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-layer-group"></i> Interactive Flashcards</h1>
+            <p class="subtitle">Flip cards to test your knowledge. Choose from different card sets.</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                    <div class="card-face card-front">
+                        <div class="card-category" id="card-category">General Knowledge</div>
+                        <div class="card-content" id="front-content">What is the capital of France?</div>
+                        <div class="card-hint">Click to flip card</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="card-category" id="card-category-back">General Knowledge</div>
+                        <div class="card-content" id="back-content">Paris</div>
+                        <div class="card-hint">Click to flip back</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-secondary" id="prev-btn">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button class="btn btn-flip" id="flip-btn">
+                    <i class="fas fa-sync-alt"></i> Flip Card
+                </button>
+                <button class="btn btn-secondary" id="next-btn">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-text" id="progress-text">Card 1 of 10</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+            
+            <div class="card-set-selector">
+                <button class="set-btn active" data-set="general">General Knowledge</button>
+                <button class="set-btn" data-set="science">Science</button>
+                <button class="set-btn" data-set="history">History</button>
+                <button class="set-btn" data-set="programming">Programming</button>
+            </div>
+            
+            <div class="instructions">
+                <h3>How to use these flashcards:</h3>
+                <ul>
+                    <li>Click on the flashcard or the "Flip Card" button to reveal the answer</li>
+                    <li>Use the "Previous" and "Next" buttons to navigate through cards</li>
+                    <li>Select different card sets from the options above</li>
+                    <li>Track your progress with the progress bar</li>
+                    <li>Try to recall the answer before flipping the card</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Flashcards data sets
+        const cardSets = {
+            general: [
+                {
+                    front: "What is the capital of France?",
+                    back: "Paris",
+                    category: "General Knowledge",
+                    hint: "A famous European city known for the Eiffel Tower"
+                },
+                {
+                    front: "How many continents are there?",
+                    back: "Seven",
+                    category: "General Knowledge",
+                    hint: "Count includes both North and South America"
+                },
+                {
+                    front: "What is the largest ocean on Earth?",
+                    back: "Pacific Ocean",
+                    category: "General Knowledge",
+                    hint: "It covers about one-third of the Earth's surface"
+                },
+                {
+                    front: "Who painted the Mona Lisa?",
+                    back: "Leonardo da Vinci",
+                    category: "General Knowledge",
+                    hint: "Italian Renaissance polymath"
+                },
+                {
+                    front: "What is the chemical symbol for gold?",
+                    back: "Au",
+                    category: "General Knowledge",
+                    hint: "From Latin 'aurum'"
+                }
+            ],
+            science: [
+                {
+                    front: "What is the hardest natural substance on Earth?",
+                    back: "Diamond",
+                    category: "Science",
+                    hint: "Form of carbon with a crystal structure"
+                },
+                {
+                    front: "What planet is known as the Red Planet?",
+                    back: "Mars",
+                    category: "Science",
+                    hint: "Fourth planet from the Sun"
+                },
+                {
+                    front: "What is the chemical formula for water?",
+                    back: "H₂O",
+                    category: "Science",
+                    hint: "Two hydrogen atoms and one oxygen atom"
+                },
+                {
+                    front: "What is the speed of light in vacuum?",
+                    back: "299,792,458 meters per second",
+                    category: "Science",
+                    hint: "Approximately 300,000 km/s"
+                },
+                {
+                    front: "What is the most abundant gas in Earth's atmosphere?",
+                    back: "Nitrogen",
+                    category: "Science",
+                    hint: "Makes up about 78% of the air"
+                }
+            ],
+            history: [
+                {
+                    front: "In what year did World War II end?",
+                    back: "1945",
+                    category: "History",
+                    hint: "Conflict ended in the mid-1940s"
+                },
+                {
+                    front: "Who was the first President of the United States?",
+                    back: "George Washington",
+                    category: "History",
+                    hint: "His face is on the one-dollar bill"
+                },
+                {
+                    front: "What ancient civilization built the pyramids?",
+                    back: "Ancient Egyptians",
+                    category: "History",
+                    hint: "Civilization along the Nile River"
+                },
+                {
+                    front: "When did the Berlin Wall fall?",
+                    back: "1989",
+                    category: "History",
+                    hint: "Late 1980s"
+                },
+                {
+                    front: "Who discovered penicillin?",
+                    back: "Alexander Fleming",
+                    category: "History",
+                    hint: "Scottish scientist"
+                }
+            ],
+            programming: [
+                {
+                    front: "What does HTML stand for?",
+                    back: "HyperText Markup Language",
+                    category: "Programming",
+                    hint: "Standard markup language for web pages"
+                },
+                {
+                    front: "Which programming language is known as the 'language of the web'?",
+                    back: "JavaScript",
+                    category: "Programming",
+                    hint: "Not to be confused with Java"
+                },
+                {
+                    front: "What does CSS stand for?",
+                    back: "Cascading Style Sheets",
+                    category: "Programming",
+                    hint: "Used for styling web pages"
+                },
+                {
+                    front: "What symbol is used for single-line comments in JavaScript?",
+                    back: "//",
+                    category: "Programming",
+                    hint: "Two forward slashes"
+                },
+                {
+                    front: "What data structure uses LIFO (Last In, First Out) principle?",
+                    back: "Stack",
+                    category: "Programming",
+                    hint: "Opposite of a queue"
+                }
+            ]
+        };
+
+        // DOM Elements
+        const flashcard = document.getElementById('flashcard');
+        const frontContent = document.getElementById('front-content');
+        const backContent = document.getElementById('back-content');
+        const cardCategory = document.getElementById('card-category');
+        const cardCategoryBack = document.getElementById('card-category-back');
+        const flipBtn = document.getElementById('flip-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressText = document.getElementById('progress-text');
+        const progressFill = document.getElementById('progress-fill');
+        const setButtons = document.querySelectorAll('.set-btn');
+        
+        // Current state
+        let currentSet = 'general';
+        let currentCardIndex = 0;
+        let cards = cardSets[currentSet];
+        
+        // Initialize the app
+        function init() {
+            updateCard();
+            updateProgress();
+            attachEventListeners();
+        }
+        
+        // Attach event listeners
+        function attachEventListeners() {
+            // Flip card on click
+            flashcard.addEventListener('click', flipCard);
+            flipBtn.addEventListener('click', flipCard);
+            
+            // Navigation buttons
+            prevBtn.addEventListener('click', showPreviousCard);
+            nextBtn.addEventListener('click', showNextCard);
+            
+            // Card set selection
+            setButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons
+                    setButtons.forEach(btn => btn.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    button.classList.add('active');
+                    
+                    // Change card set
+                    currentSet = button.getAttribute('data-set');
+                    cards = cardSets[currentSet];
+                    currentCardIndex = 0;
+                    
+                    // Reset card to front
+                    flashcard.classList.remove('flipped');
+                    
+                    // Update card and progress
+                    updateCard();
+                    updateProgress();
+                });
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'ArrowLeft':
+                        showPreviousCard();
+                        break;
+                    case 'ArrowRight':
+                        showNextCard();
+                        break;
+                    case ' ':
+                    case 'Enter':
+                        e.preventDefault();
+                        flipCard();
+                        break;
+                }
+            });
+        }
+        
+        // Flip the current card
+        function flipCard() {
+            flashcard.classList.toggle('flipped');
+        }
+        
+        // Show the previous card
+        function showPreviousCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                flashcard.classList.remove('flipped');
+                updateCard();
+                updateProgress();
+            }
+        }
+        
+        // Show the next card
+        function showNextCard() {
+            if (currentCardIndex < cards.length - 1) {
+                currentCardIndex++;
+                flashcard.classList.remove('flipped');
+                updateCard();
+                updateProgress();
+            }
+        }
+        
+        // Update card content
+        function updateCard() {
+            const currentCard = cards[currentCardIndex];
+            
+            frontContent.textContent = currentCard.front;
+            backContent.textContent = currentCard.back;
+            cardCategory.textContent = currentCard.category;
+            cardCategoryBack.textContent = currentCard.category;
+        }
+        
+        // Update progress bar and text
+        function updateProgress() {
+            const progress = ((currentCardIndex + 1) / cards.length) * 100;
+            progressFill.style.width = `${progress}%`;
+            progressText.textContent = `Card ${currentCardIndex + 1} of ${cards.length}`;
+        }
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

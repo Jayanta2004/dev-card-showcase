@@ -168,7 +168,7 @@ class KanbanBoard {
 
         taskDiv.innerHTML = `
             <div class="task-header">
-                <h3 class="task-title">${this.escapeHtml(task.title)}</h3>
+                <h3 class="task-title" onclick="kanban.startInlineEdit('${task.id}', 'title')">${this.escapeHtml(task.title)}</h3>
                 <div class="task-actions">
                     <button class="task-btn edit-btn" onclick="kanban.openModal(kanban.getTaskById('${task.id}'))">
                         <i class="ri-edit-line"></i>
@@ -178,7 +178,7 @@ class KanbanBoard {
                     </button>
                 </div>
             </div>
-            ${task.description ? `<p class="task-description">${this.escapeHtml(task.description)}</p>` : ''}
+            ${task.description ? `<p class="task-description" onclick="kanban.startInlineEdit('${task.id}', 'description')">${this.escapeHtml(task.description)}</p>` : '<p class="task-description empty-description" onclick="kanban.startInlineEdit(\'' + task.id + '\', \'description\')">Click to add description</p>'}
             <span class="task-priority priority-${task.priority}">${task.priority}</span>
         `;
 
@@ -197,6 +197,74 @@ class KanbanBoard {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Inline editing methods
+    startInlineEdit(taskId, field) {
+        const task = this.getTaskById(taskId);
+        if (!task) return;
+
+        const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+        if (!taskElement) return;
+
+        const fieldElement = taskElement.querySelector(`.${field === 'title' ? 'task-title' : 'task-description'}`);
+        if (!fieldElement) return;
+
+        // Create input element
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = `inline-edit-input ${field}-input`;
+        input.value = field === 'title' ? task.title : (task.description || '');
+        input.dataset.taskId = taskId;
+        input.dataset.field = field;
+
+        // Replace the element with input
+        fieldElement.parentNode.replaceChild(input, fieldElement);
+
+        // Focus and select all text
+        input.focus();
+        input.select();
+
+        // Add event listeners
+        input.addEventListener('blur', () => this.saveInlineEdit(input));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                this.saveInlineEdit(input);
+            } else if (e.key === 'Escape') {
+                this.cancelInlineEdit(input);
+            }
+        });
+    }
+
+    saveInlineEdit(input) {
+        const taskId = input.dataset.taskId;
+        const field = input.dataset.field;
+        const newValue = input.value.trim();
+
+        if (!newValue && field === 'title') {
+            // Don't allow empty titles
+            this.cancelInlineEdit(input);
+            return;
+        }
+
+        // Update the task
+        const task = this.getTaskById(taskId);
+        if (task) {
+            if (field === 'title') {
+                task.title = newValue;
+            } else if (field === 'description') {
+                task.description = newValue;
+            }
+            this.saveTasks();
+        }
+
+        // Replace input back with the element
+        this.renderTasks();
+    }
+
+    cancelInlineEdit(input) {
+        // Just re-render to cancel the edit
+        this.renderTasks();
     }
 
     updateTaskCounts() {

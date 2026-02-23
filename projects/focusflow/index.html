@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow · deep work tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f4ff 0%, #e6ecf9 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        /* main card */
+        .focusflow-app {
+            max-width: 950px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(18px) saturate(160%);
+            -webkit-backdrop-filter: blur(18px) saturate(160%);
+            border-radius: 3rem;
+            box-shadow: 0 35px 65px -25px #2a3f5e80, 0 0 0 1px #b7c9e8 inset;
+            border: 1px solid #cddefa;
+            padding: 2.2rem 2rem;
+        }
+
+        /* header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .flow-icon {
+            font-size: 3rem;
+            filter: drop-shadow(0 6px 10px #518fcd);
+        }
+        .title {
+            font-size: 2.4rem;
+            font-weight: 700;
+            background: linear-gradient(140deg, #1e4b7c, #2f6ea2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            margin-right: auto;
+        }
+        .stats-badge {
+            background: #d5e6ff;
+            border-radius: 40px;
+            padding: 0.5rem 1.8rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #1d4c7a;
+            border: 1px solid #9bbce8;
+        }
+
+        /* timer section */
+        .timer-card {
+            background: #ffffffde;
+            border-radius: 3rem;
+            padding: 2.2rem 2rem 2rem;
+            margin-bottom: 2.2rem;
+            border: 2px solid #b1cef0;
+            box-shadow: 0 18px 28px -18px #2e4f7c;
+        }
+        .timer-display {
+            text-align: center;
+            font-size: 5.5rem;
+            font-weight: 300;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            color: #1d3a5f;
+            letter-spacing: 6px;
+            text-shadow: 0 4px 12px #9bbde2;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        .timer-phase {
+            text-align: center;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #3f6da0;
+            margin-bottom: 1.8rem;
+            font-weight: 500;
+        }
+        .timer-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .timer-btn {
+            background: #eaf2ff;
+            border: 2px solid #97b9e1;
+            border-radius: 60px;
+            padding: 0.9rem 2.2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1d4b79;
+            cursor: pointer;
+            transition: 0.1s;
+            min-width: 120px;
+        }
+        .timer-btn.primary {
+            background: #2b6eb0;
+            border-color: #0d3e6b;
+            color: white;
+            box-shadow: 0 8px 18px #4580c0;
+        }
+        .timer-btn.primary:hover {
+            background: #1f5a96;
+        }
+        .timer-btn:hover {
+            background: #d3e5ff;
+        }
+
+        /* session log form */
+        .log-section {
+            background: #e2edffcc;
+            border-radius: 2.5rem;
+            padding: 1.8rem 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #b6d2f5;
+        }
+        .log-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #174172;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .log-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .log-input {
+            flex: 3 1 250px;
+            background: white;
+            border: 2px solid #b0cdf2;
+            border-radius: 50px;
+            padding: 0.9rem 1.8rem;
+            font-size: 1rem;
+            outline: none;
+        }
+        .log-input:focus {
+            border-color: #397ac5;
+            box-shadow: 0 0 0 4px #aac6f0;
+        }
+        .log-select {
+            flex: 1 1 140px;
+            background: white;
+            border: 2px solid #b0cdf2;
+            border-radius: 50px;
+            padding: 0.9rem 1.5rem;
+            font-size: 1rem;
+            color: #1a3f64;
+        }
+        .log-btn {
+            background: #2b6eb0;
+            border: none;
+            border-radius: 50px;
+            padding: 0.9rem 2.5rem;
+            font-weight: 600;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        /* history & stats */
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1.5rem 0 1rem;
+        }
+        .history-header h3 {
+            font-size: 1.4rem;
+            color: #1a3a5e;
+            font-weight: 600;
+        }
+        .clear-btn {
+            background: #d7e6ff;
+            border: 1px solid #9bb9e0;
+            border-radius: 40px;
+            padding: 0.4rem 1.5rem;
+            color: #254f7c;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 1.5rem;
+            background: #ffffffb3;
+            border-radius: 3rem;
+            padding: 1rem 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #b7d1f0;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            color: #163f64;
+        }
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #1f4f86;
+        }
+
+        .entries-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+            max-height: 270px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        .history-item {
+            background: white;
+            border-radius: 2rem;
+            padding: 1rem 1.8rem;
+            border-left: 10px solid #6fa3dc;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 4px 10px #acc6e8;
+        }
+        .item-icon {
+            font-size: 2rem;
+        }
+        .item-content {
+            flex: 3 1 200px;
+        }
+        .item-title {
+            font-weight: 600;
+            color: #15355a;
+        }
+        .item-meta {
+            font-size: 0.8rem;
+            color: #617faa;
+            display: flex;
+            gap: 1rem;
+        }
+        .item-minutes {
+            background: #e0edff;
+            border-radius: 30px;
+            padding: 0.3rem 1.2rem;
+            font-weight: 500;
+            color: #174985;
+        }
+        .empty-history {
+            text-align: center;
+            padding: 2rem;
+            background: #e1edff;
+            border-radius: 3rem;
+            color: #567faf;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #6181aa;
+            border-top: 1px dashed #aac3e5;
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="focusflow-app" id="focusFlowApp">
+        <!-- header -->
+        <div class="header">
+            <span class="flow-icon">⚡🌀</span>
+            <span class="title">FocusFlow</span>
+            <span class="stats-badge" id="todaySessions">today: 0</span>
+        </div>
+
+        <!-- timer card -->
+        <div class="timer-card">
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div class="timer-phase" id="timerPhase">Focus</div>
+            <div class="timer-controls">
+                <button class="timer-btn primary" id="startPauseBtn">▶ Start</button>
+                <button class="timer-btn" id="resetBtn">⟲ Reset</button>
+            </div>
+        </div>
+
+        <!-- log session -->
+        <div class="log-section">
+            <div class="log-title"><span>📝</span> log completed session</div>
+            <div class="log-form">
+                <input type="text" class="log-input" id="taskInput" placeholder="what did you work on? (e.g. UI design)" maxlength="50">
+                <select class="log-select" id="minutesSelect">
+                    <option value="25">25 min</option>
+                    <option value="30">30 min</option>
+                    <option value="40">40 min</option>
+                    <option value="50">50 min</option>
+                    <option value="60">60 min</option>
+                </select>
+                <button class="log-btn" id="logSessionBtn"><span>✓</span> log session</button>
+            </div>
+        </div>
+
+        <!-- stats and history -->
+        <div class="stats-row">
+            <div class="stat-item"><span class="stat-number" id="totalSessions">0</span> total sessions</div>
+            <div class="stat-item"><span class="stat-number" id="totalMinutes">0</span> minutes focused</div>
+            <div class="stat-item"><span class="stat-number" id="streakDays">0</span> day streak</div>
+        </div>
+
+        <div class="history-header">
+            <h3>📋 recent flow sessions</h3>
+            <button class="clear-btn" id="clearHistoryBtn">clear all</button>
+        </div>
+
+        <div class="entries-list" id="historyList">
+            <!-- dynamic -->
+        </div>
+
+        <footer>
+            🧠 deep work · one flow at a time
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // ========== STATE ==========
+            const STORAGE_KEY = 'focusflow_sessions';
+            
+            // Timer variables
+            let timerInterval = null;
+            let timerRunning = false;
+            let timerPaused = false;
+            let minutes = 25;
+            let seconds = 0;
+            let currentPhase = 'focus'; // 'focus' only for simplicity
+            
+            // Sessions array
+            let sessions = [];
+            
+            // Streak tracking (simple: count consecutive days with sessions)
+            let streak = 0;
+
+            // DOM elements
+            const timerDisplay = document.getElementById('timerDisplay');
+            const timerPhase = document.getElementById('timerPhase');
+            const startPauseBtn = document.getElementById('startPauseBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const taskInput = document.getElementById('taskInput');
+            const minutesSelect = document.getElementById('minutesSelect');
+            const logSessionBtn = document.getElementById('logSessionBtn');
+            const totalSessionsSpan = document.getElementById('totalSessions');
+            const totalMinutesSpan = document.getElementById('totalMinutes');
+            const streakDaysSpan = document.getElementById('streakDays');
+            const todaySessionsSpan = document.getElementById('todaySessions');
+            const historyList = document.getElementById('historyList');
+            const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+            // ========== HELPER FUNCTIONS ==========
+            function formatTime(mins, secs) {
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            function updateTimerDisplay() {
+                timerDisplay.textContent = formatTime(minutes, seconds);
+            }
+
+            // ========== TIMER LOGIC ==========
+            function startTimer() {
+                if (timerRunning) return;
+                timerRunning = true;
+                timerPaused = false;
+                startPauseBtn.textContent = '⏸ Pause';
+                
+                timerInterval = setInterval(() => {
+                    if (seconds === 0) {
+                        if (minutes === 0) {
+                            // Timer finished
+                            clearInterval(timerInterval);
+                            timerRunning = false;
+                            timerPaused = false;
+                            startPauseBtn.textContent = '▶ Start';
+                            
+                            // Play notification sound (vibrant)
+                            new Audio('data:audio/wav;base64,UklGRlwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVoAAACAgICAf39/f3+AgI CAgICAf39/f3+AgI CAgICAf39/f3+AgI CAgICAf39/f3+AgI CAgICAf39/f3+AgI CAgICAf39/f3+AgI CAgI=').play().catch(e => {});
+                            
+                            alert('🎉 Focus session complete! Log your work below.');
+                            return;
+                        } else {
+                            minutes--;
+                            seconds = 59;
+                        }
+                    } else {
+                        seconds--;
+                    }
+                    updateTimerDisplay();
+                }, 1000);
+            }
+
+            function pauseTimer() {
+                if (!timerRunning) return;
+                clearInterval(timerInterval);
+                timerRunning = false;
+                timerPaused = true;
+                startPauseBtn.textContent = '▶ Resume';
+            }
+
+            function resetTimer() {
+                // Stop timer
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                timerRunning = false;
+                timerPaused = false;
+                
+                // Reset to selected minutes
+                minutes = parseInt(minutesSelect.value, 10);
+                seconds = 0;
+                updateTimerDisplay();
+                startPauseBtn.textContent = '▶ Start';
+                timerPhase.textContent = 'Focus';
+            }
+
+            // Event listeners for timer
+            startPauseBtn.addEventListener('click', () => {
+                if (timerRunning) {
+                    pauseTimer();
+                } else {
+                    startTimer();
+                }
+            });
+
+            resetBtn.addEventListener('click', resetTimer);
+
+            minutesSelect.addEventListener('change', () => {
+                if (!timerRunning && !timerPaused) {
+                    minutes = parseInt(minutesSelect.value, 10);
+                    seconds = 0;
+                    updateTimerDisplay();
+                }
+            });
+
+            // ========== SESSION STORAGE ==========
+            function loadSessions() {
+                try {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    if (stored) {
+                        sessions = JSON.parse(stored);
+                        if (!Array.isArray(sessions)) sessions = [];
+                    } else {
+                        // Sample data
+                        const today = new Date().toISOString().split('T')[0];
+                        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                        sessions = [
+                            { id: '1', task: 'UI wireframing', minutes: 25, date: today, displayDate: 'Today' },
+                            { id: '2', task: 'Research reading', minutes: 30, date: yesterday, displayDate: 'Yesterday' },
+                            { id: '3', task: 'Code review', minutes: 25, date: yesterday, displayDate: 'Yesterday' }
+                        ];
+                    }
+                } catch (e) {
+                    sessions = [];
+                }
+                // Sort newest first
+                sessions.sort((a, b) => (a.date < b.date ? 1 : -1));
+            }
+
+            function saveSessions() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+            }
+
+            // ========== STATS & RENDER ==========
+            function calculateStats() {
+                const total = sessions.length;
+                const totalMins = sessions.reduce((acc, s) => acc + (s.minutes || 0), 0);
+                
+                // Calculate streak (consecutive days up to today)
+                const today = new Date().toISOString().split('T')[0];
+                const dates = [...new Set(sessions.map(s => s.date))].sort().reverse();
+                
+                let streakCount = 0;
+                let checkDate = new Date(today);
+                
+                while (true) {
+                    const dateStr = checkDate.toISOString().split('T')[0];
+                    if (dates.includes(dateStr)) {
+                        streakCount++;
+                        checkDate.setDate(checkDate.getDate() - 1);
+                    } else {
+                        break;
+                    }
+                }
+                
+                streak = streakCount;
+                
+                // Today's sessions count
+                const todayCount = sessions.filter(s => s.date === today).length;
+                
+                // Update DOM
+                totalSessionsSpan.textContent = total;
+                totalMinutesSpan.textContent = totalMins;
+                streakDaysSpan.textContent = streak;
+                todaySessionsSpan.textContent = `today: ${todayCount}`;
+            }
+
+            function renderHistory() {
+                if (sessions.length === 0) {
+                    historyList.innerHTML = '<div class="empty-history">✨ no sessions yet · start your first flow</div>';
+                    return;
+                }
+                
+                let html = '';
+                sessions.slice(0, 8).forEach(session => {
+                    const displayDate = session.displayDate || session.date;
+                    html += `
+                        <div class="history-item">
+                            <span class="item-icon">⚡</span>
+                            <div class="item-content">
+                                <div class="item-title">${escapeHtml(session.task) || 'focus session'}</div>
+                                <div class="item-meta">
+                                    <span>📅 ${displayDate}</span>
+                                </div>
+                            </div>
+                            <div class="item-minutes">${session.minutes} min</div>
+                        </div>
+                    `;
+                });
+                historyList.innerHTML = html;
+            }
+
+            function escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            // ========== LOG SESSION ==========
+            function logSession() {
+                const task = taskInput.value.trim() || 'untitled focus';
+                const mins = parseInt(minutesSelect.value, 10);
+                
+                const today = new Date();
+                const dateISO = today.toISOString().split('T')[0];
+                const displayDate = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                
+                const newSession = {
+                    id: Date.now() + '-' + Math.random().toString(36).substring(2, 8),
+                    task: task,
+                    minutes: mins,
+                    date: dateISO,
+                    displayDate: displayDate
+                };
+                
+                sessions.push(newSession);
+                sessions.sort((a, b) => (a.date < b.date ? 1 : -1));
+                saveSessions();
+                
+                // Clear input
+                taskInput.value = '';
+                
+                // Update stats and history
+                calculateStats();
+                renderHistory();
+                
+                // Optional: reset timer to logged minutes? but keep as is.
+            }
+
+            // ========== CLEAR HISTORY ==========
+            function clearHistory() {
+                if (sessions.length === 0) return;
+                if (confirm('Delete all session history? This cannot be undone.')) {
+                    sessions = [];
+                    saveSessions();
+                    calculateStats();
+                    renderHistory();
+                }
+            }
+
+            // ========== INIT ==========
+            function init() {
+                loadSessions();
+                calculateStats();
+                renderHistory();
+                
+                // Set timer to default 25
+                minutes = 25;
+                seconds = 0;
+                updateTimerDisplay();
+                
+                // Event listeners
+                logSessionBtn.addEventListener('click', logSession);
+                clearHistoryBtn.addEventListener('click', clearHistory);
+                
+                // Storage sync
+                window.addEventListener('storage', (e) => {
+                    if (e.key === STORAGE_KEY) {
+                        loadSessions();
+                        calculateStats();
+                        renderHistory();
+                    }
+                });
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>

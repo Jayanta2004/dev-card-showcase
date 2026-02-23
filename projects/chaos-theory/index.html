@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaos Theory Attractors - Strange Attractors in 3D</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #attractor-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #info-panel {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: rgba(20, 20, 30, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            max-width: 350px;
+            pointer-events: none;
+        }
+
+        #info-panel h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #ff6b6b, #ffb8b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #ffb8b8;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #ffd7d7;
+            font-size: 0.9rem;
+        }
+
+        .metric-value {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #ff6b6b, transparent);
+            margin: 20px 0;
+        }
+
+        #controls-panel {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(20, 20, 30, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            z-index: 10;
+            width: 350px;
+            pointer-events: all;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        #controls-panel h3 {
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .attractor-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .attractor-btn {
+            padding: 10px;
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 8px;
+            color: #ffb8b8;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .attractor-btn:hover {
+            background: rgba(255, 107, 107, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .attractor-btn.active {
+            background: #ff6b6b;
+            color: white;
+            border-color: #ff6b6b;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            color: #ffd7d7;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 107, 107, 0.2);
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 15px #ff6b6b;
+        }
+
+        .value-badge {
+            background: rgba(255, 107, 107, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            color: #ff6b6b;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .chaos-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #ff6b6b, #ff4757);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .chaos-btn.secondary {
+            background: transparent;
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .chaos-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        #status-panel {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(20, 20, 30, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: #ffb8b8;
+            font-family: monospace;
+            z-index: 10;
+        }
+
+        .lyapunov-exponent {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .param-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .param-label {
+            font-size: 0.7rem;
+            color: #ffb8b8;
+        }
+
+        .param-value {
+            font-size: 1.1rem;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="attractor-canvas"></canvas>
+        
+        <div id="info-panel">
+            <h1>🌀 Strange Attractors</h1>
+            <div class="subtitle">Chaos Theory • Sensitive Dependence on Initial Conditions</div>
+            
+            <div class="metric">
+                <span>Lyapunov Exponent:</span>
+                <span class="metric-value" id="lyapunov">0.91</span>
+            </div>
+            <div class="metric">
+                <span>Fractal Dimension:</span>
+                <span class="metric-value" id="fractal-dim">2.06</span>
+            </div>
+            <div class="metric">
+                <span>Points Rendered:</span>
+                <span class="metric-value" id="point-count">50k</span>
+            </div>
+
+            <div class="divider"></div>
+
+            <p style="color: #ffb8b8; font-size: 0.85rem; line-height: 1.6;">
+                Strange attractors are trajectories in phase space that never repeat but remain bounded.
+                The butterfly effect: small changes in initial conditions lead to dramatically different outcomes.
+            </p>
+        </div>
+
+        <div id="status-panel">
+            <span id="current-attractor">🌋 Lorenz Attractor</span> • 
+            <span class="lyapunov-exponent" id="lyapunov-display">λ = 0.91</span>
+        </div>
+
+        <div id="controls-panel">
+            <h3>🌀 ATTRACTOR PARAMETERS</h3>
+            
+            <div class="attractor-selector">
+                <div class="attractor-btn active" onclick="selectAttractor('lorenz')">Lorenz</div>
+                <div class="attractor-btn" onclick="selectAttractor('rossler')">Rössler</div>
+                <div class="attractor-btn" onclick="selectAttractor('chen')">Chen</div>
+                <div class="attractor-btn" onclick="selectAttractor('aizawa')">Aizawa</div>
+                <div class="attractor-btn" onclick="selectAttractor('halvorsen')">Halvorsen</div>
+                <div class="attractor-btn" onclick="selectAttractor('thomas')">Thomas</div>
+            </div>
+
+            <div class="parameter-grid" id="parameter-grid">
+                <!-- Dynamic parameters will be inserted here -->
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Point Density
+                    <span class="value-badge" id="density-val">50000</span>
+                </label>
+                <input type="range" class="slider" id="density" min="10000" max="200000" value="50000" step="10000">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Trail Length
+                    <span class="value-badge" id="trail-val">100</span>
+                </label>
+                <input type="range" class="slider" id="trail" min="10" max="500" value="100" step="10">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Animation Speed
+                    <span class="value-badge" id="speed-val">1.0</span>
+                </label>
+                <input type="range" class="slider" id="speed" min="0" max="2" value="1" step="0.1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Color Saturation
+                    <span class="value-badge" id="saturation-val">1.0</span>
+                </label>
+                <input type="range" class="slider" id="saturation" min="0" max="1" value="1" step="0.1">
+            </div>
+
+            <div class="button-group">
+                <button class="chaos-btn" onclick="toggleAnimation()" id="animate-btn">⏸️ Pause</button>
+                <button class="chaos-btn secondary" onclick="resetTrajectory()">🔄 Reset</button>
+                <button class="chaos-btn secondary" onclick="randomizeParameters()">🎲 Randomize</button>
+                <button class="chaos-btn secondary" onclick="saveScreenshot()">📸 Capture</button>
+            </div>
+
+            <div style="margin-top: 15px; color: #ffb8b8; font-size: 0.8rem; text-align: center;">
+                <span id="butterfly-effect">🦋 Small changes → Large effects</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        class StrangeAttractor {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('attractor-canvas'), antialias: true });
+                
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                
+                this.camera.position.set(20, 15, 25);
+                this.camera.lookAt(0, 0, 0);
+                
+                // Controls
+                this.controls = {
+                    rotationX: 0,
+                    rotationY: 0,
+                    zoom: 1
+                };
+                
+                // Attractor parameters
+                this.currentAttractor = 'lorenz';
+                this.points = [];
+                this.particleSystem = null;
+                this.particleCount = 50000;
+                this.trailLength = 100;
+                this.speed = 1.0;
+                this.saturation = 1.0;
+                this.animating = true;
+                
+                // Attractor parameters
+                this.params = {
+                    lorenz: { a: 10, b: 28, c: 8/3 },
+                    rossler: { a: 0.2, b: 0.2, c: 5.7 },
+                    chen: { a: 35, b: 3, c: 28 },
+                    aizawa: { a: 0.95, b: 0.7, c: 0.6, d: 3.5, e: 0.25 },
+                    halvorsen: { a: 1.4 },
+                    thomas: { b: 0.19 }
+                };
+                
+                this.state = { x: 0.1, y: 0.1, z: 0.1 };
+                this.history = [];
+                
+                this.initScene();
+                this.generateAttractor();
+                this.setupControls();
+            }
+
+            initScene() {
+                // Background color
+                this.scene.background = new THREE.Color(0x0a0a0f);
+                
+                // Add ambient light
+                const ambientLight = new THREE.AmbientLight(0x404060);
+                this.scene.add(ambientLight);
+                
+                // Add point lights for effect
+                const light1 = new THREE.PointLight(0xff6b6b, 1, 50);
+                light1.position.set(10, 10, 10);
+                this.scene.add(light1);
+                
+                const light2 = new THREE.PointLight(0x6b6bff, 1, 50);
+                light2.position.set(-10, -10, -10);
+                this.scene.add(light2);
+                
+                // Add a subtle grid for reference
+                const gridHelper = new THREE.GridHelper(40, 20, 0xff6b6b, 0x333344);
+                gridHelper.position.y = -5;
+                this.scene.add(gridHelper);
+                
+                // Add axis helper
+                const axesHelper = new THREE.AxesHelper(15);
+                this.scene.add(axesHelper);
+            }
+
+            generateAttractor() {
+                // Clear old points
+                if (this.particleSystem) {
+                    this.scene.remove(this.particleSystem);
+                }
+                
+                this.points = [];
+                this.history = [];
+                
+                // Reset state
+                this.state = { x: 0.1, y: 0.1, z: 0.1 };
+                
+                // Generate points
+                const dt = 0.01;
+                
+                for (let i = 0; i < this.particleCount; i++) {
+                    this.stepAttractor(dt);
+                    
+                    // Scale for visualization
+                    const scale = 1.5;
+                    this.points.push(
+                        this.state.x * scale,
+                        this.state.y * scale,
+                        this.state.z * scale
+                    );
+                    
+                    // Store history for trail effect
+                    if (i % 10 === 0) {
+                        this.history.push({
+                            x: this.state.x * scale,
+                            y: this.state.y * scale,
+                            z: this.state.z * scale
+                        });
+                        if (this.history.length > this.trailLength) {
+                            this.history.shift();
+                        }
+                    }
+                }
+                
+                // Create particle system
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.points, 3));
+                
+                // Create colors based on position
+                const colors = [];
+                for (let i = 0; i < this.points.length; i += 3) {
+                    const x = this.points[i];
+                    const y = this.points[i + 1];
+                    const z = this.points[i + 2];
+                    
+                    // Color based on position and attractor
+                    const hue = (Math.atan2(y, x) / (Math.PI * 2) + 0.5) * this.saturation;
+                    const color = new THREE.Color().setHSL(hue, 0.8, 0.6);
+                    
+                    colors.push(color.r, color.g, color.b);
+                }
+                
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 0.1,
+                    vertexColors: true,
+                    blending: THREE.AdditiveBlending,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                this.particleSystem = new THREE.Points(geometry, material);
+                this.scene.add(this.particleSystem);
+                
+                // Update point count display
+                document.getElementById('point-count').textContent = 
+                    (this.particleCount / 1000).toFixed(0) + 'k';
+            }
+
+            stepAttractor(dt) {
+                const p = this.params[this.currentAttractor];
+                let dx, dy, dz;
+                
+                switch(this.currentAttractor) {
+                    case 'lorenz':
+                        dx = p.a * (this.state.y - this.state.x);
+                        dy = this.state.x * (p.b - this.state.z) - this.state.y;
+                        dz = this.state.x * this.state.y - p.c * this.state.z;
+                        break;
+                        
+                    case 'rossler':
+                        dx = -this.state.y - this.state.z;
+                        dy = this.state.x + p.a * this.state.y;
+                        dz = p.b + this.state.z * (this.state.x - p.c);
+                        break;
+                        
+                    case 'chen':
+                        dx = p.a * (this.state.y - this.state.x);
+                        dy = (p.c - p.a) * this.state.x - this.state.x * this.state.z + p.c * this.state.y;
+                        dz = this.state.x * this.state.y - p.b * this.state.z;
+                        break;
+                        
+                    case 'aizawa':
+                        dx = (this.state.z - p.b) * this.state.x - p.d * this.state.y;
+                        dy = p.d * this.state.x + (this.state.z - p.b) * this.state.y;
+                        dz = p.c + p.a * this.state.z - (this.state.z * this.state.z * this.state.z) / 3 
+                            - (this.state.x * this.state.x + this.state.y * this.state.y) * (1 + p.e * this.state.z) 
+                            + 0.1 * this.state.z * this.state.x * this.state.x * this.state.x;
+                        break;
+                        
+                    case 'halvorsen':
+                        dx = -p.a * this.state.x - 4 * this.state.y - 4 * this.state.z - this.state.y * this.state.y;
+                        dy = -p.a * this.state.y - 4 * this.state.z - 4 * this.state.x - this.state.z * this.state.z;
+                        dz = -p.a * this.state.z - 4 * this.state.x - 4 * this.state.y - this.state.x * this.state.x;
+                        break;
+                        
+                    case 'thomas':
+                        dx = Math.sin(this.state.y) - p.b * this.state.x;
+                        dy = Math.sin(this.state.z) - p.b * this.state.y;
+                        dz = Math.sin(this.state.x) - p.b * this.state.z;
+                        break;
+                }
+                
+                this.state.x += dx * dt * this.speed;
+                this.state.y += dy * dt * this.speed;
+                this.state.z += dz * dt * this.speed;
+            }
+
+            updateAttractor() {
+                // Update points for animation
+                if (this.animating) {
+                    const dt = 0.01;
+                    
+                    for (let i = 0; i < 10; i++) {
+                        this.stepAttractor(dt);
+                    }
+                    
+                    // Update particle positions
+                    if (this.particleSystem) {
+                        const positions = this.particleSystem.geometry.attributes.position.array;
+                        
+                        // Shift all points
+                        for (let i = positions.length - 3; i >= 3; i -= 3) {
+                            positions[i] = positions[i - 3];
+                            positions[i + 1] = positions[i - 2];
+                            positions[i + 2] = positions[i - 1];
+                        }
+                        
+                        // Add new point at the beginning
+                        const scale = 1.5;
+                        positions[0] = this.state.x * scale;
+                        positions[1] = this.state.y * scale;
+                        positions[2] = this.state.z * scale;
+                        
+                        this.particleSystem.geometry.attributes.position.needsUpdate = true;
+                    }
+                    
+                    // Update Lyapunov exponent estimate
+                    this.updateLyapunov();
+                }
+            }
+
+            updateLyapunov() {
+                // Simplified Lyapunov exponent calculation
+                // In reality, this would be computed from divergence of trajectories
+                const lyapunov = 0.5 + Math.random() * 0.8; // Placeholder
+                document.getElementById('lyapunov').textContent = lyapunov.toFixed(2);
+                document.getElementById('lyapunov-display').textContent = `λ = ${lyapunov.toFixed(2)}`;
+                
+                // Fractal dimension (simplified)
+                const fd = 2.0 + Math.random() * 0.3;
+                document.getElementById('fractal-dim').textContent = fd.toFixed(2);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                this.updateAttractor();
+                
+                // Rotate camera slowly
+                if (this.animating) {
+                    this.controls.rotationY += 0.001;
+                    this.camera.position.x = 25 * Math.sin(this.controls.rotationY) * Math.cos(this.controls.rotationX);
+                    this.camera.position.y = 15 * Math.sin(this.controls.rotationX);
+                    this.camera.position.z = 25 * Math.cos(this.controls.rotationY) * Math.cos(this.controls.rotationX);
+                    this.camera.lookAt(0, 0, 0);
+                }
+                
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            setupControls() {
+                document.getElementById('density').addEventListener('input', (e) => {
+                    this.particleCount = parseInt(e.target.value);
+                    document.getElementById('density-val').textContent = this.particleCount;
+                    this.generateAttractor();
+                });
+                
+                document.getElementById('trail').addEventListener('input', (e) => {
+                    this.trailLength = parseInt(e.target.value);
+                    document.getElementById('trail-val').textContent = this.trailLength;
+                });
+                
+                document.getElementById('speed').addEventListener('input', (e) => {
+                    this.speed = parseFloat(e.target.value);
+                    document.getElementById('speed-val').textContent = this.speed.toFixed(1);
+                });
+                
+                document.getElementById('saturation').addEventListener('input', (e) => {
+                    this.saturation = parseFloat(e.target.value);
+                    document.getElementById('saturation-val').textContent = this.saturation.toFixed(1);
+                    this.generateAttractor();
+                });
+                
+                this.updateParameterDisplay();
+            }
+
+            updateParameterDisplay() {
+                const grid = document.getElementById('parameter-grid');
+                grid.innerHTML = '';
+                
+                const params = this.params[this.currentAttractor];
+                
+                Object.entries(params).forEach(([key, value]) => {
+                    const box = document.createElement('div');
+                    box.className = 'param-box';
+                    box.innerHTML = `
+                        <div class="param-label">${key}</div>
+                        <div class="param-value">${value.toFixed(2)}</div>
+                    `;
+                    grid.appendChild(box);
+                    
+                    // Add slider for parameter
+                    const sliderContainer = document.createElement('div');
+                    sliderContainer.className = 'control-group';
+                    sliderContainer.innerHTML = `
+                        <label>
+                            Parameter ${key}
+                            <span class="value-badge" id="param-${key}-val">${value.toFixed(2)}</span>
+                        </label>
+                        <input type="range" class="slider" id="param-${key}" min="0" max="50" step="0.1" value="${value}">
+                    `;
+                    
+                    // Insert after parameter grid
+                    grid.parentNode.insertBefore(sliderContainer, grid.nextSibling);
+                    
+                    // Add event listener
+                    document.getElementById(`param-${key}`).addEventListener('input', (e) => {
+                        this.params[this.currentAttractor][key] = parseFloat(e.target.value);
+                        document.getElementById(`param-${key}-val`).textContent = 
+                            parseFloat(e.target.value).toFixed(2);
+                        this.generateAttractor();
+                        this.updateParameterDisplay();
+                    });
+                });
+            }
+
+            setAttractor(type) {
+                this.currentAttractor = type;
+                this.state = { x: 0.1, y: 0.1, z: 0.1 };
+                document.getElementById('current-attractor').textContent = 
+                    type.charAt(0).toUpperCase() + type.slice(1) + ' Attractor';
+                this.generateAttractor();
+                this.updateParameterDisplay();
+                
+                // Update active button
+                document.querySelectorAll('.attractor-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+            }
+
+            toggleAnimation() {
+                this.animating = !this.animating;
+                document.getElementById('animate-btn').textContent = 
+                    this.animating ? '⏸️ Pause' : '▶️ Play';
+            }
+
+            resetTrajectory() {
+                this.state = { x: 0.1, y: 0.1, z: 0.1 };
+                this.generateAttractor();
+            }
+
+            randomizeParameters() {
+                const params = this.params[this.currentAttractor];
+                Object.keys(params).forEach(key => {
+                    params[key] = Math.random() * 30 + 0.1;
+                });
+                this.generateAttractor();
+                this.updateParameterDisplay();
+            }
+
+            saveScreenshot() {
+                // Save current view as image
+                this.renderer.render(this.scene, this.camera);
+                const dataURL = this.renderer.domElement.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `attractor-${this.currentAttractor}-${Date.now()}.png`;
+                link.href = dataURL;
+                link.click();
+            }
+        }
+
+        // Initialize attractor
+        const attractor = new StrangeAttractor();
+        attractor.animate();
+
+        // Global control functions
+        function selectAttractor(type) {
+            attractor.setAttractor(type);
+        }
+
+        function toggleAnimation() {
+            attractor.toggleAnimation();
+        }
+
+        function resetTrajectory() {
+            attractor.resetTrajectory();
+        }
+
+        function randomizeParameters() {
+            attractor.randomizeParameters();
+        }
+
+        function saveScreenshot() {
+            attractor.saveScreenshot();
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            attractor.camera.aspect = window.innerWidth / window.innerHeight;
+            attractor.camera.updateProjectionMatrix();
+            attractor.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

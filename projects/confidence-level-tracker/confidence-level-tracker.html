@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confidence Level Tracker - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .confidence-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .analyzer-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .confidence-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .confidence-slider {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+        }
+
+        .confidence-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .confidence-level {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .confidence-chart {
+            margin-top: 1rem;
+            height: 400px;
+        }
+
+        .readings-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .reading-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reading-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .reading-date {
+            font-weight: 500;
+        }
+
+        .reading-confidence {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .confidence-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            flex: 1;
+            max-width: 100px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .insights-section {
+            background: var(--bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .insight-item {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .insight-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-content {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .confidence-scale {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .confidence-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="brain"></i> Confidence Level Tracker</h1>
+            <p>Monitor your daily self-confidence levels and track fluctuations over time. Build self-awareness and identify patterns that affect your confidence to support personal growth and development.</p>
+        </header>
+
+        <div class="confidence-grid">
+            <!-- Confidence Logger -->
+            <section class="analyzer-section confidence-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Daily Confidence</h2>
+                <form id="confidenceForm" class="confidence-form">
+                    <div class="form-group">
+                        <label for="entryDate">Date</label>
+                        <input type="date" id="entryDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confidenceLevel">Confidence Level (1-10)</label>
+                        <div class="confidence-slider">
+                            <div class="slider-container">
+                                <input type="range" id="confidenceLevel" min="1" max="10" value="7" step="1">
+                                <div class="confidence-level" id="confidenceValue">7</div>
+                            </div>
+                            <div class="confidence-display">
+                                <span>1 - Very Low</span>
+                                <span>10 - Very High</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="context">Context/Situation (optional)</label>
+                        <select id="context">
+                            <option value="">Select context...</option>
+                            <option value="work">Work/Professional</option>
+                            <option value="social">Social Interactions</option>
+                            <option value="personal">Personal Goals</option>
+                            <option value="physical">Physical Appearance</option>
+                            <option value="skills">Skills/Abilities</option>
+                            <option value="general">General/Overall</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes (optional)</label>
+                        <textarea id="notes" placeholder="What influenced your confidence today? Any specific achievements or challenges?" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Log Confidence
+                    </button>
+                </form>
+            </section>
+
+            <!-- Confidence Dashboard -->
+            <section class="analyzer-section confidence-dashboard">
+                <h2><i data-lucide="trending-up"></i> Confidence Trends</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="currentConfidence">--</div>
+                        <div class="metric-label">Today's Level</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="weeklyAverage">--</div>
+                        <div class="metric-label">7-Day Average</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="confidenceTrend">--</div>
+                        <div class="metric-label">Trend</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="totalEntries">--</div>
+                        <div class="metric-label">Total Entries</div>
+                    </div>
+                </div>
+                <div class="confidence-chart">
+                    <canvas id="confidenceChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Recent Entries -->
+            <section class="analyzer-section recent-entries">
+                <h2><i data-lucide="clock"></i> Recent Entries</h2>
+                <div id="entriesList" class="readings-list">
+                    <!-- Entries will be populated here -->
+                </div>
+            </section>
+
+            <!-- Confidence Insights -->
+            <section class="analyzer-section confidence-insights">
+                <h2><i data-lucide="lightbulb"></i> Confidence Insights</h2>
+                <div id="insightsContent" class="insights-section">
+                    <div class="insight-item">
+                        <div class="insight-title">💪 Building Confidence</div>
+                        <div class="insight-content">Regular tracking helps identify patterns and triggers. Focus on small wins and celebrate progress to build lasting confidence.</div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-title">🎯 Setting Goals</div>
+                        <div class="insight-content">Use your confidence data to set realistic goals. When confidence is high, tackle challenging tasks. When low, focus on building skills.</div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-title">📈 Tracking Progress</div>
+                        <div class="insight-content">Monitor how different activities, situations, and contexts affect your confidence levels over time.</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Include footer -->
+    <div id="footer-container"></div>
+
+    <script>
+        // Load navbar and footer
+        fetch('../navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+                lucide.createIcons();
+            });
+
+        fetch('../footer.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('footer-container').innerHTML = data;
+            });
+
+        // Initialize chart
+        let confidenceChart = null;
+
+        // Load data from localStorage
+        let entries = JSON.parse(localStorage.getItem('confidenceEntries') || '[]');
+
+        // Update confidence value display
+        document.getElementById('confidenceLevel').addEventListener('input', function() {
+            document.getElementById('confidenceValue').textContent = this.value;
+        });
+
+        // Form submission
+        document.getElementById('confidenceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const entryDate = document.getElementById('entryDate').value;
+            const confidenceLevel = parseInt(document.getElementById('confidenceLevel').value);
+            const context = document.getElementById('context').value;
+            const notes = document.getElementById('notes').value;
+
+            // Check if entry already exists for this date
+            const existingEntry = entries.find(entry => entry.date === entryDate);
+            if (existingEntry) {
+                if (!confirm('An entry already exists for this date. Do you want to update it?')) {
+                    return;
+                }
+                // Update existing entry
+                existingEntry.confidence = confidenceLevel;
+                existingEntry.context = context;
+                existingEntry.notes = notes;
+                existingEntry.timestamp = new Date().toISOString();
+            } else {
+                const entry = {
+                    id: Date.now(),
+                    date: entryDate,
+                    confidence: confidenceLevel,
+                    context: context,
+                    notes: notes,
+                    timestamp: new Date().toISOString()
+                };
+                entries.push(entry);
+            }
+
+            localStorage.setItem('confidenceEntries', JSON.stringify(entries));
+
+            // Reset form
+            this.reset();
+            document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('confidenceValue').textContent = '7';
+            document.getElementById('confidenceLevel').value = '7';
+
+            updateDashboard();
+            updateEntriesList();
+        });
+
+        function updateDashboard() {
+            if (entries.length === 0) {
+                document.getElementById('currentConfidence').textContent = '--';
+                document.getElementById('weeklyAverage').textContent = '--';
+                document.getElementById('confidenceTrend').textContent = '--';
+                document.getElementById('totalEntries').textContent = '--';
+                if (confidenceChart) confidenceChart.destroy();
+                return;
+            }
+
+            // Sort entries by date
+            entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Current confidence (latest entry)
+            const latest = entries[entries.length - 1];
+            document.getElementById('currentConfidence').textContent = latest.confidence;
+
+            // Weekly average (last 7 days)
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const recentEntries = entries.filter(entry => new Date(entry.date) >= sevenDaysAgo);
+            const weeklyAverage = recentEntries.length > 0
+                ? (recentEntries.reduce((sum, entry) => sum + entry.confidence, 0) / recentEntries.length).toFixed(1)
+                : '--';
+            document.getElementById('weeklyAverage').textContent = weeklyAverage;
+
+            // Trend (compare last 7 days with previous 7 days)
+            const fourteenDaysAgo = new Date();
+            fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+            const olderEntries = entries.filter(entry =>
+                new Date(entry.date) >= fourteenDaysAgo && new Date(entry.date) < sevenDaysAgo
+            );
+            if (olderEntries.length > 0 && recentEntries.length > 0) {
+                const olderAverage = olderEntries.reduce((sum, entry) => sum + entry.confidence, 0) / olderEntries.length;
+                const trend = weeklyAverage - olderAverage;
+                const trendSymbol = trend > 0 ? '↗' : trend < 0 ? '↘' : '→';
+                const trendText = trend > 0 ? `+${trend.toFixed(1)}` : trend.toFixed(1);
+                document.getElementById('confidenceTrend').innerHTML = `${trendSymbol} ${trendText}`;
+            } else {
+                document.getElementById('confidenceTrend').textContent = '--';
+            }
+
+            // Total entries
+            document.getElementById('totalEntries').textContent = entries.length;
+
+            // Update chart (last 30 days)
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const chartEntries = entries.filter(entry => new Date(entry.date) >= thirtyDaysAgo);
+
+            const ctx = document.getElementById('confidenceChart').getContext('2d');
+            if (confidenceChart) confidenceChart.destroy();
+
+            confidenceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartEntries.map(entry => new Date(entry.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Confidence Level',
+                        data: chartEntries.map(entry => entry.confidence),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#3b82f6',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Confidence Level Trends (Last 30 Days)'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 1,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Confidence Level (1-10)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            hoverBorderWidth: 2
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateEntriesList() {
+            const list = document.getElementById('entriesList');
+            list.innerHTML = '';
+
+            // Show last 10 entries
+            const recentEntries = entries.slice(-10).reverse();
+
+            recentEntries.forEach(entry => {
+                const item = document.createElement('div');
+                item.className = 'reading-item';
+                const fillPercentage = (entry.confidence / 10) * 100;
+                const contextText = entry.context ? ` (${entry.context})` : '';
+
+                item.innerHTML = `
+                    <div class="reading-info">
+                        <div class="reading-date">${new Date(entry.date).toLocaleDateString()}${contextText}</div>
+                        <div class="reading-confidence">
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${fillPercentage}%; background: ${getConfidenceColor(entry.confidence)}"></div>
+                            </div>
+                            <span>${entry.confidence}/10</span>
+                        </div>
+                        ${entry.notes ? `<div class="reading-notes" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">${entry.notes}</div>` : ''}
+                    </div>
+                    <button class="delete-btn" onclick="deleteEntry(${entry.id})">Delete</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function getConfidenceColor(level) {
+            if (level >= 8) return '#10b981'; // High - green
+            if (level >= 6) return '#3b82f6'; // Medium - blue
+            if (level >= 4) return '#f59e0b'; // Low-medium - yellow
+            return '#ef4444'; // Low - red
+        }
+
+        function deleteEntry(id) {
+            entries = entries.filter(entry => entry.id !== id);
+            localStorage.setItem('confidenceEntries', JSON.stringify(entries));
+            updateDashboard();
+            updateEntriesList();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('confidenceValue').textContent = '7';
+            updateDashboard();
+            updateEntriesList();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

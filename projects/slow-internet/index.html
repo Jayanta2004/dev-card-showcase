@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dial-Up Experience: Remembering the 90s Internet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+
+        :root {
+            --dialup-blue: #000080;
+            --dialup-green: #00CC00;
+            --dialup-gray: #C0C0C0;
+            --dialup-beige: #F5F5DC;
+            --error-red: #CC0000;
+            --loading-yellow: #FFFF99;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            background-color: #000033;
+            background-image: radial-gradient(circle at 20% 50%, rgba(0, 100, 255, 0.2) 0%, transparent 50%),
+                              radial-gradient(circle at 80% 20%, rgba(0, 200, 0, 0.1) 0%, transparent 50%);
+            color: var(--dialup-green);
+            min-height: 100vh;
+            overflow-x: hidden;
+            image-rendering: pixelated;
+        }
+
+        /* CRT Monitor Effect */
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.5) 50%);
+            background-size: 100% 4px;
+            z-index: 9998;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        /* Dial-Up Connection Screen */
+        .connection-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .connection-title {
+            font-size: 2.5rem;
+            color: var(--dialup-green);
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px var(--dialup-green);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .modem-animation {
+            width: 400px;
+            height: 150px;
+            border: 3px solid var(--dialup-green);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 40px;
+            background-color: black;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modem-display {
+            width: 100%;
+            height: 100%;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            line-height: 1.4;
+            color: var(--dialup-green);
+            overflow: hidden;
+        }
+
+        .modem-line {
+            margin-bottom: 5px;
+            white-space: nowrap;
+        }
+
+        .connection-progress {
+            width: 400px;
+            height: 30px;
+            border: 2px solid var(--dialup-green);
+            background-color: black;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--dialup-green);
+            transition: width 0.5s linear;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dialup-green);
+            font-weight: bold;
+        }
+
+        /* Main Content (hidden during connection) */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            display: none;
+        }
+
+        /* Browser Window Simulation */
+        .browser-window {
+            background-color: var(--dialup-beige);
+            border: 3px solid var(--dialup-gray);
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+
+        .browser-header {
+            background: linear-gradient(to bottom, #E8E8E8, #D0D0D0);
+            padding: 10px 15px;
+            border-bottom: 2px solid var(--dialup-gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .browser-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .browser-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .browser-button.close {
+            background-color: #FF5F56;
+        }
+
+        .browser-button.minimize {
+            background-color: #FFBD2E;
+        }
+
+        .browser-button.maximize {
+            background-color: #27CA3F;
+        }
+
+        .browser-url-bar {
+            flex: 1;
+            background-color: white;
+            border: 1px solid var(--dialup-gray);
+            border-radius: 15px;
+            padding: 5px 15px;
+            font-family: 'Courier New', monospace;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .browser-url-bar i {
+            color: var(--text-light);
+        }
+
+        .loading-indicator {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--dialup-blue);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .browser-content {
+            padding: 30px;
+            min-height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Content Sections */
+        .section {
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 2s, transform 2s;
+        }
+
+        .section.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: var(--dialup-blue);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px dotted var(--dialup-gray);
+            font-family: 'Comic Sans MS', cursive;
+        }
+
+        .content-box {
+            background-color: white;
+            border: 2px solid var(--dialup-gray);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .content-box.loading {
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-text {
+            color: var(--text-light);
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        /* Image Placeholders */
+        .image-placeholder {
+            width: 100%;
+            height: 300px;
+            background-color: #F0F0F0;
+            border: 2px dashed var(--dialup-gray);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-light);
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-placeholder::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23F0F0F0"/><path d="M20,20 L80,80 M80,20 L20,80" stroke="%23C0C0C0" stroke-width="2"/></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.5;
+        }
+
+        .image-progress {
+            width: 80%;
+            height: 20px;
+            border: 1px solid var(--dialup-gray);
+            background-color: white;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--dialup-blue), var(--dialup-green));
+            transition: width 0.5s linear;
+        }
+
+        /* Interactive Elements */
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--dialup-blue);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button:hover {
+            background-color: var(--dialup-green);
+            color: black;
+        }
+
+        .button:disabled {
+            background-color: var(--dialup-gray);
+            cursor: not-allowed;
+        }
+
+        .button.loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: loadingShine 2s infinite;
+        }
+
+        @keyframes loadingShine {
+            to { left: 100%; }
+        }
+
+        /* Error Messages */
+        .error-message {
+            background-color: var(--error-red);
+            color: white;
+            padding: 15px;
+            border: 2px solid #990000;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: errorFlash 0.5s 3;
+        }
+
+        @keyframes errorFlash {
+            0%, 100% { background-color: var(--error-red); }
+            50% { background-color: #FF3333; }
+        }
+
+        /* Pop-up Ads */
+        .popup-ad {
+            position: fixed;
+            width: 300px;
+            background-color: var(--loading-yellow);
+            border: 3px solid var(--error-red);
+            padding: 15px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.2);
+        }
+
+        .popup-ad h3 {
+            color: var(--error-red);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .popup-ad-close {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--error-red);
+            cursor: pointer;
+        }
+
+        /* Connection Speed Controls */
+        .speed-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--dialup-green);
+            padding: 15px;
+            z-index: 100;
+            border-radius: 10px;
+        }
+
+        .speed-title {
+            color: var(--dialup-green);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .speed-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .speed-btn {
+            padding: 8px 15px;
+            background-color: var(--dialup-blue);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        .speed-btn.active {
+            background-color: var(--dialup-green);
+            color: black;
+        }
+
+        /* Visitor Counter */
+        .visitor-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: black;
+            border: 2px solid var(--dialup-green);
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            color: var(--dialup-green);
+            z-index: 100;
+        }
+
+        .counter-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: black;
+            border-top: 2px solid var(--dialup-green);
+            padding: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 90;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Blinking Cursor */
+        .blinking-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background-color: var(--dialup-green);
+            margin-left: 5px;
+            animation: blinkCursor 1s infinite;
+        }
+
+        @keyframes blinkCursor {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .connection-title {
+                font-size: 1.8rem;
+            }
+            
+            .modem-animation, .connection-progress {
+                width: 90%;
+            }
+            
+            .browser-window {
+                margin: 10px;
+            }
+            
+            .speed-controls, .visitor-counter {
+                position: static;
+                margin: 20px auto;
+                width: 90%;
+            }
+            
+            .status-bar {
+                position: static;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- CRT Monitor Effects -->
+    <div class="crt-overlay"></div>
+    <div class="scanlines"></div>
+
+    <!-- Dial-Up Connection Screen -->
+    <div class="connection-screen" id="connection-screen">
+        <h1 class="connection-title">DIAL-UP INTERNET CONNECTION</h1>
+        
+        <div class="modem-animation">
+            <div class="modem-display" id="modem-display">
+                <div class="modem-line">Initializing modem...</div>
+                <div class="modem-line">ATDT 1-555-1234567</div>
+                <div class="modem-line">CONNECTING...</div>
+                <div class="modem-line">WAITING FOR CARRIER...</div>
+                <div class="modem-line">CARRIER DETECTED</div>
+                <div class="modem-line">NEGOTIATING CONNECTION...</div>
+                <div class="modem-line" id="modem-noise">*SCREEEEE* *CHIRP* *SCREEE* *BEEP*</div>
+            </div>
+        </div>
+        
+        <div class="connection-progress">
+            <div class="progress-bar" id="progress-bar"></div>
+            <div class="progress-text" id="progress-text">CONNECTING... 0%</div>
+        </div>
+        
+        <div style="color: var(--dialup-green); font-family: 'Courier New', monospace;">
+            Please wait while we establish a 56K connection...
+        </div>
+    </div>
+
+    <!-- Main Content (Initially Hidden) -->
+    <div class="container" id="main-container">
+        <!-- Browser Window -->
+        <div class="browser-window">
+            <div class="browser-header">
+                <div class="browser-buttons">
+                    <div class="browser-button close"></div>
+                    <div class="browser-button minimize"></div>
+                    <div class="browser-button maximize"></div>
+                </div>
+                <div class="browser-url-bar">
+                    <i class="fas fa-globe"></i>
+                    <span id="current-url">http://www.dialup-experience.com/index.html</span>
+                    <div class="loading-indicator" id="url-loading"></div>
+                </div>
+            </div>
+            
+            <div class="browser-content">
+                <!-- Error Message (Initially Hidden) -->
+                <div class="error-message" id="error-message">
+                    <strong>ERROR 404:</strong> The page you requested is taking too long to load. Please try again later.
+                </div>
+                
+                <!-- Website Content -->
+                <div class="section" id="welcome-section">
+                    <h1 class="section-title">Welcome to the Dial-Up Experience!</h1>
+                    
+                    <div class="content-box">
+                        <p>Welcome to our website! Please be patient as it loads. Remember the good old days when downloading a single image could take minutes?</p>
+                        <p>This website simulates the authentic 1990s internet experience. Grab a snack, because you'll be waiting a while!</p>
+                    </div>
+                    
+                    <div class="content-box loading" id="image-loading-1">
+                        <div class="image-placeholder">
+                            <i class="fas fa-image fa-3x"></i>
+                            <div>LOADING IMAGE... PLEASE WAIT</div>
+                            <div class="image-progress">
+                                <div class="image-progress-bar" id="image-progress-1"></div>
+                            </div>
+                        </div>
+                        <div class="loading-text">"Under Construction" animated GIF loading...</div>
+                    </div>
+                </div>
+                
+                <div class="section" id="content-section">
+                    <h2 class="section-title">Featured Content</h2>
+                    
+                    <div class="content-box">
+                        <h3><i class="fas fa-star"></i> Why Dial-Up Was "Exciting"</h3>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>That iconic modem sound that woke up the whole house</li>
+                            <li>Getting disconnected when someone picked up the phone</li>
+                            <li>Waiting 30 minutes to download a 3MB MP3 file</li>
+                            <li>Pixelated images loading one row of pixels at a time</li>
+                            <li>The excitement of hearing "You've got mail!"</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="content-box loading" id="image-loading-2">
+                        <div class="image-placeholder">
+                            <i class="fas fa-photo-video fa-3x"></i>
+                            <div>LOADING NOSTALGIC IMAGE... 12%</div>
+                            <div class="image-progress">
+                                <div class="image-progress-bar" id="image-progress-2"></div>
+                            </div>
+                        </div>
+                        <div class="loading-text">GeoCities homepage background loading...</div>
+                    </div>
+                </div>
+                
+                <div class="section" id="interactive-section">
+                    <h2 class="section-title">Interactive Elements</h2>
+                    
+                    <div class="content-box">
+                        <p>Try clicking these buttons to experience authentic slow internet interactions:</p>
+                        
+                        <button class="button" id="load-btn">Load More Content</button>
+                        <button class="button" id="email-btn">Check Email</button>
+                        <button class="button" id="refresh-btn">Refresh Page</button>
+                        <button class="button" id="download-btn">Download Demo (1.4MB)</button>
+                        
+                        <div id="button-result" style="margin-top: 20px; min-height: 50px;"></div>
+                    </div>
+                </div>
+                
+                <div class="section" id="stats-section">
+                    <h2 class="section-title">Connection Statistics</h2>
+                    
+                    <div class="content-box">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div>
+                                <h4><i class="fas fa-tachometer-alt"></i> Current Speed</h4>
+                                <div id="speed-display" style="font-size: 2rem; color: var(--dialup-blue);">56 Kbps</div>
+                            </div>
+                            <div>
+                                <h4><i class="fas fa-clock"></i> Time Connected</h4>
+                                <div id="time-display" style="font-size: 2rem; color: var(--dialup-green);">00:00</div>
+                            </div>
+                            <div>
+                                <h4><i class="fas fa-download"></i> Data Received</h4>
+                                <div id="data-display" style="font-size: 2rem; color: var(--error-red);">0 KB</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pop-up Ads (Will appear randomly) -->
+        <div class="popup-ad" id="popup-ad-1" style="top: 100px; left: 50px;">
+            <button class="popup-ad-close" onclick="closeAd(1)">×</button>
+            <h3>YOU'VE WON A FREE IPOD!</h3>
+            <p>Click here to claim your prize! (NOT A SCAM)</p>
+            <button class="button" style="margin-top: 10px; width: 100%;">CLICK HERE NOW!</button>
+        </div>
+        
+        <div class="popup-ad" id="popup-ad-2" style="top: 200px; right: 50px;">
+            <button class="popup-ad-close" onclick="closeAd(2)">×</button>
+            <h3>ENLARGE YOUR... INTERNET!</h3>
+            <p>Download our software to speed up your connection by 500%!</p>
+            <button class="button" style="margin-top: 10px; width: 100%;">DOWNLOAD NOW</button>
+        </div>
+    </div>
+
+    <!-- Connection Speed Controls -->
+    <div class="speed-controls">
+        <div class="speed-title">CONNECTION SPEED:</div>
+        <div class="speed-buttons">
+            <button class="speed-btn active" data-speed="56">56K (Painful)</button>
+            <button class="speed-btn" data-speed="128">128K (Slow)</button>
+            <button class="speed-btn" data-speed="512">512K (Bearable)</button>
+            <button class="speed-btn" data-speed="9999">MODERN (Cheater)</button>
+        </div>
+    </div>
+
+    <!-- Visitor Counter -->
+    <div class="visitor-counter">
+        <div>VISITORS ONLINE:</div>
+        <div class="counter-number" id="visitor-count">000042</div>
+        <div>Since 1998</div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <i class="fas fa-satellite-dish"></i>
+            <span id="connection-status">Connected at 56,000 bps</span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-shield-alt"></i>
+            <span>Internet Zone: This site is safe</span>
+        </div>
+        <div class="status-item">
+            <i class="far fa-clock"></i>
+            <span id="page-load-time">Loading... <span class="blinking-cursor"></span></span>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let connectionSpeed = 56; // Kbps
+        let isConnected = false;
+        let pageLoadStartTime;
+        let visitorCount = 42000;
+        let loadedSections = 0;
+        let totalSections = 4;
+
+        // DOM Elements
+        const connectionScreen = document.getElementById('connection-screen');
+        const mainContainer = document.getElementById('main-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const modemDisplay = document.getElementById('modem-display');
+        const speedButtons = document.querySelectorAll('.speed-btn');
+        const sections = document.querySelectorAll('.section');
+        const errorMessage = document.getElementById('error-message');
+        const visitorCountEl = document.getElementById('visitor-count');
+        const pageLoadTimeEl = document.getElementById('page-load-time');
+        const connectionStatusEl = document.getElementById('connection-status');
+        const speedDisplay = document.getElementById('speed-display');
+        const timeDisplay = document.getElementById('time-display');
+        const dataDisplay = document.getElementById('data-display');
+        const urlLoading = document.getElementById('url-loading');
+
+        // Modem connection sounds
+        const modemSounds = [
+            "SCREEEEEEEEEEE...",
+            "CHIRP CHIRP CHIRP",
+            "BEEP BEEP BEEP",
+            "BRRRRRRRRRRRRR...",
+            "DEEE DEEE DOOO",
+            "KSSSSSSSSSSSSHHHH",
+            "*STATIC* *BUZZ* *STATIC*"
+        ];
+
+        // Initialize the website
+        function initWebsite() {
+            // Start the dial-up connection simulation
+            simulateDialUpConnection();
+            
+            // Set up speed controls
+            setupSpeedControls();
+            
+            // Start visitor counter animation
+            animateVisitorCounter();
+            
+            // Set up interactive buttons
+            setupInteractiveButtons();
+            
+            // Start random pop-up ads
+            startRandomAds();
+            
+            // Start connection timer
+            startConnectionTimer();
+            
+            // Start data counter
+            startDataCounter();
+        }
+
+        // Simulate dial-up connection
+        function simulateDialUpConnection() {
+            let progress = 0;
+            let modemLines = 7; // Number of modem lines to show
+            
+            // Add modem sounds to display
+            const modemNoiseEl = document.getElementById('modem-noise');
+            
+            // Update modem sounds periodically
+            const modemSoundInterval = setInterval(() => {
+                if (progress < 100) {
+                    const randomSound = modemSounds[Math.floor(Math.random() * modemSounds.length)];
+                    modemNoiseEl.textContent = randomSound;
+                }
+            }, 800);
+            
+            // Simulate connection progress
+            const connectionInterval = setInterval(() => {
+                // Increase progress based on "connection speed"
+                progress += Math.random() * 5 + 1;
+                
+                if (progress > 100) progress = 100;
+                
+                // Update progress bar
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `CONNECTING... ${Math.floor(progress)}%`;
+                
+                // Add new modem lines as progress increases
+                if (progress > 15 && modemLines < 8) {
+                    addModemLine("HANDSHAKE COMPLETE");
+                    modemLines++;
+                }
+                if (progress > 30 && modemLines < 9) {
+                    addModemLine("PROTOCOL: V.90");
+                    modemLines++;
+                }
+                if (progress > 50 && modemLines < 10) {
+                    addModemLine("CONNECTION ESTABLISHED");
+                    modemLines++;
+                }
+                if (progress > 70 && modemLines < 11) {
+                    addModemLine("AUTHENTICATING...");
+                    modemLines++;
+                }
+                if (progress > 85 && modemLines < 12) {
+                    addModemLine("LOGIN SUCCESSFUL");
+                    modemLines++;
+                }
+                
+                // When connection is complete
+                if (progress >= 100) {
+                    clearInterval(connectionInterval);
+                    clearInterval(modemSoundInterval);
+                    
+                    // Final modem messages
+                    setTimeout(() => {
+                        addModemLine("CONNECTED at 56,000 bps");
+                        setTimeout(() => {
+                            addModemLine("Welcome to the Internet!");
+                            
+                            // Show "You've got mail!"
+                            setTimeout(() => {
+                                addModemLine("*** YOU'VE GOT MAIL! ***");
+                                
+                                // Complete connection
+                                setTimeout(() => {
+                                    completeConnection();
+                                }, 1500);
+                            }, 1000);
+                        }, 800);
+                    }, 500);
+                }
+            }, 200);
+        }
+
+        // Add a line to the modem display
+        function addModemLine(text) {
+            const line = document.createElement('div');
+            line.className = 'modem-line';
+            line.textContent = text;
+            modemDisplay.appendChild(line);
+            
+            // Scroll to bottom
+            modemDisplay.scrollTop = modemDisplay.scrollHeight;
+        }
+
+        // Complete the connection and show main content
+        function completeConnection() {
+            // Hide connection screen
+            connectionScreen.style.opacity = '0';
+            connectionScreen.style.transition = 'opacity 1s';
+            
+            setTimeout(() => {
+                connectionScreen.style.display = 'none';
+                mainContainer.style.display = 'block';
+                isConnected = true;
+                
+                // Start loading website content
+                startContentLoading();
+                
+                // Record page load start time
+                pageLoadStartTime = Date.now();
+                updatePageLoadTime();
+                
+                // Start periodic page load time updates
+                setInterval(updatePageLoadTime, 1000);
+            }, 1000);
+        }
+
+        // Start loading website content (slowly)
+        function startContentLoading() {
+            // Show first section immediately
+            setTimeout(() => {
+                sections[0].classList.add('loaded');
+                loadedSections++;
+                simulateImageLoading('image-loading-1', 'image-progress-1', 3000);
+            }, 500);
+            
+            // Show second section after delay
+            setTimeout(() => {
+                sections[1].classList.add('loaded');
+                loadedSections++;
+                simulateImageLoading('image-loading-2', 'image-progress-2', 5000);
+            }, 2500);
+            
+            // Show third section after longer delay
+            setTimeout(() => {
+                sections[2].classList.add('loaded');
+                loadedSections++;
+            }, 5000);
+            
+            // Show fourth section last
+            setTimeout(() => {
+                sections[3].classList.add('loaded');
+                loadedSections++;
+            }, 7000);
+            
+            // Randomly show error message
+            setTimeout(() => {
+                if (Math.random() > 0.7) {
+                    showErrorMessage();
+                }
+            }, 4000);
+        }
+
+        // Simulate image loading with progress bar
+        function simulateImageLoading(containerId, progressBarId, duration) {
+            const container = document.getElementById(containerId);
+            const progressBar = document.getElementById(progressBarId);
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                // Simulate slow loading with occasional stalls
+                if (Math.random() > 0.3) {
+                    progress += Math.random() * 5;
+                }
+                
+                if (progress > 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    
+                    // "Complete" the image loading after a delay
+                    setTimeout(() => {
+                        container.innerHTML = `
+                            <div style="text-align: center;">
+                                <div style="font-size: 4rem; color: var(--dialup-green);">✓</div>
+                                <div style="font-weight: bold; margin-top: 10px;">IMAGE LOADED!</div>
+                                <div style="margin-top: 20px; font-style: italic;">"Best viewed in 800x600 resolution"</div>
+                            </div>
+                        `;
+                    }, 500);
+                }
+                
+                progressBar.style.width = `${progress}%`;
+            }, duration / 100);
+        }
+
+        // Show error message
+        function showErrorMessage() {
+            errorMessage.classList.add('show');
+            
+            // Hide after some time
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        // Set up speed controls
+        function setupSpeedControls() {
+            speedButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    speedButtons.forEach(b => b.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Update connection speed
+                    connectionSpeed = parseInt(this.dataset.speed);
+                    
+                    // Update status display
+                    if (connectionSpeed === 9999) {
+                        connectionStatusEl.textContent = "Connected at 1,000,000+ bps (CHEATER!)";
+                        speedDisplay.textContent = "∞ Kbps";
+                    } else {
+                        connectionStatusEl.textContent = `Connected at ${connectionSpeed},000 bps`;
+                        speedDisplay.textContent = `${connectionSpeed} Kbps`;
+                    }
+                    
+                    // If switching to "modern" speed, load everything instantly
+                    if (connectionSpeed === 9999) {
+                        document.querySelectorAll('.section').forEach(section => {
+                            section.classList.add('loaded');
+                        });
+                        
+                        document.querySelectorAll('.content-box.loading').forEach(box => {
+                            box.innerHTML = `
+                                <div style="text-align: center;">
+                                    <div style="font-size: 4rem; color: var(--dialup-green);">⚡</div>
+                                    <div style="font-weight: bold; margin-top: 10px;">LOADED INSTANTLY!</div>
+                                    <div style="margin-top: 20px; font-style: italic;">"You cheated! This isn't the 90s experience!"</div>
+                                </div>
+                            `;
+                        });
+                    }
+                });
+            });
+        }
+
+        // Animate visitor counter
+        function animateVisitorCounter() {
+            // Start with a random number
+            visitorCount = 42000 + Math.floor(Math.random() * 1000);
+            
+            // Update every few seconds
+            setInterval(() => {
+                // Randomly increase or decrease
+                const change = Math.floor(Math.random() * 10) - 3;
+                visitorCount += change;
+                
+                // Keep within reasonable bounds
+                if (visitorCount < 42000) visitorCount = 42000;
+                if (visitorCount > 43000) visitorCount = 43000;
+                
+                // Update display with leading zeros
+                visitorCountEl.textContent = visitorCount.toString().padStart(6, '0');
+            }, 3000);
+        }
+
+        // Set up interactive buttons
+        function setupInteractiveButtons() {
+            const loadBtn = document.getElementById('load-btn');
+            const emailBtn = document.getElementById('email-btn');
+            const refreshBtn = document.getElementById('refresh-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const buttonResult = document.getElementById('button-result');
+            
+            loadBtn.addEventListener('click', function() {
+                simulateLoadingAction(this, buttonResult, "Loading additional content...", 3000, "<div style='color: var(--dialup-green);'><strong>✓</strong> Additional content loaded! (It was worth the wait)</div>");
+            });
+            
+            emailBtn.addEventListener('click', function() {
+                simulateLoadingAction(this, buttonResult, "Connecting to mail server...", 4000, "<div style='color: var(--dialup-green);'><strong>✓</strong> You've got 3 new emails! (2 are spam)</div>");
+            });
+            
+            refreshBtn.addEventListener('click', function() {
+                simulateLoadingAction(this, buttonResult, "Refreshing page...", 2000, "<div style='color: var(--error-red);'><strong>✗</strong> Page refresh failed. Try again in 30 seconds.</div>");
+            });
+            
+            downloadBtn.addEventListener('click', function() {
+                simulateDownload(this, buttonResult);
+            });
+        }
+
+        // Simulate a loading action
+        function simulateLoadingAction(button, resultElement, loadingText, duration, resultHTML) {
+            // Disable button and show loading state
+            button.disabled = true;
+            button.classList.add('loading');
+            
+            // Show loading text
+            resultElement.innerHTML = `<div style="color: var(--text-light);"><i class="fas fa-spinner fa-spin"></i> ${loadingText}</div>`;
+            
+            // Show URL loading indicator
+            urlLoading.style.display = 'block';
+            
+            // Simulate delay based on connection speed
+            const actualDuration = connectionSpeed === 9999 ? 500 : duration * (56 / connectionSpeed);
+            
+            // Complete after delay
+            setTimeout(() => {
+                // Enable button and remove loading state
+                button.disabled = false;
+                button.classList.remove('loading');
+                
+                // Show result
+                resultElement.innerHTML = resultHTML;
+                
+                // Hide URL loading indicator
+                urlLoading.style.display = 'none';
+                
+                // Randomly show error message
+                if (Math.random() > 0.7) {
+                    showErrorMessage();
+                }
+            }, actualDuration);
+        }
+
+        // Simulate a file download
+        function simulateDownload(button, resultElement) {
+            // Disable button and show loading state
+            button.disabled = true;
+            button.classList.add('loading');
+            
+            // Show download dialog simulation
+            resultElement.innerHTML = `
+                <div style="border: 2px solid var(--dialup-gray); padding: 10px; background-color: white;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-download fa-2x" style="color: var(--dialup-blue);"></i>
+                        <div>
+                            <div><strong>Download: demo.zip (1.4 MB)</strong></div>
+                            <div style="font-size: 0.9rem; color: var(--text-light);">Estimated time: ${calculateDownloadTime(1400)}</div>
+                        </div>
+                    </div>
+                    <div class="image-progress" style="margin-top: 10px;">
+                        <div class="image-progress-bar" id="download-progress"></div>
+                    </div>
+                </div>
+            `;
+            
+            const progressBar = document.getElementById('download-progress');
+            let progress = 0;
+            
+            // Calculate download speed based on connection speed (in KB/s)
+            const speedKBps = connectionSpeed === 9999 ? 1000 : connectionSpeed / 8;
+            
+            // Simulate download progress
+            const downloadInterval = setInterval(() => {
+                // Increase progress based on speed
+                progress += (speedKBps / 1400) * 100 * 0.1;
+                
+                if (progress > 100) {
+                    progress = 100;
+                    clearInterval(downloadInterval);
+                    
+                    // Download complete
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.classList.remove('loading');
+                        resultElement.innerHTML = `
+                            <div style="color: var(--dialup-green);">
+                                <strong>✓</strong> Download complete! File saved to C:\\Downloads\\demo.zip
+                            </div>
+                        `;
+                    }, 500);
+                }
+                
+                progressBar.style.width = `${progress}%`;
+            }, 100);
+        }
+
+        // Calculate download time for a file
+        function calculateDownloadTime(sizeKB) {
+            if (connectionSpeed === 9999) return "1 second";
+            
+            const speedKBps = connectionSpeed / 8;
+            const seconds = sizeKB / speedKBps;
+            
+            if (seconds < 60) {
+                return `${Math.ceil(seconds)} seconds`;
+            } else {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = Math.ceil(seconds % 60);
+                return `${minutes} minute${minutes > 1 ? 's' : ''} ${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}`;
+            }
+        }
+
+        // Start random pop-up ads
+        function startRandomAds() {
+            // Show first ad after delay
+            setTimeout(() => {
+                showRandomAd();
+            }, 8000);
+            
+            // Continue showing ads periodically
+            setInterval(() => {
+                if (Math.random() > 0.5 && isConnected) {
+                    showRandomAd();
+                }
+            }, 15000);
+        }
+
+        // Show a random pop-up ad
+        function showRandomAd() {
+            const adId = Math.random() > 0.5 ? 1 : 2;
+            const ad = document.getElementById(`popup-ad-${adId}`);
+            
+            // Random position
+            const top = 50 + Math.random() * 300;
+            const left = Math.random() > 0.5 ? 50 + Math.random() * 200 : window.innerWidth - 350 - Math.random() * 200;
+            
+            ad.style.top = `${top}px`;
+            ad.style.left = `${left}px`;
+            ad.style.display = 'block';
+            
+            // Auto-close after some time
+            setTimeout(() => {
+                closeAd(adId);
+            }, 10000);
+        }
+
+        // Close a pop-up ad
+        function closeAd(adId) {
+            const ad = document.getElementById(`popup-ad-${adId}`);
+            ad.style.display = 'none';
+        }
+
+        // Start connection timer
+        function startConnectionTimer() {
+            let seconds = 0;
+            
+            setInterval(() => {
+                if (isConnected) {
+                    seconds++;
+                    
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    
+                    timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        // Start data counter
+        function startDataCounter() {
+            let dataKB = 0;
+            
+            setInterval(() => {
+                if (isConnected) {
+                    // Increase data based on connection speed
+                    const increment = connectionSpeed === 9999 ? 100 : connectionSpeed / 10;
+                    dataKB += increment * Math.random();
+                    
+                    // Update display
+                    if (dataKB < 1024) {
+                        dataDisplay.textContent = `${Math.floor(dataKB)} KB`;
+                    } else {
+                        dataDisplay.textContent = `${(dataKB / 1024).toFixed(1)} MB`;
+                    }
+                }
+            }, 1000);
+        }
+
+        // Update page load time display
+        function updatePageLoadTime() {
+            if (!pageLoadStartTime) return;
+            
+            const elapsed = Date.now() - pageLoadStartTime;
+            const seconds = Math.floor(elapsed / 1000);
+            
+            if (seconds < 60) {
+                pageLoadTimeEl.innerHTML = `Page loading: ${seconds} second${seconds !== 1 ? 's' : ''} <span class="blinking-cursor"></span>`;
+            } else {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                pageLoadTimeEl.innerHTML = `Page loading: ${minutes} minute${minutes > 1 ? 's' : ''} ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''} <span class="blinking-cursor"></span>`;
+            }
+            
+            // Randomly change to "Done" after a while
+            if (seconds > 30 && Math.random() > 0.7) {
+                pageLoadTimeEl.innerHTML = `Done <span class="blinking-cursor"></span>`;
+            }
+        }
+
+        // Initialize the website when page loads
+        document.addEventListener('DOMContentLoaded', initWebsite);
+    </script>
+</body>
+</html>

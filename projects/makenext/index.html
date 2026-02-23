@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>make next · one‑step planner</title>
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #f0ebe2;
+            background: linear-gradient(145deg, #f7f0e3 0%, #e5d9cb 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.2rem;
+        }
+
+        .next-card {
+            max-width: 800px;
+            width: 100%;
+            background: #fffff8;
+            border-radius: 3rem 3rem 2.5rem 2.5rem;
+            box-shadow: 0 30px 40px -18px #a28c76, 0 8px 16px rgba(90, 70, 50, 0.15);
+            border: 5px solid #fae8d4;
+            padding: 2rem 2rem 2.2rem 2rem;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 0.8rem 1.5rem;
+            background: #fdf5e9;
+            padding: 0.5rem 1.8rem 0.5rem 2.3rem;
+            border-radius: 60px;
+            border: 3px solid #f0d8bf;
+        }
+
+        .header h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+            color: #3a4a53;
+            text-shadow: 2px 2px 0 #e5d1bb;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 i {
+            color: #cd8f64;
+        }
+
+        .focus-chip {
+            background: #d6b696;
+            border-radius: 40px;
+            padding: 0.3rem 1.6rem;
+            color: #2d3e44;
+            font-weight: 600;
+            border: 3px solid #fae1c1;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 1.8rem;
+            background: #faf2e6;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            border: 3px solid #ebd3b8;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #4f5d64;
+            font-weight: 500;
+        }
+
+        .stat-item i {
+            color: #b58a64;
+        }
+
+        .stat-value {
+            background: white;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            font-weight: 700;
+            color: #2a4a55;
+            border: 2px solid #edd6bb;
+        }
+
+        .next-suggestion {
+            background: #f4f0e8;
+            border-radius: 3rem;
+            padding: 1.2rem 2rem;
+            margin-bottom: 2rem;
+            border: 4px solid #ecd6bb;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .next-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #6b5340;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .next-task {
+            flex: 2 1 240px;
+            background: white;
+            border-radius: 60px;
+            padding: 0.9rem 2rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1d3d4a;
+            box-shadow: inset 0 2px 8px #d9caba;
+            border: 3px solid #ffe5cd;
+            min-width: 200px;
+        }
+
+        .next-empty {
+            color: #a9947e;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        .do-btn {
+            background: #7096a5;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            box-shadow: 0 7px 0 #3f606e, 0 8px 18px #819ca8;
+            transition: 0.08s;
+            border: 3px solid #d7e6ed;
+        }
+
+        .do-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #3f606e, 0 8px 18px #819ca8;
+        }
+
+        .do-btn:disabled {
+            opacity: 0.4;
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #3f606e;
+            pointer-events: none;
+        }
+
+        /* new task form */
+        .add-section {
+            background: #fffcf5;
+            border-radius: 3rem;
+            padding: 1.2rem 2rem 1.8rem 2rem;
+            margin-bottom: 2rem;
+            border: 4px solid #f2dcc6;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .field {
+            flex: 1 1 180px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #9b7d60;
+            margin-bottom: 0.2rem;
+        }
+
+        .field input, .field select {
+            width: 100%;
+            padding: 0.8rem 1.2rem;
+            border: 3px solid #eddac4;
+            border-radius: 50px;
+            font-size: 1rem;
+            background: white;
+            outline: none;
+        }
+
+        .field input:focus, .field select:focus {
+            border-color: #b69067;
+            box-shadow: 0 0 0 4px #faead8;
+        }
+
+        .add-btn {
+            background: #b28b66;
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.8rem 2.2rem;
+            border-radius: 60px;
+            font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #745c45, 0 8px 16px #a7866b;
+            transition: 0.08s;
+            border: 3px solid #f1dcc9;
+        }
+
+        .add-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #745c45, 0 8px 16px #a7866b;
+        }
+
+        /* task list */
+        .task-list {
+            background: #faf2e6;
+            border-radius: 2rem;
+            padding: 1rem 0.5rem 1rem 1.5rem;
+            border: 4px solid #eedbc5;
+            max-height: 340px;
+            overflow-y: auto;
+        }
+
+        .task-list::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .task-list::-webkit-scrollbar-track {
+            background: #dfd0bd;
+            border-radius: 20px;
+        }
+
+        .task-list::-webkit-scrollbar-thumb {
+            background: #947c64;
+            border-radius: 20px;
+            border: 3px solid #f6e4d0;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem 1rem;
+            background: white;
+            border-radius: 60px;
+            padding: 0.5rem 1rem 0.5rem 1.5rem;
+            margin-bottom: 0.7rem;
+            border: 3px solid #f5e1cc;
+            box-shadow: 0 4px 10px #d6c1ab;
+            flex-wrap: wrap;
+        }
+
+        .task-priority {
+            font-weight: 700;
+            font-size: 0.8rem;
+            padding: 0.2rem 1.2rem;
+            border-radius: 30px;
+            border: 2px solid white;
+            background: #f2e2d2;
+            color: #4c5a5f;
+        }
+
+        .priority-high { background: #fadcd2; color: #aa3c3c; }
+        .priority-medium { background: #fef0cb; color: #9e771f; }
+        .priority-low { background: #d4ebd6; color: #2d7643; }
+
+        .task-title {
+            flex: 2 1 180px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e3b45;
+            word-break: break-word;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.2rem;
+            margin-left: auto;
+        }
+
+        .task-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            padding: 0.4rem;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #7a6853;
+            width: 2.4rem;
+            height: 2.4rem;
+        }
+
+        .task-btn:hover {
+            background: #efddcc;
+        }
+
+        .delete-btn:hover {
+            background: #fbd6c6;
+            color: #b34444;
+        }
+
+        .empty-tasks {
+            text-align: center;
+            padding: 2rem;
+            color: #9f8a74;
+            font-size: 1.2rem;
+        }
+
+        footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            color: #8b7863;
+            font-weight: 400;
+        }
+        hr {
+            border: 3px solid #efdac4;
+            margin: 1rem 0 0.2rem;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="next-card">
+        <div class="header">
+            <h1>
+                <i class="fas fa-arrow-right-to-bracket"></i> 
+                make next
+            </h1>
+            <div class="focus-chip"><i class="fa-regular fa-bell"></i> what's next?</div>
+        </div>
+
+        <!-- quick stats -->
+        <div class="stats-row">
+            <span class="stat-item"><i class="fa-regular fa-list"></i> total <span id="totalTasks" class="stat-value">0</span></span>
+            <span class="stat-item"><i class="fa-regular fa-flag"></i> high <span id="highCount" class="stat-value">0</span></span>
+            <span class="stat-item"><i class="fa-regular fa-clock"></i> medium <span id="mediumCount" class="stat-value">0</span></span>
+            <span class="stat-item"><i class="fa-regular fa-leaf"></i> low <span id="lowCount" class="stat-value">0</span></span>
+        </div>
+
+        <!-- next suggestion card -->
+        <div class="next-suggestion">
+            <span class="next-label"><i class="fa-regular fa-compass"></i> NEXT:</span>
+            <span id="nextTaskDisplay" class="next-task next-empty">— add a task —</span>
+            <button class="do-btn" id="completeNextBtn"><i class="fa-regular fa-check"></i> done</button>
+        </div>
+
+        <!-- new task form -->
+        <div class="add-section">
+            <div class="form-row">
+                <div class="field">
+                    <label><i class="fa-regular fa-pen"></i> task</label>
+                    <input type="text" id="taskInput" placeholder="write proposal, call ..." maxlength="60">
+                </div>
+                <div class="field" style="flex: 0.6 1 140px;">
+                    <label><i class="fa-regular fa-bolt"></i> priority</label>
+                    <select id="prioritySelect">
+                        <option value="high">🔴 high</option>
+                        <option value="medium" selected>🟡 medium</option>
+                        <option value="low">🟢 low</option>
+                    </select>
+                </div>
+                <button class="add-btn" id="addTaskBtn"><i class="fa-regular fa-plus"></i> add</button>
+            </div>
+        </div>
+
+        <!-- task list (all pending) -->
+        <div class="task-list" id="taskListContainer">
+            <!-- dynamic items -->
+        </div>
+
+        <hr>
+        <footer>
+            <i class="fa-regular fa-circle-check"></i> finish what's next · saved in browser
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // --- data model ---
+            let tasks = [];   // { id, title, priority: 'high'|'medium'|'low', done: false } (we only show pending, but we can keep done for history? we'll keep only pending; completed removed)
+            // but for "next" we only consider pending. We'll keep tasks as pending items; completing removes them.
+
+            const STORAGE_KEY = 'makenext_tasks';
+
+            // DOM elements
+            const taskInput = document.getElementById('taskInput');
+            const prioritySelect = document.getElementById('prioritySelect');
+            const addBtn = document.getElementById('addTaskBtn');
+            const taskContainer = document.getElementById('taskListContainer');
+            const nextDisplay = document.getElementById('nextTaskDisplay');
+            const completeBtn = document.getElementById('completeNextBtn');
+
+            // stats spans
+            const totalSpan = document.getElementById('totalTasks');
+            const highSpan = document.getElementById('highCount');
+            const mediumSpan = document.getElementById('mediumCount');
+            const lowSpan = document.getElementById('lowCount');
+
+            // --- load / seed ---
+            function loadTasks() {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        if (Array.isArray(parsed)) {
+                            tasks = parsed.map(t => ({
+                                id: t.id || crypto.randomUUID ? crypto.randomUUID() : 'task_' + Date.now() + '_' + Math.random(),
+                                title: t.title || 'untitled',
+                                priority: t.priority || 'medium'
+                            }));
+                        }
+                    } catch (e) {}
+                }
+                if (!tasks.length) {
+                    tasks = [
+                        { id: 't1', title: 'Sketch wireframes for project', priority: 'high' },
+                        { id: 't2', title: 'Reply to client email', priority: 'high' },
+                        { id: 't3', title: 'Update weekly log', priority: 'medium' },
+                        { id: 't4', title: 'Organize desk', priority: 'low' },
+                    ];
+                }
+            }
+
+            function saveTasks() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+            }
+
+            // --- helper: get sorted tasks (high > medium > low), preserving order within same priority? we can keep insertion order but group.
+            function getSortedTasks() {
+                const priorityOrder = { high: 1, medium: 2, low: 3 };
+                return [...tasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+            }
+
+            // --- determine next task (first after sort) ---
+            function getNextTask() {
+                const sorted = getSortedTasks();
+                return sorted.length ? sorted[0] : null;
+            }
+
+            // --- render task list and next suggestion ---
+            function renderAll() {
+                // stats
+                const total = tasks.length;
+                const high = tasks.filter(t => t.priority === 'high').length;
+                const medium = tasks.filter(t => t.priority === 'medium').length;
+                const low = tasks.filter(t => t.priority === 'low').length;
+
+                totalSpan.textContent = total;
+                highSpan.textContent = high;
+                mediumSpan.textContent = medium;
+                lowSpan.textContent = low;
+
+                // next display
+                const next = getNextTask();
+                if (next) {
+                    nextDisplay.textContent = `⚡ ${next.title}`;
+                    nextDisplay.classList.remove('next-empty');
+                    completeBtn.disabled = false;
+                } else {
+                    nextDisplay.textContent = '— all done. add a task —';
+                    nextDisplay.classList.add('next-empty');
+                    completeBtn.disabled = true;
+                }
+
+                // render task list (all pending)
+                if (tasks.length === 0) {
+                    taskContainer.innerHTML = `<div class="empty-tasks"><i class="fa-regular fa-face-smile"></i> nothing pending · nice work</div>`;
+                    return;
+                }
+
+                const sorted = getSortedTasks();
+                let html = '';
+                sorted.forEach(task => {
+                    let priorityClass = '';
+                    if (task.priority === 'high') priorityClass = 'priority-high';
+                    else if (task.priority === 'medium') priorityClass = 'priority-medium';
+                    else priorityClass = 'priority-low';
+
+                    html += `
+                        <div class="task-item" data-id="${task.id}">
+                            <span class="task-priority ${priorityClass}">${task.priority}</span>
+                            <span class="task-title">${escapeHtml(task.title)}</span>
+                            <div class="task-actions">
+                                <button class="task-btn up-priority" title="increase priority"><i class="fa-regular fa-arrow-up"></i></button>
+                                <button class="task-btn down-priority" title="decrease priority"><i class="fa-regular fa-arrow-down"></i></button>
+                                <button class="task-btn delete-btn" title="delete task"><i class="fa-regular fa-trash-can"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                taskContainer.innerHTML = html;
+
+                // attach event listeners
+                document.querySelectorAll('.task-item').forEach(item => {
+                    const id = item.dataset.id;
+                    const upBtn = item.querySelector('.up-priority');
+                    const downBtn = item.querySelector('.down-priority');
+                    const deleteBtn = item.querySelector('.delete-btn');
+
+                    if (upBtn) upBtn.addEventListener('click', (e) => { e.stopPropagation(); changePriority(id, 'up'); });
+                    if (downBtn) downBtn.addEventListener('click', (e) => { e.stopPropagation(); changePriority(id, 'down'); });
+                    if (deleteBtn) deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteTask(id); });
+                });
+            }
+
+            function escapeHtml(unsafe) {
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            // --- priority change cycle: high > medium > low ---
+            function changePriority(id, direction) {
+                const task = tasks.find(t => t.id === id);
+                if (!task) return;
+                const order = ['high', 'medium', 'low'];
+                let idx = order.indexOf(task.priority);
+                if (idx === -1) idx = 1; // fallback
+
+                if (direction === 'up') {
+                    idx = Math.max(0, idx - 1);
+                } else {
+                    idx = Math.min(2, idx + 1);
+                }
+                task.priority = order[idx];
+                saveTasks();
+                renderAll();
+            }
+
+            function deleteTask(id) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasks();
+                renderAll();
+            }
+
+            // --- complete next task (remove it) ---
+            function completeNext() {
+                const next = getNextTask();
+                if (next) {
+                    tasks = tasks.filter(t => t.id !== next.id);
+                    saveTasks();
+                    renderAll();
+                }
+            }
+
+            // --- add new task ---
+            function addTask() {
+                const title = taskInput.value.trim();
+                if (!title) {
+                    alert('Please describe the task.');
+                    return;
+                }
+                const priority = prioritySelect.value;
+
+                const newTask = {
+                    id: crypto.randomUUID ? crypto.randomUUID() : 'task_' + Date.now() + '_' + Math.random().toString(36),
+                    title: title,
+                    priority: priority
+                };
+                tasks.push(newTask);
+                saveTasks();
+                renderAll();
+
+                // clear input
+                taskInput.value = '';
+                taskInput.focus();
+            }
+
+            // --- event listeners ---
+            addBtn.addEventListener('click', addTask);
+            taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask(); });
+            completeBtn.addEventListener('click', completeNext);
+
+            // initialize
+            loadTasks();
+            renderAll();
+        })();
+    </script>
+</body>
+</html>

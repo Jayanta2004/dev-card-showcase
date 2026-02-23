@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Graph Playground</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.5.0/lib/browser/math.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .graph-section {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .graph-container {
+            flex: 1;
+            position: relative;
+            margin-top: 20px;
+        }
+        
+        .controls-section {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #1a2980;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        
+        .section-title i {
+            color: #26d0ce;
+        }
+        
+        .function-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .function-item {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #1a2980;
+        }
+        
+        .function-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .function-color {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .function-expression {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        
+        .function-range {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .range-input {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+        }
+        
+        .function-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: #1a2980;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0f1a5c;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: #26d0ce;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #1da8a6;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #ff5252;
+            transform: translateY(-2px);
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.9rem;
+        }
+        
+        .add-function-btn {
+            width: 100%;
+            padding: 15px;
+            margin-top: 10px;
+            background-color: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            color: #666;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .add-function-btn:hover {
+            background-color: #e9ecef;
+            border-color: #1a2980;
+            color: #1a2980;
+        }
+        
+        .graph-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .control-group {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            color: #1a2980;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #1a2980;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .preset-btn {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .preset-btn:hover {
+            background-color: #1a2980;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .info-panel {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-top: 30px;
+        }
+        
+        .info-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #26d0ce;
+        }
+        
+        .info-card h3 {
+            color: #1a2980;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .coordinates-display {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .graph-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        
+        .calculator {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .calculator-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .calculator-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        
+        .calculator-result {
+            padding: 15px;
+            background-color: white;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            border: 1px solid #ddd;
+            min-height: 50px;
+            word-break: break-all;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .main-content {
+                gap: 20px;
+            }
+            
+            .graph-section, .controls-section {
+                padding: 20px;
+            }
+            
+            .function-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .derivative-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #1a2980;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .grid-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-project-diagram"></i> Math Graph Playground</h1>
+            <p class="subtitle">Visualize mathematical functions, explore transformations, and discover the beauty of graphs in an interactive environment.</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="graph-section">
+                <h2 class="section-title"><i class="fas fa-chart-line"></i> Graph Canvas</h2>
+                <div class="graph-container">
+                    <canvas id="graphCanvas"></canvas>
+                    <div class="coordinates-display" id="coordinates">x: 0.00, y: 0.00</div>
+                </div>
+                <div class="graph-legend" id="graphLegend"></div>
+            </div>
+            
+            <div class="controls-section">
+                <h2 class="section-title"><i class="fas fa-sliders-h"></i> Function Controls</h2>
+                
+                <div class="function-controls" id="functionControls">
+                    <!-- Function items will be dynamically added here -->
+                </div>
+                
+                <button class="add-function-btn" id="addFunctionBtn">
+                    <i class="fas fa-plus-circle"></i> Add New Function
+                </button>
+                
+                <h2 class="section-title" style="margin-top: 30px;"><i class="fas fa-cogs"></i> Graph Settings</h2>
+                
+                <div class="graph-controls">
+                    <div class="control-group">
+                        <label class="control-label">X-Axis Range</label>
+                        <div class="slider-container">
+                            <span class="slider-value" id="xMinValue">-10</span>
+                            <input type="range" id="xRange" min="-20" max="20" value="-10" step="1">
+                            <span class="slider-value" id="xMaxValue">10</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Y-Axis Range</label>
+                        <div class="slider-container">
+                            <span class="slider-value" id="yMinValue">-10</span>
+                            <input type="range" id="yRange" min="-20" max="20" value="-10" step="1">
+                            <span class="slider-value" id="yMaxValue">10</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Grid Density</label>
+                        <div class="slider-container">
+                            <span class="slider-value" id="gridValue">1</span>
+                            <input type="range" id="gridDensity" min="0.5" max="5" value="1" step="0.5">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Line Thickness</label>
+                        <div class="slider-container">
+                            <span class="slider-value" id="thicknessValue">2</span>
+                            <input type="range" id="lineThickness" min="1" max="5" value="2" step="1">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="derivative-toggle">
+                    <span>Show Derivatives</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="derivativeToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="grid-toggle">
+                    <span>Show Grid</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="gridToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <h2 class="section-title" style="margin-top: 30px;"><i class="fas fa-bolt"></i> Quick Presets</h2>
+                
+                <div class="preset-buttons">
+                    <button class="preset-btn" data-preset="quadratic">Quadratic</button>
+                    <button class="preset-btn" data-preset="sin">Sine Wave</button>
+                    <button class="preset-btn" data-preset="cos">Cosine</button>
+                    <button class="preset-btn" data-preset="exp">Exponential</button>
+                    <button class="preset-btn" data-preset="log">Logarithm</button>
+                    <button class="preset-btn" data-preset="cubic">Cubic</button>
+                    <button class="preset-btn" data-preset="abs">Absolute</button>
+                    <button class="preset-btn" data-preset="linear">Linear</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h2 class="section-title"><i class="fas fa-info-circle"></i> Information & Tools</h2>
+            
+            <div class="info-content">
+                <div class="info-card">
+                    <h3><i class="fas fa-lightbulb"></i> How to Use</h3>
+                    <p>Enter mathematical expressions using "x" as the variable. You can use functions like sin(x), cos(x), exp(x), log(x), sqrt(x), and constants like pi and e.</p>
+                    <p>Example: 2*sin(3*x) + x^2</p>
+                </div>
+                
+                <div class="info-card">
+                    <h3><i class="fas fa-calculator"></i> Quick Calculator</h3>
+                    <div class="calculator">
+                        <div class="calculator-input">
+                            <input type="text" id="calcInput" placeholder="Enter expression (e.g., 2*pi, sin(pi/2))">
+                            <button class="btn btn-primary btn-small" id="calculateBtn">Calculate</button>
+                        </div>
+                        <div class="calculator-result" id="calcResult">Result will appear here</div>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h3><i class="fas fa-download"></i> Export Options</h3>
+                    <p>Export your graph as an image or save your function configuration.</p>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn btn-secondary btn-small" id="exportImageBtn">
+                            <i class="fas fa-image"></i> Export Image
+                        </button>
+                        <button class="btn btn-secondary btn-small" id="saveConfigBtn">
+                            <i class="fas fa-save"></i> Save Config
+                        </button>
+                        <button class="btn btn-secondary btn-small" id="loadConfigBtn">
+                            <i class="fas fa-folder-open"></i> Load Config
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize mathjs
+        const math = window.math;
+        
+        // Chart.js configuration
+        let graphChart = null;
+        let functions = [];
+        let nextFunctionId = 1;
+        const defaultColors = [
+            '#1a2980', '#26d0ce', '#ff6b6b', '#4CAF50', '#FF9800', 
+            '#9C27B0', '#2196F3', '#FF5722', '#795548', '#607D8B'
+        ];
+        
+        // Default functions
+        const defaultFunctions = [
+            { id: 1, expression: "x^2", color: defaultColors[0], minX: -5, maxX: 5, visible: true, derivative: false },
+            { id: 2, expression: "sin(x)", color: defaultColors[1], minX: -10, maxX: 10, visible: true, derivative: false },
+            { id: 3, expression: "1/x", color: defaultColors[2], minX: -5, maxX: 5, visible: true, derivative: false }
+        ];
+        
+        // Graph settings
+        let graphSettings = {
+            xMin: -10,
+            xMax: 10,
+            yMin: -10,
+            yMax: 10,
+            gridDensity: 1,
+            lineThickness: 2,
+            showDerivatives: false,
+            showGrid: true
+        };
+        
+        // Initialize the application
+        function init() {
+            // Load functions from localStorage or use defaults
+            const savedFunctions = localStorage.getItem('mathGraphFunctions');
+            if (savedFunctions) {
+                functions = JSON.parse(savedFunctions);
+                nextFunctionId = functions.length > 0 ? Math.max(...functions.map(f => f.id)) + 1 : 1;
+            } else {
+                functions = JSON.parse(JSON.stringify(defaultFunctions));
+                nextFunctionId = 4;
+            }
+            
+            // Load graph settings
+            const savedSettings = localStorage.getItem('mathGraphSettings');
+            if (savedSettings) {
+                Object.assign(graphSettings, JSON.parse(savedSettings));
+            }
+            
+            // Render function controls
+            renderFunctionControls();
+            
+            // Initialize graph
+            initGraph();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Update UI with saved settings
+            updateSettingsUI();
+        }
+        
+        // Initialize the graph
+        function initGraph() {
+            const ctx = document.getElementById('graphCanvas').getContext('2d');
+            
+            // Configure chart
+            const config = {
+                type: 'line',
+                data: {
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            min: graphSettings.xMin,
+                            max: graphSettings.xMax,
+                            grid: {
+                                display: graphSettings.showGrid,
+                                color: '#e0e0e0',
+                                drawBorder: true,
+                                borderColor: '#ccc'
+                            },
+                            ticks: {
+                                stepSize: graphSettings.gridDensity
+                            }
+                        },
+                        y: {
+                            min: graphSettings.yMin,
+                            max: graphSettings.yMax,
+                            grid: {
+                                display: graphSettings.showGrid,
+                                color: '#e0e0e0',
+                                drawBorder: true,
+                                borderColor: '#ccc'
+                            },
+                            ticks: {
+                                stepSize: graphSettings.gridDensity
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    elements: {
+                        point: {
+                            radius: 0
+                        }
+                    }
+                }
+            };
+            
+            // Create chart
+            graphChart = new Chart(ctx, config);
+            
+            // Update graph with functions
+            updateGraph();
+            
+            // Add mousemove listener for coordinates
+            document.getElementById('graphCanvas').addEventListener('mousemove', handleMouseMove);
+        }
+        
+        // Render function controls
+        function renderFunctionControls() {
+            const container = document.getElementById('functionControls');
+            container.innerHTML = '';
+            
+            functions.forEach(func => {
+                const funcElement = createFunctionElement(func);
+                container.appendChild(funcElement);
+            });
+            
+            updateGraphLegend();
+        }
+        
+        // Create function control element
+        function createFunctionElement(func) {
+            const div = document.createElement('div');
+            div.className = 'function-item';
+            div.dataset.id = func.id;
+            
+            div.innerHTML = `
+                <div class="function-header">
+                    <span style="font-weight: 600;">f${func.id}(x)</span>
+                    <div class="function-color" style="background-color: ${func.color};" data-id="${func.id}"></div>
+                </div>
+                <input type="text" class="function-expression" value="${func.expression}" placeholder="Enter function (e.g., x^2)" data-id="${func.id}">
+                <div class="error-message" id="error-${func.id}"></div>
+                <div class="function-range">
+                    <input type="number" class="range-input" value="${func.minX}" placeholder="Min X" data-id="${func.id}" data-type="min">
+                    <span>to</span>
+                    <input type="number" class="range-input" value="${func.maxX}" placeholder="Max X" data-id="${func.id}" data-type="max">
+                </div>
+                <div class="function-actions">
+                    <button class="btn btn-primary btn-small toggle-visibility" data-id="${func.id}">
+                        <i class="fas fa-eye${func.visible ? '' : '-slash'}"></i>
+                        ${func.visible ? 'Hide' : 'Show'}
+                    </button>
+                    <button class="btn btn-danger btn-small remove-function" data-id="${func.id}">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        // Update graph with current functions
+        function updateGraph() {
+            if (!graphChart) return;
+            
+            // Clear existing datasets
+            graphChart.data.datasets = [];
+            
+            // Add axes lines
+            graphChart.data.datasets.push({
+                label: 'x-axis',
+                data: [{x: graphSettings.xMin, y: 0}, {x: graphSettings.xMax, y: 0}],
+                borderColor: '#aaa',
+                borderWidth: 1,
+                pointRadius: 0,
+                fill: false,
+                tension: 0
+            });
+            
+            graphChart.data.datasets.push({
+                label: 'y-axis',
+                data: [{x: 0, y: graphSettings.yMin}, {x: 0, y: graphSettings.yMax}],
+                borderColor: '#aaa',
+                borderWidth: 1,
+                pointRadius: 0,
+                fill: false,
+                tension: 0
+            });
+            
+            // Add function datasets
+            functions.forEach(func => {
+                if (!func.visible) return;
+                
+                const data = generateFunctionData(func);
+                
+                // Add main function
+                graphChart.data.datasets.push({
+                    label: `f${func.id}(x) = ${func.expression}`,
+                    data: data,
+                    borderColor: func.color,
+                    borderWidth: graphSettings.lineThickness,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.1
+                });
+                
+                // Add derivative if enabled
+                if (graphSettings.showDerivatives) {
+                    const derivativeData = generateDerivativeData(func);
+                    
+                    graphChart.data.datasets.push({
+                        label: `f'${func.id}(x)`,
+                        data: derivativeData,
+                        borderColor: func.color,
+                        borderWidth: graphSettings.lineThickness,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false,
+                        tension: 0.1
+                    });
+                }
+            });
+            
+            // Update chart scales
+            graphChart.options.scales.x.min = graphSettings.xMin;
+            graphChart.options.scales.x.max = graphSettings.xMax;
+            graphChart.options.scales.x.ticks.stepSize = graphSettings.gridDensity;
+            graphChart.options.scales.y.min = graphSettings.yMin;
+            graphChart.options.scales.y.max = graphSettings.yMax;
+            graphChart.options.scales.y.ticks.stepSize = graphSettings.gridDensity;
+            graphChart.options.scales.x.grid.display = graphSettings.showGrid;
+            graphChart.options.scales.y.grid.display = graphSettings.showGrid;
+            
+            graphChart.update();
+            updateGraphLegend();
+        }
+        
+        // Generate data points for a function
+        function generateFunctionData(func) {
+            const data = [];
+            const step = (func.maxX - func.minX) / 200; // 200 points
+            
+            for (let x = func.minX; x <= func.maxX; x += step) {
+                try {
+                    // Replace ^ with ** for mathjs
+                    let expr = func.expression.replace(/\^/g, '**');
+                    
+                    // Evaluate the expression
+                    const scope = { x: x };
+                    const y = math.evaluate(expr, scope);
+                    
+                    // Check if result is a real number
+                    if (typeof y === 'number' && isFinite(y)) {
+                        data.push({ x: x, y: y });
+                    }
+                } catch (error) {
+                    // Skip points that cause evaluation errors
+                    continue;
+                }
+            }
+            
+            return data;
+        }
+        
+        // Generate derivative data using numerical differentiation
+        function generateDerivativeData(func) {
+            const data = [];
+            const step = (func.maxX - func.minX) / 200;
+            const h = 0.0001; // Small value for derivative approximation
+            
+            for (let x = func.minX; x <= func.maxX; x += step) {
+                try {
+                    let expr = func.expression.replace(/\^/g, '**');
+                    
+                    // Calculate f(x + h) and f(x - h)
+                    const scope1 = { x: x + h };
+                    const scope2 = { x: x - h };
+                    
+                    const f1 = math.evaluate(expr, scope1);
+                    const f2 = math.evaluate(expr, scope2);
+                    
+                    // Central difference approximation
+                    if (typeof f1 === 'number' && typeof f2 === 'number' && isFinite(f1) && isFinite(f2)) {
+                        const derivative = (f1 - f2) / (2 * h);
+                        data.push({ x: x, y: derivative });
+                    }
+                } catch (error) {
+                    continue;
+                }
+            }
+            
+            return data;
+        }
+        
+        // Update graph legend
+        function updateGraphLegend() {
+            const legend = document.getElementById('graphLegend');
+            legend.innerHTML = '';
+            
+            functions.forEach(func => {
+                if (!func.visible) return;
+                
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                
+                item.innerHTML = `
+                    <div class="legend-color" style="background-color: ${func.color};"></div>
+                    <span>f${func.id}(x) = ${func.expression}</span>
+                `;
+                
+                legend.appendChild(item);
+            });
+            
+            if (graphSettings.showDerivatives) {
+                const derivativeNote = document.createElement('div');
+                derivativeNote.className = 'legend-item';
+                derivativeNote.innerHTML = '<i>Dashed lines show derivatives</i>';
+                derivativeNote.style.fontStyle = 'italic';
+                derivativeNote.style.color = '#666';
+                legend.appendChild(derivativeNote);
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Add function button
+            document.getElementById('addFunctionBtn').addEventListener('click', addNewFunction);
+            
+            // Graph controls
+            document.getElementById('xRange').addEventListener('input', function() {
+                const value = parseInt(this.value);
+                graphSettings.xMin = -value;
+                graphSettings.xMax = value;
+                document.getElementById('xMinValue').textContent = -value;
+                document.getElementById('xMaxValue').textContent = value;
+                updateGraph();
+                saveSettings();
+            });
+            
+            document.getElementById('yRange').addEventListener('input', function() {
+                const value = parseInt(this.value);
+                graphSettings.yMin = -value;
+                graphSettings.yMax = value;
+                document.getElementById('yMinValue').textContent = -value;
+                document.getElementById('yMaxValue').textContent = value;
+                updateGraph();
+                saveSettings();
+            });
+            
+            document.getElementById('gridDensity').addEventListener('input', function() {
+                graphSettings.gridDensity = parseFloat(this.value);
+                document.getElementById('gridValue').textContent = this.value;
+                updateGraph();
+                saveSettings();
+            });
+            
+            document.getElementById('lineThickness').addEventListener('input', function() {
+                graphSettings.lineThickness = parseInt(this.value);
+                document.getElementById('thicknessValue').textContent = this.value;
+                updateGraph();
+                saveSettings();
+            });
+            
+            // Toggles
+            document.getElementById('derivativeToggle').addEventListener('change', function() {
+                graphSettings.showDerivatives = this.checked;
+                updateGraph();
+                saveSettings();
+            });
+            
+            document.getElementById('gridToggle').addEventListener('change', function() {
+                graphSettings.showGrid = this.checked;
+                updateGraph();
+                saveSettings();
+            });
+            
+            // Preset buttons
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const preset = this.dataset.preset;
+                    loadPreset(preset);
+                });
+            });
+            
+            // Calculator
+            document.getElementById('calculateBtn').addEventListener('click', calculateExpression);
+            document.getElementById('calcInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') calculateExpression();
+            });
+            
+            // Export buttons
+            document.getElementById('exportImageBtn').addEventListener('click', exportImage);
+            document.getElementById('saveConfigBtn').addEventListener('click', saveConfiguration);
+            document.getElementById('loadConfigBtn').addEventListener('click', loadConfiguration);
+            
+            // Delegated event listeners for dynamic function controls
+            document.getElementById('functionControls').addEventListener('input', function(e) {
+                if (e.target.classList.contains('function-expression')) {
+                    updateFunction(e.target.dataset.id, 'expression', e.target.value);
+                } else if (e.target.classList.contains('range-input')) {
+                    const id = e.target.dataset.id;
+                    const type = e.target.dataset.type;
+                    const value = parseFloat(e.target.value);
+                    
+                    if (!isNaN(value)) {
+                        updateFunction(id, type === 'min' ? 'minX' : 'maxX', value);
+                    }
+                }
+            });
+            
+            document.getElementById('functionControls').addEventListener('click', function(e) {
+                // Color picker
+                if (e.target.classList.contains('function-color')) {
+                    const id = e.target.dataset.id;
+                    const newColor = getRandomColor();
+                    updateFunction(id, 'color', newColor);
+                    e.target.style.backgroundColor = newColor;
+                }
+                
+                // Toggle visibility
+                if (e.target.classList.contains('toggle-visibility') || 
+                    e.target.parentElement.classList.contains('toggle-visibility')) {
+                    
+                    const btn = e.target.classList.contains('toggle-visibility') ? e.target : e.target.parentElement;
+                    const id = btn.dataset.id;
+                    const func = functions.find(f => f.id == id);
+                    
+                    if (func) {
+                        func.visible = !func.visible;
+                        btn.innerHTML = `<i class="fas fa-eye${func.visible ? '' : '-slash'}"></i> ${func.visible ? 'Hide' : 'Show'}`;
+                        updateGraph();
+                        saveFunctions();
+                    }
+                }
+                
+                // Remove function
+                if (e.target.classList.contains('remove-function') || 
+                    e.target.parentElement.classList.contains('remove-function')) {
+                    
+                    const btn = e.target.classList.contains('remove-function') ? e.target : e.target.parentElement;
+                    const id = btn.dataset.id;
+                    removeFunction(id);
+                }
+            });
+        }
+        
+        // Add new function
+        function addNewFunction() {
+            const newFunc = {
+                id: nextFunctionId++,
+                expression: "x",
+                color: defaultColors[functions.length % defaultColors.length],
+                minX: graphSettings.xMin,
+                maxX: graphSettings.xMax,
+                visible: true,
+                derivative: false
+            };
+            
+            functions.push(newFunc);
+            renderFunctionControls();
+            updateGraph();
+            saveFunctions();
+        }
+        
+        // Update function property
+        function updateFunction(id, property, value) {
+            const func = functions.find(f => f.id == id);
+            if (func) {
+                func[property] = value;
+                
+                // Validate expression and show error if needed
+                if (property === 'expression') {
+                    validateExpression(id, value);
+                }
+                
+                updateGraph();
+                saveFunctions();
+            }
+        }
+        
+        // Validate mathematical expression
+        function validateExpression(id, expression) {
+            const errorElement = document.getElementById(`error-${id}`);
+            
+            try {
+                // Test the expression with a sample value
+                const testExpr = expression.replace(/\^/g, '**');
+                math.evaluate(testExpr, { x: 1 });
+                
+                errorElement.style.display = 'none';
+                errorElement.textContent = '';
+                return true;
+            } catch (error) {
+                errorElement.style.display = 'block';
+                errorElement.textContent = `Error: ${error.message}`;
+                return false;
+            }
+        }
+        
+        // Remove function
+        function removeFunction(id) {
+            functions = functions.filter(f => f.id != id);
+            renderFunctionControls();
+            updateGraph();
+            saveFunctions();
+        }
+        
+        // Load preset functions
+        function loadPreset(presetName) {
+            let presetFuncs = [];
+            
+            switch(presetName) {
+                case 'quadratic':
+                    presetFuncs = [
+                        { expression: "x^2", color: '#1a2980', minX: -5, maxX: 5 },
+                        { expression: "x^2 - 4", color: '#26d0ce', minX: -5, maxX: 5 },
+                        { expression: "x^2 + 2*x + 1", color: '#ff6b6b', minX: -5, maxX: 5 }
+                    ];
+                    break;
+                case 'sin':
+                    presetFuncs = [
+                        { expression: "sin(x)", color: '#1a2980', minX: -10, maxX: 10 },
+                        { expression: "2*sin(x)", color: '#26d0ce', minX: -10, maxX: 10 },
+                        { expression: "sin(2*x)", color: '#ff6b6b', minX: -10, maxX: 10 }
+                    ];
+                    break;
+                case 'cos':
+                    presetFuncs = [
+                        { expression: "cos(x)", color: '#1a2980', minX: -10, maxX: 10 },
+                        { expression: "cos(x) + 1", color: '#26d0ce', minX: -10, maxX: 10 },
+                        { expression: "cos(2*x)", color: '#ff6b6b', minX: -10, maxX: 10 }
+                    ];
+                    break;
+                case 'exp':
+                    presetFuncs = [
+                        { expression: "exp(x)", color: '#1a2980', minX: -3, maxX: 3 },
+                        { expression: "2^x", color: '#26d0ce', minX: -3, maxX: 3 },
+                        { expression: "exp(-x)", color: '#ff6b6b', minX: -3, maxX: 3 }
+                    ];
+                    break;
+                case 'log':
+                    presetFuncs = [
+                        { expression: "log(x)", color: '#1a2980', minX: 0.1, maxX: 10 },
+                        { expression: "log(x+1)", color: '#26d0ce', minX: -0.9, maxX: 10 },
+                        { expression: "log10(x)", color: '#ff6b6b', minX: 0.1, maxX: 10 }
+                    ];
+                    break;
+                case 'cubic':
+                    presetFuncs = [
+                        { expression: "x^3", color: '#1a2980', minX: -3, maxX: 3 },
+                        { expression: "x^3 - 3*x", color: '#26d0ce', minX: -3, maxX: 3 },
+                        { expression: "x^3 - x^2 - x + 1", color: '#ff6b6b', minX: -3, maxX: 3 }
+                    ];
+                    break;
+                case 'abs':
+                    presetFuncs = [
+                        { expression: "abs(x)", color: '#1a2980', minX: -5, maxX: 5 },
+                        { expression: "abs(x-2)", color: '#26d0ce', minX: -5, maxX: 5 },
+                        { expression: "abs(x) + x", color: '#ff6b6b', minX: -5, maxX: 5 }
+                    ];
+                    break;
+                case 'linear':
+                    presetFuncs = [
+                        { expression: "x", color: '#1a2980', minX: -5, maxX: 5 },
+                        { expression: "2*x + 1", color: '#26d0ce', minX: -5, maxX: 5 },
+                        { expression: "-x + 3", color: '#ff6b6b', minX: -5, maxX: 5 }
+                    ];
+                    break;
+            }
+            
+            // Clear current functions
+            functions = [];
+            nextFunctionId = 1;
+            
+            // Add preset functions
+            presetFuncs.forEach(presetFunc => {
+                functions.push({
+                    id: nextFunctionId++,
+                    expression: presetFunc.expression,
+                    color: presetFunc.color,
+                    minX: presetFunc.minX,
+                    maxX: presetFunc.maxX,
+                    visible: true,
+                    derivative: false
+                });
+            });
+            
+            renderFunctionControls();
+            updateGraph();
+            saveFunctions();
+        }
+        
+        // Calculate expression
+        function calculateExpression() {
+            const input = document.getElementById('calcInput').value;
+            const resultElement = document.getElementById('calcResult');
+            
+            try {
+                // Replace ^ with ** for mathjs
+                let expr = input.replace(/\^/g, '**');
+                
+                // Evaluate the expression
+                const result = math.evaluate(expr);
+                resultElement.textContent = `${input} = ${result}`;
+                resultElement.style.color = '#1a2980';
+            } catch (error) {
+                resultElement.textContent = `Error: ${error.message}`;
+                resultElement.style.color = '#ff6b6b';
+            }
+        }
+        
+        // Export graph as image
+        function exportImage() {
+            const canvas = document.getElementById('graphCanvas');
+            const link = document.createElement('a');
+            link.download = 'math-graph.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Save configuration
+        function saveConfiguration() {
+            const config = {
+                functions: functions,
+                settings: graphSettings
+            };
+            
+            const dataStr = JSON.stringify(config, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const link = document.createElement('a');
+            link.download = 'math-graph-config.json';
+            link.href = dataUri;
+            link.click();
+        }
+        
+        // Load configuration
+        function loadConfiguration() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    try {
+                        const config = JSON.parse(event.target.result);
+                        
+                        // Load functions
+                        if (config.functions && Array.isArray(config.functions)) {
+                            functions = config.functions;
+                            nextFunctionId = functions.length > 0 ? Math.max(...functions.map(f => f.id)) + 1 : 1;
+                        }
+                        
+                        // Load settings
+                        if (config.settings) {
+                            Object.assign(graphSettings, config.settings);
+                            updateSettingsUI();
+                        }
+                        
+                        renderFunctionControls();
+                        updateGraph();
+                        saveFunctions();
+                        saveSettings();
+                        
+                        alert('Configuration loaded successfully!');
+                    } catch (error) {
+                        alert('Error loading configuration: ' + error.message);
+                    }
+                };
+                
+                reader.readAsText(file);
+            });
+            
+            input.click();
+        }
+        
+        // Update settings UI
+        function updateSettingsUI() {
+            document.getElementById('xRange').value = Math.abs(graphSettings.xMin);
+            document.getElementById('xMinValue').textContent = graphSettings.xMin;
+            document.getElementById('xMaxValue').textContent = graphSettings.xMax;
+            
+            document.getElementById('yRange').value = Math.abs(graphSettings.yMin);
+            document.getElementById('yMinValue').textContent = graphSettings.yMin;
+            document.getElementById('yMaxValue').textContent = graphSettings.yMax;
+            
+            document.getElementById('gridDensity').value = graphSettings.gridDensity;
+            document.getElementById('gridValue').textContent = graphSettings.gridDensity;
+            
+            document.getElementById('lineThickness').value = graphSettings.lineThickness;
+            document.getElementById('thicknessValue').textContent = graphSettings.lineThickness;
+            
+            document.getElementById('derivativeToggle').checked = graphSettings.showDerivatives;
+            document.getElementById('gridToggle').checked = graphSettings.showGrid;
+        }
+        
+        // Save functions to localStorage
+        function saveFunctions() {
+            localStorage.setItem('mathGraphFunctions', JSON.stringify(functions));
+        }
+        
+        // Save settings to localStorage
+        function saveSettings() {
+            localStorage.setItem('mathGraphSettings', JSON.stringify(graphSettings));
+        }
+        
+        // Get random color
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+        
+        // Handle mouse move on graph
+        function handleMouseMove(event) {
+            const canvas = document.getElementById('graphCanvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            // Get mouse position relative to canvas
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Convert to graph coordinates
+            const xScale = graphChart.scales.x;
+            const yScale = graphChart.scales.y;
+            
+            const graphX = xScale.getValueForPixel(x);
+            const graphY = yScale.getValueForPixel(y);
+            
+            // Update coordinates display
+            const coordsElement = document.getElementById('coordinates');
+            coordsElement.textContent = `x: ${graphX.toFixed(2)}, y: ${graphY.toFixed(2)}`;
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

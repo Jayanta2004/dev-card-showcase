@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edge Deployment Compatibility Mode</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Edge Deployment Compatibility Mode</h1>
+            <p>Analyze and optimize applications for edge computing environments</p>
+        </header>
+
+        <div class="main-controls">
+            <button id="analyzeBtn" class="btn btn-primary">Analyze Application</button>
+            <button id="uploadBtn" class="btn btn-secondary">Upload Files</button>
+            <button id="generateReportBtn" class="btn btn-info">Generate Report</button>
+            <button id="resetBtn" class="btn btn-secondary">Reset Analysis</button>
+        </div>
+
+        <div class="analysis-section">
+            <h2>Application Analysis</h2>
+
+            <div class="file-upload">
+                <h3>Upload Application Files</h3>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10,9 9,9 8,9"></polyline>
+                        </svg>
+                        <p>Drag and drop files here or click to browse</p>
+                        <p class="upload-hint">Supports ZIP archives, Dockerfiles, and source code files</p>
+                    </div>
+                    <input type="file" id="fileInput" multiple accept=".zip,.tar,.gz,.dockerfile,Dockerfile,.js,.py,.java,.cs,.go,.rs,.yaml,.yml,.json,.xml,.md">
+                </div>
+                <div id="fileList" class="file-list"></div>
+            </div>
+
+            <div class="analysis-config">
+                <h3>Analysis Configuration</h3>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label for="targetPlatform">Target Edge Platform:</label>
+                        <select id="targetPlatform">
+                            <option value="kubernetes">Kubernetes Edge</option>
+                            <option value="k3s">K3s</option>
+                            <option value="microk8s">MicroK8s</option>
+                            <option value="docker">Docker Edge</option>
+                            <option value="podman">Podman</option>
+                            <option value="aws-iot">AWS IoT Greengrass</option>
+                            <option value="azure-iot">Azure IoT Edge</option>
+                            <option value="gcp-iot">Google Cloud IoT</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item">
+                        <label for="resourceConstraints">Resource Constraints:</label>
+                        <div class="resource-inputs">
+                            <input type="number" id="cpuLimit" placeholder="CPU cores" min="0.1" step="0.1">
+                            <input type="number" id="memoryLimit" placeholder="Memory (MB)" min="1">
+                            <input type="number" id="storageLimit" placeholder="Storage (GB)" min="0.1" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="config-item">
+                        <label for="networkProfile">Network Profile:</label>
+                        <select id="networkProfile">
+                            <option value="low-latency">Low Latency</option>
+                            <option value="high-throughput">High Throughput</option>
+                            <option value="intermittent">Intermittent Connectivity</option>
+                            <option value="offline-first">Offline-First</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item">
+                        <label for="securityLevel">Security Requirements:</label>
+                        <select id="securityLevel">
+                            <option value="basic">Basic</option>
+                            <option value="standard">Standard</option>
+                            <option value="high">High Security</option>
+                            <option value="critical">Critical Systems</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h2>Compatibility Assessment Results</h2>
+
+            <div class="compatibility-score">
+                <div class="score-display">
+                    <div class="score-circle">
+                        <span id="overallScore">0</span>
+                        <span class="score-label">Compatibility Score</span>
+                    </div>
+                    <div class="score-breakdown">
+                        <div class="score-item">
+                            <span class="score-label">Architecture</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="architectureScore" style="width: 0%"></div>
+                            </div>
+                            <span class="score-value" id="architectureValue">0%</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">Resources</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="resourcesScore" style="width: 0%"></div>
+                            </div>
+                            <span class="score-value" id="resourcesValue">0%</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">Network</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="networkScore" style="width: 0%"></div>
+                            </div>
+                            <span class="score-value" id="networkValue">0%</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">Security</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="securityScore" style="width: 0%"></div>
+                            </div>
+                            <span class="score-value" id="securityValue">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="issues-container">
+                <h3>Compatibility Issues</h3>
+                <div id="issuesList" class="issues-list">
+                    <div class="no-issues">No analysis performed yet. Upload files and run analysis.</div>
+                </div>
+            </div>
+
+            <div class="recommendations">
+                <h3>Edge Deployment Recommendations</h3>
+                <div id="recommendationsList" class="recommendations-list">
+                    <div class="no-recommendations">No recommendations available yet.</div>
+                </div>
+            </div>
+
+            <div class="compatibility-chart">
+                <h3>Compatibility Overview</h3>
+                <canvas id="compatibilityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="deployment-config">
+            <h2>Deployment Configuration</h2>
+
+            <div class="config-sections">
+                <div class="config-section">
+                    <h3>Docker Configuration</h3>
+                    <div class="code-block">
+                        <pre id="dockerfileContent"># Generated Dockerfile for Edge Deployment
+FROM alpine:latest
+
+# Copy application files
+COPY . /app
+
+# Install dependencies
+RUN apk add --no-cache ca-certificates
+
+# Set working directory
+WORKDIR /app
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Run application
+CMD ["./app"]</pre>
+                    </div>
+                    <button id="copyDockerfileBtn" class="btn btn-secondary">Copy Dockerfile</button>
+                </div>
+
+                <div class="config-section">
+                    <h3>Kubernetes Manifest</h3>
+                    <div class="code-block">
+                        <pre id="k8sManifestContent">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-app
+  labels:
+    app: edge-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edge-app
+  template:
+    metadata:
+      labels:
+        app: edge-app
+    spec:
+      containers:
+      - name: app
+        image: edge-app:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "256Mi"
+          requests:
+            cpu: "0.1"
+            memory: "128Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10</pre>
+                    </div>
+                    <button id="copyK8sBtn" class="btn btn-secondary">Copy K8s Manifest</button>
+                </div>
+
+                <div class="config-section">
+                    <h3>Edge-Specific Optimizations</h3>
+                    <div id="optimizationsList" class="optimizations-list">
+                        <div class="optimization-item">
+                            <h4>Resource Optimization</h4>
+                            <ul>
+                                <li>Use multi-stage Docker builds to reduce image size</li>
+                                <li>Implement proper resource limits and requests</li>
+                                <li>Use distroless base images for minimal attack surface</li>
+                            </ul>
+                        </div>
+                        <div class="optimization-item">
+                            <h4>Network Optimization</h4>
+                            <ul>
+                                <li>Implement connection pooling and retry logic</li>
+                                <li>Use efficient serialization formats (Protocol Buffers)</li>
+                                <li>Implement offline data synchronization</li>
+                            </ul>
+                        </div>
+                        <div class="optimization-item">
+                            <h4>Security Hardening</h4>
+                            <ul>
+                                <li>Use non-root user in containers</li>
+                                <li>Implement proper secret management</li>
+                                <li>Enable security contexts and capabilities</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-history">
+            <h2>Analysis History</h2>
+            <div id="historyList" class="history-list">
+                <div class="no-history">No analysis history available.</div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Edge Deployment Compatibility Mode. For development and deployment analysis purposes only.</p>
+        </footer>
+    </div>
+
+    <div id="notificationContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

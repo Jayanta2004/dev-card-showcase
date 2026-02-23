@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>target gallery · light shooting game</title>
+  <!-- soft, arcade feel – clean & responsive -->
+  <style>
+    /* ---------- FRESH LIGHT BASE ---------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f4f8fe 0%, #e9f0f7 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+      color: #1d3a4f;
+    }
+
+    .game-pavilion {
+      max-width: 1000px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(8px);
+      border-radius: 60px 60px 48px 48px;
+      padding: 2.2rem 2rem;
+      box-shadow: 0 20px 32px -12px rgba(0,32,48,0.04), 
+                  inset 0 1px 2px white,
+                  0 0 0 1px rgba(255,255,255,0.7);
+    }
+
+    /* ----- HEADER: light scores, calm ----- */
+    .shooting-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.8rem;
+      padding: 0 0.2rem;
+    }
+
+    .title-badge {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .title-badge h1 {
+      font-size: 2.2rem;
+      font-weight: 470;
+      letter-spacing: -0.02em;
+      color: #1e3f52;
+    }
+
+    .light-chip {
+      background: #e6f0f5;
+      padding: 0.25rem 1.1rem;
+      border-radius: 60px;
+      font-size: 0.8rem;
+      font-weight: 560;
+      color: #2f5770;
+      border: 1px solid white;
+      box-shadow: inset 0 1px 3px white;
+    }
+
+    .score-panel {
+      display: flex;
+      gap: 1.4rem;
+      background: #ffffffd6;
+      padding: 0.5rem 1.6rem;
+      border-radius: 48px;
+      border: 1px solid #deeaf2;
+      box-shadow: inset 0 1px 3px white, 0 6px 10px -8px rgba(0,0,0,0.02);
+    }
+
+    .stat {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: #547385;
+      font-weight: 560;
+    }
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: 500;
+      line-height: 1;
+      color: #1f4c61;
+    }
+
+    /* ----- TARGET RANGE (canvas stage) ----- */
+    .range-container {
+      background: #f9fcff;
+      border-radius: 48px;
+      padding: 1.3rem;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.9), inset 0 4px 12px rgba(0,0,0,0.01);
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.8rem;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: linear-gradient(165deg, #fefefe, #f5fafd);
+      border-radius: 36px;
+      box-shadow: 0 6px 14px -6px rgba(0,0,0,0.02), inset 0 0 0 1px white;
+      border: 1px solid #deecf2;
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="8" fill="none" stroke="%23447a94" stroke-width="2"/><circle cx="15" cy="15" r="2" fill="%23447a94"/></svg>') 15 15, crosshair;
+    }
+
+    /* ----- LIGHT AMMO & CONTROLS ----- */
+    .control-dash {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.8rem;
+    }
+
+    .ammo-box {
+      background: #ecf3fa;
+      border-radius: 60px;
+      padding: 0.5rem 1.2rem;
+      border: 1px solid white;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: #215268;
+      font-weight: 480;
+    }
+
+    .shoot-hint {
+      background: transparent;
+      border: 1px dashed #aec6d4;
+      padding: 0.4rem 1.2rem;
+      border-radius: 60px;
+      font-size: 0.85rem;
+    }
+
+    .btn {
+      background: white;
+      border: 1px solid #ccdee9;
+      border-radius: 60px;
+      padding: 0.7rem 1.6rem;
+      font-size: 0.95rem;
+      font-weight: 480;
+      color: #265772;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.01);
+      transition: 0.1s;
+      cursor: pointer;
+      border-bottom: 2px solid #bfd3e0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn:hover {
+      background: #f6fdff;
+      border-color: #b1cfdf;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 16px -10px rgba(60,120,150,0.08);
+    }
+
+    /* target counter */
+    .target-stat {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    /* responsive canvas */
+    @media (max-width: 600px) {
+      .game-pavilion { padding: 1.5rem; }
+      .title-badge h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-pavilion">
+    <!-- header: shooting gallery, light scores -->
+    <div class="shooting-header">
+      <div class="title-badge">
+        <h1>🎯 target gallery</h1>
+        <span class="light-chip">shooting</span>
+      </div>
+      <div class="score-panel">
+        <div class="stat">
+          <span class="stat-label">score</span>
+          <span class="stat-number" id="scoreDisplay">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">hits</span>
+          <span class="stat-number" id="hitsDisplay">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">shots</span>
+          <span class="stat-number" id="shotsDisplay">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- shooting canvas range -->
+    <div class="range-container">
+      <canvas id="targetCanvas" width="700" height="420"></canvas>
+    </div>
+
+    <!-- bottom dashboard: ammo, new game, difficulty toggles -->
+    <div class="control-dash">
+      <div class="ammo-box">
+        <span>🎯</span> 
+        <span id="targetCountDisplay">6 targets</span>
+      </div>
+      <div class="shoot-hint">
+        ⚡ click canvas — shoot!
+      </div>
+      <div style="display: flex; gap: 0.6rem;">
+        <button class="btn" id="newGameBtn">↻ new round</button>
+        <button class="btn" id="addTargetBtn">+ add target</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- LIGHT TARGET GALLERY · CANVAS ----------
+    (function(){
+      "use strict";
+
+      // ----- CANVAS SETUP -----
+      const canvas = document.getElementById('targetCanvas');
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;   // 700
+      const height = canvas.height; // 420
+
+      // ----- GAME STATE (soft pastel palette) -----
+      let targets = [];
+      let score = 0;
+      let hits = 0;
+      let shots = 0;
+
+      // ----- UI ELEMENTS -----
+      const scoreEl = document.getElementById('scoreDisplay');
+      const hitsEl = document.getElementById('hitsDisplay');
+      const shotsEl = document.getElementById('shotsDisplay');
+      const targetCountDisplay = document.getElementById('targetCountDisplay');
+
+      // ----- TARGET CONFIG -----
+      const TARGET_RADIUS = 26;      // nice hit area
+      const MAX_TARGETS = 12;
+      
+      // ----- HELPER: generate random position (respect margins) -----
+      function randomTargetPosition() {
+        const margin = TARGET_RADIUS + 8;
+        return {
+          x: Math.random() * (width - margin * 2) + margin,
+          y: Math.random() * (height - margin * 2) + margin,
+        };
+      }
+
+      // ----- CREATE A FRESH TARGET (light color) -----
+      function createTarget() {
+        const pos = randomTargetPosition();
+        return {
+          x: pos.x,
+          y: pos.y,
+          r: TARGET_RADIUS,
+          // soft pastel rings – will be drawn with opacity
+        };
+      }
+
+      // ----- INIT / RESET: place 5 targets -----
+      function initGame() {
+        targets = [];
+        for (let i = 0; i < 5; i++) {
+          targets.push(createTarget());
+        }
+        score = 0;
+        hits = 0;
+        shots = 0;
+        updateStats();
+        draw();
+      }
+
+      // ----- ADD TARGET (if below max) -----
+      function addTarget() {
+        if (targets.length < MAX_TARGETS) {
+          targets.push(createTarget());
+          updateStats();
+          draw();
+        } else {
+          // subtle feedback (no alert, just visual)
+          targetCountDisplay.style.background = '#ffefef';
+          setTimeout(() => targetCountDisplay.style.background = '', 200);
+        }
+      }
+
+      // ----- UPDATE UI SCORE / HITS / SHOTS -----
+      function updateStats() {
+        scoreEl.textContent = score;
+        hitsEl.textContent = hits;
+        shotsEl.textContent = shots;
+        targetCountDisplay.textContent = `${targets.length} target${targets.length !== 1 ? 's' : ''}`;
+      }
+
+      // ----- DRAW THE TARGET RANGE (light, airy aesthetics) -----
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        // very subtle paper texture
+        ctx.fillStyle = '#fcfdff';
+        ctx.fillRect(0, 0, width, height);
+        
+        // light grid lines (soft)
+        ctx.strokeStyle = '#e2ecf2';
+        ctx.lineWidth = 0.6;
+        for (let i = 0; i <= 6; i++) {
+          ctx.beginPath();
+          ctx.moveTo(i * 120, 0);
+          ctx.lineTo(i * 120, height);
+          ctx.strokeStyle = '#e0eaf0';
+          ctx.stroke();
+        }
+        for (let i = 0; i <= 4; i++) {
+          ctx.beginPath();
+          ctx.moveTo(0, i * 110);
+          ctx.lineTo(width, i * 110);
+          ctx.strokeStyle = '#e0eaf0';
+          ctx.stroke();
+        }
+
+        // draw all targets – light style, semi-transparent rings
+        targets.forEach((t, index) => {
+          const x = t.x, y = t.y, r = t.r;
+          
+          // outer ring – very soft sand
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, 2 * Math.PI);
+          ctx.fillStyle = '#fff9e8';
+          ctx.shadowColor = 'rgba(100,130,150,0.1)';
+          ctx.shadowBlur = 6;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          
+          // middle ring (light peach)
+          ctx.beginPath();
+          ctx.arc(x, y, r * 0.7, 0, 2 * Math.PI);
+          ctx.fillStyle = '#ffeede';
+          ctx.fill();
+          
+          // inner bullseye (soft coral)
+          ctx.beginPath();
+          ctx.arc(x, y, r * 0.35, 0, 2 * Math.PI);
+          ctx.fillStyle = '#fdd7c4';
+          ctx.fill();
+          
+          // tiny highlight
+          ctx.beginPath();
+          ctx.arc(x-3, y-3, 3, 0, 2 * Math.PI);
+          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          ctx.fill();
+
+          // very subtle outline
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, 2 * Math.PI);
+          ctx.strokeStyle = '#b8d0dd';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+
+          // inner ring accent
+          ctx.beginPath();
+          ctx.arc(x, y, r * 0.7, 0, 2 * Math.PI);
+          ctx.strokeStyle = '#c8dae3';
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+
+          // tiny crosshair hint (optional)
+          ctx.beginPath();
+          ctx.moveTo(x - 6, y);
+          ctx.lineTo(x + 6, y);
+          ctx.moveTo(x, y - 6);
+          ctx.lineTo(x, y + 6);
+          ctx.strokeStyle = 'rgba(150,180,200,0.2)';
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        });
+
+        // draw 'empty' message if no targets
+        if (targets.length === 0) {
+          ctx.font = '400 22px Inter, sans-serif';
+          ctx.fillStyle = '#a4bac8';
+          ctx.textAlign = 'center';
+          ctx.fillText('✨ all targets cleared', width/2, height/2);
+        }
+      }
+
+      // ----- HIT DETECTION (distance) -----
+      function handleShoot(e) {
+        // get click coordinates relative to canvas
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;   // canvas physical size / display size
+        const scaleY = canvas.height / rect.height;
+        const canvasRelativeX = (e.clientX - rect.left) * scaleX;
+        const canvasRelativeY = (e.clientY - rect.top) * scaleY;
+
+        shots++;
+        let hitTargetIndex = -1;
+        let hitDistance = Infinity;
+
+        // find the closest target within radius
+        targets.forEach((target, index) => {
+          const dx = target.x - canvasRelativeX;
+          const dy = target.y - canvasRelativeY;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist <= target.r && dist < hitDistance) {
+            hitDistance = dist;
+            hitTargetIndex = index;
+          }
+        });
+
+        if (hitTargetIndex !== -1) {
+          // hit! remove target, increment score/hits
+          targets.splice(hitTargetIndex, 1);
+          hits++;
+          // score: bullseye proximity: 10 + (remaining health just fun)
+          score += 15;
+          
+          // optional: add a little pop effect (instant remove)
+        } else {
+          // miss: no score
+        }
+
+        // update UI
+        updateStats();
+        draw();
+
+        // auto-refill if empty? no — player adds or reset
+      }
+
+      // ----- RESET (new game) -----
+      function newGame() {
+        targets = [];
+        for (let i = 0; i < 5; i++) {
+          targets.push(createTarget());
+        }
+        score = 0;
+        hits = 0;
+        shots = 0;
+        updateStats();
+        draw();
+      }
+
+      // ----- BIND EVENTS -----
+      function bindEvents() {
+        canvas.addEventListener('click', function(e) {
+          handleShoot(e);
+        });
+
+        document.getElementById('newGameBtn').addEventListener('click', function() {
+          newGame();
+        });
+
+        document.getElementById('addTargetBtn').addEventListener('click', function() {
+          addTarget();
+        });
+      }
+
+      // ensure canvas resets on window resize? not needed, but we keep.
+      // initialize
+      initGame();
+      bindEvents();
+
+      // for extra smoothness: redraw if needed, but mostly done
+      // optional: adjust target count on add
+    })();
+  </script>
+
+  <!-- subtle extra style for target count feedback -->
+  <style>
+    #targetCountDisplay {
+      transition: background 0.15s;
+      padding: 0.2rem 0.6rem;
+      border-radius: 40px;
+    }
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+    canvas {
+      transition: box-shadow 0.1s;
+    }
+    canvas:active {
+      box-shadow: inset 0 0 0 2px rgba(180,210,230,0.3);
+    }
+  </style>
+</body>
+</html>
