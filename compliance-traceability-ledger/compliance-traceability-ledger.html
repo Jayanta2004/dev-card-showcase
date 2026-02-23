@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Traceability Ledger</title>
+    <link rel="stylesheet" href="compliance-traceability-ledger.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-book"></i> Compliance Traceability Ledger</h1>
+            <p>Comprehensive compliance management and traceability system for regulatory requirements</p>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-button" data-tab="requirements">Requirements</button>
+            <button class="tab-button" data-tab="assessments">Assessments</button>
+            <button class="tab-button" data-tab="ledger">Ledger</button>
+            <button class="tab-button" data-tab="reports">Reports</button>
+            <button class="tab-button" data-tab="settings">Settings</button>
+        </nav>
+
+        <div id="dashboard-tab" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="metric-card">
+                    <h3>Total Requirements</h3>
+                    <span id="totalRequirements">0</span>
+                    <div class="metric-trend" id="requirementsTrend"></div>
+                </div>
+                <div class="metric-card">
+                    <h3>Compliance Score</h3>
+                    <span id="complianceScore">0%</span>
+                    <div class="score-ring">
+                        <svg width="60" height="60">
+                            <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="5" fill="none"/>
+                            <circle cx="30" cy="30" r="25" stroke="#28a745" stroke-width="5" fill="none"
+                                    stroke-dasharray="157" stroke-dashoffset="157" id="scoreRing"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <h3>Active Assessments</h3>
+                    <span id="activeAssessments">0</span>
+                    <div class="metric-trend" id="assessmentsTrend"></div>
+                </div>
+                <div class="metric-card">
+                    <h3>Critical Issues</h3>
+                    <span id="criticalIssues">0</span>
+                    <div class="metric-trend" id="issuesTrend"></div>
+                </div>
+            </div>
+
+            <div class="dashboard-charts">
+                <div class="chart-container">
+                    <h3>Compliance Status Overview</h3>
+                    <canvas id="complianceChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Requirements by Category</h3>
+                    <canvas id="requirementsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="recent-activity">
+                <h3>Recent Activity</h3>
+                <div id="activityFeed" class="activity-feed"></div>
+            </div>
+        </div>
+
+        <div id="requirements-tab" class="tab-content">
+            <div class="requirements-controls">
+                <button id="addRequirement" class="btn-primary">
+                    <i class="fas fa-plus"></i> Add Requirement
+                </button>
+                <button id="importRequirements" class="btn-secondary">
+                    <i class="fas fa-upload"></i> Import
+                </button>
+                <button id="exportRequirements" class="btn-secondary">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <div class="search-filter">
+                    <input type="text" id="requirementsSearch" placeholder="Search requirements...">
+                    <select id="categoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="gdpr">GDPR</option>
+                        <option value="hipaa">HIPAA</option>
+                        <option value="pci-dss">PCI-DSS</option>
+                        <option value="sox">SOX</option>
+                        <option value="iso27001">ISO 27001</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <select id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="compliant">Compliant</option>
+                        <option value="non-compliant">Non-Compliant</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="not-started">Not Started</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="requirements-list">
+                <div id="requirementsGrid" class="requirements-grid"></div>
+                <div id="noRequirements" class="no-data">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>No requirements found. Add your first requirement to get started.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="assessments-tab" class="tab-content">
+            <div class="assessments-controls">
+                <button id="scheduleAssessment" class="btn-primary">
+                    <i class="fas fa-calendar-plus"></i> Schedule Assessment
+                </button>
+                <button id="runAssessment" class="btn-secondary">
+                    <i class="fas fa-play"></i> Run Assessment
+                </button>
+                <div class="assessment-filters">
+                    <select id="assessmentTypeFilter">
+                        <option value="all">All Types</option>
+                        <option value="internal">Internal</option>
+                        <option value="external">External</option>
+                        <option value="automated">Automated</option>
+                    </select>
+                    <select id="assessmentStatusFilter">
+                        <option value="all">All Status</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="overdue">Overdue</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="assessments-list">
+                <div id="assessmentsGrid" class="assessments-grid"></div>
+                <div id="noAssessments" class="no-data">
+                    <i class="fas fa-search"></i>
+                    <p>No assessments found. Schedule your first assessment.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="ledger-tab" class="tab-content">
+            <div class="ledger-controls">
+                <button id="addLedgerEntry" class="btn-primary">
+                    <i class="fas fa-plus"></i> Add Entry
+                </button>
+                <button id="filterLedger" class="btn-secondary">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <div class="ledger-filters">
+                    <input type="date" id="ledgerStartDate">
+                    <input type="date" id="ledgerEndDate">
+                    <select id="ledgerCategoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="requirement">Requirement</option>
+                        <option value="assessment">Assessment</option>
+                        <option value="remediation">Remediation</option>
+                        <option value="audit">Audit</option>
+                        <option value="policy">Policy</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="ledger-entries">
+                <div id="ledgerTable" class="ledger-table">
+                    <div class="ledger-header">
+                        <div>Date</div>
+                        <div>Category</div>
+                        <div>Description</div>
+                        <div>Status</div>
+                        <div>Evidence</div>
+                        <div>Actions</div>
+                    </div>
+                    <div id="ledgerBody" class="ledger-body"></div>
+                </div>
+                <div id="noLedgerEntries" class="no-data">
+                    <i class="fas fa-book-open"></i>
+                    <p>No ledger entries found. Add your first entry to start tracking compliance activities.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="reports-tab" class="tab-content">
+            <div class="reports-controls">
+                <button id="generateReport" class="btn-primary">
+                    <i class="fas fa-chart-bar"></i> Generate Report
+                </button>
+                <button id="scheduleReport" class="btn-secondary">
+                    <i class="fas fa-clock"></i> Schedule Report
+                </button>
+                <div class="report-templates">
+                    <select id="reportTemplate">
+                        <option value="compliance-overview">Compliance Overview</option>
+                        <option value="gap-analysis">Gap Analysis</option>
+                        <option value="audit-trail">Audit Trail</option>
+                        <option value="risk-assessment">Risk Assessment</option>
+                        <option value="progress-report">Progress Report</option>
+                    </select>
+                    <select id="reportFormat">
+                        <option value="html">HTML</option>
+                        <option value="pdf">PDF</option>
+                        <option value="csv">CSV</option>
+                        <option value="json">JSON</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="reports-list">
+                <div id="reportsGrid" class="reports-grid"></div>
+                <div id="noReports" class="no-data">
+                    <i class="fas fa-file-alt"></i>
+                    <p>No reports generated yet. Create your first compliance report.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-tab" class="tab-content">
+            <div class="settings-container">
+                <div class="setting-group">
+                    <h3>Compliance Frameworks</h3>
+                    <div id="frameworksList" class="frameworks-list">
+                        <label><input type="checkbox" value="gdpr" checked> GDPR</label>
+                        <label><input type="checkbox" value="hipaa"> HIPAA</label>
+                        <label><input type="checkbox" value="pci-dss"> PCI-DSS</label>
+                        <label><input type="checkbox" value="sox"> SOX</label>
+                        <label><input type="checkbox" value="iso27001"> ISO 27001</label>
+                        <label><input type="checkbox" value="cmmc"> CMMC</label>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Notifications</h3>
+                    <label>
+                        <input type="checkbox" id="emailNotifications" checked>
+                        <span>Email notifications for assessments</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="reminderNotifications" checked>
+                        <span>Compliance deadline reminders</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="alertNotifications">
+                        <span>Critical compliance alerts</span>
+                    </label>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Data Management</h3>
+                    <button id="exportData" class="btn-secondary">Export All Data</button>
+                    <button id="importData" class="btn-secondary">Import Data</button>
+                    <button id="clearData" class="btn-danger">Clear All Data</button>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Risk Scoring</h3>
+                    <label>
+                        <span>High Risk Threshold</span>
+                        <input type="range" id="highRiskThreshold" min="70" max="100" value="85">
+                        <span id="highRiskValue">85%</span>
+                    </label>
+                    <label>
+                        <span>Medium Risk Threshold</span>
+                        <input type="range" id="mediumRiskThreshold" min="40" max="80" value="60">
+                        <span id="mediumRiskValue">60%</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div id="requirementModal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3 id="requirementModalTitle">Add Requirement</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="requirementForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="reqTitle">Title *</label>
+                                <input type="text" id="reqTitle" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="reqCategory">Category *</label>
+                                <select id="reqCategory" required>
+                                    <option value="">Select Category</option>
+                                    <option value="gdpr">GDPR</option>
+                                    <option value="hipaa">HIPAA</option>
+                                    <option value="pci-dss">PCI-DSS</option>
+                                    <option value="sox">SOX</option>
+                                    <option value="iso27001">ISO 27001</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="reqDescription">Description *</label>
+                            <textarea id="reqDescription" rows="3" required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="reqPriority">Priority</label>
+                                <select id="reqPriority">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="reqDueDate">Due Date</label>
+                                <input type="date" id="reqDueDate">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="reqEvidence">Evidence/Implementation</label>
+                            <textarea id="reqEvidence" rows="3" placeholder="Describe how this requirement is implemented or provide evidence of compliance"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="reqStatus">Status</label>
+                            <select id="reqStatus">
+                                <option value="not-started">Not Started</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="compliant">Compliant</option>
+                                <option value="non-compliant">Non-Compliant</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveRequirement" class="btn-primary">Save Requirement</button>
+                    <button class="close-modal btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="assessmentModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Schedule Assessment</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="assessmentForm">
+                        <div class="form-group">
+                            <label for="assessmentTitle">Title *</label>
+                            <input type="text" id="assessmentTitle" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="assessmentType">Type</label>
+                                <select id="assessmentType">
+                                    <option value="internal">Internal</option>
+                                    <option value="external">External</option>
+                                    <option value="automated">Automated</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="assessmentDate">Scheduled Date *</label>
+                                <input type="datetime-local" id="assessmentDate" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="assessmentScope">Scope</label>
+                            <textarea id="assessmentScope" rows="3" placeholder="Describe what will be assessed"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="assessmentAssignee">Assignee</label>
+                            <input type="text" id="assessmentAssignee" placeholder="Person responsible">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveAssessment" class="btn-primary">Schedule Assessment</button>
+                    <button class="close-modal btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="ledgerModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Ledger Entry</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="ledgerForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ledgerDate">Date *</label>
+                                <input type="datetime-local" id="ledgerDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ledgerCategory">Category *</label>
+                                <select id="ledgerCategory" required>
+                                    <option value="requirement">Requirement</option>
+                                    <option value="assessment">Assessment</option>
+                                    <option value="remediation">Remediation</option>
+                                    <option value="audit">Audit</option>
+                                    <option value="policy">Policy</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="ledgerDescription">Description *</label>
+                            <textarea id="ledgerDescription" rows="3" required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ledgerStatus">Status</label>
+                                <select id="ledgerStatus">
+                                    <option value="completed">Completed</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="ledgerPriority">Priority</label>
+                                <select id="ledgerPriority">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="ledgerEvidence">Evidence/Notes</label>
+                            <textarea id="ledgerEvidence" rows="3" placeholder="Supporting evidence or additional notes"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveLedgerEntry" class="btn-primary">Save Entry</button>
+                    <button class="close-modal btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="confirmModal" class="modal">
+            <div class="modal-content small">
+                <div class="modal-header">
+                    <h3>Confirm Action</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button id="confirmYes" class="btn-danger">Yes</button>
+                    <button class="close-modal btn-secondary">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="compliance-traceability-ledger.js"></script>
+</body>
+</html>

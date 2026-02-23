@@ -922,5 +922,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 menu.style.display = "none";
             });
         });
+
+        // Load images and add loaded class
+        const images = document.querySelectorAll('.card-img');
+        images.forEach(img => {
+            if (img.complete) {
+                // Image is already loaded from cache
+                img.classList.add('loaded');
+            } else {
+                // Image is loading, wait for load event
+                img.addEventListener('load', function() {
+                    this.classList.add('loaded');
+                });
+                img.addEventListener('error', function() {
+                    // Even on error, make it visible
+                    this.classList.add('loaded');
+                });
+            }
+        });
     });
 });
