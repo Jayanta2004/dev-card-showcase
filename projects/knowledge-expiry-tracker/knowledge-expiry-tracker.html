@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Expiry Tracker #5064</title>
+    <link rel="stylesheet" href="knowledge-expiry-tracker.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.29.3/date-fns.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-title">Knowledge Expiry Tracker</h1>
+            <div class="nav-controls">
+                <button id="theme-toggle" class="nav-button">🌙</button>
+                <button id="export-btn" class="nav-button">📤</button>
+                <button id="import-btn" class="nav-button">📥</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="#dashboard" class="sidebar-link active">📊 Dashboard</a></li>
+                <li><a href="#knowledge" class="sidebar-link">📚 Knowledge Base</a></li>
+                <li><a href="#categories" class="sidebar-link">🏷️ Categories</a></li>
+                <li><a href="#reminders" class="sidebar-link">⏰ Reminders</a></li>
+                <li><a href="#analytics" class="sidebar-link">📈 Analytics</a></li>
+                <li><a href="#settings" class="sidebar-link">⚙️ Settings</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <section id="dashboard" class="section active">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Total Knowledge Items</h3>
+                        <div class="metric-value" id="total-items">0</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Expiring Soon</h3>
+                        <div class="metric-value warning" id="expiring-soon">0</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Expired</h3>
+                        <div class="metric-value error" id="expired-items">0</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Up to Date</h3>
+                        <div class="metric-value success" id="up-to-date">0</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>Knowledge Status Distribution</h3>
+                        <canvas id="status-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Expiry Timeline</h3>
+                        <canvas id="timeline-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div class="activity-list" id="activity-list">
+                        <!-- Activity items will be populated here -->
+                    </div>
+                </div>
+            </section>
+
+            <section id="knowledge" class="section">
+                <div class="section-header">
+                    <h2>Knowledge Base</h2>
+                    <div class="section-controls">
+                        <div class="search-container">
+                            <input type="text" id="search-input" placeholder="Search knowledge...">
+                            <select id="category-filter">
+                                <option value="all">All Categories</option>
+                            </select>
+                            <select id="status-filter">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="expiring">Expiring Soon</option>
+                                <option value="expired">Expired</option>
+                                <option value="renewed">Recently Renewed</option>
+                            </select>
+                        </div>
+                        <button id="add-knowledge-btn" class="primary-btn">➕ Add Knowledge</button>
+                    </div>
+                </div>
+
+                <div class="knowledge-grid" id="knowledge-grid">
+                    <!-- Knowledge cards will be populated here -->
+                </div>
+            </section>
+
+            <section id="categories" class="section">
+                <div class="section-header">
+                    <h2>Categories</h2>
+                    <button id="add-category-btn" class="primary-btn">➕ Add Category</button>
+                </div>
+
+                <div class="categories-grid" id="categories-grid">
+                    <!-- Category cards will be populated here -->
+                </div>
+            </section>
+
+            <section id="reminders" class="section">
+                <div class="section-header">
+                    <h2>Reminders & Notifications</h2>
+                    <div class="reminder-controls">
+                        <label>
+                            <input type="checkbox" id="enable-notifications"> Enable Browser Notifications
+                        </label>
+                        <button id="test-notification" class="secondary-btn">🔔 Test Notification</button>
+                    </div>
+                </div>
+
+                <div class="reminders-list" id="reminders-list">
+                    <!-- Reminder items will be populated here -->
+                </div>
+
+                <div class="reminder-settings">
+                    <h3>Reminder Settings</h3>
+                    <div class="setting-group">
+                        <label for="reminder-days">Days before expiry to remind:</label>
+                        <input type="number" id="reminder-days" min="1" max="365" value="30">
+                    </div>
+                    <div class="setting-group">
+                        <label>
+                            <input type="checkbox" id="weekly-digest"> Send weekly digest
+                        </label>
+                    </div>
+                    <div class="setting-group">
+                        <label>
+                            <input type="checkbox" id="email-reminders"> Email reminders (future feature)
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <section id="analytics" class="section">
+                <h2>Knowledge Analytics</h2>
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Category Distribution</h3>
+                        <canvas id="category-chart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Renewal Frequency</h3>
+                        <canvas id="renewal-chart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Priority Levels</h3>
+                        <canvas id="priority-chart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Monthly Activity</h3>
+                        <canvas id="activity-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="analytics-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Average Lifespan:</span>
+                        <span class="summary-value" id="avg-lifespan">0 days</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Renewal Rate:</span>
+                        <span class="summary-value" id="renewal-rate">0%</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Most Active Category:</span>
+                        <span class="summary-value" id="most-active-category">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Renewal Cost:</span>
+                        <span class="summary-value" id="total-cost">$0</span>
+                    </div>
+                </div>
+            </section>
+
+            <section id="settings" class="section">
+                <h2>Settings</h2>
+                <div class="settings-grid">
+                    <div class="setting-card">
+                        <h3>Data Management</h3>
+                        <button id="export-data" class="secondary-btn">📤 Export All Data</button>
+                        <button id="import-data" class="secondary-btn">📥 Import Data</button>
+                        <input type="file" id="import-file" accept=".json" style="display: none;">
+                        <button id="backup-data" class="secondary-btn">💾 Create Backup</button>
+                        <button id="clear-all-data" class="danger-btn">🗑️ Clear All Data</button>
+                    </div>
+                    <div class="setting-card">
+                        <h3>Display Settings</h3>
+                        <div class="setting-group">
+                            <label for="items-per-page">Items per page:</label>
+                            <select id="items-per-page">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label for="default-sort">Default sort:</label>
+                            <select id="default-sort">
+                                <option value="expiry-date">Expiry Date</option>
+                                <option value="name">Name</option>
+                                <option value="category">Category</option>
+                                <option value="priority">Priority</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label>
+                                <input type="checkbox" id="show-expiry-warnings"> Show expiry warnings
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-card">
+                        <h3>Notification Settings</h3>
+                        <div class="setting-group">
+                            <label>
+                                <input type="checkbox" id="sound-notifications"> Sound notifications
+                            </label>
+                        </div>
+                        <div class="setting-group">
+                            <label>
+                                <input type="checkbox" id="desktop-notifications"> Desktop notifications
+                            </label>
+                        </div>
+                        <div class="setting-group">
+                            <label for="notification-time">Daily notification time:</label>
+                            <input type="time" id="notification-time" value="09:00">
+                        </div>
+                    </div>
+                    <div class="setting-card">
+                        <h3>Advanced Settings</h3>
+                        <div class="setting-group">
+                            <label for="auto-backup">Auto backup interval (days):</label>
+                            <input type="number" id="auto-backup" min="0" max="365" value="7">
+                        </div>
+                        <div class="setting-group">
+                            <label>
+                                <input type="checkbox" id="enable-analytics"> Enable analytics tracking
+                            </label>
+                        </div>
+                        <button id="reset-settings" class="secondary-btn">🔄 Reset to Defaults</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add/Edit Knowledge Modal -->
+    <div id="knowledge-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Add Knowledge Item</h3>
+                <button id="close-knowledge-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="knowledge-form">
+                    <div class="form-group">
+                        <label for="knowledge-name">Name *</label>
+                        <input type="text" id="knowledge-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="knowledge-description">Description</label>
+                        <textarea id="knowledge-description" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="knowledge-category">Category *</label>
+                            <select id="knowledge-category" required>
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="knowledge-priority">Priority</label>
+                            <select id="knowledge-priority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="knowledge-expiry">Expiry Date *</label>
+                            <input type="date" id="knowledge-expiry" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="knowledge-cost">Renewal Cost ($)</label>
+                            <input type="number" id="knowledge-cost" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="knowledge-tags">Tags (comma-separated)</label>
+                        <input type="text" id="knowledge-tags" placeholder="certification, training, license">
+                    </div>
+                    <div class="form-group">
+                        <label for="knowledge-notes">Additional Notes</label>
+                        <textarea id="knowledge-notes" rows="2"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancel-knowledge" class="secondary-btn">Cancel</button>
+                        <button type="submit" class="primary-btn">Save Knowledge Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div id="category-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Category</h3>
+                <button id="close-category-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="category-form">
+                    <div class="form-group">
+                        <label for="category-name">Category Name *</label>
+                        <input type="text" id="category-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category-description">Description</label>
+                        <textarea id="category-description" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="category-color">Color</label>
+                        <input type="color" id="category-color" value="#2563eb">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancel-category" class="secondary-btn">Cancel</button>
+                        <button type="submit" class="primary-btn">Create Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+                <button id="close-delete-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-message">Are you sure you want to delete this item?</p>
+                <div class="form-actions">
+                    <button id="cancel-delete" class="secondary-btn">Cancel</button>
+                    <button id="confirm-delete" class="danger-btn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="knowledge-expiry-tracker.js"></script>
+</body>
+</html>
