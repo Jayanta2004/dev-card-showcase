@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENERATIVE HUD · UNIQUE MONOLITH</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0b0f1c;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', 'Avenir', 'Inter', system-ui, sans-serif;
+            padding: 16px;
+        }
+
+        /* main panel – glassy, extreme, layered */
+        .hud {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(12, 20, 30, 0.65);
+            backdrop-filter: blur(22px) saturate(200%);
+            -webkit-backdrop-filter: blur(22px) saturate(200%);
+            border: 1px solid rgba(80, 180, 255, 0.25);
+            border-radius: 48px 48px 32px 32px;
+            box-shadow: 0 30px 50px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(150, 220, 255, 0.15) inset, 0 0 40px rgba(30, 144, 255, 0.2);
+            padding: 28px 32px 42px 32px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        /* cyber corner elements */
+        .hud::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 48px 48px 32px 32px;
+            padding: 10px;
+            background: radial-gradient(circle at 20% 30%, rgba(50,200,255,0.1), transparent 60%);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* scanline flicker */
+        .hud::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,255,255,0.02) 0px, rgba(0,0,0,0.2) 2px, transparent 3px, transparent 6px);
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: 2;
+            mix-blend-mode: overlay;
+            opacity: 0.3;
+        }
+
+        /* header with dynamic status */
+        .top-dashboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 8px 16px 8px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.25);
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 12px 8px;
+        }
+
+        .badge {
+            background: rgba(0, 20, 40, 0.7);
+            border: 1px solid #2cf;
+            color: #b6f0ff;
+            border-radius: 40px;
+            padding: 8px 22px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 10px #00a6ff70;
+        }
+
+        .badge strong {
+            color: white;
+            font-weight: 500;
+            margin-left: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pulse {
+            background: #0e2630;
+            border-color: #ffb86b;
+            color: #ffdbb5;
+            box-shadow: 0 0 15px #ffae42;
+            animation: softPulse 2s infinite alternate;
+        }
+
+        @keyframes softPulse {
+            0% { box-shadow: 0 0 5px #ffae42; border-color: #ffae42; }
+            100% { box-shadow: 0 0 20px #ffae42, 0 0 5px #fd9e2a; border-color: #fd9e2a; }
+        }
+
+        /* main grid: three distinct zones */
+        .grid-main {
+            display: grid;
+            grid-template-columns: 1.2fr 0.9fr 1.2fr;
+            gap: 24px;
+            margin-bottom: 36px;
+        }
+
+        /* ----- left column : data stream / quantum noise ----- */
+        .left-panel {
+            background: rgba(10, 20, 30, 0.5);
+            border-radius: 24px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            padding: 20px 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 0 #051016;
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            color: #4e9bb8;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            border-left: 4px solid #0cf;
+            padding-left: 10px;
+        }
+
+        .stream {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .stream-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            border-bottom: 1px dashed rgba(100, 200, 255, 0.2);
+            padding-bottom: 8px;
+        }
+
+        .stream-index {
+            color: #20c0e0;
+            background: #071e28;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .stream-value {
+            color: #b0f0ff;
+            word-break: break-word;
+            flex: 1;
+            text-shadow: 0 0 5px cyan;
+        }
+
+        .glitch {
+            animation: glitch 3s infinite steps(1);
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 cyan, -0.05em -0.025em 0 red; }
+            25% { text-shadow: -0.05em 0.025em 0 cyan, 0.05em 0 0 red; }
+            50% { text-shadow: 0.075em 0.025em 0 cyan, -0.05em -0.025em 0 red; }
+            75% { text-shadow: -0.05em 0 0 cyan, 0.05em 0.025em 0 red; }
+            100% { text-shadow: 0.025em 0.025em 0 cyan, -0.025em -0.025em 0 red; }
+        }
+
+        /* ----- center : main viz & interactive target ----- */
+        .center-panel {
+            background: rgba(6, 16, 26, 0.7);
+            border-radius: 32px;
+            border: 1px solid #26ccff;
+            box-shadow: 0 0 30px #006a9e33, inset 0 0 30px #003349;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 18px;
+            position: relative;
+        }
+
+        .center-panel canvas {
+            width: 100%;
+            aspect-ratio: 1/0.9;
+            background: #030b12;
+            border-radius: 24px;
+            display: block;
+            margin-bottom: 18px;
+            border: 1px solid #1e6985;
+            box-shadow: 0 0 20px #005678;
+            cursor: crosshair;
+            transition: 0.15s ease;
+        }
+
+        .center-panel canvas:active {
+            transform: scale(0.99);
+        }
+
+        .launch-btn {
+            background: none;
+            border: 2px solid #0cf;
+            color: #0cf;
+            font-size: 1rem;
+            padding: 12px 0;
+            border-radius: 60px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            backdrop-filter: blur(12px);
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 15px #00a6ff;
+            width: 100%;
+        }
+
+        .launch-btn:hover {
+            background: #0cf;
+            color: #021118;
+            box-shadow: 0 0 40px cyan;
+            border-color: white;
+        }
+
+        /* ----- right panel : network mapping / entropy ----- */
+        .right-panel {
+            background: rgba(10, 20, 30, 0.5);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            padding: 20px 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .node {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 140, 0, 0.2);
+            padding: 8px 4px;
+        }
+
+        .node-id {
+            color: #ffb347;
+            font-weight: 400;
+        }
+
+        .node-bar {
+            width: 100px;
+            height: 8px;
+            background: #15232e;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-left: 12px;
+        }
+
+        .node-fill {
+            height: 100%;
+            width: 60%;
+            background: linear-gradient(90deg, #fa0, #fc6);
+            border-radius: 20px;
+            box-shadow: 0 0 8px #fa0;
+        }
+
+        .sig {
+            font-family: monospace;
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+
+        /* footer : telemetry */
+        .footer-strip {
+            margin-top: 28px;
+            display: flex;
+            gap: 20px;
+            background: #02111880;
+            border-radius: 60px;
+            padding: 14px 30px;
+            border: 1px solid #266a81;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            backdrop-filter: blur(16px);
+        }
+
+        .telemetry {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tele-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            color: #adf0ff;
+            font-size: 0.9rem;
+        }
+
+        .tele-value {
+            font-size: 1.5rem;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+            color: white;
+            text-shadow: 0 0 8px cyan;
+        }
+
+        .unit {
+            font-size: 0.7rem;
+            color: #4f95af;
+        }
+
+        /* responsive */
+        @media (max-width: 800px) {
+            .grid-main { grid-template-columns: 1fr; }
+            .hud { padding: 20px; }
+        }
+
+        /* custom flicker */
+        .flicker {
+            animation: flick 5.5s linear infinite;
+        }
+
+        @keyframes flick {
+            0% { opacity: 1; }
+            45% { opacity: 1; }
+            47% { opacity: 0.8; }
+            48% { opacity: 1; }
+            52% { opacity: 0.7; }
+            53% { opacity: 1; }
+            90% { opacity: 1; }
+            92% { opacity: 0.4; }
+            94% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hud flicker">
+        <!-- top bar with live timestamps and unique ID -->
+        <div class="top-dashboard">
+            <span class="badge">◉ SECURE LINK <strong id="sessionID">0x7F3A-2B</strong></span>
+            <span class="badge pulse">⟳ LIVE FEED <strong id="liveTimestamp">18:42:05</strong></span>
+            <span class="badge">⚡ QUANTUM NOISE <strong id="noiseLevel">0.83 f</strong></span>
+        </div>
+
+        <!-- main grid -->
+        <div class="grid-main">
+            <!-- left : data stream (regenerates with each interaction) -->
+            <div class="left-panel">
+                <div class="section-label">⏧  DATA STREAM (DECIMATED)</div>
+                <div class="stream" id="streamContainer">
+                    <!-- dynamic injected via js -->
+                </div>
+                <div style="margin-top: 16px; text-align: right; color: #337788; font-size: 0.7rem;">⏴⏴   ENC // 0x⏎</div>
+            </div>
+
+            <!-- center : canvas + main control -->
+            <div class="center-panel">
+                <canvas id="spectralCanvas" width="300" height="270"></canvas>
+                <button class="launch-btn" id="regenerateBtn">⟳  REGENERATE  ⟳</button>
+                <div style="margin-top: 8px; color: #3aa; font-size: 0.7rem; letter-spacing: 1px; text-align: center;">click canvas / button — everything mutates</div>
+            </div>
+
+            <!-- right : dynamic nodes (connection strengths) -->
+            <div class="right-panel">
+                <div class="section-label" style="border-left-color: #fa0;">⏧  MESH LATENCY (GBe)</div>
+                <div class="node-container" id="nodeContainer">
+                    <!-- filled by js -->
+                </div>
+                <div style="margin-top: 20px; background: #04131e; border-radius: 16px; padding: 12px; border: 1px solid #f80; font-family: monospace; color: #fc8;" id="entropySig">SIG: 0x4F1A · HASH: 3E2B</div>
+            </div>
+        </div>
+
+        <!-- footer telemetry (live updates) -->
+        <div class="footer-strip">
+            <div class="telemetry">
+                <div class="tele-item"><span class="tele-value" id="fpsCounter">60</span><span class="unit">FPS</span></div>
+                <div class="tele-item"><span class="tele-value" id="driftValue">0.24</span><span class="unit">DRIFT</span></div>
+                <div class="tele-item"><span class="tele-value" id="particleCount">128</span><span class="unit">NODES</span></div>
+            </div>
+            <div style="color: #2d819d;">⍟ ACTIVE NEURAL WEB v.9.22</div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- unique generative system: one file, high complexity ----------
+            const canvas = document.getElementById('spectralCanvas');
+            const ctx = canvas.getContext('2d');
+            const streamDiv = document.getElementById('streamContainer');
+            const nodeDiv = document.getElementById('nodeContainer');
+            const entropySig = document.getElementById('entropySig');
+            const sessionSpan = document.getElementById('sessionID');
+            const timeSpan = document.getElementById('liveTimestamp');
+            const noiseSpan = document.getElementById('noiseLevel');
+            const fpsSpan = document.getElementById('fpsCounter');
+            const driftSpan = document.getElementById('driftValue');
+            const particleSpan = document.getElementById('particleCount');
+            const regenBtn = document.getElementById('regenerateBtn');
+
+            // state — changes on every regeneration
+            let sessionToken = Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase().padStart(4,'0');
+            let privateSeed = 0.1;
+            let noiseBase = 0.3;
+            let nodesData = [];
+            let streamItems = [];
+
+            // ---------- helpers ----------
+            function randomHex(len = 4) {
+                return Math.floor(Math.random()*Math.pow(16, len)).toString(16).toUpperCase().padStart(len, '0');
+            }
+
+            // generate fresh dataset (nodes, stream items, seed)
+            function generateNewState() {
+                // noise & drift
+                noiseBase = 0.2 + Math.random() * 1.5;
+                privateSeed = Math.random() * 2.0 - 1.0;
+
+                // stream items (left column) — 5 items with cryptic evolving values
+                const newStream = [];
+                const prefixes = ['XQ', 'NV', 'AL', 'Z9', 'KP', '7H', 'RX'];
+                for (let i=0; i<5; i++) {
+                    const p = prefixes[Math.floor(Math.random() * prefixes.length)];
+                    const hexPart = randomHex(6);
+                    const val = (Math.random() * 100).toFixed(2);
+                    newStream.push({
+                        index: `[${String(i+1).padStart(2,'0')}]`,
+                        content: `${p}·${hexPart}  ➔  ${val} mV  ∷ ${randomHex(2)}`
+                    });
+                }
+                streamItems = newStream;
+
+                // nodes (right column) — 4 mesh nodes with random fill
+                const newNodeSet = [];
+                for (let i=0; i<4; i++) {
+                    const fillPercent = 15 + Math.floor(Math.random() * 80);
+                    newNodeSet.push({
+                        id: `NODE_${String.fromCharCode(65+i)}:${randomHex(2)}`,
+                        fill: fillPercent,
+                        tail: randomHex(3)
+                    });
+                }
+                nodesData = newNodeSet;
+
+                // update entropy sig
+                const entropyRand = randomHex(6);
+                const hashRand = randomHex(4);
+                entropySig.innerText = `SIG: 0x${entropyRand} · HASH: ${hashRand}`;
+
+                // drift value, particle count
+                const newDrift = (Math.random() * 1.5).toFixed(2);
+                driftSpan.innerText = newDrift;
+                const newParticle = Math.floor(50 + Math.random() * 250);
+                particleSpan.innerText = newParticle;
+
+                // noise level
+                noiseSpan.innerText = noiseBase.toFixed(2) + ' f';
+
+                // session id small update
+                sessionToken = randomHex(4) + '-' + randomHex(2);
+                sessionSpan.innerText = '0x' + sessionToken;
+
+                // update canvas
+                drawCanvas(privateSeed, noiseBase);
+                renderStream();
+                renderNodes();
+            }
+
+            // render left stream
+            function renderStream() {
+                let htmlStr = '';
+                streamItems.forEach(item => {
+                    htmlStr += `<div class="stream-item">
+                        <span class="stream-index">${item.index}</span>
+                        <span class="stream-value glitch">${item.content}</span>
+                    </div>`;
+                });
+                streamDiv.innerHTML = htmlStr;
+            }
+
+            // render right nodes
+            function renderNodes() {
+                let nodesHtml = '';
+                nodesData.forEach(n => {
+                    nodesHtml += `<div class="node">
+                        <span class="node-id">${n.id}</span>
+                        <div style="display: flex; align-items: center;">
+                            <div class="node-bar"><div class="node-fill" style="width:${n.fill}%;"></div></div>
+                            <span class="sig" style="margin-left: 8px;">${n.tail}</span>
+                        </div>
+                    </div>`;
+                });
+                nodeDiv.innerHTML = nodesHtml;
+            }
+
+            // draw the main abstract viz — dynamic, generative, never the same
+            function drawCanvas(seed, noise) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // background gradient
+                const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                grad.addColorStop(0, '#02131f');
+                grad.addColorStop(0.7, '#102f3f');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // draw layered waves / glitch lines based on seed & noise
+                const rows = 9;
+                const cols = 14;
+                const cellW = canvas.width / cols;
+                const cellH = canvas.height / rows;
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const x = j * cellW;
+                        const y = i * cellH;
+                        // pseudo random based on seed+coords+noise
+                        const rVal = Math.sin(i * 1.5 + seed * 5) * Math.cos(j * 1.2 + noise) * 1.5 + 0.8;
+                        const alpha = Math.abs(rVal * 0.4);
+                        if (rVal > 0.1) {
+                            ctx.fillStyle = `rgba(0, 220, 250, ${alpha*0.6})`;
+                            ctx.fillRect(x+2, y+2, cellW-4, cellH-4);
+                        }
+                        // draw small cross pattern
+                        ctx.strokeStyle = '#0cf';
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.moveTo(x+4, y+4);
+                        ctx.lineTo(x+cellW-8, y+cellH-8);
+                        ctx.strokeStyle = `rgba(50, 200, 255, ${0.3+alpha*0.4})`;
+                        ctx.stroke();
+                    }
+                }
+
+                // free-form curve loops (unique)
+                ctx.beginPath();
+                for (let k = 0; k < 5; k++) {
+                    const offset = (seed * 20 + k * 12) % canvas.width;
+                    ctx.beginPath();
+                    ctx.moveTo(offset, 10);
+                    for (let t = 0; t < 20; t++) {
+                        const xPos = (offset + t * 12 + Math.sin(t + seed*5)*8) % canvas.width;
+                        const yPos = 40 + t*9 + Math.cos(t*0.5 + noise)*10;
+                        ctx.lineTo(xPos, yPos);
+                    }
+                    ctx.strokeStyle = `hsl(${180 + k*30}, 80%, 60%)`;
+                    ctx.lineWidth = 2.5 - k*0.3;
+                    ctx.stroke();
+                }
+
+                // random circles (quantum dots)
+                for (let c=0; c<12; c++) {
+                    const rad = 5 + Math.random() * 16;
+                    const cx = 30 + Math.random() * (canvas.width-60);
+                    const cy = 40 + Math.random() * (canvas.height-80);
+                    const hue = 180 + Math.floor(30 * Math.sin(cy * seed));
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, rad, 0, 2*Math.PI);
+                    ctx.fillStyle = `hsla(${hue}, 90%, 65%, 0.3)`;
+                    ctx.fill();
+                    ctx.strokeStyle = '#0cf';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+
+                // write something glitchy
+                ctx.font = "bold 10px 'JetBrains Mono', monospace";
+                ctx.fillStyle = "#aaf0ff";
+                ctx.fillText("0x" + randomHex(3), 220, 40);
+                ctx.fillStyle = "#ffbd4a";
+                ctx.fillText("◈", 150, 210);
+            }
+
+            // update time and fps simulation
+            function updateTelemetry() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-GB');
+                timeSpan.innerText = timeStr;
+
+                // fake fps variance
+                const fakeFps = 55 + Math.floor(Math.random() * 15);
+                fpsSpan.innerText = fakeFps;
+            }
+
+            // regenerate on click (button)
+            function handleRegenerate() {
+                generateNewState();
+                updateTelemetry();
+            }
+
+            // canvas click also triggers
+            canvas.addEventListener('click', (e) => {
+                // also mutate extra based on click position (advanced feel)
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const canvasX = (e.clientX - rect.left) * scaleX;
+                const canvasY = (e.clientY - rect.top) * scaleY;
+                // mix into seed for fun
+                privateSeed += (canvasX / canvas.width) * 0.4 - 0.2;
+                noiseBase += (canvasY / canvas.height) * 0.3 - 0.15;
+                if (noiseBase > 2.0) noiseBase = 0.2;
+                generateNewState(); // full refresh
+                updateTelemetry();
+            });
+
+            // timer for seconds
+            setInterval(() => {
+                updateTelemetry();
+                // also slightly mutate noise to show activity (optional)
+                noiseBase += (Math.random() - 0.5) * 0.1;
+                if (noiseBase > 2.0) noiseBase = 0.3;
+                if (noiseBase < 0.1) noiseBase = 0.5;
+                noiseSpan.innerText = noiseBase.toFixed(2) + ' f';
+                // small entropy update for footer sig
+                const e1 = randomHex(4);
+                const e2 = randomHex(3);
+                entropySig.innerText = `SIG: 0x${e1} · HASH: ${e2}`;
+                // redraw canvas to keep alive movement? (comment out if too heavy but it's cool)
+                drawCanvas(privateSeed, noiseBase);
+            }, 1200);
+
+            // initialize everything and first draw
+            generateNewState();
+            updateTelemetry();
+
+            // button listener
+            regenBtn.addEventListener('click', () => {
+                handleRegenerate();
+            });
+
+            // extra: update on window load (fine)
+            window.addEventListener('load', () => {
+                drawCanvas(privateSeed, noiseBase);
+            });
+
+            // optional: mouse move subtle influence (high level but subtle)
+            canvas.addEventListener('mousemove', (e) => {
+                if (Math.random() > 0.97) { // rarely, to keep uniqueness
+                    const rect = canvas.getBoundingClientRect();
+                    const relX = (e.clientX - rect.left) / rect.width;
+                    privateSeed += (relX - 0.5) * 0.02;
+                    drawCanvas(privateSeed, noiseBase);
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>
