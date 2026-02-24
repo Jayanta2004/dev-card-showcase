@@ -182,6 +182,60 @@ function initMap() {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
   renderMapMarkers();
+  
+    // Community Event Map Logic
+    const events = [
+      {
+        name: 'Tech Meetup',
+        lat: 28.6139,
+        lng: 77.2090,
+        date: '2026-02-28',
+        rsvped: false
+      },
+      {
+        name: 'Art Festival',
+        lat: 28.6200,
+        lng: 77.2300,
+        date: '2026-03-02',
+        rsvped: false
+      },
+      {
+        name: 'Community Clean-Up',
+        lat: 28.6000,
+        lng: 77.2100,
+        date: '2026-03-05',
+        rsvped: false
+      }
+    ];
+
+    function renderEvents() {
+      document.getElementById('event-list').innerHTML = '';
+      events.forEach((event, idx) => {
+        const eventDiv = document.createElement('div');
+        eventDiv.className = 'event';
+        eventDiv.innerHTML = `
+          <span><strong>${event.name}</strong> - ${event.date}</span>
+          <button class="rsvp-btn" onclick="rsvpEvent(${idx})" ${event.rsvped ? 'disabled' : ''}>${event.rsvped ? 'RSVPed' : 'RSVP'}</button>
+        `;
+        document.getElementById('event-list').appendChild(eventDiv);
+      });
+    }
+
+    window.rsvpEvent = function(idx) {
+      events[idx].rsvped = true;
+      renderEvents();
+    }
+
+    // Add markers to map
+    function addMarkers() {
+      events.forEach((event, idx) => {
+        const marker = L.marker([event.lat, event.lng]).addTo(map);
+        marker.bindPopup(`<strong>${event.name}</strong><br>${event.date}<br><button onclick=\"window.rsvpEvent(${idx})\">${event.rsvped ? 'RSVPed' : 'RSVP'}</button>`);
+      });
+    }
+
+    renderEvents();
+    addMarkers();
 }
 
 // Initial load
