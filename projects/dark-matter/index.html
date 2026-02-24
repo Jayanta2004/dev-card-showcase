@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARK MATTER DETECTOR · WIMP halo · galactic archaeology</title>
+    <!-- single file · particle physics + galactic dynamics + cryogenic detectors -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #030514;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Martian Mono', 'Fira Code', monospace;
+            overflow: hidden;
+        }
+
+        .dark-lab {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 20% 30%, #1a1f2a, #010103);
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #haloCanvas {
+            z-index: 1;
+            filter: drop-shadow(0 0 10px #6a4fff);
+        }
+
+        #detectorCanvas {
+            z-index: 2;
+            mix-blend-mode: screen;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        #eventCanvas {
+            z-index: 3;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+
+        .dark-panel {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(10, 15, 30, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(100, 150, 255, 0.6);
+            border-radius: 60px 60px 30px 30px;
+            padding: 1.5rem 3rem;
+            display: flex;
+            gap: 3rem;
+            color: #aac0ff;
+            box-shadow: 0 0 80px #3f6cff, 0 20px 40px black;
+            pointer-events: auto;
+        }
+
+        .dark-param {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .param-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            opacity: 0.7;
+            color: #aac;
+        }
+
+        .param-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #aaf, #faf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px #f6f;
+        }
+
+        .dark-slider {
+            width: 200px;
+            height: 6px;
+            background: #1a1f3a;
+            border-radius: 3px;
+            position: relative;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+
+        .slider-fill {
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, #66f, #f6f);
+            border-radius: 3px;
+            box-shadow: 0 0 20px #66f;
+        }
+
+        .slider-handle {
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 30px #99f;
+            border: 3px solid #66f;
+            cursor: grab;
+        }
+
+        .dark-badge {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            z-index: 10;
+            background: rgba(0, 5, 20, 0.6);
+            backdrop-filter: blur(8px);
+            border: 2px solid #66f;
+            border-radius: 40px;
+            padding: 1rem 2.5rem;
+            color: white;
+            font-size: 1.6rem;
+            letter-spacing: 4px;
+            box-shadow: 0 0 50px #33f;
+        }
+
+        .dark-stats {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            z-index: 10;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat-panel {
+            background: rgba(10, 15, 40, 0.7);
+            backdrop-filter: blur(8px);
+            border: 2px solid #8af;
+            border-radius: 30px;
+            padding: 1.2rem 2rem;
+            text-align: center;
+            color: #ccf;
+            min-width: 150px;
+        }
+
+        .stat-number {
+            font-size: 2.4rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .event-counter {
+            position: absolute;
+            bottom: 200px;
+            right: 60px;
+            z-index: 10;
+            background: rgba(10, 5, 30, 0.8);
+            backdrop-filter: blur(4px);
+            padding: 1.2rem 2rem;
+            border-radius: 40px;
+            border-right: 8px solid #66f;
+            color: #ccf;
+            font-size: 1.2rem;
+        }
+
+        .wimp-mass {
+            position: absolute;
+            bottom: 200px;
+            left: 60px;
+            z-index: 10;
+            background: rgba(20, 20, 40, 0.7);
+            backdrop-filter: blur(4px);
+            padding: 1rem 2rem;
+            border-radius: 40px;
+            border-left: 8px solid #f6f;
+            color: #ccf;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-lab">
+        <canvas id="haloCanvas"></canvas>
+        <canvas id="detectorCanvas"></canvas>
+        <canvas id="eventCanvas"></canvas>
+
+        <!-- dark matter control panel -->
+        <div class="dark-panel">
+            <div class="dark-param">
+                <span class="param-label">WIMP MASS</span>
+                <div class="dark-slider" id="massSlider">
+                    <div class="slider-fill" id="massFill" style="width: 40%;"></div>
+                    <div class="slider-handle" id="massHandle" style="left: 40%;"></div>
+                </div>
+                <span class="param-value" id="massDisplay">100</span>
+            </div>
+
+            <div class="dark-param">
+                <span class="param-label">CROSS SECTION</span>
+                <div class="dark-slider" id="crossSlider">
+                    <div class="slider-fill" id="crossFill" style="width: 30%;"></div>
+                    <div class="slider-handle" id="crossHandle" style="left: 30%;"></div>
+                </div>
+                <span class="param-value" id="crossDisplay">1e-46</span>
+            </div>
+
+            <div class="dark-param">
+                <span class="param-label">HALO DENSITY</span>
+                <div class="dark-slider" id="densitySlider">
+                    <div class="slider-fill" id="densityFill" style="width: 60%;"></div>
+                    <div class="slider-handle" id="densityHandle" style="left: 60%;"></div>
+                </div>
+                <span class="param-value" id="densityDisplay">0.6</span>
+            </div>
+        </div>
+
+        <div class="dark-badge">🌀 DARK MATTER · WIMP HALO</div>
+        
+        <div class="dark-stats">
+            <div class="stat-panel">
+                <div class="stat-number" id="eventRate">0.23</div>
+                <div>EVENTS/DAY</div>
+            </div>
+            <div class="stat-panel">
+                <div class="stat-number" id="totalEvents">47</div>
+                <div>TOTAL EVENTS</div>
+            </div>
+        </div>
+
+        <div class="event-counter" id="lastEvent">
+            last event: 2.3 keV · 2h ago
+        </div>
+
+        <div class="wimp-mass" id="wimpInfo">
+            ⚛️ WIMP mass: 100 GeV/c²
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- DARK MATTER DETECTOR ----------
+            // Simulates WIMP interactions in cryogenic detectors + galactic halo
+            
+            const haloCanvas = document.getElementById('haloCanvas');
+            const detectorCanvas = document.getElementById('detectorCanvas');
+            const eventCanvas = document.getElementById('eventCanvas');
+            
+            const ctxHalo = haloCanvas.getContext('2d');
+            const ctxDetector = detectorCanvas.getContext('2d');
+            const ctxEvent = eventCanvas.getContext('2d');
+
+            let width, height;
+            let time = 0;
+
+            // dark matter parameters
+            let wimpMass = 100; // GeV/c²
+            let crossSection = 1e-46; // cm²
+            let haloDensity = 0.6; // local density in GeV/cm³
+            
+            // galactic halo particles
+            const haloParticles = [];
+            const PARTICLE_COUNT = 200;
+            
+            // detector events
+            const events = [];
+            let totalEvents = 0;
+            let eventRate = 0;
+
+            // detector materials
+            const detectorMaterials = ['XENON', 'ARGON', 'GERMANIUM', 'SILICON'];
+            
+            // UI elements
+            const massDisplay = document.getElementById('massDisplay');
+            const crossDisplay = document.getElementById('crossDisplay');
+            const densityDisplay = document.getElementById('densityDisplay');
+            const eventRateSpan = document.getElementById('eventRate');
+            const totalEventsSpan = document.getElementById('totalEvents');
+            const lastEventSpan = document.getElementById('lastEvent');
+            const wimpInfoSpan = document.getElementById('wimpInfo');
+            
+            // sliders
+            const massSlider = document.getElementById('massSlider');
+            const massHandle = document.getElementById('massHandle');
+            const massFill = document.getElementById('massFill');
+            
+            const crossSlider = document.getElementById('crossSlider');
+            const crossHandle = document.getElementById('crossHandle');
+            const crossFill = document.getElementById('crossFill');
+            
+            const densitySlider = document.getElementById('densitySlider');
+            const densityHandle = document.getElementById('densityHandle');
+            const densityFill = document.getElementById('densityFill');
+
+            // halo particle class
+            class HaloParticle {
+                constructor() {
+                    this.reset();
+                }
+                
+                reset() {
+                    // random position in halo (spherical)
+                    let r = 0.8 + Math.random() * 0.4;
+                    let theta = Math.random() * Math.PI * 2;
+                    let phi = Math.acos(2 * Math.random() - 1);
+                    
+                    this.x = r * Math.sin(phi) * Math.cos(theta);
+                    this.y = r * Math.sin(phi) * Math.sin(theta);
+                    this.z = r * Math.cos(phi);
+                    
+                    // velocity (Maxwell-Boltzmann)
+                    let vScale = 0.2 + Math.random() * 0.3;
+                    this.vx = (Math.random() - 0.5) * vScale;
+                    this.vy = (Math.random() - 0.5) * vScale;
+                    this.vz = (Math.random() - 0.5) * vScale;
+                    
+                    // normalize to galactic rotation
+                    this.vx += 0.1; // galactic drift
+                    
+                    this.energy = Math.random() * 100; // keV
+                }
+                
+                update() {
+                    this.x += this.vx * 0.01;
+                    this.y += this.vy * 0.01;
+                    this.z += this.vz * 0.01;
+                    
+                    // wrap around halo
+                    let r = Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z);
+                    if (r > 1.2) {
+                        this.reset();
+                    }
+                }
+            }
+
+            // detector event class
+            class DetectorEvent {
+                constructor(energy, x, y, material) {
+                    this.energy = energy;
+                    this.x = x;
+                    this.y = y;
+                    this.material = material;
+                    this.time = Date.now();
+                    this.lifetime = 1.0;
+                }
+                
+                update(dt) {
+                    this.lifetime -= dt * 0.5;
+                    return this.lifetime > 0;
+                }
+            }
+
+            // initialize halo
+            function initHalo() {
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    haloParticles.push(new HaloParticle());
+                }
+            }
+
+            // resize
+            function resizeCanvases() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                haloCanvas.width = width;
+                haloCanvas.height = height;
+                detectorCanvas.width = width;
+                detectorCanvas.height = height;
+                eventCanvas.width = width;
+                eventCanvas.height = height;
+                
+                initHalo();
+            }
+            window.addEventListener('resize', resizeCanvases);
+            resizeCanvases();
+
+            // slider interactions
+            function setupSliders() {
+                // mass slider (10-1000 GeV)
+                function updateMassFromEvent(e) {
+                    const rect = massSlider.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    x = Math.max(0, Math.min(rect.width, x));
+                    let val = x / rect.width;
+                    
+                    wimpMass = Math.pow(10, 1 + val * 2); // 10 to 1000 GeV
+                    massDisplay.innerText = Math.round(wimpMass);
+                    massFill.style.width = (val * 100) + '%';
+                    massHandle.style.left = (val * 100) + '%';
+                    
+                    wimpInfoSpan.innerText = `⚛️ WIMP mass: ${Math.round(wimpMass)} GeV/c²`;
+                }
+                
+                massHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const onMove = (e) => updateMassFromEvent(e);
+                    const onUp = () => {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                
+                massSlider.addEventListener('click', (e) => {
+                    updateMassFromEvent(e);
+                });
+                
+                // cross section slider (log scale)
+                function updateCrossFromEvent(e) {
+                    const rect = crossSlider.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    x = Math.max(0, Math.min(rect.width, x));
+                    let val = x / rect.width;
+                    
+                    let logCross = -42 - val * 4; // -42 to -46
+                    crossSection = Math.pow(10, logCross);
+                    crossDisplay.innerText = '1e' + Math.round(logCross);
+                    crossFill.style.width = (val * 100) + '%';
+                    crossHandle.style.left = (val * 100) + '%';
+                }
+                
+                crossHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const onMove = (e) => updateCrossFromEvent(e);
+                    const onUp = () => {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                
+                crossSlider.addEventListener('click', (e) => {
+                    updateCrossFromEvent(e);
+                });
+                
+                // density slider
+                function updateDensityFromEvent(e) {
+                    const rect = densitySlider.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    x = Math.max(0, Math.min(rect.width, x));
+                    let val = x / rect.width;
+                    
+                    haloDensity = val;
+                    densityDisplay.innerText = haloDensity.toFixed(2);
+                    densityFill.style.width = (val * 100) + '%';
+                    densityHandle.style.left = (val * 100) + '%';
+                }
+                
+                densityHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const onMove = (e) => updateDensityFromEvent(e);
+                    const onUp = () => {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                
+                densitySlider.addEventListener('click', (e) => {
+                    updateDensityFromEvent(e);
+                });
+            }
+            setupSliders();
+
+            // simulate WIMP interaction
+            function checkInteractions() {
+                // interaction probability based on cross section and density
+                let prob = crossSection * 1e44 * haloDensity * 0.01;
+                
+                for (let particle of haloParticles) {
+                    if (Math.random() < prob) {
+                        // nuclear recoil energy
+                        let energy = 1 + Math.random() * 10 * (wimpMass / 100);
+                        
+                        // detector position
+                        let x = 0.3 + Math.random() * 0.4;
+                        let y = 0.3 + Math.random() * 0.4;
+                        
+                        let material = detectorMaterials[Math.floor(Math.random() * detectorMaterials.length)];
+                        
+                        events.push(new DetectorEvent(energy, x, y, material));
+                        totalEvents++;
+                        
+                        // update last event display
+                        let hoursAgo = Math.floor(Math.random() * 24);
+                        lastEventSpan.innerText = `last event: ${energy.toFixed(1)} keV · ${hoursAgo}h ago`;
+                    }
+                }
+                
+                // calculate event rate (events per day)
+                eventRate = totalEvents * 0.1; // scaled for display
+                eventRateSpan.innerText = eventRate.toFixed(2);
+                totalEventsSpan.innerText = totalEvents;
+            }
+
+            // update halo particles
+            function updateHalo() {
+                for (let particle of haloParticles) {
+                    particle.update();
+                }
+            }
+
+            // draw galactic halo
+            function drawHalo() {
+                ctxHalo.clearRect(0, 0, width, height);
+                
+                // draw Milky Way background
+                ctxHalo.fillStyle = '#030514';
+                ctxHalo.fillRect(0, 0, width, height);
+                
+                // draw stellar background
+                for (let i = 0; i < 100; i++) {
+                    let x = Math.random() * width;
+                    let y = Math.random() * height;
+                    
+                    ctxHalo.beginPath();
+                    ctxHalo.arc(x, y, 1 + Math.random() * 2, 0, 2 * Math.PI);
+                    ctxHalo.fillStyle = `rgba(255, 255, 200, ${Math.random() * 0.5})`;
+                    ctxHalo.fill();
+                }
+                
+                // draw halo particles (WIMPs)
+                for (let particle of haloParticles) {
+                    // project 3D to 2D
+                    let scale = 200;
+                    let x = width/2 + particle.x * scale * (width/height);
+                    let y = height/2 + particle.y * scale;
+                    
+                    // depth cue
+                    let depth = (particle.z + 1) / 2;
+                    let size = 2 + depth * 3;
+                    let alpha = 0.3 + depth * 0.3;
+                    
+                    ctxHalo.beginPath();
+                    ctxHalo.arc(x, y, size, 0, 2 * Math.PI);
+                    ctxHalo.fillStyle = `rgba(100, 150, 255, ${alpha * haloDensity})`;
+                    ctxHalo.shadowColor = '#66f';
+                    ctxHalo.shadowBlur = 10;
+                    ctxHalo.fill();
+                }
+                
+                // draw galactic center
+                ctxHalo.beginPath();
+                ctxHalo.arc(width/2, height/2, 30, 0, 2 * Math.PI);
+                ctxHalo.fillStyle = 'rgba(255, 200, 100, 0.3)';
+                ctxHalo.shadowBlur = 40;
+                ctxHalo.shadowColor = '#fa0';
+                ctxHalo.fill();
+            }
+
+            // draw detector
+            function drawDetector() {
+                ctxDetector.clearRect(0, 0, width, height);
+                
+                // draw detector vessel
+                let detX = width * 0.3;
+                let detY = height * 0.3;
+                let detW = width * 0.4;
+                let detH = height * 0.4;
+                
+                // cryostat
+                ctxDetector.strokeStyle = '#8af';
+                ctxDetector.lineWidth = 4;
+                ctxDetector.strokeRect(detX, detY, detW, detH);
+                
+                // fill with detector medium
+                ctxDetector.fillStyle = 'rgba(100, 150, 255, 0.1)';
+                ctxDetector.fillRect(detX, detY, detW, detH);
+                
+                // PMT array
+                for (let i = 0; i < 8; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        let px = detX + i * detW/8 + detW/16;
+                        let py = detY + j * detH/8 + detH/16;
+                        
+                        ctxDetector.beginPath();
+                        ctxDetector.arc(px, py, 5, 0, 2 * Math.PI);
+                        ctxDetector.fillStyle = '#8af80';
+                        ctxDetector.fill();
+                    }
+                }
+                
+                // draw energy deposit pattern
+                for (let event of events) {
+                    let ex = detX + event.x * detW;
+                    let ey = detY + event.y * detH;
+                    
+                    let radius = event.energy * 2;
+                    
+                    ctxDetector.beginPath();
+                    ctxDetector.arc(ex, ey, radius, 0, 2 * Math.PI);
+                    ctxDetector.fillStyle = `rgba(255, 200, 100, ${event.lifetime * 0.5})`;
+                    ctxDetector.shadowBlur = 30;
+                    ctxDetector.shadowColor = '#ff6';
+                    ctxDetector.fill();
+                }
+            }
+
+            // draw event history
+            function drawEvents() {
+                ctxEvent.clearRect(0, 0, width, height);
+                
+                // update and draw events
+                for (let i = events.length - 1; i >= 0; i--) {
+                    let event = events[i];
+                    if (!event.update(0.02)) {
+                        events.splice(i, 1);
+                        continue;
+                    }
+                    
+                    // draw event waveform
+                    let x = 100 + i * 30;
+                    let y = height - 100;
+                    
+                    ctxEvent.beginPath();
+                    ctxEvent.moveTo(x, y);
+                    ctxEvent.lineTo(x + 20, y - event.energy * 5);
+                    ctxEvent.lineTo(x + 40, y);
+                    ctxEvent.strokeStyle = '#ff6';
+                    ctxEvent.lineWidth = 2;
+                    ctxEvent.stroke();
+                    
+                    // event label
+                    ctxEvent.font = '10px monospace';
+                    ctxEvent.fillStyle = '#ff6';
+                    ctxEvent.fillText(event.energy.toFixed(1) + ' keV', x, y - 30);
+                }
+                
+                // draw energy spectrum
+                ctxEvent.beginPath();
+                ctxEvent.strokeStyle = '#8af80';
+                ctxEvent.lineWidth = 1;
+                
+                for (let e = 0; e < 100; e++) {
+                    let x = width - 200 + e * 2;
+                    let y = height - 100 - Math.exp(-e/20) * 100;
+                    
+                    if (e === 0) ctxEvent.moveTo(x, y);
+                    else ctxEvent.lineTo(x, y);
+                }
+                ctxEvent.stroke();
+            }
+
+            // animation loop
+            function animate() {
+                time += 0.02;
+                
+                updateHalo();
+                checkInteractions();
+                
+                drawHalo();
+                drawDetector();
+                drawEvents();
+                
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+    </script>
+</body>
+</html>

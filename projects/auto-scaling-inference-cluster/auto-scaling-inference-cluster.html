@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Scaling Inference Cluster #5001</title>
+    <link rel="stylesheet" href="auto-scaling-inference-cluster.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-brain"></i>
+                    <h1>Auto-Scaling Inference Cluster</h1>
+                    <span class="version">#5001</span>
+                </div>
+                <div class="header-controls">
+                    <div class="connection-status">
+                        <div id="connectionStatus" class="status-online"></div>
+                        <span id="connectionStatusText">Cluster Online</span>
+                    </div>
+                    <button id="emergencyStopBtn" class="btn btn-danger">
+                        <i class="fas fa-stop-circle"></i> Emergency Stop
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="#dashboard" class="nav-link active">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#cluster" class="nav-link">
+                            <i class="fas fa-server"></i>
+                            <span>Cluster Management</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#scaling" class="nav-link">
+                            <i class="fas fa-balance-scale"></i>
+                            <span>Auto-Scaling</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#models" class="nav-link">
+                            <i class="fas fa-cubes"></i>
+                            <span>Model Registry</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#monitoring" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Monitoring</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#security" class="nav-link">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Security</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#settings" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="section-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> Cluster Dashboard</h2>
+                    <div class="section-actions">
+                        <button id="refreshDashboardBtn" class="btn btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Active Nodes</h3>
+                            <i class="fas fa-server metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="activeNodesValue">24</div>
+                        <div class="metric-change positive" id="activeNodesChange">+2 (8.3%)</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Requests/sec</h3>
+                            <i class="fas fa-bolt metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="requestsPerSecValue">1,247</div>
+                        <div class="metric-change positive" id="requestsPerSecChange">+156 (14.3%)</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Avg Latency</h3>
+                            <i class="fas fa-clock metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="avgLatencyValue">127ms</div>
+                        <div class="metric-change negative" id="avgLatencyChange">+12ms (10.4%)</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Success Rate</h3>
+                            <i class="fas fa-check-circle metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="successRateValue">99.7%</div>
+                        <div class="metric-change positive" id="successRateChange">+0.2% (0.02%)</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>CPU Usage</h3>
+                            <i class="fas fa-microchip metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="cpuUsageValue">67%</div>
+                        <div class="metric-change negative" id="cpuUsageChange">-3% (-4.3%)</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Memory Usage</h3>
+                            <i class="fas fa-memory metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="memoryUsageValue">4.2GB</div>
+                        <div class="metric-change positive" id="memoryUsageChange">+0.3GB (7.7%)</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <h3>Request Throughput</h3>
+                        <canvas id="throughputChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Resource Utilization</h3>
+                        <canvas id="resourceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="activity-container">
+                    <h3>Recent Activity</h3>
+                    <div id="activityList" class="activity-list">
+                        <!-- Activity items will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cluster Management Section -->
+            <section id="cluster" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-server"></i> Cluster Management</h2>
+                    <div class="section-actions">
+                        <button id="addNodeBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Node
+                        </button>
+                        <button id="optimizeClusterBtn" class="btn btn-secondary">
+                            <i class="fas fa-magic"></i> Optimize
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Node Grid -->
+                <div id="nodeGrid" class="node-grid">
+                    <!-- Node cards will be populated by JavaScript -->
+                </div>
+
+                <!-- Cluster Stats -->
+                <div class="cluster-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Nodes:</span>
+                        <span class="stat-value" id="totalNodes">32</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Active Nodes:</span>
+                        <span class="stat-value" id="activeNodesStat">28</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Idle Nodes:</span>
+                        <span class="stat-value" id="idleNodes">4</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Failed Nodes:</span>
+                        <span class="stat-value" id="failedNodes">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Auto-Scaling Section -->
+            <section id="scaling" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-balance-scale"></i> Auto-Scaling Policies</h2>
+                    <div class="section-actions">
+                        <button id="createPolicyBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Policy
+                        </button>
+                        <button id="testScalingBtn" class="btn btn-secondary">
+                            <i class="fas fa-play"></i> Test Scaling
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scaling Policies -->
+                <div id="scalingPolicies" class="policies-grid">
+                    <!-- Policy cards will be populated by JavaScript -->
+                </div>
+
+                <!-- Scaling History -->
+                <div class="scaling-history">
+                    <h3>Scaling Events</h3>
+                    <div id="scalingEvents" class="events-list">
+                        <!-- Scaling events will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Scaling Configuration -->
+                <div class="scaling-config">
+                    <h3>Global Scaling Settings</h3>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label for="minNodes">Minimum Nodes:</label>
+                            <input type="number" id="minNodes" value="4" min="1" max="100">
+                        </div>
+                        <div class="config-item">
+                            <label for="maxNodes">Maximum Nodes:</label>
+                            <input type="number" id="maxNodes" value="64" min="1" max="200">
+                        </div>
+                        <div class="config-item">
+                            <label for="scaleUpThreshold">Scale Up Threshold (%):</label>
+                            <input type="number" id="scaleUpThreshold" value="80" min="1" max="100">
+                        </div>
+                        <div class="config-item">
+                            <label for="scaleDownThreshold">Scale Down Threshold (%):</label>
+                            <input type="number" id="scaleDownThreshold" value="30" min="1" max="100">
+                        </div>
+                        <div class="config-item">
+                            <label for="cooldownPeriod">Cooldown Period (min):</label>
+                            <input type="number" id="cooldownPeriod" value="5" min="1" max="60">
+                        </div>
+                    </div>
+                    <button id="saveScalingConfigBtn" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Configuration
+                    </button>
+                </div>
+            </section>
+
+            <!-- Model Registry Section -->
+            <section id="models" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-cubes"></i> Model Registry</h2>
+                    <div class="section-actions">
+                        <button id="uploadModelBtn" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Upload Model
+                        </button>
+                        <button id="createVersionBtn" class="btn btn-secondary">
+                            <i class="fas fa-code-branch"></i> New Version
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Model Grid -->
+                <div id="modelGrid" class="model-grid">
+                    <!-- Model cards will be populated by JavaScript -->
+                </div>
+
+                <!-- Model Details -->
+                <div id="modelDetails" class="model-details" style="display: none;">
+                    <div class="model-info">
+                        <h3 id="modelName">Model Name</h3>
+                        <div class="model-meta">
+                            <span id="modelVersion">v1.0.0</span>
+                            <span id="modelSize">2.3 GB</span>
+                            <span id="modelFramework">TensorFlow</span>
+                        </div>
+                        <p id="modelDescription">Model description...</p>
+                    </div>
+                    <div class="model-performance">
+                        <h4>Performance Metrics</h4>
+                        <div class="metrics-table">
+                            <div class="metric-row">
+                                <span class="metric-label">Accuracy:</span>
+                                <span class="metric-value" id="modelAccuracy">95.2%</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Latency:</span>
+                                <span class="metric-value" id="modelLatency">45ms</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Throughput:</span>
+                                <span class="metric-value" id="modelThroughput">250 req/sec</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Monitoring Section -->
+            <section id="monitoring" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-line"></i> Monitoring & Analytics</h2>
+                    <div class="section-actions">
+                        <button id="exportMetricsBtn" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <button id="setAlertsBtn" class="btn btn-warning">
+                            <i class="fas fa-bell"></i> Set Alerts
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Monitoring Charts -->
+                <div class="monitoring-charts">
+                    <div class="chart-container full-width">
+                        <h3>Cluster Performance Over Time</h3>
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Error Rate by Model</h3>
+                        <canvas id="errorChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Resource Distribution</h3>
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Alerts and Warnings -->
+                <div class="alerts-container">
+                    <h3>Active Alerts</h3>
+                    <div id="alertsList" class="alerts-list">
+                        <!-- Alerts will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security Section -->
+            <section id="security" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-shield-alt"></i> Security Center</h2>
+                    <div class="section-actions">
+                        <button id="runSecurityScanBtn" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Security Scan
+                        </button>
+                        <button id="viewAuditLogBtn" class="btn btn-secondary">
+                            <i class="fas fa-history"></i> Audit Log
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Security Metrics -->
+                <div class="security-metrics">
+                    <div class="security-card">
+                        <h4>Threat Level</h4>
+                        <div class="threat-level low">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Low</span>
+                        </div>
+                    </div>
+                    <div class="security-card">
+                        <h4>Failed Authentications</h4>
+                        <div class="metric-large">3</div>
+                        <div class="metric-small">Last 24h</div>
+                    </div>
+                    <div class="security-card">
+                        <h4>Active Sessions</h4>
+                        <div class="metric-large">127</div>
+                        <div class="metric-small">Current</div>
+                    </div>
+                    <div class="security-card">
+                        <h4>Security Score</h4>
+                        <div class="metric-large">98%</div>
+                        <div class="metric-small">Excellent</div>
+                    </div>
+                </div>
+
+                <!-- Security Policies -->
+                <div class="security-policies">
+                    <h3>Security Policies</h3>
+                    <div id="securityPoliciesList" class="policies-list">
+                        <!-- Security policies will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-cog"></i> Settings</h2>
+                    <div class="section-actions">
+                        <button id="saveSettingsBtn" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <button id="resetSettingsBtn" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Settings Grid -->
+                <div class="settings-grid">
+                    <div class="settings-group">
+                        <h3>Cluster Configuration</h3>
+                        <div class="setting-item">
+                            <label for="clusterName">Cluster Name:</label>
+                            <input type="text" id="clusterName" value="Production Inference Cluster">
+                        </div>
+                        <div class="setting-item">
+                            <label for="region">Region:</label>
+                            <select id="region">
+                                <option value="us-east-1" selected>US East (N. Virginia)</option>
+                                <option value="us-west-2">US West (Oregon)</option>
+                                <option value="eu-west-1">EU West (Ireland)</option>
+                                <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label for="instanceType">Default Instance Type:</label>
+                            <select id="instanceType">
+                                <option value="t3.medium">t3.medium (2 vCPU, 4GB RAM)</option>
+                                <option value="c5.large" selected>c5.large (2 vCPU, 4GB RAM)</option>
+                                <option value="c5.xlarge">c5.xlarge (4 vCPU, 8GB RAM)</option>
+                                <option value="g4dn.xlarge">g4dn.xlarge (4 vCPU, 16GB RAM, GPU)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Monitoring & Alerts</h3>
+                        <div class="setting-item toggle">
+                            <label for="enableMonitoring">Enable Detailed Monitoring:</label>
+                            <input type="checkbox" id="enableMonitoring" checked>
+                        </div>
+                        <div class="setting-item toggle">
+                            <label for="enableAlerts">Enable Email Alerts:</label>
+                            <input type="checkbox" id="enableAlerts" checked>
+                        </div>
+                        <div class="setting-item">
+                            <label for="alertEmail">Alert Email:</label>
+                            <input type="email" id="alertEmail" value="admin@company.com">
+                        </div>
+                        <div class="setting-item">
+                            <label for="logRetention">Log Retention (days):</label>
+                            <input type="number" id="logRetention" value="30" min="1" max="365">
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Security Settings</h3>
+                        <div class="setting-item toggle">
+                            <label for="enableEncryption">Enable Data Encryption:</label>
+                            <input type="checkbox" id="enableEncryption" checked>
+                        </div>
+                        <div class="setting-item toggle">
+                            <label for="enableAudit">Enable Audit Logging:</label>
+                            <input type="checkbox" id="enableAudit" checked>
+                        </div>
+                        <div class="setting-item">
+                            <label for="sessionTimeout">Session Timeout (minutes):</label>
+                            <input type="number" id="sessionTimeout" value="60" min="5" max="480">
+                        </div>
+                        <div class="setting-item">
+                            <label for="maxConcurrentRequests">Max Concurrent Requests:</label>
+                            <input type="number" id="maxConcurrentRequests" value="1000" min="10" max="10000">
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Auto-Scaling Inference Cluster #5001</h4>
+                    <p>Intelligent ML inference infrastructure with automatic scaling capabilities.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#dashboard">Dashboard</a></li>
+                        <li><a href="#cluster">Cluster Management</a></li>
+                        <li><a href="#scaling">Auto-Scaling</a></li>
+                        <li><a href="#monitoring">Monitoring</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>System Status</h4>
+                    <div class="status-indicators">
+                        <div class="status-item">
+                            <span class="status-dot online"></span>
+                            <span>API Gateway</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-dot online"></span>
+                            <span>Load Balancer</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-dot warning"></span>
+                            <span>Database</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Auto-Scaling Inference Cluster. Built for high-performance ML inference.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Node Modal -->
+    <div id="addNodeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Node</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addNodeForm">
+                    <div class="form-group">
+                        <label for="nodeName">Node Name:</label>
+                        <input type="text" id="nodeName" placeholder="e.g., inference-node-01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nodeType">Instance Type:</label>
+                        <select id="nodeType" required>
+                            <option value="c5.large">c5.large (General Purpose)</option>
+                            <option value="c5.xlarge">c5.xlarge (High Performance)</option>
+                            <option value="g4dn.xlarge">g4dn.xlarge (GPU Enabled)</option>
+                            <option value="r5.large">r5.large (Memory Optimized)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="nodeZone">Availability Zone:</label>
+                        <select id="nodeZone" required>
+                            <option value="us-east-1a">us-east-1a</option>
+                            <option value="us-east-1b">us-east-1b</option>
+                            <option value="us-east-1c">us-east-1c</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="autoScaling">Enable Auto-Scaling:</label>
+                        <input type="checkbox" id="autoScaling" checked>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelAddNodeBtn" class="btn btn-secondary">Cancel</button>
+                <button id="confirmAddNodeBtn" class="btn btn-primary">Add Node</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Model Modal -->
+    <div id="uploadModelModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Upload Model</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="uploadModelForm">
+                    <div class="form-group">
+                        <label for="modelFile">Model File:</label>
+                        <input type="file" id="modelFile" accept=".pb,.onnx,.h5,.pt,.pkl" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="uploadModelName">Model Name:</label>
+                        <input type="text" id="uploadModelName" placeholder="e.g., sentiment-analysis-v2" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modelFramework">Framework:</label>
+                        <select id="modelFramework" required>
+                            <option value="tensorflow">TensorFlow</option>
+                            <option value="pytorch">PyTorch</option>
+                            <option value="onnx">ONNX</option>
+                            <option value="scikit-learn">Scikit-learn</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modelDescription">Description:</label>
+                        <textarea id="modelDescription" rows="3" placeholder="Describe the model and its capabilities..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="modelTags">Tags:</label>
+                        <input type="text" id="modelTags" placeholder="e.g., nlp, classification, production">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelUploadBtn" class="btn btn-secondary">Cancel</button>
+                <button id="confirmUploadBtn" class="btn btn-primary">Upload Model</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h3 id="alertTitle">Alert</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="alertMessage">This is an alert message.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="alertOkBtn" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auto-scaling-inference-cluster.js"></script>
+</body>
+</html>
