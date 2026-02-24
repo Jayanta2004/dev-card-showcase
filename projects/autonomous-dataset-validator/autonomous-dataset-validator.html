@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Dataset Validator #5067</title>
+    <link rel="stylesheet" href="autonomous-dataset-validator.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🔍 Autonomous Dataset Validator</h1>
+                <p>Intelligent data quality assessment and validation tool</p>
+                <div class="header-controls">
+                    <button id="theme-toggle" class="icon-btn">🌙</button>
+                    <button id="export-btn" class="primary-btn">📊 Export Report</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Navigation</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#dashboard" class="sidebar-link active">📊 Dashboard</a></li>
+                <li><a href="#upload" class="sidebar-link">📁 Data Upload</a></li>
+                <li><a href="#validation" class="sidebar-link">✅ Validation Rules</a></li>
+                <li><a href="#results" class="sidebar-link">📈 Results</a></li>
+                <li><a href="#analytics" class="sidebar-link">📊 Analytics</a></li>
+                <li><a href="#reports" class="sidebar-link">📋 Reports</a></li>
+                <li><a href="#settings" class="sidebar-link">⚙️ Settings</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="section-header">
+                    <h2>📊 Validation Dashboard</h2>
+                    <p>Real-time data quality overview</p>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">📊</div>
+                        <div class="metric-content">
+                            <h3 id="total-records">0</h3>
+                            <p>Total Records</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">✅</div>
+                        <div class="metric-content">
+                            <h3 id="valid-records">0</h3>
+                            <p>Valid Records</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">❌</div>
+                        <div class="metric-content">
+                            <h3 id="invalid-records">0</h3>
+                            <p>Invalid Records</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚠️</div>
+                        <div class="metric-content">
+                            <h3 id="warnings">0</h3>
+                            <p>Warnings</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">📈</div>
+                        <div class="metric-content">
+                            <h3 id="quality-score">0%</h3>
+                            <p>Quality Score</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⏱️</div>
+                        <div class="metric-content">
+                            <h3 id="validation-time">0ms</h3>
+                            <p>Validation Time</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Data Quality Overview</h3>
+                        <canvas id="quality-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Validation Results</h3>
+                        <canvas id="validation-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Error Distribution</h3>
+                        <canvas id="error-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Data Types</h3>
+                        <canvas id="data-types-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section id="upload" class="section">
+                <div class="section-header">
+                    <h2>📁 Data Upload</h2>
+                    <p>Import your dataset for validation</p>
+                </div>
+
+                <div class="upload-area">
+                    <div class="upload-zone" id="upload-zone">
+                        <div class="upload-icon">📁</div>
+                        <h3>Drop your file here or click to browse</h3>
+                        <p>Supported formats: CSV, JSON, Excel (.xlsx, .xls)</p>
+                        <input type="file" id="file-input" accept=".csv,.json,.xlsx,.xls" hidden>
+                        <button id="browse-btn" class="primary-btn">Browse Files</button>
+                    </div>
+
+                    <div class="upload-options">
+                        <div class="option-group">
+                            <label for="delimiter">CSV Delimiter:</label>
+                            <select id="delimiter">
+                                <option value=",">Comma (,)</option>
+                                <option value=";">Semicolon (;)</option>
+                                <option value="\t">Tab</option>
+                                <option value="|">Pipe (|)</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label for="encoding">File Encoding:</label>
+                            <select id="encoding">
+                                <option value="utf-8">UTF-8</option>
+                                <option value="iso-8859-1">ISO-8859-1</option>
+                                <option value="windows-1252">Windows-1252</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <input type="checkbox" id="has-headers" checked>
+                            <label for="has-headers">First row contains headers</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sample-data">
+                    <h3>Or try with sample data:</h3>
+                    <div class="sample-buttons">
+                        <button id="load-sample-users" class="secondary-btn">👥 User Data</button>
+                        <button id="load-sample-sales" class="secondary-btn">💰 Sales Data</button>
+                        <button id="load-sample-sensor" class="secondary-btn">📡 Sensor Data</button>
+                        <button id="load-sample-financial" class="secondary-btn">💳 Financial Data</button>
+                    </div>
+                </div>
+
+                <div id="file-info" class="file-info" style="display: none;">
+                    <h3>File Information</h3>
+                    <div class="info-grid">
+                        <div><strong>Filename:</strong> <span id="filename">-</span></div>
+                        <div><strong>Size:</strong> <span id="filesize">-</span></div>
+                        <div><strong>Records:</strong> <span id="record-count">-</span></div>
+                        <div><strong>Columns:</strong> <span id="column-count">-</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Validation Rules Section -->
+            <section id="validation" class="section">
+                <div class="section-header">
+                    <h2>✅ Validation Rules</h2>
+                    <p>Configure data quality validation rules</p>
+                </div>
+
+                <div class="rules-container">
+                    <div class="rules-list">
+                        <h3>Active Rules</h3>
+                        <div id="rules-grid" class="rules-grid">
+                            <!-- Rules will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="rule-config">
+                        <h3>Rule Configuration</h3>
+                        <div id="rule-config-panel" class="rule-config-panel">
+                            <p>Select a rule to configure</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rule-templates">
+                    <h3>Quick Rule Templates</h3>
+                    <div class="template-buttons">
+                        <button id="template-basic" class="secondary-btn">📋 Basic Validation</button>
+                        <button id="template-financial" class="secondary-btn">💰 Financial Data</button>
+                        <button id="template-user" class="secondary-btn">👥 User Data</button>
+                        <button id="template-sensor" class="secondary-btn">📡 IoT/Sensor Data</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="results" class="section">
+                <div class="section-header">
+                    <h2>📈 Validation Results</h2>
+                    <p>Detailed validation findings and issues</p>
+                </div>
+
+                <div class="results-controls">
+                    <div class="filter-controls">
+                        <select id="severity-filter">
+                            <option value="all">All Severities</option>
+                            <option value="error">Errors Only</option>
+                            <option value="warning">Warnings Only</option>
+                            <option value="info">Info Only</option>
+                        </select>
+                        <select id="column-filter">
+                            <option value="all">All Columns</option>
+                        </select>
+                    </div>
+                    <div class="action-controls">
+                        <button id="clear-results" class="secondary-btn">🗑️ Clear Results</button>
+                        <button id="export-results" class="primary-btn">📊 Export Results</button>
+                    </div>
+                </div>
+
+                <div class="results-summary">
+                    <div class="summary-card">
+                        <h4>Summary</h4>
+                        <div id="results-summary-content">
+                            <p>No validation results yet. Upload data and run validation.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="issues-table-container">
+                    <table id="issues-table" class="issues-table">
+                        <thead>
+                            <tr>
+                                <th>Row</th>
+                                <th>Column</th>
+                                <th>Issue</th>
+                                <th>Severity</th>
+                                <th>Description</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="issues-body">
+                            <tr>
+                                <td colspan="6" class="no-data">No validation issues found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics" class="section">
+                <div class="section-header">
+                    <h2>📊 Data Analytics</h2>
+                    <p>Advanced data quality analytics and insights</p>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Missing Values Analysis</h3>
+                        <canvas id="missing-values-chart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Data Type Distribution</h3>
+                        <canvas id="type-distribution-chart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Outlier Detection</h3>
+                        <canvas id="outlier-chart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Correlation Matrix</h3>
+                        <div id="correlation-matrix" class="correlation-matrix"></div>
+                    </div>
+                    <div class="analytics-card full-width">
+                        <h3>Data Quality Timeline</h3>
+                        <canvas id="quality-timeline-chart"></canvas>
+                    </div>
+                    <div class="analytics-card full-width">
+                        <h3>Column Statistics</h3>
+                        <div id="column-stats" class="column-stats"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports" class="section">
+                <div class="section-header">
+                    <h2>📋 Validation Reports</h2>
+                    <p>Generate and manage validation reports</p>
+                </div>
+
+                <div class="reports-controls">
+                    <button id="generate-report" class="primary-btn">📄 Generate Report</button>
+                    <button id="schedule-reports" class="secondary-btn">⏰ Schedule Reports</button>
+                    <button id="export-report-pdf" class="secondary-btn">📕 Export PDF</button>
+                </div>
+
+                <div class="reports-history">
+                    <h3>Report History</h3>
+                    <div id="reports-list" class="reports-list">
+                        <p>No reports generated yet</p>
+                    </div>
+                </div>
+
+                <div id="report-preview" class="report-preview" style="display: none;">
+                    <h3>Report Preview</h3>
+                    <div id="report-content" class="report-content"></div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section">
+                <div class="section-header">
+                    <h2>⚙️ Settings</h2>
+                    <p>Configure validation preferences and options</p>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="settings-group">
+                        <h3>General Settings</h3>
+                        <div class="setting-item">
+                            <label for="auto-validate">Auto-validate on upload</label>
+                            <input type="checkbox" id="auto-validate" checked>
+                        </div>
+                        <div class="setting-item">
+                            <label for="max-errors">Max errors to display</label>
+                            <input type="number" id="max-errors" value="1000" min="1" max="10000">
+                        </div>
+                        <div class="setting-item">
+                            <label for="validation-timeout">Validation timeout (seconds)</label>
+                            <input type="number" id="validation-timeout" value="30" min="1" max="300">
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Data Quality Thresholds</h3>
+                        <div class="setting-item">
+                            <label for="missing-threshold">Missing values threshold (%)</label>
+                            <input type="number" id="missing-threshold" value="5" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="setting-item">
+                            <label for="duplicate-threshold">Duplicate records threshold (%)</label>
+                            <input type="number" id="duplicate-threshold" value="1" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="setting-item">
+                            <label for="outlier-threshold">Outlier detection sensitivity</label>
+                            <select id="outlier-threshold">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Export Settings</h3>
+                        <div class="setting-item">
+                            <label for="export-format">Default export format</label>
+                            <select id="export-format">
+                                <option value="json">JSON</option>
+                                <option value="csv" selected>CSV</option>
+                                <option value="xlsx">Excel</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label for="include-metadata">Include metadata in exports</label>
+                            <input type="checkbox" id="include-metadata" checked>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Data Management</h3>
+                        <button id="clear-cache" class="secondary-btn">🗑️ Clear Cache</button>
+                        <button id="reset-settings" class="danger-btn">🔄 Reset to Defaults</button>
+                        <button id="export-settings" class="secondary-btn">📤 Export Settings</button>
+                        <button id="import-settings" class="secondary-btn">📥 Import Settings</button>
+                        <input type="file" id="settings-file" accept=".json" style="display: none;">
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loading-modal" class="modal">
+        <div class="modal-content">
+            <div class="loading-spinner"></div>
+            <h3 id="loading-text">Processing...</h3>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <script src="autonomous-dataset-validator.js"></script>
+</body>
+</html>
