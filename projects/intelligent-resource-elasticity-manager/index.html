@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Resource Elasticity Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>🔄 Resource Elasticity Manager</h1>
+                <span class="nav-subtitle">Intelligent Auto-Scaling & Resource Optimization</span>
+            </div>
+            <div class="nav-controls">
+                <button id="theme-toggle" class="nav-btn">🌙</button>
+                <button id="fullscreen-btn" class="nav-btn">⛶</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>Navigation</h3>
+                <button class="sidebar-btn active" data-view="dashboard">📊 Dashboard</button>
+                <button class="sidebar-btn" data-view="resources">🖥️ Resources</button>
+                <button class="sidebar-btn" data-view="scaling">⚖️ Scaling Policies</button>
+                <button class="sidebar-btn" data-view="monitoring">📈 Monitoring</button>
+                <button class="sidebar-btn" data-view="simulation">🎮 Simulation</button>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Quick Actions</h3>
+                <button id="add-resource-btn" class="action-btn">+ Add Resource</button>
+                <button id="create-policy-btn" class="action-btn">+ New Policy</button>
+                <button id="start-simulation-btn" class="action-btn">▶️ Start Sim</button>
+                <button id="reset-system-btn" class="action-btn">🔄 Reset</button>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>System Status</h3>
+                <div class="status-indicator">
+                    <span class="status-dot" id="system-status"></span>
+                    <span id="system-status-text">Initializing</span>
+                </div>
+                <div class="resource-summary">
+                    <div class="summary-item">
+                        <span>Active Resources:</span>
+                        <span id="active-resources">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Total Capacity:</span>
+                        <span id="total-capacity">0%</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="view active">
+                <div class="view-header">
+                    <h2>Resource Elasticity Dashboard</h2>
+                    <div class="view-controls">
+                        <select id="time-range">
+                            <option value="1m">Last Minute</option>
+                            <option value="5m">Last 5 Minutes</option>
+                            <option value="15m">Last 15 Minutes</option>
+                            <option value="1h" selected>Last Hour</option>
+                            <option value="6h">Last 6 Hours</option>
+                            <option value="24h">Last 24 Hours</option>
+                        </select>
+                        <button id="refresh-dashboard" class="btn-secondary">🔄 Refresh</button>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>CPU Utilization</h3>
+                            <span class="metric-value" id="cpu-utilization">0%</span>
+                        </div>
+                        <div class="metric-chart">
+                            <canvas id="cpu-chart" width="300" height="100"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Memory Usage</h3>
+                            <span class="metric-value" id="memory-usage">0%</span>
+                        </div>
+                        <div class="metric-chart">
+                            <canvas id="memory-chart" width="300" height="100"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Network I/O</h3>
+                            <span class="metric-value" id="network-io">0 MB/s</span>
+                        </div>
+                        <div class="metric-chart">
+                            <canvas id="network-chart" width="300" height="100"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Storage I/O</h3>
+                            <span class="metric-value" id="storage-io">0 MB/s</span>
+                        </div>
+                        <div class="metric-chart">
+                            <canvas id="storage-chart" width="300" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-panel">
+                        <h3>Resource Allocation</h3>
+                        <canvas id="resource-allocation-chart" width="400" height="200"></canvas>
+                    </div>
+
+                    <div class="dashboard-panel">
+                        <h3>Scaling Events</h3>
+                        <div id="scaling-events-list" class="events-list">
+                            <div class="event-item">
+                                <span class="event-time">10:30:15</span>
+                                <span class="event-type scale-up">Scale Up</span>
+                                <span class="event-resource">Web Server Cluster</span>
+                                <span class="event-details">+2 instances (CPU > 80%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resources View -->
+            <div id="resources-view" class="view">
+                <div class="view-header">
+                    <h2>Resource Management</h2>
+                    <button id="add-resource-modal-btn" class="btn-primary">+ Add Resource</button>
+                </div>
+
+                <div class="resources-grid" id="resources-grid">
+                    <!-- Resources will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Scaling Policies View -->
+            <div id="scaling-view" class="view">
+                <div class="view-header">
+                    <h2>Scaling Policies</h2>
+                    <button id="add-policy-modal-btn" class="btn-primary">+ Create Policy</button>
+                </div>
+
+                <div class="policies-container" id="policies-container">
+                    <!-- Policies will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Monitoring View -->
+            <div id="monitoring-view" class="view">
+                <div class="view-header">
+                    <h2>Advanced Monitoring</h2>
+                    <div class="view-controls">
+                        <button id="export-metrics" class="btn-secondary">📊 Export</button>
+                        <button id="clear-metrics" class="btn-secondary">🗑️ Clear</button>
+                    </div>
+                </div>
+
+                <div class="monitoring-container">
+                    <div class="monitoring-panel">
+                        <h3>Real-time Metrics</h3>
+                        <canvas id="realtime-metrics-chart" width="800" height="300"></canvas>
+                    </div>
+
+                    <div class="monitoring-panel">
+                        <h3>Alert History</h3>
+                        <div id="alerts-list" class="alerts-list">
+                            <!-- Alerts will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation View -->
+            <div id="simulation-view" class="view">
+                <div class="view-header">
+                    <h2>Load Simulation</h2>
+                    <div class="view-controls">
+                        <button id="start-load-test" class="btn-primary">▶️ Start Test</button>
+                        <button id="stop-load-test" class="btn-secondary">⏹️ Stop Test</button>
+                        <button id="reset-simulation" class="btn-secondary">🔄 Reset</button>
+                    </div>
+                </div>
+
+                <div class="simulation-container">
+                    <div class="simulation-panel">
+                        <h3>Load Configuration</h3>
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label>Concurrent Users:</label>
+                                <input type="range" id="concurrent-users" min="1" max="1000" value="100">
+                                <span id="concurrent-users-value">100</span>
+                            </div>
+                            <div class="config-item">
+                                <label>Request Rate (req/s):</label>
+                                <input type="range" id="request-rate" min="1" max="1000" value="50">
+                                <span id="request-rate-value">50</span>
+                            </div>
+                            <div class="config-item">
+                                <label>Test Duration (min):</label>
+                                <input type="range" id="test-duration" min="1" max="60" value="5">
+                                <span id="test-duration-value">5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="simulation-panel">
+                        <h3>Simulation Results</h3>
+                        <canvas id="simulation-chart" width="600" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="add-resource-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Resource</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="resource-form">
+                    <div class="form-group">
+                        <label for="resource-name">Resource Name:</label>
+                        <input type="text" id="resource-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="resource-type">Resource Type:</label>
+                        <select id="resource-type">
+                            <option value="compute">Compute Instance</option>
+                            <option value="storage">Storage Volume</option>
+                            <option value="database">Database</option>
+                            <option value="cache">Cache Cluster</option>
+                            <option value="load-balancer">Load Balancer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="min-instances">Minimum Instances:</label>
+                        <input type="number" id="min-instances" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="max-instances">Maximum Instances:</label>
+                        <input type="number" id="max-instances" min="1" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label for="cpu-threshold">CPU Scale Threshold (%):</label>
+                        <input type="number" id="cpu-threshold" min="1" max="100" value="70">
+                    </div>
+                    <div class="form-group">
+                        <label for="memory-threshold">Memory Scale Threshold (%):</label>
+                        <input type="number" id="memory-threshold" min="1" max="100" value="80">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary modal-close">Cancel</button>
+                <button class="btn-primary" id="save-resource">Save Resource</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-policy-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Scaling Policy</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="policy-form">
+                    <div class="form-group">
+                        <label for="policy-name">Policy Name:</label>
+                        <input type="text" id="policy-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="policy-type">Policy Type:</label>
+                        <select id="policy-type">
+                            <option value="cpu-based">CPU-Based Scaling</option>
+                            <option value="memory-based">Memory-Based Scaling</option>
+                            <option value="request-based">Request-Based Scaling</option>
+                            <option value="schedule-based">Schedule-Based Scaling</option>
+                            <option value="custom">Custom Metric</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="scale-up-threshold">Scale Up Threshold:</label>
+                        <input type="number" id="scale-up-threshold" min="1" max="100" value="70">
+                    </div>
+                    <div class="form-group">
+                        <label for="scale-down-threshold">Scale Down Threshold:</label>
+                        <input type="number" id="scale-down-threshold" min="1" max="50" value="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="cooldown-period">Cooldown Period (seconds):</label>
+                        <input type="number" id="cooldown-period" min="30" value="300">
+                    </div>
+                    <div class="form-group">
+                        <label for="adjustment-type">Adjustment Type:</label>
+                        <select id="adjustment-type">
+                            <option value="percent">Percentage</option>
+                            <option value="absolute">Absolute</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="adjustment-value">Adjustment Value:</label>
+                        <input type="number" id="adjustment-value" min="1" value="20">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary modal-close">Cancel</button>
+                <button class="btn-primary" id="save-policy">Save Policy</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="resource-details-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="resource-details-title">Resource Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="resource-details-grid">
+                    <div class="details-panel">
+                        <h4>Current Metrics</h4>
+                        <div id="resource-metrics">
+                            <!-- Metrics will be populated here -->
+                        </div>
+                    </div>
+                    <div class="details-panel">
+                        <h4>Scaling History</h4>
+                        <div id="resource-history">
+                            <!-- History will be populated here -->
+                        </div>
+                    </div>
+                    <div class="details-panel">
+                        <h4>Configuration</h4>
+                        <div id="resource-config">
+                            <!-- Configuration will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary modal-close">Close</button>
+                <button class="btn-primary" id="edit-resource">Edit Resource</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
