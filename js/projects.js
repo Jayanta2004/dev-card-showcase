@@ -1868,6 +1868,18 @@ const staticProjects = [
             name: "Bavanetha M.R",
             github: "https://github.com/Bavanetha27"
         }
+    },
+    {
+        title: "Secure Multi-Tenant Isolation Architecture 🔒",
+        description: "Interactive visualization of secure multi-tenant architecture with isolation controls, attack simulation, and real-time security metrics.",
+        tags: ["HTML", "CSS", "JavaScript", "Security", "Architecture", "Multi-Tenant", "Visualization"],
+        links: {
+            live: "./projects/Secure Multi-Tenant Isolation Architecture/index.html"
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
     }
 
 ];

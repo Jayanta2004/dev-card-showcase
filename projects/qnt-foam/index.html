@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>quantum foam · planck-scale tessellation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000000;
+            overflow: hidden;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        }
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        #info {
+            position: absolute;
+            bottom: 32px;
+            left: 32px;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 215, 150, 0.3);
+            border-radius: 60px;
+            padding: 14px 32px;
+            color: #ffecdd;
+            font-weight: 300;
+            font-size: 1rem;
+            letter-spacing: 0.4px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        #info .symbol {
+            color: #ffbb88;
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 12px #ffaa66);
+        }
+        #metrics {
+            position: absolute;
+            bottom: 32px;
+            right: 32px;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 200, 150, 0.4);
+            border-radius: 50px;
+            padding: 12px 28px;
+            color: #ffdec2;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.7);
+            pointer-events: none;
+        }
+        .foam-badge {
+            background: rgba(200, 140, 80, 0.3);
+            color: #ffcdad;
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 1px solid rgba(255, 180, 120, 0.5);
+        }
+        .controls {
+            position: absolute;
+            top: 32px;
+            right: 32px;
+            z-index: 30;
+            display: flex;
+            gap: 14px;
+        }
+        button {
+            background: rgba(10, 10, 18, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 170, 120, 0.6);
+            color: #ffddbb;
+            padding: 12px 26px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.4px;
+        }
+        button:hover {
+            background: rgba(100, 50, 30, 0.6);
+            border-color: #ffb088;
+            color: #fff0e0;
+            box-shadow: 0 0 28px #ff9f4d66;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div id="info">
+        <span class="symbol">𓃉</span> quantum foam · planck-scale tessellation
+    </div>
+    
+    <div id="metrics">
+        <span>🌊 bubble density</span>
+        <span class="foam-badge" id="density-val">1.6e+35</span>
+    </div>
+    
+    <div class="controls">
+        <button id="resonance">𓋴 shift resonance</button>
+        <button id="collapse">⎔ collapse/expand</button>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  QUANTUM FOAM
+        //  concept: visualize the turbulent, bubbling structure of spacetime
+        //  at the Planck scale. uses a dynamic mesh of interconnected vertices
+        //  that constantly morph, with virtual particles appearing as sparkles.
+        //  inspired by Wheeler's "quantum foam" — no basic shapes, only organic
+        //  topology with light and shadow.
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- setup scene with deep darkness ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = new THREE.FogExp2(0x000000, 0.004);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(18, 10, 28);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.4;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.4;
+        controls.enableZoom = true;
+        controls.maxPolarAngle = Math.PI / 2.2;
+        controls.target.set(0, 0, 0);
+
+        // --- lighting (warm/cold contrast) ---
+        const ambient = new THREE.AmbientLight(0x403830);
+        scene.add(ambient);
+
+        const light1 = new THREE.PointLight(0xffaa66, 1.5, 60);
+        light1.position.set(10, 8, 12);
+        scene.add(light1);
+
+        const light2 = new THREE.PointLight(0x88aaff, 1.2, 60);
+        light2.position.set(-10, 6, 15);
+        scene.add(light2);
+
+        // distant glimmer stars
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 1800;
+        const starPos = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            const r = 100 + Math.random() * 100;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            starPos[i*3] = Math.sin(phi) * Math.cos(theta) * r;
+            starPos[i*3+1] = Math.sin(phi) * Math.sin(theta) * r;
+            starPos[i*3+2] = Math.cos(phi) * r;
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xccaa88, size: 0.25, transparent: true, blending: THREE.AdditiveBlending });
+        const stars = new THREE.Points(starGeo, starMat);
+        scene.add(stars);
+
+        // --- main quantum foam mesh ---
+        // we'll create a subdivided icosahedron with vertex animation
+        const baseGeo = new THREE.IcosahedronGeometry(7, 3); // radius 7, subdivision 3 -> many vertices
+        const positionAttribute = baseGeo.attributes.position;
+        const vertexCount = positionAttribute.count;
+        
+        // store original positions (normalized sphere) and random phases for each vertex
+        const originalPositions = [];
+        const phases = [];
+        for (let i = 0; i < vertexCount; i++) {
+            const ix = i * 3;
+            const x = positionAttribute.array[ix];
+            const y = positionAttribute.array[ix+1];
+            const z = positionAttribute.array[ix+2];
+            const len = Math.sqrt(x*x + y*y + z*z);
+            originalPositions.push({ x: x/len, y: y/len, z: z/len }); // unit vector
+            phases.push({
+                theta: Math.random() * Math.PI * 2,
+                phi: Math.random() * Math.PI * 2,
+                speed: 0.2 + Math.random() * 0.5
+            });
+        }
+
+        // colors based on position
+        const colorArray = [];
+        for (let i = 0; i < vertexCount; i++) {
+            const ix = i * 3;
+            const x = positionAttribute.array[ix];
+            const y = positionAttribute.array[ix+1];
+            const z = positionAttribute.array[ix+2];
+            // map to hue
+            const hue = (Math.atan2(y, x) / (Math.PI*2) + 0.5) % 1.0;
+            const col = new THREE.Color().setHSL(hue, 0.9, 0.6);
+            colorArray.push(col.r, col.g, col.b);
+        }
+        baseGeo.setAttribute('color', new THREE.Float32BufferAttribute(colorArray, 3));
+
+        // custom material with wireframe + emissive
+        const foamMaterial = new THREE.MeshStandardMaterial({
+            vertexColors: true,
+            wireframe: true,
+            emissive: new THREE.Color(0x332211),
+            roughness: 0.3,
+            metalness: 0.2,
+            transparent: true,
+            opacity: 0.85,
+            side: THREE.DoubleSide
+        });
+
+        const foamMesh = new THREE.Mesh(baseGeo, foamMaterial);
+        scene.add(foamMesh);
+
+        // add glowing vertices as small points (virtual particles)
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(vertexCount * 3);
+        for (let i = 0; i < vertexCount; i++) {
+            particlePositions[i*3] = positionAttribute.array[i*3];
+            particlePositions[i*3+1] = positionAttribute.array[i*3+1];
+            particlePositions[i*3+2] = positionAttribute.array[i*3+2];
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particleMat = new THREE.PointsMaterial({
+            color: 0xffaa77,
+            size: 0.15,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            sizeAttenuation: true
+        });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+
+        // additional floating bubble-like orbs (few)
+        const bubbleGroup = new THREE.Group();
+        for (let j = 0; j < 12; j++) {
+            const geo = new THREE.SphereGeometry(0.3 + Math.random()*0.3, 6, 6);
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0xffaa88,
+                emissive: 0x442200,
+                transparent: true,
+                opacity: 0.4
+            });
+            const sphere = new THREE.Mesh(geo, mat);
+            const angle = (j / 12) * Math.PI * 2;
+            const rad = 9 + Math.sin(j)*1.5;
+            sphere.position.set(
+                Math.cos(angle) * rad,
+                Math.sin(angle*2) * 3,
+                Math.sin(angle) * rad
+            );
+            bubbleGroup.add(sphere);
+        }
+        scene.add(bubbleGroup);
+
+        // --- state variables ---
+        let resonance = 1.0; // amplitude factor
+        let collapseFactor = 1.0; // 1 = normal, 0.5 = collapsed, 1.5 = expanded
+        let collapseDir = 0; // for auto toggle
+        
+        document.getElementById('resonance').addEventListener('click', () => {
+            resonance = 0.5 + Math.random() * 2.0;
+            document.getElementById('resonance').style.borderColor = '#ffaa66';
+            setTimeout(() => document.getElementById('resonance').style.borderColor = '', 300);
+        });
+        
+        document.getElementById('collapse').addEventListener('click', () => {
+            if (collapseFactor > 0.9) collapseFactor = 0.5;
+            else collapseFactor = 1.4;
+            // update badge
+            document.getElementById('density-val').innerHTML = (collapseFactor * 1.6).toFixed(1) + 'e+35';
+        });
+
+        // --- animation loop ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            const delta = clock.getDelta();
+            const elapsed = performance.now() / 1000;
+
+            // animate foam vertices
+            const positions = foamMesh.geometry.attributes.position.array;
+            const particlePos = particles.geometry.attributes.position.array;
+            
+            // frequency factor
+            const freq = 1.2 + Math.sin(elapsed * 0.5) * 0.3;
+            
+            for (let i = 0; i < vertexCount; i++) {
+                const ix = i * 3;
+                const orig = originalPositions[i];
+                const phase = phases[i];
+                
+                // compute radial displacement using combination of spherical harmonics like noise
+                const noise1 = Math.sin(phase.theta + elapsed * phase.speed * freq) * Math.cos(phase.phi + elapsed * 0.8);
+                const noise2 = Math.sin(phase.phi * 2 + elapsed * 0.5) * Math.cos(phase.theta + elapsed * 0.7);
+                const displacement = (noise1 * 0.4 + noise2 * 0.4) * resonance * collapseFactor;
+                
+                // new radius: base 7 + displacement
+                const r = 7.0 + displacement * 2.5; 
+                
+                const x = orig.x * r;
+                const y = orig.y * r;
+                const z = orig.z * r;
+                
+                positions[ix] = x;
+                positions[ix+1] = y;
+                positions[ix+2] = z;
+                
+                // update particle positions (same as vertices)
+                particlePos[ix] = x;
+                particlePos[ix+1] = y;
+                particlePos[ix+2] = z;
+            }
+            
+            foamMesh.geometry.attributes.position.needsUpdate = true;
+            particles.geometry.attributes.position.needsUpdate = true;
+            
+            // rotate bubble group
+            bubbleGroup.rotation.y += 0.001;
+            bubbleGroup.rotation.x += 0.0005;
+            
+            // rotate stars
+            stars.rotation.y += 0.0002;
+            
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // subtle light shift
+        setInterval(() => {
+            const t = performance.now() / 2000;
+            light1.color.setHSL(0.08 + Math.sin(t)*0.02, 0.9, 0.6);
+            light2.color.setHSL(0.65 + Math.cos(t*1.1)*0.03, 0.8, 0.6);
+        }, 200);
+    </script>
+</body>
+</html>
