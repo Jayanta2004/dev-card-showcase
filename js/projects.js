@@ -1870,11 +1870,11 @@ const staticProjects = [
         }
     },
     {
-        title: "Contextual Drift Mitigation System 🧭",
-        description: "Analyze text for contextual drift and receive suggestions to maintain coherence and relevance in conversations or documents.",
-        tags: ["HTML", "CSS", "JavaScript", "NLP", "Analysis", "Cognitive"],
+        title: "Autonomous Compliance Verification Kernel 🔍",
+        description: "An intelligent system that autonomously verifies compliance with health, productivity, and development protocols using rule-based and machine learning approaches. Monitors multiple trackers and provides automated feedback.",
+        tags: ["HTML", "CSS", "JavaScript", "Health", "Productivity", "AI", "Compliance"],
         links: {
-            live: "./projects/Contextual Drift Mitigation System/index.html"
+            live: "autonomous-compliance-verification-kernel.html"
         },
         author: {
             name: "Gupta-02",
