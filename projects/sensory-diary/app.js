@@ -1,4 +1,4 @@
-// Sensory Diary Logic
+    // Sensory Diary Logic
 // Log daily sensory experiences (touch, taste, sound) and visualize patterns
 
 const diaryForm = document.getElementById('diary-form');

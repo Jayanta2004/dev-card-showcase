@@ -1868,6 +1868,18 @@ const staticProjects = [
             name: "Bavanetha M.R",
             github: "https://github.com/Bavanetha27"
         }
+    },
+    {
+        title: "Contextual Drift Mitigation System 🧭",
+        description: "Analyze text for contextual drift and receive suggestions to maintain coherence and relevance in conversations or documents.",
+        tags: ["HTML", "CSS", "JavaScript", "NLP", "Analysis", "Cognitive"],
+        links: {
+            live: "./projects/Contextual Drift Mitigation System/index.html"
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
     }
 
 ];
