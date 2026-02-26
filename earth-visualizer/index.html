@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earth Perspective Visualizer</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: radial-gradient(circle at top, #0b1a2a, #000);
+        color: white;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    h1 {
+        margin-bottom: 20px;
+    }
+
+    .input-box {
+        margin-bottom: 20px;
+    }
+
+    input {
+        padding: 10px;
+        border-radius: 6px;
+        border: none;
+        width: 200px;
+    }
+
+    button {
+        padding: 10px 20px;
+        background: #1e90ff;
+        border: none;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-left: 5px;
+    }
+
+    button:hover {
+        background: #187bcd;
+    }
+
+    #info {
+        margin-top: 20px;
+        font-size: 18px;
+        line-height: 1.6;
+    }
+
+    canvas {
+        margin-top: 30px;
+        background: black;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(255,255,255,0.1);
+    }
+</style>
+</head>
+
+<body>
+
+<h1>🌍 Earth Perspective Visualizer</h1>
+
+<div class="input-box">
+    <input type="text" id="cityInput" placeholder="Enter your city">
+    <button onclick="getLocation()">Explore</button>
+</div>
+
+<div id="info"></div>
+
+<canvas id="spaceCanvas" width="600" height="400"></canvas>
+
+<script>
+async function getLocation() {
+    const city = document.getElementById("cityInput").value;
+
+    if (!city) {
+        alert("Please enter a city name");
+        return;
+    }
+
+    try {
+        // Geocoding API (OpenStreetMap)
+        const geoRes = await fetch(
+            `https://nominatim.openstreetmap.org/search?city=${city}&format=json`
+        );
+        const geoData = await geoRes.json();
+
+        if (!geoData.length) {
+            alert("City not found");
+            return;
+        }
+
+        const lat = parseFloat(geoData[0].lat);
+        const lon = parseFloat(geoData[0].lon);
+
+        calculateRotation(lat);
+        getSunTimes(lat, lon);
+        drawSpaceView();
+
+    } catch (error) {
+        alert("Something went wrong.");
+        console.error(error);
+    }
+}
+
+function calculateRotation(lat) {
+    const equatorSpeed = 1670; // km/h
+    const speed = equatorSpeed * Math.cos(lat * Math.PI / 180);
+
+    document.getElementById("info").innerHTML = `
+        <p><strong>Latitude:</strong> ${lat.toFixed(2)}°</p>
+        <p><strong>Earth Rotation Speed at your location:</strong> ${speed.toFixed(2)} km/h</p>
+    `;
+}
+
+async function getSunTimes(lat, lon) {
+    const res = await fetch(
+        `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&formatted=0`
+    );
+    const data = await res.json();
+
+    const sunrise = new Date(data.results.sunrise).toLocaleTimeString();
+    const sunset = new Date(data.results.sunset).toLocaleTimeString();
+
+    document.getElementById("info").innerHTML += `
+        <p><strong>Sunrise:</strong> ${sunrise}</p>
+        <p><strong>Sunset:</strong> ${sunset}</p>
+    `;
+}
+
+function drawSpaceView() {
+    const canvas = document.getElementById("spaceCanvas");
+    const ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw Sun
+    ctx.beginPath();
+    ctx.arc(120, 200, 50, 0, Math.PI * 2);
+    ctx.fillStyle = "yellow";
+    ctx.fill();
+
+    // Draw Earth
+    ctx.beginPath();
+    ctx.arc(450, 200, 60, 0, Math.PI * 2);
+    ctx.fillStyle = "blue";
+    ctx.fill();
+
+    // Earth latitude line (simple visual)
+    ctx.beginPath();
+    ctx.moveTo(390, 200);
+    ctx.lineTo(510, 200);
+    ctx.strokeStyle = "white";
+    ctx.stroke();
+}
+</script>
+
+</body>
+</html>
