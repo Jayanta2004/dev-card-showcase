@@ -1978,6 +1978,19 @@ const staticProjects = [
             name: "Gupta-02",
             github: "https://github.com/Gupta-02"
         }
+    },
+    {
+        title: "Predictive Maintenance Scheduler",
+        description:
+            "An intelligent maintenance scheduling system that forecasts equipment failures using historical data and sensor readings. Features multiple prediction models (statistical, ML-based, hybrid), cost-benefit analysis, and optimized maintenance planning to prevent unexpected downtime.",
+        tags: ["HTML", "CSS", "JavaScript", "Data Visualization", "Machine Learning", "IoT", "Predictive Analytics", "Industrial IoT"],
+        links: {
+            live: "./projects/predictive-maintenance-scheduler/index.html",
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
     }
 
 ];
