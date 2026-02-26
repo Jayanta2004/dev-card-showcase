@@ -11,6 +11,7 @@ class CognitiveSwitchTracker {
 
     init() {
         this.setupEventListeners();
+        this.setupModalEventListeners();
         this.updateUI();
         this.renderCharts();
         this.displayRecentSwitches();
@@ -19,6 +20,7 @@ class CognitiveSwitchTracker {
     setupEventListeners() {
         const form = document.getElementById('task-switch-form');
         const cognitiveLoadSlider = document.getElementById('cognitive-load');
+        const clearDataBtn = document.getElementById('clear-data-btn');
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -28,6 +30,91 @@ class CognitiveSwitchTracker {
         cognitiveLoadSlider.addEventListener('input', (e) => {
             document.getElementById('cognitive-load-value').textContent = e.target.value;
         });
+
+        clearDataBtn.addEventListener('click', () => {
+            this.showConfirmationModal();
+        });
+    }
+
+    setupModalEventListeners() {
+        const modal = document.getElementById('confirm-modal');
+        const cancelBtn = document.getElementById('modal-cancel');
+        const confirmBtn = document.getElementById('modal-confirm');
+
+        cancelBtn.addEventListener('click', () => {
+            this.hideConfirmationModal();
+        });
+
+        confirmBtn.addEventListener('click', () => {
+            this.clearAllData();
+            this.hideConfirmationModal();
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.hideConfirmationModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
+                this.hideConfirmationModal();
+            }
+        });
+    }
+
+    showConfirmationModal() {
+        const modal = document.getElementById('confirm-modal');
+        modal.classList.add('show');
+    }
+
+    hideConfirmationModal() {
+        const modal = document.getElementById('confirm-modal');
+        modal.classList.remove('show');
+    }
+
+    clearAllData() {
+        localStorage.removeItem('cognitive-switches');
+        localStorage.removeItem('current-task');
+        
+        this.switches = [];
+        this.currentTask = null;
+        
+        document.getElementById('task-switch-form').reset();
+        document.getElementById('cognitive-load').value = 5;
+        document.getElementById('cognitive-load-value').textContent = '5';
+        
+        this.destroyCharts();
+        
+        this.updateUI();
+        this.renderCharts();
+        this.displayRecentSwitches();
+        
+        this.showNotification('All data has been cleared successfully!', 'success');
+        
+        this.resetInsights();
+    }
+
+    destroyCharts() {
+        const charts = ['switch-frequency-chart', 'time-loss-chart'];
+        charts.forEach(chartId => {
+            const canvas = document.getElementById(chartId);
+            if (canvas) {
+                const existingChart = Chart.getChart(canvas);
+                if (existingChart) {
+                    existingChart.destroy();
+                }
+            }
+        });
+    }
+
+    resetInsights() {
+        const insightsContent = document.getElementById('insights-content');
+        insightsContent.innerHTML = `
+            <p>💡 <strong>Did you know?</strong> Research shows that context switching can cost up to 25 minutes of productive time per switch.</p>
+            <p>🎯 <strong>Tip:</strong> Try to batch similar tasks together and minimize interruptions during deep work sessions.</p>
+            <p>📊 <strong>Get started:</strong> Log your first task switch to see personalized insights!</p>
+        `;
     }
 
     logTaskSwitch() {
@@ -67,7 +154,10 @@ class CognitiveSwitchTracker {
 
         this.saveData();
         this.updateUI();
+        
+        this.destroyCharts();
         this.renderCharts();
+        
         this.displayRecentSwitches();
 
         // Reset form
@@ -174,6 +264,33 @@ class CognitiveSwitchTracker {
         const labels = Object.keys(reasons).map(reason => this.formatReason(reason));
         const data = Object.values(reasons);
 
+        if (data.length === 0) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['No Data'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['#e1e5e9']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Time Lost by Switch Reason'
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            return;
+        }
+
         new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -245,8 +362,13 @@ class CognitiveSwitchTracker {
     }
 
     showNotification(message, type = 'info') {
-        // Simple notification - could be enhanced with a proper notification system
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+
         const notification = document.createElement('div');
+        notification.className = 'notification';
         notification.textContent = message;
         notification.style.cssText = `
             position: fixed;
@@ -257,7 +379,7 @@ class CognitiveSwitchTracker {
             padding: 15px 20px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 1000;
+            z-index: 3000;
             animation: slideIn 0.3s ease;
         `;
 
@@ -276,15 +398,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Add CSS animations for notifications
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
+if (!document.querySelector('#notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+}
