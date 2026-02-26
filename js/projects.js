@@ -2017,6 +2017,19 @@ const staticProjects = [
             name: "Gupta-02",
             github: "https://github.com/Gupta-02"
         }
+    },
+    {
+        title: "Adaptive Security Policy Engine",
+        description:
+            "An intelligent security system that dynamically adjusts security policies based on real-time threat intelligence, risk scoring, and behavior analysis. Features automated threat response, policy optimization, and comprehensive security monitoring.",
+        tags: ["HTML", "CSS", "JavaScript", "Security", "AI", "Automation", "Threat Intelligence"],
+        links: {
+            live: "./projects/adaptive-security-policy-engine/index.html",
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
     }
 
 ];
