@@ -2069,6 +2069,19 @@ const staticProjects = [
             name: "Gupta-02",
             github: "https://github.com/Gupta-02"
         }
+    },
+    {
+        title: "Real-Time Dependency Impact Analyzer",
+        description:
+            "An advanced system for analyzing service dependencies and their cascading failure impacts in real-time. Features interactive dependency graph visualization, impact simulation controls, service health monitoring, automated mitigation strategy generation, and comprehensive system resilience assessment.",
+        tags: ["HTML", "CSS", "JavaScript", "System Architecture", "Dependency Analysis", "Real-time Monitoring", "Impact Simulation", "Resilience Engineering"],
+        links: {
+            live: "./projects/real-time-dependency-impact-analyzer/index.html",
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
     }
 
 ];
