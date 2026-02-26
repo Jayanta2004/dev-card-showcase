@@ -6,6 +6,9 @@
     <title>Cognitive Switching Cost Tracker</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-sankey@0.12.0/dist/chartjs-chart-sankey.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -42,9 +45,39 @@
                         <input type="text" id="previous-task" placeholder="What were you working on?" required>
                     </div>
                     <div class="form-group">
+                        <label for="previous-category">Previous Task Category:</label>
+                        <select id="previous-category" required>
+                            <option value="">Select category...</option>
+                            <option value="Development">💻 Development</option>
+                            <option value="Meetings">📅 Meetings</option>
+                            <option value="Email">📧 Email</option>
+                            <option value="Planning">📊 Planning</option>
+                            <option value="Research">🔬 Research</option>
+                            <option value="Admin">📋 Admin</option>
+                            <option value="Creative">🎨 Creative</option>
+                            <option value="Other">🔄 Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="current-task-input">New Task:</label>
                         <input type="text" id="current-task-input" placeholder="What are you switching to?" required>
                     </div>
+                    <div class="form-group">
+                        <label for="current-category">New Task Category:</label>
+                        <select id="current-category" required>
+                            <option value="">Select category...</option>
+                            <option value="Development">💻 Development</option>
+                            <option value="Meetings">📅 Meetings</option>
+                            <option value="Email">📧 Email</option>
+                            <option value="Planning">📊 Planning</option>
+                            <option value="Research">🔬 Research</option>
+                            <option value="Admin">📋 Admin</option>
+                            <option value="Creative">🎨 Creative</option>
+                            <option value="Other">🔄 Other</option>
+                        </select>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="switch-reason">Reason for Switch:</label>
                         <select id="switch-reason" required>
@@ -83,6 +116,107 @@
             </div>
         </div>
 
+        <!-- Flow Analysis Section -->
+        <div class="flow-analysis-section">
+            <h2>🔄 Category Flow Analysis</h2>
+            
+            <div class="flow-stats-grid">
+                <div class="flow-stat-card">
+                    <h3>Most Common Transition</h3>
+                    <div class="flow-stat-value" id="most-common-transition">None</div>
+                    <div class="flow-stat-desc" id="most-common-count">0 times</div>
+                </div>
+                
+                <div class="flow-stat-card">
+                    <h3>Most Costly Transition</h3>
+                    <div class="flow-stat-value" id="most-costly-transition">None</div>
+                    <div class="flow-stat-desc" id="most-costly-time">0 min lost</div>
+                </div>
+                
+                <div class="flow-stat-card">
+                    <h3>Total Categories Used</h3>
+                    <div class="flow-stat-value" id="total-categories">0</div>
+                    <div class="flow-stat-desc">across all tasks</div>
+                </div>
+                
+                <div class="flow-stat-card">
+                    <h3>Recommended Batch</h3>
+                    <div class="flow-stat-value" id="recommended-batch">None</div>
+                    <div class="flow-stat-desc">based on your patterns</div>
+                </div>
+            </div>
+            
+            <div class="flow-charts-container">
+                <div class="flow-chart-card">
+                    <h3>Task Flow Between Categories</h3>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="flow-sankey-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="flow-chart-card">
+                    <h3>Top 5 Category Transitions</h3>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="top-transitions-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="time-loss-table">
+                <h3>Time Lost by Category Combination</h3>
+                <div class="table-container">
+                    <table id="category-time-loss-table">
+                        <thead>
+                            <tr>
+                                <th>From Category</th>
+                                <th>To Category</th>
+                                <th>Frequency</th>
+                                <th>Total Time Lost</th>
+                                <th>Avg Time per Switch</th>
+                            </tr>
+                        </thead>
+                        <tbody id="category-time-loss-body">
+                            <tr>
+                                <td colspan="5" class="no-data">No data available yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Break Recommendations Section -->
+        <div class="break-recommendations-section">
+            <h2>☕ Smart Break Recommendations</h2>
+            
+            <div class="break-stats-grid">
+                <div class="focus-score-card">
+                    <h3>Focus Score</h3>
+                    <div class="focus-score-circle" id="focus-score-circle">
+                        <span id="focus-score">0</span>
+                    </div>
+                    <p class="focus-score-label">Your focus quality score (0-100)</p>
+                </div>
+                
+                <div class="break-analytics-card">
+                    <h3>Break Analytics</h3>
+                    <div id="break-analytics" class="break-analytics-content">
+                        <div class="break-stat">
+                            <span class="stat-label">Breaks Taken:</span>
+                            <span class="stat-value">0</span>
+                        </div>
+                        <div class="break-stat">
+                            <span class="stat-label">Log your first break to see analytics!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="break-effectiveness-chart"></canvas>
+            </div>
+        </div>
+
         <div class="recent-switches">
             <h2>Recent Task Switches</h2>
             <div id="switches-list"></div>
@@ -90,12 +224,21 @@
 
         <div class="insights">
             <h2>Productivity Insights</h2>
+            <div class="insights-header">
+                <div class="insights-buttons">
+                    <button id="export-data-btn" class="btn-secondary">📥 Export Data</button>
+                    <button id="import-data-btn" class="btn-secondary">📤 Import Data</button>
+                    <button id="weekly-report-btn" class="btn-primary">📊 Generate Weekly Report</button>
+                </div>
+            </div>
             <div id="insights-content">
                 <p>💡 <strong>Did you know?</strong> Research shows that context switching can cost up to 25 minutes of productive time per switch.</p>
                 <p>🎯 <strong>Tip:</strong> Try to batch similar tasks together and minimize interruptions during deep work sessions.</p>
             </div>
         </div>
     </div>
+
+    <input type="file" id="import-file" accept=".json" style="display: none;">
 
     <!-- Confirmation Modal -->
     <div id="confirm-modal" class="modal">
@@ -105,6 +248,59 @@
             <div class="modal-buttons">
                 <button id="modal-cancel" class="btn-secondary">Cancel</button>
                 <button id="modal-confirm" class="btn-danger">Yes, Clear All Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Confirm Modal -->
+    <div id="import-confirm-modal" class="modal">
+        <div class="modal-content">
+            <h3>📤 Import Data</h3>
+            <p id="import-summary"></p>
+            <p>Do you want to proceed with import?</p>
+            <div class="modal-buttons">
+                <button id="import-cancel" class="btn-secondary">Cancel</button>
+                <button id="import-confirm" class="btn-primary">Yes, Import Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Break Recommendation Modal -->
+    <div id="break-modal" class="modal">
+        <div class="modal-content break-modal-content">
+            <h3>☕ Time for a Break!</h3>
+            <div class="break-recommendation-details">
+                <p>
+                    <span>Focus Duration:</span>
+                    <strong id="break-duration">0</strong> minutes
+                </p>
+                <p>
+                    <span>Avg Cognitive Load:</span>
+                    <strong id="break-cognitive-load">0</strong>/10
+                </p>
+                <p>
+                    <span>Est. Productivity Gain:</span>
+                    <strong id="break-benefit">+25%</strong>
+                </p>
+            </div>
+            <p class="break-message">Taking a short break now can help maintain your focus and productivity. Studies show that regular breaks improve cognitive performance and reduce mental fatigue.</p>
+            <div class="modal-buttons">
+                <button id="modal-snooze" class="btn-secondary">Snooze (30 min)</button>
+                <button id="modal-dismiss" class="btn-primary">OK, Take Break</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Report Modal -->
+    <div id="weekly-report-modal" class="modal">
+        <div class="modal-content weekly-report-content">
+            <h3>📊 Weekly Productivity Report</h3>
+            <div class="report-preview" id="report-preview">
+                <div class="report-loading">Generating your personalized report...</div>
+            </div>
+            <div class="modal-buttons">
+                <button id="report-cancel" class="btn-secondary">Close</button>
+                <button id="report-download" class="btn-primary">⬇️ Download PDF</button>
             </div>
         </div>
     </div>
