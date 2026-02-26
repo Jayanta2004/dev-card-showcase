@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Session Expiration Optimizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏰</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="title">Predictive Session Expiration Optimizer</h1>
+                    <p class="subtitle">Dynamic timeout management balancing security & usability</p>
+                </div>
+                <div class="header-right">
+                    <div class="status-indicator">
+                        <span class="status-dot" id="systemStatus"></span>
+                        <span class="status-text" id="systemStatusText">Optimizing</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="window.controller.toggleOptimization()">
+                        <span id="optimizationToggle">▶️</span> Start Optimization
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="overview-cards">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Active Sessions</h3>
+                    <span class="metric-value" id="activeSessions">0</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-bar">
+                        <div class="bar-fill" id="activeSessionsBar" style="width: 0%"></div>
+                    </div>
+                    <div class="metric-details">
+                        <span>Optimized: <strong id="optimizedSessions">0</strong></span>
+                        <span>At Risk: <strong id="atRiskSessions">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Avg. Session Duration</h3>
+                    <span class="metric-value" id="avgSessionDuration">0m</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-bar">
+                        <div class="bar-fill" id="sessionDurationBar" style="width: 0%"></div>
+                    </div>
+                    <div class="metric-details">
+                        <span>Extended: <strong id="extendedSessions">0</strong></span>
+                        <span>Shortened: <strong id="shortenedSessions">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Security Score</h3>
+                    <span class="metric-value" id="securityScore">85%</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-bar">
+                        <div class="bar-fill security-fill" id="securityScoreBar" style="width: 85%"></div>
+                    </div>
+                    <div class="metric-details">
+                        <span>Low Risk: <strong id="lowRiskSessions">0</strong></span>
+                        <span>High Risk: <strong id="highRiskSessions">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Optimization Impact</h3>
+                    <span class="metric-value" id="optimizationImpact">+12%</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-bar">
+                        <div class="bar-fill impact-fill" id="optimizationImpactBar" style="width: 12%"></div>
+                    </div>
+                    <div class="metric-details">
+                        <span>UX Improved: <strong id="uxImprovement">0</strong></span>
+                        <span>Security Enhanced: <strong id="securityEnhancement">0</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="window.controller.onTabChange('dashboard')">Dashboard</button>
+                <button class="tab-btn" onclick="window.controller.onTabChange('sessions')">Session Analysis</button>
+                <button class="tab-btn" onclick="window.controller.onTabChange('optimization')">Optimization</button>
+                <button class="tab-btn" onclick="window.controller.onTabChange('risk')">Risk Assessment</button>
+                <button class="tab-btn" onclick="window.controller.onTabChange('analytics')">Analytics</button>
+            </div>
+
+            <div class="tab-content">
+                <!-- Dashboard Tab -->
+                <div id="dashboardTab" class="tab-panel active">
+                    <div class="dashboard-grid">
+                        <div class="chart-container">
+                            <h3>Session Activity Trends</h3>
+                            <canvas id="activityChart" width="800" height="300"></canvas>
+                        </div>
+
+                        <div class="chart-container">
+                            <h3>Timeout Distribution</h3>
+                            <canvas id="timeoutChart" width="800" height="300"></canvas>
+                        </div>
+
+                        <div class="recent-activity">
+                            <h3>Recent Session Events</h3>
+                            <div class="activity-list" id="recentActivity">
+                                <!-- Activity items will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="optimization-recommendations">
+                            <h3>Optimization Recommendations</h3>
+                            <div class="recommendations-list" id="recommendationsList">
+                                <!-- Recommendations will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Analysis Tab -->
+                <div id="sessionsTab" class="tab-panel">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Session Status:</label>
+                            <select id="sessionStatusFilter" onchange="window.controller.filterSessions()">
+                                <option value="all">All Sessions</option>
+                                <option value="active">Active</option>
+                                <option value="expired">Expired</option>
+                                <option value="extended">Extended</option>
+                                <option value="shortened">Shortened</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Risk Level:</label>
+                            <select id="riskLevelFilter" onchange="window.controller.filterSessions()">
+                                <option value="all">All Risks</option>
+                                <option value="low">Low Risk</option>
+                                <option value="medium">Medium Risk</option>
+                                <option value="high">High Risk</option>
+                                <option value="critical">Critical Risk</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Search:</label>
+                            <input type="text" id="sessionSearch" placeholder="Search sessions..." oninput="window.controller.filterSessions()">
+                        </div>
+                    </div>
+
+                    <div class="sessions-grid" id="sessionsGrid">
+                        <!-- Session cards will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Optimization Tab -->
+                <div id="optimizationTab" class="tab-panel">
+                    <div class="optimization-controls">
+                        <div class="control-group">
+                            <h3>Optimization Settings</h3>
+                            <div class="setting">
+                                <label>Activity Window (minutes):</label>
+                                <input type="range" id="activityWindow" min="5" max="120" value="30" oninput="window.controller.updateOptimizationSettings()">
+                                <span id="activityWindowValue">30</span>
+                            </div>
+                            <div class="setting">
+                                <label>Risk Sensitivity:</label>
+                                <input type="range" id="riskSensitivity" min="0.1" max="2.0" step="0.1" value="1.0" oninput="window.controller.updateOptimizationSettings()">
+                                <span id="riskSensitivityValue">1.0</span>
+                            </div>
+                            <div class="setting">
+                                <label>Base Timeout (minutes):</label>
+                                <input type="range" id="baseTimeout" min="15" max="480" value="60" oninput="window.controller.updateOptimizationSettings()">
+                                <span id="baseTimeoutValue">60</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <h3>Optimization Metrics</h3>
+                            <div class="metric-display">
+                                <div class="metric-item">
+                                    <span class="metric-label">Sessions Extended:</span>
+                                    <span class="metric-value" id="sessionsExtended">0</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="metric-label">Sessions Shortened:</span>
+                                    <span class="metric-value" id="sessionsShortened">0</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="metric-label">Avg. Extension:</span>
+                                    <span class="metric-value" id="avgExtension">0m</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="metric-label">Security Violations Prevented:</span>
+                                    <span class="metric-value" id="securityViolationsPrevented">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="optimization-chart">
+                        <h3>Optimization Impact Over Time</h3>
+                        <canvas id="optimizationChart" width="800" height="400"></canvas>
+                    </div>
+                </div>
+
+                <!-- Risk Assessment Tab -->
+                <div id="riskTab" class="tab-panel">
+                    <div class="risk-overview">
+                        <div class="risk-summary">
+                            <h3>Risk Distribution</h3>
+                            <canvas id="riskChart" width="600" height="300"></canvas>
+                        </div>
+
+                        <div class="risk-factors">
+                            <h3>Top Risk Factors</h3>
+                            <div class="risk-factors-list" id="riskFactorsList">
+                                <!-- Risk factors will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="risk-analysis">
+                        <h3>Risk Analysis Details</h3>
+                        <div class="risk-details" id="riskAnalysisDetails">
+                            <!-- Risk analysis will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div id="analyticsTab" class="tab-panel">
+                    <div class="analytics-controls">
+                        <div class="time-range-selector">
+                            <label>Time Range:</label>
+                            <select id="analyticsTimeRange" onchange="window.controller.updateAnalytics()">
+                                <option value="1h">Last Hour</option>
+                                <option value="6h">Last 6 Hours</option>
+                                <option value="24h">Last 24 Hours</option>
+                                <option value="7d">Last 7 Days</option>
+                            </select>
+                        </div>
+                        <div class="metric-selector">
+                            <label>Primary Metric:</label>
+                            <select id="analyticsMetric" onchange="window.controller.updateAnalytics()">
+                                <option value="sessionDuration">Session Duration</option>
+                                <option value="activityFrequency">Activity Frequency</option>
+                                <option value="timeoutAdjustments">Timeout Adjustments</option>
+                                <option value="securityEvents">Security Events</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="analytics-grid">
+                        <div class="analytics-chart">
+                            <h3>Session Analytics</h3>
+                            <canvas id="analyticsChart" width="800" height="400"></canvas>
+                        </div>
+
+                        <div class="analytics-insights">
+                            <h3>Key Insights</h3>
+                            <div class="insights-list" id="analyticsInsights">
+                                <!-- Insights will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analytics-export">
+                        <button class="btn btn-secondary" onclick="window.controller.generateReport()">
+                            📊 Generate Report
+                        </button>
+                        <button class="btn btn-secondary" onclick="window.controller.exportData()">
+                            📤 Export Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Details Modal -->
+    <div id="sessionModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="window.controller.closeModal()">&times;</span>
+            <h2 id="sessionModalTitle">Session Details</h2>
+            <div id="sessionModalContent">
+                <!-- Session details will be populated by JavaScript -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="window.controller.extendSession()">Extend Session</button>
+                <button class="btn btn-warning" onclick="window.controller.shortenSession()">Shorten Session</button>
+                <button class="btn btn-danger" onclick="window.controller.terminateSession()">Terminate Session</button>
+                <button class="btn btn-secondary" onclick="window.controller.closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <script src="controller.js"></script>
+</body>
+</html>
