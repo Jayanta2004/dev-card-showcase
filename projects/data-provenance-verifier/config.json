@@ -1,0 +1,517 @@
+{
+  "version": "1.0.0",
+  "name": "Data Provenance Verifier",
+  "description": "Enterprise-grade data provenance verification system",
+
+  "verification": {
+    "enabled": true,
+    "modes": {
+      "quick": {
+        "integrity": true,
+        "authenticity": false,
+        "completeness": false,
+        "timeliness": true
+      },
+      "standard": {
+        "integrity": true,
+        "authenticity": true,
+        "completeness": true,
+        "timeliness": true
+      },
+      "deep": {
+        "integrity": true,
+        "authenticity": true,
+        "completeness": true,
+        "timeliness": true,
+        "additionalChecks": ["schema_validation", "business_rules"]
+      }
+    },
+    "thresholds": {
+      "integrity": 0.95,
+      "authenticity": 0.90,
+      "completeness": 0.85,
+      "timeliness": 0.80
+    },
+    "timeouts": {
+      "quick": 5000,
+      "standard": 15000,
+      "deep": 30000
+    }
+  },
+
+  "sources": {
+    "maxSources": 100,
+    "supportedTypes": ["database", "api", "file", "stream", "sensor"],
+    "regions": ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1", "ap-northeast-1"],
+    "defaultSettings": {
+      "timeout": 30000,
+      "retryAttempts": 3,
+      "retryDelay": 1000,
+      "healthCheckInterval": 60000
+    },
+    "sampleSources": [
+      {
+        "id": "source_db_prod",
+        "name": "Production Database",
+        "type": "database",
+        "endpoint": "postgresql://prod-db.us-east-1.internal:5432/analytics",
+        "region": "us-east-1",
+        "owner": "data-team",
+        "sensitivity": "confidential",
+        "encrypted": true,
+        "authenticated": true,
+        "trustScore": 98
+      },
+      {
+        "id": "source_api_external",
+        "name": "External API Service",
+        "type": "api",
+        "endpoint": "https://api.external-service.com/v2/data",
+        "region": "us-west-2",
+        "owner": "integration-team",
+        "sensitivity": "internal",
+        "encrypted": true,
+        "authenticated": true,
+        "trustScore": 85
+      },
+      {
+        "id": "source_file_batch",
+        "name": "Batch File Upload",
+        "type": "file",
+        "endpoint": "/data/uploads/daily/",
+        "region": "eu-west-1",
+        "owner": "etl-team",
+        "sensitivity": "internal",
+        "encrypted": false,
+        "authenticated": true,
+        "trustScore": 92
+      },
+      {
+        "id": "source_stream_iot",
+        "name": "IoT Sensor Stream",
+        "type": "stream",
+        "endpoint": "kafka://iot-cluster.eu-west-1.internal:9092/sensor-data",
+        "region": "eu-west-1",
+        "owner": "iot-team",
+        "sensitivity": "public",
+        "encrypted": false,
+        "authenticated": false,
+        "trustScore": 78
+      },
+      {
+        "id": "source_sensor_weather",
+        "name": "Weather Sensor Network",
+        "type": "sensor",
+        "endpoint": "mqtt://weather-sensors.ap-southeast-1.iot.example.com/data",
+        "region": "ap-southeast-1",
+        "owner": "environment-team",
+        "sensitivity": "public",
+        "encrypted": false,
+        "authenticated": false,
+        "trustScore": 88
+      }
+    ]
+  },
+
+  "artifacts": {
+    "maxArtifacts": 1000,
+    "supportedTypes": ["dataset", "model", "report", "dashboard", "api_response", "stream_batch"],
+    "retentionPolicy": {
+      "verified": "1year",
+      "failed": "30days",
+      "quarantined": "90days"
+    },
+    "sizeLimits": {
+      "small": 1048576,
+      "medium": 104857600,
+      "large": 1073741824
+    },
+    "sampleArtifacts": [
+      {
+        "id": "artifact_customer_data",
+        "name": "Customer Analytics Dataset",
+        "type": "dataset",
+        "sourceId": "source_db_prod",
+        "description": "Aggregated customer behavior data for analytics",
+        "size": 52428800,
+        "transformations": ["filter", "aggregate", "anonymize"],
+        "sensitivity": "confidential",
+        "tags": ["customer", "analytics", "gdpr"]
+      },
+      {
+        "id": "artifact_ml_model",
+        "name": "Fraud Detection Model",
+        "type": "model",
+        "sourceId": "source_file_batch",
+        "description": "Machine learning model for fraud detection",
+        "size": 268435456,
+        "transformations": ["train", "validate", "serialize"],
+        "sensitivity": "confidential",
+        "tags": ["ml", "fraud", "ai"]
+      },
+      {
+        "id": "artifact_sales_report",
+        "name": "Monthly Sales Report",
+        "type": "report",
+        "sourceId": "source_api_external",
+        "description": "Automated monthly sales performance report",
+        "size": 2097152,
+        "transformations": ["aggregate", "format", "encrypt"],
+        "sensitivity": "internal",
+        "tags": ["sales", "reporting", "monthly"]
+      },
+      {
+        "id": "artifact_sensor_data",
+        "name": "IoT Sensor Batch",
+        "type": "stream_batch",
+        "sourceId": "source_stream_iot",
+        "description": "Hourly batch of IoT sensor readings",
+        "size": 10485760,
+        "transformations": ["filter", "normalize", "compress"],
+        "sensitivity": "public",
+        "tags": ["iot", "sensors", "batch"]
+      }
+    ]
+  },
+
+  "monitoring": {
+    "enabled": true,
+    "interval": 10000,
+    "healthChecks": {
+      "sourceConnectivity": true,
+      "artifactIntegrity": true,
+      "verificationCoverage": true,
+      "performanceMetrics": true
+    },
+    "alerts": {
+      "enabled": true,
+      "channels": ["ui", "console"],
+      "thresholds": {
+        "sourceFailureRate": 0.05,
+        "verificationFailureRate": 0.10,
+        "responseTimeMs": 5000
+      },
+      "escalation": {
+        "critical": "immediate",
+        "high": "5minutes",
+        "medium": "1hour",
+        "low": "1day"
+      }
+    },
+    "metrics": {
+      "retention": "30days",
+      "granularity": "1minute",
+      "export": {
+        "enabled": false,
+        "format": "json",
+        "destination": "/metrics/export"
+      }
+    }
+  },
+
+  "audit": {
+    "enabled": true,
+    "retention": "7years",
+    "events": [
+      "source_created",
+      "source_updated",
+      "source_deleted",
+      "source_status_changed",
+      "artifact_created",
+      "artifact_updated",
+      "artifact_deleted",
+      "transformation_applied",
+      "verification_started",
+      "verification_completed",
+      "verification_failed",
+      "alert_generated",
+      "alert_acknowledged",
+      "user_login",
+      "user_logout",
+      "config_changed"
+    ],
+    "export": {
+      "formats": ["json", "csv", "xml"],
+      "compression": "gzip",
+      "encryption": "aes256"
+    },
+    "compliance": {
+      "gdpr": true,
+      "sox": true,
+      "hipaa": false,
+      "pci": false
+    }
+  },
+
+  "security": {
+    "encryption": {
+      "algorithm": "AES256",
+      "keyRotation": "90days",
+      "dataAtRest": true,
+      "dataInTransit": true
+    },
+    "authentication": {
+      "method": "oauth2",
+      "mfa": true,
+      "sessionTimeout": 3600000,
+      "maxLoginAttempts": 5
+    },
+    "authorization": {
+      "roles": ["admin", "operator", "viewer"],
+      "permissions": {
+        "admin": ["read", "write", "delete", "admin"],
+        "operator": ["read", "write"],
+        "viewer": ["read"]
+      }
+    },
+    "dataMasking": {
+      "enabled": true,
+      "patterns": ["ssn", "credit_card", "email", "phone"],
+      "maskChar": "*"
+    }
+  },
+
+  "performance": {
+    "parallelProcessing": true,
+    "batchSize": 10,
+    "queueSize": 100,
+    "workerThreads": 4,
+    "memoryLimit": "512MB",
+    "cpuLimit": "2cores"
+  },
+
+  "integrations": {
+    "webhooks": {
+      "enabled": false,
+      "endpoints": [],
+      "retryPolicy": {
+        "maxRetries": 3,
+        "backoffMultiplier": 2
+      }
+    },
+    "externalSystems": {
+      "siem": {
+        "enabled": false,
+        "endpoint": "",
+        "format": "cef"
+      },
+      "ticketing": {
+        "enabled": false,
+        "system": "jira",
+        "endpoint": "",
+        "project": ""
+      }
+    }
+  },
+
+  "testScenarios": {
+    "verificationTests": [
+      {
+        "name": "Integrity Check - Valid Data",
+        "artifact": "artifact_customer_data",
+        "expectedResult": "passed",
+        "expectedConfidence": 0.95,
+        "issues": []
+      },
+      {
+        "name": "Integrity Check - Corrupted Data",
+        "artifact": "artifact_customer_data",
+        "corruption": "checksum_mismatch",
+        "expectedResult": "failed",
+        "expectedIssues": ["Checksum mismatch detected"]
+      },
+      {
+        "name": "Authenticity Check - Valid Source",
+        "artifact": "artifact_sales_report",
+        "expectedResult": "passed",
+        "expectedConfidence": 0.92
+      },
+      {
+        "name": "Authenticity Check - Compromised Source",
+        "artifact": "artifact_sensor_data",
+        "sourceCompromised": true,
+        "expectedResult": "failed",
+        "expectedIssues": ["Source has been compromised"]
+      },
+      {
+        "name": "Completeness Check - Complete Data",
+        "artifact": "artifact_ml_model",
+        "expectedResult": "passed",
+        "expectedConfidence": 0.88
+      },
+      {
+        "name": "Completeness Check - Missing Records",
+        "artifact": "artifact_ml_model",
+        "missingRecords": true,
+        "expectedResult": "failed",
+        "expectedIssues": ["Missing records detected"]
+      },
+      {
+        "name": "Timeliness Check - Fresh Data",
+        "artifact": "artifact_sensor_data",
+        "expectedResult": "passed",
+        "expectedConfidence": 0.95
+      },
+      {
+        "name": "Timeliness Check - Stale Data",
+        "artifact": "artifact_customer_data",
+        "age": "10days",
+        "expectedResult": "failed",
+        "expectedIssues": ["Data is older than acceptable threshold"]
+      }
+    ],
+    "performanceTests": [
+      {
+        "name": "Single Artifact Verification",
+        "artifacts": 1,
+        "expectedDuration": "< 2000ms",
+        "parallel": false
+      },
+      {
+        "name": "Batch Verification - 10 Artifacts",
+        "artifacts": 10,
+        "expectedDuration": "< 10000ms",
+        "parallel": true
+      },
+      {
+        "name": "Batch Verification - 100 Artifacts",
+        "artifacts": 100,
+        "expectedDuration": "< 60000ms",
+        "parallel": true
+      }
+    ],
+    "stressTests": [
+      {
+        "name": "High Frequency Verification",
+        "frequency": "100ms",
+        "duration": "5minutes",
+        "expectedThroughput": "> 500/minute"
+      },
+      {
+        "name": "Large Dataset Verification",
+        "artifactSize": "1GB",
+        "expectedDuration": "< 30000ms"
+      },
+      {
+        "name": "Concurrent Source Access",
+        "concurrentSources": 50,
+        "expectedSuccessRate": "> 95%"
+      }
+    ]
+  },
+
+  "simulation": {
+    "enabled": true,
+    "autoGenerate": {
+      "sources": true,
+      "artifacts": true,
+      "transformations": true,
+      "verifications": true
+    },
+    "intervals": {
+      "newArtifact": 30000,
+      "sourceHealthCheck": 60000,
+      "verificationRun": 45000,
+      "alertGeneration": 120000
+    },
+    "probabilities": {
+      "sourceFailure": 0.02,
+      "verificationFailure": 0.05,
+      "dataCorruption": 0.01,
+      "compromisedSource": 0.005
+    },
+    "dataPatterns": {
+      "artifactNames": [
+        "Customer Segmentation Dataset",
+        "Sales Performance Report",
+        "Inventory Optimization Model",
+        "User Behavior Analytics",
+        "Financial Risk Assessment",
+        "Supply Chain Optimization",
+        "Quality Control Metrics",
+        "Predictive Maintenance Data",
+        "Market Trend Analysis",
+        "Compliance Audit Report"
+      ],
+      "sourceEndpoints": [
+        "postgresql://db-{id}.us-east-1.internal:5432/data",
+        "https://api-{id}.external-service.com/v1",
+        "/data/batch/{region}/upload-{id}",
+        "kafka://stream-{id}.internal:9092/topic",
+        "mqtt://sensors-{id}.iot.example.com/data"
+      ]
+    }
+  },
+
+  "ui": {
+    "theme": "dark",
+    "colors": {
+      "primary": "#2563eb",
+      "secondary": "#3b82f6",
+      "success": "#10b981",
+      "warning": "#f59e0b",
+      "error": "#ef4444",
+      "background": "#0f172a",
+      "surface": "#1e293b",
+      "text": "#e2e8f0"
+    },
+    "animations": {
+      "enabled": true,
+      "duration": 300,
+      "easing": "ease-out"
+    },
+    "responsive": {
+      "breakpoints": {
+        "mobile": 480,
+        "tablet": 768,
+        "desktop": 1500
+      }
+    },
+    "notifications": {
+      "enabled": true,
+      "duration": 3000,
+      "position": "bottom-right"
+    }
+  },
+
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "outputs": ["console", "file"],
+    "rotation": {
+      "enabled": true,
+      "maxSize": "100MB",
+      "maxFiles": 10
+    },
+    "filters": {
+      "exclude": ["debug", "trace"],
+      "include": ["error", "warn", "info"]
+    }
+  },
+
+  "backup": {
+    "enabled": true,
+    "schedule": "daily",
+    "retention": "30days",
+    "location": "/backup/provenance",
+    "encryption": true,
+    "compression": "gzip"
+  },
+
+  "maintenance": {
+    "cleanup": {
+      "enabled": true,
+      "schedule": "weekly",
+      "retention": {
+        "logs": "90days",
+        "temp": "7days",
+        "cache": "1day"
+      }
+    },
+    "healthChecks": {
+      "enabled": true,
+      "schedule": "hourly",
+      "actions": ["verify_sources", "check_integrity", "validate_config"]
+    }
+  }
+}
