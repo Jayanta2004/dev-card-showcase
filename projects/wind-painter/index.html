@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wind Painter Game</title>
+
+<style>
+body{
+  margin:0;
+  background:linear-gradient(135deg,#d9f99d,#86efac);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  font-family:"Segoe UI",sans-serif;
+}
+
+#gameBox{
+  background:#f0fdf4;
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 0 20px #22c55e;
+}
+
+h1{
+  text-align:center;
+  color:#15803d;
+}
+
+canvas{
+  background:#ecfeff;
+  border-radius:15px;
+  border:3px solid #16a34a;
+  display:block;
+  margin:auto;
+}
+
+#hud{
+  display:flex;
+  justify-content:space-between;
+  margin-top:10px;
+  color:#065f46;
+  font-weight:bold;
+}
+
+button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+  background:#22c55e;
+  color:white;
+  font-size:18px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#16a34a;
+}
+
+#msg{
+  text-align:center;
+  margin-top:8px;
+  font-size:18px;
+  color:#166534;
+}
+</style>
+</head>
+
+<body>
+
+<div id="gameBox">
+  <h1>🍃 Wind Painter</h1>
+  <canvas id="canvas" width="500" height="400"></canvas>
+
+  <div id="hud">
+    <div>Score: <span id="score">0</span></div>
+    <div>Wind Power: <span id="wind">1</span></div>
+  </div>
+
+  <button onclick="startGame()">Start / Restart</button>
+  <div id="msg">Guide the leaves into the circle 🎯</div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let leaves=[];
+let windX=0;
+let windY=0;
+let score=0;
+let windPower=1;
+let running=false;
+
+const target={
+  x:250,
+  y:200,
+  radius:40,
+  fill:0
+};
+
+let keys={};
+
+document.addEventListener("keydown",e=>keys[e.key]=true);
+document.addEventListener("keyup",e=>keys[e.key]=false);
+
+function createLeaf(){
+  leaves.push({
+    x:Math.random()*500,
+    y:-20,
+    size:10+Math.random()*10,
+    vx:0,
+    vy:1+Math.random()*2
+  });
+}
+
+function drawTarget(){
+  ctx.beginPath();
+  ctx.arc(target.x,target.y,target.radius,0,Math.PI*2);
+  ctx.strokeStyle="#15803d";
+  ctx.lineWidth=3;
+  ctx.stroke();
+  ctx.closePath();
+
+  ctx.beginPath();
+  ctx.arc(target.x,target.y,target.radius*(target.fill/100),0,Math.PI*2);
+  ctx.fillStyle="rgba(34,197,94,0.5)";
+  ctx.fill();
+  ctx.closePath();
+}
+
+function drawLeaves(){
+  leaves.forEach(l=>{
+    ctx.beginPath();
+    ctx.arc(l.x,l.y,l.size,0,Math.PI*2);
+    ctx.fillStyle="#84cc16";
+    ctx.fill();
+    ctx.closePath();
+  });
+}
+
+function updateWind(){
+  windX=0;
+  windY=0;
+  if(keys["ArrowLeft"]) windX=-windPower;
+  if(keys["ArrowRight"]) windX=windPower;
+  if(keys["ArrowUp"]) windY=-windPower;
+  if(keys["ArrowDown"]) windY=windPower;
+}
+
+function updateLeaves(){
+  for(let i=leaves.length-1;i>=0;i--){
+    const l=leaves[i];
+    l.vx+=windX*0.1;
+    l.vy+=windY*0.1;
+    l.x+=l.vx;
+    l.y+=l.vy;
+
+    if(l.y>canvas.height+20){
+      leaves.splice(i,1);
+    }
+
+    const dx=l.x-target.x;
+    const dy=l.y-target.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+
+    if(dist<target.radius){
+      leaves.splice(i,1);
+      score++;
+      target.fill+=5;
+      document.getElementById("score").innerText=score;
+
+      if(target.fill>=100){
+        winGame();
+      }
+    }
+  }
+}
+
+function drawBackground(){
+  ctx.fillStyle="rgba(240,253,244,0.6)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function gameLoop(){
+  if(!running) return;
+
+  drawBackground();
+  updateWind();
+  drawTarget();
+  drawLeaves();
+  updateLeaves();
+
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame(){
+  leaves=[];
+  score=0;
+  target.fill=0;
+  running=true;
+  document.getElementById("score").innerText=0;
+  document.getElementById("msg").innerText="Guide leaves into target 🎯";
+
+  setInterval(()=>{
+    if(running){
+      createLeaf();
+    }
+  },800);
+
+  gameLoop();
+}
+
+function winGame(){
+  running=false;
+  document.getElementById("msg").innerText="🎉 You painted the circle!";
+}
+</script>
+
+</body>
+</html>
