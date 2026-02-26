@@ -32,6 +32,7 @@ class CognitiveSwitchTracker {
         this.setupEventListeners();
         this.setupModalEventListeners();
         this.setupImportExportListeners();
+        this.setupWeeklyReportListener();
         this.updateUI();
         this.renderCharts();
         this.renderFlowAnalysis();
@@ -76,6 +77,13 @@ class CognitiveSwitchTracker {
 
         importFile.addEventListener('change', (e) => {
             this.handleFileSelect(e);
+        });
+    }
+
+    setupWeeklyReportListener() {
+        const reportBtn = document.getElementById('weekly-report-btn');
+        reportBtn.addEventListener('click', () => {
+            this.generateWeeklyReport();
         });
     }
 
@@ -211,12 +219,15 @@ class CognitiveSwitchTracker {
         const modal = document.getElementById('confirm-modal');
         const importModal = document.getElementById('import-confirm-modal');
         const breakModal = document.getElementById('break-modal');
+        const reportModal = document.getElementById('weekly-report-modal');
         const cancelBtn = document.getElementById('modal-cancel');
         const confirmBtn = document.getElementById('modal-confirm');
         const importCancel = document.getElementById('import-cancel');
         const importConfirm = document.getElementById('import-confirm');
         const snoozeBtn = document.getElementById('modal-snooze');
         const dismissBtn = document.getElementById('modal-dismiss');
+        const reportCancel = document.getElementById('report-cancel');
+        const reportDownload = document.getElementById('report-download');
 
         cancelBtn.addEventListener('click', () => {
             this.hideConfirmationModal();
@@ -252,6 +263,18 @@ class CognitiveSwitchTracker {
             this.hideImportModal();
         });
 
+        if (reportCancel) {
+            reportCancel.addEventListener('click', () => {
+                this.hideReportModal();
+            });
+        }
+
+        if (reportDownload) {
+            reportDownload.addEventListener('click', () => {
+                this.downloadPDFReport();
+            });
+        }
+
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 this.hideConfirmationModal();
@@ -270,6 +293,14 @@ class CognitiveSwitchTracker {
             }
         });
 
+        if (reportModal) {
+            reportModal.addEventListener('click', (e) => {
+                if (e.target === reportModal) {
+                    this.hideReportModal();
+                }
+            });
+        }
+
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 if (modal.classList.contains('show')) {
@@ -280,6 +311,9 @@ class CognitiveSwitchTracker {
                 }
                 if (breakModal.classList.contains('show')) {
                     this.hideBreakModal();
+                }
+                if (reportModal && reportModal.classList.contains('show')) {
+                    this.hideReportModal();
                 }
             }
         });
@@ -309,6 +343,20 @@ class CognitiveSwitchTracker {
         const modal = document.getElementById('import-confirm-modal');
         modal.classList.remove('show');
         this.importedData = null;
+    }
+
+    showReportModal() {
+        const modal = document.getElementById('weekly-report-modal');
+        if (modal) {
+            modal.classList.add('show');
+        }
+    }
+
+    hideReportModal() {
+        const modal = document.getElementById('weekly-report-modal');
+        if (modal) {
+            modal.classList.remove('show');
+        }
     }
 
     clearAllData() {
@@ -1247,6 +1295,357 @@ class CognitiveSwitchTracker {
             notification.style.animation = 'slideOut 0.3s ease';
             setTimeout(() => notification.remove(), 300);
         }, 3000);
+    }
+
+    generateWeeklyReport() {
+        if (this.switches.length === 0) {
+            this.showNotification('No data available to generate report!', 'error');
+            return;
+        }
+
+        const reportData = this.prepareWeeklyReportData();
+        this.displayReportPreview(reportData);
+        this.showReportModal();
+    }
+
+    prepareWeeklyReportData() {
+        const now = new Date();
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        
+        const weeklySwitches = this.switches.filter(s => new Date(s.timestamp) >= oneWeekAgo);
+        
+        if (weeklySwitches.length === 0) {
+            return this.prepareReportWithAllData();
+        }
+
+        return this.calculateReportMetrics(weeklySwitches);
+    }
+
+    prepareReportWithAllData() {
+        return this.calculateReportMetrics(this.switches);
+    }
+
+    calculateReportMetrics(switches) {
+        const interruptions = {};
+        switches.forEach(s => {
+            if (s.reason !== 'break' && s.reason !== 'completion') {
+                interruptions[s.reason] = (interruptions[s.reason] || 0) + 1;
+            }
+        });
+
+        const totalInterruptions = Object.values(interruptions).reduce((a, b) => a + b, 0);
+        const interruptionPercentages = {};
+        Object.entries(interruptions).forEach(([reason, count]) => {
+            interruptionPercentages[reason] = Math.round((count / totalInterruptions) * 100);
+        });
+
+        const dayStats = {};
+        switches.forEach(s => {
+            const day = new Date(s.timestamp).toLocaleDateString('en-US', { weekday: 'long' });
+            if (!dayStats[day]) {
+                dayStats[day] = { switches: 0, timeLost: 0, count: 0 };
+            }
+            dayStats[day].switches++;
+            dayStats[day].timeLost += s.switchCost;
+            dayStats[day].count++;
+        });
+
+        let bestDay = { name: 'None', avgTimeLost: Infinity };
+        let worstDay = { name: 'None', avgTimeLost: 0 };
+
+        Object.entries(dayStats).forEach(([day, stats]) => {
+            const avgTimeLost = stats.timeLost / stats.switches;
+            if (avgTimeLost < bestDay.avgTimeLost) {
+                bestDay = { name: day, avgTimeLost };
+            }
+            if (avgTimeLost > worstDay.avgTimeLost) {
+                worstDay = { name: day, avgTimeLost };
+            }
+        });
+
+        const now = new Date();
+        const thisWeek = switches.filter(s => {
+            const date = new Date(s.timestamp);
+            return date >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        });
+
+        const lastWeek = switches.filter(s => {
+            const date = new Date(s.timestamp);
+            const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            return date >= twoWeeksAgo && date < oneWeekAgo;
+        });
+
+        const thisWeekSwitches = thisWeek.length;
+        const lastWeekSwitches = lastWeek.length;
+        const switchChange = lastWeekSwitches > 0 
+            ? Math.round(((thisWeekSwitches - lastWeekSwitches) / lastWeekSwitches) * 100) 
+            : 0;
+
+        const thisWeekTimeLost = thisWeek.reduce((sum, s) => sum + s.switchCost, 0);
+        const lastWeekTimeLost = lastWeek.reduce((sum, s) => sum + s.switchCost, 0);
+        const timeLostChange = lastWeekTimeLost > 0 
+            ? Math.round(((thisWeekTimeLost - lastWeekTimeLost) / lastWeekTimeLost) * 100) 
+            : 0;
+
+        const recommendations = this.generateRecommendations(switches);
+
+        return {
+            interruptionPercentages,
+            bestDay: bestDay.name,
+            worstDay: worstDay.name,
+            weekComparison: {
+                thisWeekSwitches,
+                lastWeekSwitches,
+                switchChange,
+                thisWeekTimeLost,
+                lastWeekTimeLost,
+                timeLostChange
+            },
+            recommendations,
+            totalSwitches: switches.length,
+            totalTimeLost: switches.reduce((sum, s) => sum + s.switchCost, 0),
+            avgCognitiveLoad: Math.round(switches.reduce((sum, s) => sum + s.cognitiveLoad, 0) / switches.length),
+            focusScore: this.focusScore
+        };
+    }
+
+    generateRecommendations(switches) {
+        const recommendations = [];
+
+        const interruptionCounts = {};
+        switches.forEach(s => {
+            if (s.reason !== 'break' && s.reason !== 'completion') {
+                interruptionCounts[s.reason] = (interruptionCounts[s.reason] || 0) + 1;
+            }
+        });
+
+        const topInterruption = Object.entries(interruptionCounts)
+            .sort((a, b) => b[1] - a[1])[0];
+
+        if (topInterruption) {
+            const reason = this.formatReason(topInterruption[0]);
+            recommendations.push({
+                type: 'interruption',
+                text: `Your main productivity disruptor is "${reason}". Try scheduling specific times to handle these interruptions.`
+            });
+        }
+
+        const transitions = {};
+        switches.forEach(s => {
+            const key = `${s.previousCategory}→${s.currentCategory}`;
+            transitions[key] = (transitions[key] || 0) + 1;
+        });
+
+        const topTransition = Object.entries(transitions)
+            .sort((a, b) => b[1] - a[1])[0];
+
+        if (topTransition) {
+            const [from, to] = topTransition[0].split('→');
+            recommendations.push({
+                type: 'batching',
+                text: `You frequently switch between ${from} and ${to}. Consider batching these activities together to reduce switching costs.`
+            });
+        }
+
+        const highLoadSwitches = switches.filter(s => s.cognitiveLoad > 7).length;
+        if (highLoadSwitches > switches.length * 0.3) {
+            recommendations.push({
+                type: 'break',
+                text: `${highLoadSwitches} of your switches involved high cognitive load. Try taking more frequent breaks to maintain mental clarity.`
+            });
+        }
+
+        const breaks = switches.filter(s => s.reason === 'break').length;
+        if (breaks < switches.length * 0.1 && switches.length > 10) {
+            recommendations.push({
+                type: 'break-frequency',
+                text: `You're taking relatively few breaks. Taking short breaks every 60-90 minutes can improve focus by up to 25%.`
+            });
+        }
+
+        if (recommendations.length === 0) {
+            recommendations.push({
+                type: 'general',
+                text: 'Great job! Keep tracking your switches to maintain this productive pattern.'
+            });
+        }
+
+        return recommendations;
+    }
+
+    displayReportPreview(data) {
+        const previewDiv = document.getElementById('report-preview');
+        
+        if (!previewDiv) return;
+
+        const interruptionHtml = Object.entries(data.interruptionPercentages)
+            .map(([reason, percent]) => `
+                <div class="interruption-item">
+                    <span class="interruption-name">${this.formatReason(reason)}</span>
+                    <div class="interruption-bar-container">
+                        <div class="interruption-bar" style="width: ${percent}%"></div>
+                    </div>
+                    <span class="interruption-percent">${percent}%</span>
+                </div>
+            `).join('');
+
+        const recommendationsHtml = data.recommendations.map(r => `
+            <div class="recommendation-item">
+                <i>💡</i> ${r.text}
+            </div>
+        `).join('');
+
+        const switchChangeClass = data.weekComparison.switchChange > 0 ? 'comparison-negative' : 
+                                 data.weekComparison.switchChange < 0 ? 'comparison-positive' : 'comparison-neutral';
+        const timeChangeClass = data.weekComparison.timeLostChange > 0 ? 'comparison-negative' : 
+                               data.weekComparison.timeLostChange < 0 ? 'comparison-positive' : 'comparison-neutral';
+
+        previewDiv.innerHTML = `
+            <div class="report-section">
+                <h4><i>📊</i> Weekly Summary</h4>
+                <div class="report-stat">
+                    <span class="label">Total Switches:</span>
+                    <span class="value highlight">${data.totalSwitches}</span>
+                </div>
+                <div class="report-stat">
+                    <span class="label">Total Time Lost:</span>
+                    <span class="value highlight">${data.totalTimeLost} min</span>
+                </div>
+                <div class="report-stat">
+                    <span class="label">Avg Cognitive Load:</span>
+                    <span class="value">${data.avgCognitiveLoad}/10</span>
+                </div>
+                <div class="report-stat">
+                    <span class="label">Focus Score:</span>
+                    <span class="value ${data.focusScore >= 70 ? 'highlight' : data.focusScore >= 40 ? 'comparison-neutral' : 'warning'}">${data.focusScore}</span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4><i>🔍</i> Interruption Sources</h4>
+                ${interruptionHtml || '<p>No interruption data available</p>'}
+            </div>
+
+            <div class="report-section">
+                <h4><i>📅</i> Productivity Patterns</h4>
+                <div class="report-stat">
+                    <span class="label">Best Day:</span>
+                    <span class="day-badge best">${data.bestDay}</span>
+                </div>
+                <div class="report-stat">
+                    <span class="label">Worst Day:</span>
+                    <span class="day-badge worst">${data.worstDay}</span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4><i>📈</i> Week-over-Week Comparison</h4>
+                <div class="report-stat">
+                    <span class="label">Switches:</span>
+                    <span class="value ${switchChangeClass}">
+                        ${data.weekComparison.thisWeekSwitches} vs ${data.weekComparison.lastWeekSwitches} 
+                        (${data.weekComparison.switchChange > 0 ? '+' : ''}${data.weekComparison.switchChange}%)
+                    </span>
+                </div>
+                <div class="report-stat">
+                    <span class="label">Time Lost:</span>
+                    <span class="value ${timeChangeClass}">
+                        ${data.weekComparison.thisWeekTimeLost} min vs ${data.weekComparison.lastWeekTimeLost} min 
+                        (${data.weekComparison.timeLostChange > 0 ? '+' : ''}${data.weekComparison.timeLostChange}%)
+                    </span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4><i>💪</i> Personalized Recommendations</h4>
+                ${recommendationsHtml}
+            </div>
+        `;
+    }
+
+    downloadPDFReport() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const reportData = this.prepareWeeklyReportData();
+        
+        doc.setFontSize(20);
+        doc.setTextColor(39, 174, 96);
+        doc.text('Weekly Productivity Report', 20, 20);
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 30);
+        
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Weekly Summary', 20, 45);
+        
+        doc.setFontSize(11);
+        doc.text(`• Total Switches: ${reportData.totalSwitches}`, 25, 55);
+        doc.text(`• Total Time Lost: ${reportData.totalTimeLost} minutes`, 25, 62);
+        doc.text(`• Avg Cognitive Load: ${reportData.avgCognitiveLoad}/10`, 25, 69);
+        doc.text(`• Focus Score: ${reportData.focusScore}`, 25, 76);
+        
+        doc.setFontSize(14);
+        doc.text('Interruption Sources', 20, 91);
+        
+        let yPos = 101;
+        Object.entries(reportData.interruptionPercentages).forEach(([reason, percent]) => {
+            doc.setFontSize(10);
+            doc.text(`• ${this.formatReason(reason)}: ${percent}%`, 25, yPos);
+            yPos += 7;
+        });
+        
+        yPos += 5;
+        doc.setFontSize(14);
+        doc.text('Productivity Patterns', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        doc.text(`• Best Day: ${reportData.bestDay}`, 25, yPos);
+        yPos += 7;
+        doc.text(`• Worst Day: ${reportData.worstDay}`, 25, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(14);
+        doc.text('Week-over-Week Comparison', 20, yPos);
+        yPos += 10;
+        
+        const switchSymbol = reportData.weekComparison.switchChange > 0 ? '+' : '';
+        const timeSymbol = reportData.weekComparison.timeLostChange > 0 ? '+' : '';
+        
+        doc.setFontSize(11);
+        doc.text(`• Switches: ${reportData.weekComparison.thisWeekSwitches} vs ${reportData.weekComparison.lastWeekSwitches} (${switchSymbol}${reportData.weekComparison.switchChange}%)`, 25, yPos);
+        yPos += 7;
+        doc.text(`• Time Lost: ${reportData.weekComparison.thisWeekTimeLost} min vs ${reportData.weekComparison.lastWeekTimeLost} min (${timeSymbol}${reportData.weekComparison.timeLostChange}%)`, 25, yPos);
+        yPos += 10;
+        
+        if (yPos > 250) {
+            doc.addPage();
+            yPos = 20;
+        }
+        
+        doc.setFontSize(14);
+        doc.text('Personalized Recommendations', 20, yPos);
+        yPos += 10;
+        
+        reportData.recommendations.forEach(rec => {
+            if (yPos > 280) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setFontSize(10);
+            const lines = doc.splitTextToSize(`• ${rec.text}`, 170);
+            doc.text(lines, 25, yPos);
+            yPos += (lines.length * 5) + 5;
+        });
+        
+        doc.save(`productivity-report-${new Date().toISOString().split('T')[0]}.pdf`);
+        
+        this.showNotification('PDF report downloaded successfully!', 'success');
+        this.hideReportModal();
     }
 }
 
