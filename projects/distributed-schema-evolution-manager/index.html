@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributed Schema Evolution Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="header-title">Distributed Schema Evolution Manager</h1>
+                    <p class="header-subtitle">Coordinated database schema updates across distributed environments</p>
+                </div>
+                <div class="header-right">
+                    <div class="status-indicator">
+                        <div class="status-dot" id="systemStatus"></div>
+                        <span class="status-text" id="systemStatusText">System Healthy</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-btn" data-tab="schemas">Schema Registry</button>
+            <button class="tab-btn" data-tab="migrations">Migrations</button>
+            <button class="tab-btn" data-tab="environments">Environments</button>
+            <button class="tab-btn" data-tab="audit">Audit Trail</button>
+        </nav>
+
+        <!-- Tab Content -->
+        <main class="tab-content">
+
+            <!-- Dashboard Tab -->
+            <div id="dashboardTab" class="tab-pane active">
+                <div class="dashboard-grid">
+
+                    <!-- Overview Cards -->
+                    <div class="overview-cards">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Total Schemas</h3>
+                                <div class="card-icon">📊</div>
+                            </div>
+                            <div class="card-value" id="totalSchemas">0</div>
+                            <div class="card-trend" id="schemasTrend">+0 this hour</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Active Migrations</h3>
+                                <div class="card-icon">🔄</div>
+                            </div>
+                            <div class="card-value" id="activeMigrations">0</div>
+                            <div class="card-trend" id="migrationsTrend">0 running</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Compatibility Score</h3>
+                                <div class="card-icon">✅</div>
+                            </div>
+                            <div class="card-value" id="compatibilityScore">100%</div>
+                            <div class="card-trend" id="compatibilityTrend">All compatible</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Environments</h3>
+                                <div class="card-icon">🌐</div>
+                            </div>
+                            <div class="card-value" id="totalEnvironments">0</div>
+                            <div class="card-trend" id="environmentsTrend">0 in sync</div>
+                        </div>
+                    </div>
+
+                    <!-- Schema Evolution Chart -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <h3>Schema Evolution Timeline</h3>
+                            <div class="chart-controls">
+                                <select id="timelineRange">
+                                    <option value="24h">Last 24 Hours</option>
+                                    <option value="7d">Last 7 Days</option>
+                                    <option value="30d">Last 30 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="evolutionChart" width="800" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="activity-section">
+                        <div class="section-header">
+                            <h3>Recent Activity</h3>
+                            <button class="btn-secondary" id="refreshActivity">Refresh</button>
+                        </div>
+                        <div class="activity-list" id="recentActivity">
+                            <div class="placeholder">Loading recent activity...</div>
+                        </div>
+                    </div>
+
+                    <!-- Migration Status -->
+                    <div class="status-section">
+                        <div class="section-header">
+                            <h3>Migration Status</h3>
+                        </div>
+                        <div class="status-grid" id="migrationStatus">
+                            <div class="placeholder">No active migrations</div>
+                        </div>
+                    </div>
+
+                    <!-- Compatibility Matrix -->
+                    <div class="compatibility-section">
+                        <div class="section-header">
+                            <h3>Schema Compatibility Matrix</h3>
+                            <button class="btn-primary" id="validateCompatibility">Validate All</button>
+                        </div>
+                        <div class="compatibility-matrix" id="compatibilityMatrix">
+                            <div class="placeholder">Loading compatibility matrix...</div>
+                        </div>
+                    </div>
+
+                    <!-- Environment Sync Status -->
+                    <div class="sync-section">
+                        <div class="section-header">
+                            <h3>Environment Synchronization</h3>
+                            <button class="btn-primary" id="syncAllEnvironments">Sync All</button>
+                        </div>
+                        <div class="sync-status" id="environmentSync">
+                            <div class="placeholder">Loading environment status...</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Schema Registry Tab -->
+            <div id="schemasTab" class="tab-pane">
+                <div class="filters-section">
+                    <div class="filter-group">
+                        <label>Database Type:</label>
+                        <select id="schemaTypeFilter">
+                            <option value="all">All Types</option>
+                            <option value="postgresql">PostgreSQL</option>
+                            <option value="mysql">MySQL</option>
+                            <option value="mongodb">MongoDB</option>
+                            <option value="cassandra">Cassandra</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Status:</label>
+                        <select id="schemaStatusFilter">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="deprecated">Deprecated</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <input type="text" id="schemaSearch" placeholder="Search schemas...">
+                    </div>
+                    <button class="btn-primary" id="addSchemaBtn">Add Schema</button>
+                </div>
+
+                <div class="schema-registry" id="schemaRegistry">
+                    <div class="placeholder">Loading schema registry...</div>
+                </div>
+            </div>
+
+            <!-- Migrations Tab -->
+            <div id="migrationsTab" class="tab-pane">
+                <div class="migration-controls">
+                    <button class="btn-primary" id="createMigrationBtn">Create Migration</button>
+                    <button class="btn-secondary" id="scheduleMigrationBtn">Schedule Migration</button>
+                    <button class="btn-warning" id="rollbackMigrationBtn">Rollback</button>
+                </div>
+
+                <div class="migration-queue">
+                    <h3>Migration Queue</h3>
+                    <div class="queue-list" id="migrationQueue">
+                        <div class="placeholder">No migrations in queue</div>
+                    </div>
+                </div>
+
+                <div class="migration-history">
+                    <h3>Migration History</h3>
+                    <div class="history-filters">
+                        <select id="historyTimeRange">
+                            <option value="24h">Last 24 Hours</option>
+                            <option value="7d">Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
+                        </select>
+                        <select id="historyStatusFilter">
+                            <option value="all">All Status</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                            <option value="running">Running</option>
+                        </select>
+                    </div>
+                    <div class="history-list" id="migrationHistory">
+                        <div class="placeholder">Loading migration history...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environments Tab -->
+            <div id="environmentsTab" class="tab-pane">
+                <div class="environment-controls">
+                    <button class="btn-primary" id="addEnvironmentBtn">Add Environment</button>
+                    <button class="btn-secondary" id="syncEnvironmentBtn">Sync Environment</button>
+                </div>
+
+                <div class="environment-grid" id="environmentGrid">
+                    <div class="placeholder">Loading environments...</div>
+                </div>
+            </div>
+
+            <!-- Audit Trail Tab -->
+            <div id="auditTab" class="tab-pane">
+                <div class="audit-controls">
+                    <div class="audit-filters">
+                        <select id="auditTimeRange">
+                            <option value="1h">Last Hour</option>
+                            <option value="24h">Last 24 Hours</option>
+                            <option value="7d">Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
+                        </select>
+                        <select id="auditActionFilter">
+                            <option value="all">All Actions</option>
+                            <option value="schema_created">Schema Created</option>
+                            <option value="schema_updated">Schema Updated</option>
+                            <option value="migration_started">Migration Started</option>
+                            <option value="migration_completed">Migration Completed</option>
+                            <option value="environment_synced">Environment Synced</option>
+                        </select>
+                        <input type="text" id="auditSearch" placeholder="Search audit trail...">
+                    </div>
+                    <button class="btn-secondary" id="exportAuditBtn">Export Audit</button>
+                </div>
+
+                <div class="audit-trail" id="auditTrail">
+                    <div class="placeholder">Loading audit trail...</div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <span id="footerStatus">System Status: Operational</span>
+                </div>
+                <div class="footer-center">
+                    <span id="footerSchemas">Schemas: 0</span>
+                    <span id="footerMigrations">Migrations: 0</span>
+                    <span id="footerEnvironments">Environments: 0</span>
+                </div>
+                <div class="footer-right">
+                    <button class="btn-link" id="systemHealthBtn">System Health</button>
+                    <button class="btn-link" id="exportReportBtn">Export Report</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="addSchemaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Schema</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="addSchemaForm">
+                <div class="form-group">
+                    <label for="schemaName">Schema Name:</label>
+                    <input type="text" id="schemaName" required>
+                </div>
+                <div class="form-group">
+                    <label for="schemaType">Database Type:</label>
+                    <select id="schemaType" required>
+                        <option value="postgresql">PostgreSQL</option>
+                        <option value="mysql">MySQL</option>
+                        <option value="mongodb">MongoDB</option>
+                        <option value="cassandra">Cassandra</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="schemaDescription">Description:</label>
+                    <textarea id="schemaDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="schemaDefinition">Schema Definition (JSON):</label>
+                    <textarea id="schemaDefinition" rows="10" placeholder='{"tables": [...], "indexes": [...]}'></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="controller.closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Schema</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="createMigrationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Migration</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="createMigrationForm">
+                <div class="form-group">
+                    <label for="migrationName">Migration Name:</label>
+                    <input type="text" id="migrationName" required>
+                </div>
+                <div class="form-group">
+                    <label for="sourceSchema">Source Schema:</label>
+                    <select id="sourceSchema" required>
+                        <option value="">Select source schema...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="targetSchema">Target Schema:</label>
+                    <select id="targetSchema" required>
+                        <option value="">Select target schema...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="migrationType">Migration Type:</label>
+                    <select id="migrationType" required>
+                        <option value="add_column">Add Column</option>
+                        <option value="drop_column">Drop Column</option>
+                        <option value="modify_column">Modify Column</option>
+                        <option value="add_table">Add Table</option>
+                        <option value="drop_table">Drop Table</option>
+                        <option value="add_index">Add Index</option>
+                        <option value="drop_index">Drop Index</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="migrationScript">Migration Script:</label>
+                    <textarea id="migrationScript" rows="8" placeholder="Enter SQL or migration commands..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="rollbackScript">Rollback Script:</label>
+                    <textarea id="rollbackScript" rows="4" placeholder="Enter rollback commands..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="controller.closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Migration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="addEnvironmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Environment</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="addEnvironmentForm">
+                <div class="form-group">
+                    <label for="environmentName">Environment Name:</label>
+                    <input type="text" id="environmentName" required>
+                </div>
+                <div class="form-group">
+                    <label for="environmentType">Type:</label>
+                    <select id="environmentType" required>
+                        <option value="development">Development</option>
+                        <option value="staging">Staging</option>
+                        <option value="production">Production</option>
+                        <option value="testing">Testing</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="databaseUrl">Database URL:</label>
+                    <input type="text" id="databaseUrl" required placeholder="postgresql://host:port/database">
+                </div>
+                <div class="form-group">
+                    <label for="connectionString">Connection String:</label>
+                    <input type="password" id="connectionString" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="controller.closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Environment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="controller.js"></script>
+</body>
+</html>

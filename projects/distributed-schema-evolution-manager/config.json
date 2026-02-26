@@ -1,0 +1,647 @@
+{
+  "version": "1.0.0",
+  "name": "Distributed Schema Evolution Manager",
+  "description": "Configuration for coordinated database schema updates across distributed environments",
+
+  "validation": {
+    "backwardCompatibility": true,
+    "forwardCompatibility": true,
+    "breakingChangeDetection": true,
+    "dependencyAnalysis": true,
+    "performanceImpact": true
+  },
+
+  "migration": {
+    "autoGenerate": true,
+    "rollbackRequired": true,
+    "zeroDowntime": true,
+    "batchSize": 1000,
+    "timeout": 3600000,
+    "retryAttempts": 3,
+    "retryDelay": 30000
+  },
+
+  "environments": {
+    "autoSync": false,
+    "healthCheckInterval": 30000,
+    "syncTimeout": 300000,
+    "driftDetection": true,
+    "autoRollback": true
+  },
+
+  "databases": {
+    "postgresql": {
+      "version": "13+",
+      "extensions": ["uuid-ossp", "pgcrypto"],
+      "connectionPool": {
+        "min": 2,
+        "max": 10,
+        "idleTimeout": 30000
+      }
+    },
+    "mysql": {
+      "version": "8.0+",
+      "engine": "InnoDB",
+      "charset": "utf8mb4",
+      "collation": "utf8mb4_unicode_ci"
+    },
+    "mongodb": {
+      "version": "4.4+",
+      "replicaSet": true,
+      "sharding": true,
+      "readPreference": "primaryPreferred"
+    },
+    "cassandra": {
+      "version": "3.11+",
+      "replicationFactor": 3,
+      "consistencyLevel": "QUORUM"
+    }
+  },
+
+  "schemas": {
+    "user_profile": {
+      "version": "2.1.0",
+      "database": "postgresql",
+      "description": "User profile information schema",
+      "definition": {
+        "tables": {
+          "users": {
+            "columns": {
+              "id": { "type": "uuid", "primary": true, "nullable": false },
+              "email": { "type": "varchar(255)", "unique": true, "nullable": false },
+              "username": { "type": "varchar(50)", "unique": true, "nullable": false },
+              "first_name": { "type": "varchar(100)", "nullable": true },
+              "last_name": { "type": "varchar(100)", "nullable": true },
+              "phone": { "type": "varchar(20)", "nullable": true },
+              "date_of_birth": { "type": "date", "nullable": true },
+              "created_at": { "type": "timestamp", "default": "CURRENT_TIMESTAMP", "nullable": false },
+              "updated_at": { "type": "timestamp", "default": "CURRENT_TIMESTAMP", "nullable": false },
+              "is_active": { "type": "boolean", "default": true, "nullable": false },
+              "profile_picture_url": { "type": "text", "nullable": true },
+              "timezone": { "type": "varchar(50)", "default": "UTC", "nullable": false },
+              "language": { "type": "varchar(10)", "default": "en", "nullable": false }
+            },
+            "indexes": [
+              { "name": "idx_users_email", "columns": ["email"], "unique": true },
+              { "name": "idx_users_username", "columns": ["username"], "unique": true },
+              { "name": "idx_users_created_at", "columns": ["created_at"] },
+              { "name": "idx_users_active", "columns": ["is_active"] }
+            ],
+            "constraints": [
+              { "name": "chk_users_email_format", "type": "check", "expression": "email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'" },
+              { "name": "chk_users_username_length", "type": "check", "expression": "length(username) >= 3" }
+            ]
+          },
+          "user_preferences": {
+            "columns": {
+              "user_id": { "type": "uuid", "primary": true, "nullable": false, "references": "users(id)" },
+              "theme": { "type": "varchar(20)", "default": "light", "nullable": false },
+              "notifications_enabled": { "type": "boolean", "default": true, "nullable": false },
+              "email_updates": { "type": "boolean", "default": true, "nullable": false },
+              "privacy_level": { "type": "varchar(20)", "default": "public", "nullable": false },
+              "data_sharing": { "type": "boolean", "default": false, "nullable": false }
+            }
+          }
+        }
+      },
+      "compatibility": {
+        "backward": true,
+        "forward": true,
+        "breakingChanges": []
+      }
+    },
+
+    "product_catalog": {
+      "version": "1.3.2",
+      "database": "mysql",
+      "description": "E-commerce product catalog schema",
+      "definition": {
+        "tables": {
+          "products": {
+            "columns": {
+              "id": { "type": "bigint", "primary": true, "autoIncrement": true, "nullable": false },
+              "sku": { "type": "varchar(50)", "unique": true, "nullable": false },
+              "name": { "type": "varchar(255)", "nullable": false },
+              "description": { "type": "text", "nullable": true },
+              "price": { "type": "decimal(10,2)", "nullable": false },
+              "category_id": { "type": "bigint", "nullable": false },
+              "brand_id": { "type": "bigint", "nullable": true },
+              "stock_quantity": { "type": "int", "default": 0, "nullable": false },
+              "is_active": { "type": "tinyint(1)", "default": 1, "nullable": false },
+              "weight_kg": { "type": "decimal(8,3)", "nullable": true },
+              "dimensions_cm": { "type": "varchar(50)", "nullable": true },
+              "created_at": { "type": "datetime", "default": "CURRENT_TIMESTAMP", "nullable": false },
+              "updated_at": { "type": "datetime", "default": "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", "nullable": false }
+            }
+          },
+          "categories": {
+            "columns": {
+              "id": { "type": "bigint", "primary": true, "autoIncrement": true, "nullable": false },
+              "name": { "type": "varchar(100)", "nullable": false },
+              "description": { "type": "text", "nullable": true },
+              "parent_id": { "type": "bigint", "nullable": true, "references": "categories(id)" },
+              "is_active": { "type": "tinyint(1)", "default": 1, "nullable": false }
+            }
+          }
+        }
+      }
+    },
+
+    "sensor_data": {
+      "version": "3.0.1",
+      "database": "mongodb",
+      "description": "IoT sensor data collection schema",
+      "definition": {
+        "collections": {
+          "sensor_readings": {
+            "schema": {
+              "sensor_id": { "type": "string", "required": true },
+              "device_type": { "type": "string", "required": true },
+              "timestamp": { "type": "date", "required": true },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+                  "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
+                  "altitude": { "type": "number" }
+                }
+              },
+              "measurements": {
+                "type": "object",
+                "additionalProperties": { "type": "number" }
+              },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "firmware_version": { "type": "string" },
+                  "battery_level": { "type": "number", "minimum": 0, "maximum": 100 },
+                  "signal_strength": { "type": "number" }
+                }
+              }
+            },
+            "indexes": [
+              { "key": { "sensor_id": 1, "timestamp": -1 } },
+              { "key": { "device_type": 1 } },
+              { "key": { "location": "2dsphere" } }
+            ]
+          }
+        }
+      }
+    },
+
+    "user_sessions": {
+      "version": "1.2.0",
+      "database": "cassandra",
+      "description": "User session management schema",
+      "definition": {
+        "keyspace": "user_management",
+        "tables": {
+          "user_sessions": {
+            "partitionKey": ["user_id"],
+            "clusteringKey": ["session_id"],
+            "columns": {
+              "user_id": { "type": "uuid" },
+              "session_id": { "type": "uuid" },
+              "device_info": { "type": "text" },
+              "ip_address": { "type": "inet" },
+              "user_agent": { "type": "text" },
+              "created_at": { "type": "timestamp" },
+              "expires_at": { "type": "timestamp" },
+              "is_active": { "type": "boolean" },
+              "last_activity": { "type": "timestamp" }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "migrations": {
+    "add_user_timezone": {
+      "id": "mig_001",
+      "description": "Add timezone support to user profiles",
+      "database": "postgresql",
+      "schema": "user_profile",
+      "type": "additive",
+      "scripts": {
+        "up": "ALTER TABLE users ADD COLUMN timezone VARCHAR(50) DEFAULT 'UTC' NOT NULL;",
+        "down": "ALTER TABLE users DROP COLUMN timezone;"
+      },
+      "compatibility": {
+        "backward": true,
+        "forward": true,
+        "breaking": false
+      },
+      "dependencies": [],
+      "environments": ["development", "staging", "production"],
+      "estimatedDuration": 30000,
+      "rollbackSupported": true
+    },
+
+    "add_product_weight": {
+      "id": "mig_002",
+      "description": "Add weight tracking for shipping calculations",
+      "database": "mysql",
+      "schema": "product_catalog",
+      "type": "additive",
+      "scripts": {
+        "up": "ALTER TABLE products ADD COLUMN weight_kg DECIMAL(8,3) NULL;",
+        "down": "ALTER TABLE products DROP COLUMN weight_kg;"
+      },
+      "compatibility": {
+        "backward": true,
+        "forward": true,
+        "breaking": false
+      },
+      "dependencies": [],
+      "environments": ["development", "staging"],
+      "estimatedDuration": 45000,
+      "rollbackSupported": true
+    },
+
+    "add_sensor_metadata": {
+      "id": "mig_003",
+      "description": "Add metadata collection for sensor readings",
+      "database": "mongodb",
+      "schema": "sensor_data",
+      "type": "additive",
+      "scripts": {
+        "up": "db.sensor_readings.updateMany({}, {$set: {metadata: {}}})",
+        "down": "db.sensor_readings.updateMany({}, {$unset: {metadata: 1}})"
+      },
+      "compatibility": {
+        "backward": true,
+        "forward": true,
+        "breaking": false
+      },
+      "dependencies": [],
+      "environments": ["development", "staging", "production"],
+      "estimatedDuration": 60000,
+      "rollbackSupported": true
+    },
+
+    "optimize_session_indexes": {
+      "id": "mig_004",
+      "description": "Add indexes for better session query performance",
+      "database": "cassandra",
+      "schema": "user_sessions",
+      "type": "optimization",
+      "scripts": {
+        "up": "CREATE INDEX idx_user_sessions_active ON user_sessions (is_active) WHERE is_active = true;",
+        "down": "DROP INDEX idx_user_sessions_active;"
+      },
+      "compatibility": {
+        "backward": true,
+        "forward": true,
+        "breaking": false
+      },
+      "dependencies": [],
+      "environments": ["staging", "production"],
+      "estimatedDuration": 90000,
+      "rollbackSupported": true
+    }
+  },
+
+  "environments": {
+    "development": {
+      "id": "dev",
+      "name": "Development",
+      "type": "development",
+      "database": {
+        "host": "localhost",
+        "port": 5432,
+        "database": "dev_schema_evolution",
+        "username": "dev_user",
+        "password": "dev_password"
+      },
+      "autoSync": true,
+      "validationLevel": "basic",
+      "rollbackOnFailure": true,
+      "notificationChannels": ["slack", "email"],
+      "maintenanceWindow": {
+        "enabled": false
+      }
+    },
+
+    "staging": {
+      "id": "staging",
+      "name": "Staging",
+      "type": "staging",
+      "database": {
+        "host": "staging-db.example.com",
+        "port": 5432,
+        "database": "staging_schema_evolution",
+        "username": "staging_user",
+        "password": "${STAGING_DB_PASSWORD}"
+      },
+      "autoSync": false,
+      "validationLevel": "full",
+      "rollbackOnFailure": true,
+      "notificationChannels": ["slack", "email", "pagerduty"],
+      "maintenanceWindow": {
+        "enabled": true,
+        "startTime": "02:00",
+        "endTime": "04:00",
+        "timezone": "UTC"
+      }
+    },
+
+    "production": {
+      "id": "prod",
+      "name": "Production",
+      "type": "production",
+      "database": {
+        "host": "prod-db.example.com",
+        "port": 5432,
+        "database": "prod_schema_evolution",
+        "username": "prod_user",
+        "password": "${PROD_DB_PASSWORD}"
+      },
+      "autoSync": false,
+      "validationLevel": "strict",
+      "rollbackOnFailure": true,
+      "notificationChannels": ["slack", "email", "pagerduty", "sms"],
+      "maintenanceWindow": {
+        "enabled": true,
+        "startTime": "01:00",
+        "endTime": "03:00",
+        "timezone": "UTC"
+      }
+    }
+  },
+
+  "security": {
+    "encryption": {
+      "enabled": true,
+      "algorithm": "AES-256-GCM",
+      "keyRotation": {
+        "enabled": true,
+        "interval": 2592000000
+      }
+    },
+    "authentication": {
+      "oauth2": {
+        "enabled": true,
+        "providers": ["github", "google", "azure"]
+      },
+      "apiKeys": {
+        "enabled": true,
+        "rotationRequired": true,
+        "expirationDays": 90
+      },
+      "mfa": {
+        "required": true,
+        "methods": ["totp", "sms"]
+      }
+    },
+    "authorization": {
+      "roles": {
+        "admin": {
+          "permissions": ["read", "write", "delete", "execute", "audit"]
+        },
+        "developer": {
+          "permissions": ["read", "write", "execute"]
+        },
+        "viewer": {
+          "permissions": ["read"]
+        }
+      },
+      "approvalWorkflow": {
+        "productionChanges": true,
+        "breakingChanges": true,
+        "destructiveChanges": true
+      }
+    },
+    "audit": {
+      "enabled": true,
+      "retentionDays": 2555,
+      "sensitiveDataMasking": true,
+      "compliance": {
+        "gdpr": true,
+        "sox": true,
+        "hipaa": false
+      }
+    }
+  },
+
+  "monitoring": {
+    "metrics": {
+      "enabled": true,
+      "collectionInterval": 30000,
+      "retentionDays": 90,
+      "exporters": {
+        "prometheus": {
+          "enabled": true,
+          "endpoint": "/metrics"
+        },
+        "datadog": {
+          "enabled": false,
+          "apiKey": "${DD_API_KEY}"
+        }
+      }
+    },
+    "alerts": {
+      "enabled": true,
+      "channels": {
+        "slack": {
+          "enabled": true,
+          "webhookUrl": "${SLACK_WEBHOOK_URL}",
+          "channel": "#schema-alerts"
+        },
+        "email": {
+          "enabled": true,
+          "smtp": {
+            "host": "smtp.example.com",
+            "port": 587,
+            "username": "${SMTP_USERNAME}",
+            "password": "${SMTP_PASSWORD}"
+          },
+          "recipients": ["team@example.com"]
+        },
+        "pagerduty": {
+          "enabled": false,
+          "integrationKey": "${PAGERDUTY_KEY}"
+        }
+      },
+      "rules": {
+        "migration_failure": {
+          "severity": "critical",
+          "threshold": 1,
+          "message": "Migration failed in {{environment}}"
+        },
+        "compatibility_violation": {
+          "severity": "high",
+          "threshold": 1,
+          "message": "Schema compatibility violation detected"
+        },
+        "sync_delay": {
+          "severity": "medium",
+          "threshold": 300000,
+          "message": "Environment sync delayed by {{delay}}ms"
+        }
+      }
+    },
+    "healthChecks": {
+      "enabled": true,
+      "interval": 60000,
+      "timeout": 10000,
+      "endpoints": {
+        "database": {
+          "enabled": true,
+          "query": "SELECT 1"
+        },
+        "schema": {
+          "enabled": true,
+          "validateConsistency": true
+        }
+      }
+    }
+  },
+
+  "performance": {
+    "optimization": {
+      "connectionPooling": true,
+      "queryOptimization": true,
+      "batchProcessing": true,
+      "parallelExecution": true
+    },
+    "limits": {
+      "maxConcurrentMigrations": 5,
+      "maxMigrationDuration": 3600000,
+      "maxRollbackDuration": 1800000,
+      "maxBatchSize": 10000
+    },
+    "caching": {
+      "schemaCache": {
+        "enabled": true,
+        "ttl": 300000,
+        "maxSize": 100
+      },
+      "compatibilityCache": {
+        "enabled": true,
+        "ttl": 600000,
+        "maxSize": 500
+      }
+    }
+  },
+
+  "simulation": {
+    "enabled": true,
+    "scenarios": {
+      "successful_migration": {
+        "description": "Simulate successful schema migration",
+        "probability": 0.8,
+        "duration": 30000,
+        "successRate": 1.0
+      },
+      "failed_migration": {
+        "description": "Simulate migration failure with rollback",
+        "probability": 0.1,
+        "duration": 45000,
+        "successRate": 0.0,
+        "errorType": "constraint_violation"
+      },
+      "slow_migration": {
+        "description": "Simulate slow migration execution",
+        "probability": 0.05,
+        "duration": 120000,
+        "successRate": 0.9
+      },
+      "compatibility_issue": {
+        "description": "Simulate compatibility validation failure",
+        "probability": 0.03,
+        "duration": 15000,
+        "successRate": 0.0,
+        "errorType": "breaking_change"
+      },
+      "network_timeout": {
+        "description": "Simulate network connectivity issues",
+        "probability": 0.02,
+        "duration": 60000,
+        "successRate": 0.0,
+        "errorType": "connection_timeout"
+      }
+    },
+    "realTimeUpdates": true,
+    "randomEvents": true,
+    "dataVolume": "realistic"
+  },
+
+  "ui": {
+    "theme": {
+      "primary": "#7c3aed",
+      "secondary": "#a855f7",
+      "accent": "#c084fc",
+      "background": "#0f172a",
+      "surface": "#1e293b",
+      "text": "#f1f5f9",
+      "textSecondary": "#94a3b8"
+    },
+    "animations": {
+      "enabled": true,
+      "duration": 300,
+      "easing": "ease-out"
+    },
+    "charts": {
+      "type": "canvas",
+      "responsive": true,
+      "animation": true,
+      "colors": ["#7c3aed", "#a855f7", "#c084fc", "#ddd6fe", "#e9d5ff"]
+    },
+    "notifications": {
+      "position": "top-right",
+      "duration": 5000,
+      "maxVisible": 3
+    }
+  },
+
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "outputs": ["console", "file"],
+    "rotation": {
+      "enabled": true,
+      "maxSize": "10m",
+      "maxFiles": 5
+    },
+    "sensitiveData": {
+      "masking": true,
+      "fields": ["password", "token", "key", "secret"]
+    }
+  },
+
+  "backup": {
+    "enabled": true,
+    "strategy": "before_migration",
+    "retention": {
+      "count": 10,
+      "days": 30
+    },
+    "compression": true,
+    "encryption": true,
+    "verification": true
+  },
+
+  "testing": {
+    "unitTests": {
+      "enabled": true,
+      "coverage": 85,
+      "framework": "jest"
+    },
+    "integrationTests": {
+      "enabled": true,
+      "databases": ["postgresql", "mysql", "mongodb"],
+      "environments": ["test"]
+    },
+    "performanceTests": {
+      "enabled": true,
+      "loadTesting": true,
+      "stressTesting": true
+    },
+    "compatibilityTests": {
+      "enabled": true,
+      "matrix": true,
+      "automated": true
+    }
+  }
+}
