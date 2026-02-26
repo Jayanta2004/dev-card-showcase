@@ -6,6 +6,16 @@ class CognitiveSwitchTracker {
         this.currentTask = localStorage.getItem('current-task') || null;
         this.AVERAGE_SWITCH_COST = 25; // minutes based on research
         this.importedData = null;
+        this.categoryColors = {
+            'Development': '#4a90e2',
+            'Meetings': '#e74c3c',
+            'Email': '#f39c12',
+            'Planning': '#27ae60',
+            'Research': '#9b59b6',
+            'Admin': '#1abc9c',
+            'Creative': '#e67e22',
+            'Other': '#95a5a6'
+        };
 
         this.init();
     }
@@ -16,6 +26,7 @@ class CognitiveSwitchTracker {
         this.setupImportExportListeners();
         this.updateUI();
         this.renderCharts();
+        this.renderFlowAnalysis();
         this.displayRecentSwitches();
     }
 
@@ -109,7 +120,8 @@ class CognitiveSwitchTracker {
         }
 
         const isValid = data.switches.every(s => 
-            s.id && s.timestamp && s.previousTask && s.currentTask && s.reason && s.cognitiveLoad && s.switchCost
+            s.id && s.timestamp && s.previousTask && s.currentTask && s.reason && 
+            s.cognitiveLoad && s.switchCost
         );
 
         if (!isValid) {
@@ -118,7 +130,6 @@ class CognitiveSwitchTracker {
         }
 
         this.importedData = data;
-
         this.showImportPreview(data);
     }
 
@@ -170,6 +181,7 @@ class CognitiveSwitchTracker {
         this.destroyCharts();
         this.updateUI();
         this.renderCharts();
+        this.renderFlowAnalysis();
         this.displayRecentSwitches();
         this.showNotification(`Successfully imported ${newSwitches.length} new records!`, 'success');
         this.importedData = null;
@@ -256,6 +268,7 @@ class CognitiveSwitchTracker {
         
         this.updateUI();
         this.renderCharts();
+        this.renderFlowAnalysis();
         this.displayRecentSwitches();
         
         this.showNotification('All data has been cleared successfully!', 'success');
@@ -264,7 +277,7 @@ class CognitiveSwitchTracker {
     }
 
     destroyCharts() {
-        const charts = ['switch-frequency-chart', 'time-loss-chart'];
+        const charts = ['switch-frequency-chart', 'time-loss-chart', 'flow-sankey-chart', 'top-transitions-chart'];
         charts.forEach(chartId => {
             const canvas = document.getElementById(chartId);
             if (canvas) {
@@ -287,11 +300,13 @@ class CognitiveSwitchTracker {
 
     logTaskSwitch() {
         const previousTask = document.getElementById('previous-task').value.trim();
+        const previousCategory = document.getElementById('previous-category').value;
         const currentTaskInput = document.getElementById('current-task-input').value.trim();
+        const currentCategory = document.getElementById('current-category').value;
         const reason = document.getElementById('switch-reason').value;
         const cognitiveLoad = parseInt(document.getElementById('cognitive-load').value);
 
-        if (!previousTask || !currentTaskInput || !reason) {
+        if (!previousTask || !previousCategory || !currentTaskInput || !currentCategory || !reason) {
             alert('Please fill in all required fields.');
             return;
         }
@@ -305,7 +320,9 @@ class CognitiveSwitchTracker {
             id: Date.now(),
             timestamp: new Date().toISOString(),
             previousTask,
+            previousCategory,
             currentTask: currentTaskInput,
+            currentCategory,
             reason,
             cognitiveLoad,
             switchCost,
@@ -325,6 +342,7 @@ class CognitiveSwitchTracker {
         
         this.destroyCharts();
         this.renderCharts();
+        this.renderFlowAnalysis();
         
         this.displayRecentSwitches();
 
@@ -492,6 +510,298 @@ class CognitiveSwitchTracker {
         });
     }
 
+    renderFlowAnalysis() {
+        this.calculateFlowStats();
+        this.renderSankeyChart();
+        this.renderTopTransitionsChart();
+        this.renderCategoryTimeLossTable();
+    }
+
+    calculateFlowStats() {
+        if (this.switches.length === 0) {
+            document.getElementById('most-common-transition').textContent = 'None';
+            document.getElementById('most-common-count').textContent = '0 times';
+            document.getElementById('most-costly-transition').textContent = 'None';
+            document.getElementById('most-costly-time').textContent = '0 min lost';
+            document.getElementById('total-categories').textContent = '0';
+            document.getElementById('recommended-batch').textContent = 'None';
+            return;
+        }
+
+        const categories = new Set();
+        this.switches.forEach(s => {
+            categories.add(s.previousCategory);
+            categories.add(s.currentCategory);
+        });
+        document.getElementById('total-categories').textContent = categories.size;
+
+        const transitions = {};
+        this.switches.forEach(s => {
+            const key = `${s.previousCategory}→${s.currentCategory}`;
+            if (!transitions[key]) {
+                transitions[key] = {
+                    count: 0,
+                    totalTime: 0,
+                    from: s.previousCategory,
+                    to: s.currentCategory
+                };
+            }
+            transitions[key].count++;
+            transitions[key].totalTime += s.switchCost;
+        });
+
+        let mostCommon = null;
+        let maxCount = 0;
+        Object.values(transitions).forEach(t => {
+            if (t.count > maxCount) {
+                maxCount = t.count;
+                mostCommon = t;
+            }
+        });
+
+        if (mostCommon) {
+            document.getElementById('most-common-transition').textContent = 
+                `${mostCommon.from} → ${mostCommon.to}`;
+            document.getElementById('most-common-count').textContent = 
+                `${mostCommon.count} times`;
+        }
+
+        let mostCostly = null;
+        let maxTime = 0;
+        Object.values(transitions).forEach(t => {
+            if (t.totalTime > maxTime) {
+                maxTime = t.totalTime;
+                mostCostly = t;
+            }
+        });
+
+        if (mostCostly) {
+            document.getElementById('most-costly-transition').textContent = 
+                `${mostCostly.from} → ${mostCostly.to}`;
+            document.getElementById('most-costly-time').textContent = 
+                `${mostCostly.totalTime} min lost`;
+        }
+
+        this.generateBatchRecommendation(transitions);
+    }
+
+    generateBatchRecommendation(transitions) {
+        const pairs = [];
+        Object.values(transitions).forEach(t => {
+            if (t.count >= 3) { 
+                pairs.push({
+                    from: t.from,
+                    to: t.to,
+                    count: t.count
+                });
+            }
+        });
+
+        if (pairs.length === 0) {
+            document.getElementById('recommended-batch').textContent = 'Batch similar tasks';
+            return;
+        }
+
+        pairs.sort((a, b) => b.count - a.count);
+        const topPair = pairs[0];
+        
+        document.getElementById('recommended-batch').textContent = 
+            `${topPair.from} + ${topPair.to}`;
+    }
+
+    renderSankeyChart() {
+        const ctx = document.getElementById('flow-sankey-chart').getContext('2d');
+        
+        if (this.switches.length === 0) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['No Data'],
+                    datasets: [{
+                        data: [0]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'No flow data available'
+                        }
+                    }
+                }
+            });
+            return;
+        }
+
+        const flows = {};
+        this.switches.forEach(s => {
+            const from = s.previousCategory;
+            const to = s.currentCategory;
+            const key = `${from}→${to}`;
+            
+            if (!flows[key]) {
+                flows[key] = {
+                    from: from,
+                    to: to,
+                    count: 0
+                };
+            }
+            flows[key].count++;
+        });
+
+        const nodes = new Set();
+        Object.values(flows).forEach(f => {
+            nodes.add(f.from);
+            nodes.add(f.to);
+        });
+
+        const nodeArray = Array.from(nodes);
+        
+        const flowData = Object.values(flows).map(f => ({
+            from: f.from,
+            to: f.to,
+            flow: f.count
+        }));
+
+        const topFlows = Object.values(flows)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 8);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: topFlows.map(f => `${f.from} → ${f.to}`),
+                datasets: [{
+                    label: 'Number of Switches',
+                    data: topFlows.map(f => f.count),
+                    backgroundColor: '#4a90e2'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Top Category Flows'
+                    }
+                }
+            }
+        });
+    }
+
+    renderTopTransitionsChart() {
+        const ctx = document.getElementById('top-transitions-chart').getContext('2d');
+        
+        if (this.switches.length === 0) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['No Data'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['#e1e5e9']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+            return;
+        }
+
+        const transitions = {};
+        this.switches.forEach(s => {
+            const key = `${s.previousCategory} → ${s.currentCategory}`;
+            if (!transitions[key]) {
+                transitions[key] = 0;
+            }
+            transitions[key] += s.switchCost;
+        });
+
+        const top5 = Object.entries(transitions)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: top5.map(t => t[0]),
+                datasets: [{
+                    data: top5.map(t => t[1]),
+                    backgroundColor: [
+                        '#4a90e2',
+                        '#e74c3c',
+                        '#f39c12',
+                        '#27ae60',
+                        '#9b59b6'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Top 5 by Time Lost'
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    renderCategoryTimeLossTable() {
+        const tbody = document.getElementById('category-time-loss-body');
+        
+        if (this.switches.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="no-data">No data available yet</td></tr>';
+            return;
+        }
+
+        const transitions = {};
+        this.switches.forEach(s => {
+            const key = `${s.previousCategory}|${s.currentCategory}`;
+            if (!transitions[key]) {
+                transitions[key] = {
+                    from: s.previousCategory,
+                    to: s.currentCategory,
+                    count: 0,
+                    totalTime: 0,
+                    totalLoad: 0
+                };
+            }
+            transitions[key].count++;
+            transitions[key].totalTime += s.switchCost;
+            transitions[key].totalLoad += s.cognitiveLoad;
+        });
+
+        const transitionArray = Object.values(transitions)
+            .map(t => ({
+                ...t,
+                avgTime: Math.round(t.totalTime / t.count),
+                avgLoad: Math.round(t.totalLoad / t.count)
+            }))
+            .sort((a, b) => b.totalTime - a.totalTime);
+
+        tbody.innerHTML = transitionArray.map(t => `
+            <tr>
+                <td><span class="category-badge" style="background: ${this.categoryColors[t.from] || '#95a5a6'}20; color: ${this.categoryColors[t.from] || '#666'}">${t.from}</span></td>
+                <td><span class="category-badge" style="background: ${this.categoryColors[t.to] || '#95a5a6'}20; color: ${this.categoryColors[t.to] || '#666'}">${t.to}</span></td>
+                <td>${t.count} times</td>
+                <td>${t.totalTime} min</td>
+                <td>${t.avgTime} min</td>
+            </tr>
+        `).join('');
+    }
+
     formatReason(reason) {
         const reasonMap = {
             'interruption': 'External Interruption',
@@ -517,7 +827,13 @@ class CognitiveSwitchTracker {
         list.innerHTML = recentSwitches.map(switchItem => `
             <div class="switch-item">
                 <div class="time">${new Date(switchItem.timestamp).toLocaleString()}</div>
-                <div class="tasks">${switchItem.previousTask} → ${switchItem.currentTask}</div>
+                <div class="tasks">
+                    <span class="category-badge prev-category">${switchItem.previousCategory}</span>
+                    ${switchItem.previousTask} 
+                    → 
+                    <span class="category-badge current-category">${switchItem.currentCategory}</span>
+                    ${switchItem.currentTask}
+                </div>
                 <div class="reason">Reason: ${this.formatReason(switchItem.reason)}</div>
                 <div class="cost">Time Lost: ${switchItem.switchCost} min (Load: ${switchItem.cognitiveLoad}/10)</div>
             </div>
