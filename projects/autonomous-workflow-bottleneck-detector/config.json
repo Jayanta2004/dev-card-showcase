@@ -1,0 +1,797 @@
+{
+  "version": "1.0.0",
+  "name": "Autonomous Workflow Bottleneck Detector",
+  "description": "AI-powered system for identifying performance bottlenecks in automated workflows",
+
+  "ai": {
+    "models": {
+      "anomalyDetector": {
+        "model": "isolation-forest-v2",
+        "version": "2.1.0",
+        "contamination": 0.1,
+        "n_estimators": 100,
+        "accuracy": 0.94,
+        "cacheEnabled": true,
+        "cacheSize": 10000
+      },
+      "patternAnalyzer": {
+        "model": "time-series-analyzer",
+        "version": "1.3.0",
+        "algorithms": ["arima", "exponential_smoothing", "fft"],
+        "seasonalPeriod": 24,
+        "cacheEnabled": true,
+        "cacheSize": 5000
+      },
+      "predictiveModel": {
+        "model": "gradient-boost-predictor",
+        "version": "3.0.0",
+        "predictionHorizon": 60,
+        "confidenceThreshold": 0.8,
+        "features": ["latency", "throughput", "error_rate", "resource_usage"],
+        "cacheEnabled": false
+      },
+      "rootCauseAnalyzer": {
+        "model": "causal-inference-engine",
+        "version": "1.2.0",
+        "maxDepth": 5,
+        "minSamples": 100,
+        "cacheEnabled": true,
+        "cacheSize": 2000
+      }
+    },
+    "processing": {
+      "batchSize": 50,
+      "timeout": 30000,
+      "retryAttempts": 3,
+      "retryDelay": 1000,
+      "parallelProcessing": true,
+      "maxConcurrency": 10,
+      "memoryLimit": "2GB"
+    },
+    "training": {
+      "autoRetrain": true,
+      "retrainInterval": 86400000,
+      "minSamplesForRetrain": 10000,
+      "validationSplit": 0.2,
+      "earlyStoppingPatience": 10
+    }
+  },
+
+  "monitoring": {
+    "enabled": true,
+    "realTime": true,
+    "collectionInterval": 5000,
+    "retentionPeriod": 2592000000,
+    "maxWorkflows": 10000,
+    "maxStagesPerWorkflow": 50,
+    "metrics": {
+      "latency": {
+        "enabled": true,
+        "precision": "ms",
+        "percentiles": [50, 95, 99],
+        "histogramBuckets": [10, 50, 100, 500, 1000, 5000]
+      },
+      "throughput": {
+        "enabled": true,
+        "unit": "requests_per_second",
+        "slidingWindow": 60000
+      },
+      "errorRate": {
+        "enabled": true,
+        "categories": ["4xx", "5xx", "timeout", "network"],
+        "alertThreshold": 0.05
+      },
+      "resourceUsage": {
+        "enabled": true,
+        "metrics": ["cpu", "memory", "disk", "network"],
+        "collectionInterval": 10000
+      }
+    },
+    "workflows": {
+      "autoDiscovery": true,
+      "registrationTimeout": 30000,
+      "heartbeatInterval": 30000,
+      "staleWorkflowTimeout": 300000
+    }
+  },
+
+  "bottleneckDetection": {
+    "enabled": true,
+    "algorithms": {
+      "statistical": {
+        "enabled": true,
+        "method": "z_score",
+        "threshold": 2.5,
+        "minSamples": 30,
+        "warmupPeriod": 300000
+      },
+      "machineLearning": {
+        "enabled": true,
+        "sensitivity": 0.8,
+        "falsePositiveRate": 0.02,
+        "updateInterval": 3600000
+      },
+      "ruleBased": {
+        "enabled": true,
+        "rules": [
+          {
+            "name": "latency_spike",
+            "condition": "latency > baseline * 2",
+            "duration": 300000,
+            "severity": "high"
+          },
+          {
+            "name": "throughput_drop",
+            "condition": "throughput < baseline * 0.5",
+            "duration": 180000,
+            "severity": "medium"
+          },
+          {
+            "name": "error_rate_spike",
+            "condition": "error_rate > 0.1",
+            "duration": 120000,
+            "severity": "critical"
+          }
+        ]
+      }
+    },
+    "classification": {
+      "types": {
+        "latency": {
+          "description": "Response time bottlenecks",
+          "indicators": ["response_time", "queue_time"],
+          "severityMultiplier": 1.0
+        },
+        "throughput": {
+          "description": "Processing capacity limitations",
+          "indicators": ["requests_per_second", "queue_depth"],
+          "severityMultiplier": 1.2
+        },
+        "resource": {
+          "description": "Resource exhaustion issues",
+          "indicators": ["cpu_usage", "memory_usage", "disk_usage"],
+          "severityMultiplier": 1.1
+        },
+        "error_rate": {
+          "description": "High error rate bottlenecks",
+          "indicators": ["error_percentage", "failure_rate"],
+          "severityMultiplier": 1.5
+        },
+        "dependency": {
+          "description": "External dependency bottlenecks",
+          "indicators": ["external_call_time", "network_latency"],
+          "severityMultiplier": 0.9
+        }
+      },
+      "severityLevels": {
+        "critical": {
+          "threshold": 3.0,
+          "impact": "high",
+          "autoEscalate": true,
+          "notificationChannels": ["slack", "email", "pagerduty"]
+        },
+        "high": {
+          "threshold": 2.0,
+          "impact": "medium",
+          "autoEscalate": false,
+          "notificationChannels": ["slack", "email"]
+        },
+        "medium": {
+          "threshold": 1.5,
+          "impact": "low",
+          "autoEscalate": false,
+          "notificationChannels": ["slack"]
+        },
+        "low": {
+          "threshold": 1.0,
+          "impact": "minimal",
+          "autoEscalate": false,
+          "notificationChannels": ["dashboard"]
+        }
+      }
+    },
+    "analysis": {
+      "correlationThreshold": 0.7,
+      "causalAnalysis": true,
+      "patternRecognition": true,
+      "predictiveWindow": 3600000,
+      "historicalAnalysis": true,
+      "crossWorkflowAnalysis": true
+    }
+  },
+
+  "alerting": {
+    "enabled": true,
+    "cooldownPeriod": 300000,
+    "maxAlertsPerHour": 100,
+    "autoResolve": {
+      "enabled": true,
+      "resolutionTime": 1800000,
+      "confidenceThreshold": 0.8
+    },
+    "channels": {
+      "slack": {
+        "enabled": true,
+        "webhookUrl": "${SLACK_WEBHOOK_URL}",
+        "channel": "#bottleneck-alerts",
+        "username": "Workflow Monitor",
+        "icon": ":warning:",
+        "templates": {
+          "critical": ":fire: *CRITICAL BOTTLENECK* detected in {{workflowName}}\n• Stage: {{stage}}\n• Latency: {{latency}}ms\n• Impact: {{impact}}",
+          "high": ":warning: *High Priority* bottleneck in {{workflowName}}\n• Stage: {{stage}}\n• Deviation: {{deviation}}%",
+          "medium": ":bell: Bottleneck detected in {{workflowName}}\n• Type: {{type}}\n• Severity: Medium",
+          "low": ":information_source: Minor bottleneck in {{workflowName}}"
+        }
+      },
+      "email": {
+        "enabled": true,
+        "smtp": {
+          "host": "${SMTP_HOST}",
+          "port": 587,
+          "secure": false,
+          "auth": {
+            "user": "${SMTP_USER}",
+            "pass": "${SMTP_PASS}"
+          }
+        },
+        "from": "alerts@workflow-monitor.com",
+        "to": ["team@company.com"],
+        "subject": "Workflow Bottleneck Alert: {{severity}} - {{workflowName}}",
+        "templates": {
+          "html": "<h2>Workflow Bottleneck Alert</h2><p><strong>Severity:</strong> {{severity}}</p><p><strong>Workflow:</strong> {{workflowName}}</p><p><strong>Stage:</strong> {{stage}}</p><p><strong>Details:</strong> {{message}}</p>"
+        }
+      },
+      "pagerduty": {
+        "enabled": false,
+        "integrationKey": "${PAGERDUTY_KEY}",
+        "serviceName": "Workflow Monitor",
+        "severityMapping": {
+          "critical": "critical",
+          "high": "error",
+          "medium": "warning",
+          "low": "info"
+        }
+      },
+      "webhook": {
+        "enabled": true,
+        "url": "${ALERT_WEBHOOK_URL}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${WEBHOOK_TOKEN}"
+        },
+        "payload": {
+          "alertId": "{{alertId}}",
+          "severity": "{{severity}}",
+          "workflowName": "{{workflowName}}",
+          "stage": "{{stage}}",
+          "timestamp": "{{timestamp}}",
+          "details": "{{details}}"
+        }
+      },
+      "dashboard": {
+        "enabled": true,
+        "maxActiveAlerts": 50,
+        "autoCleanup": true,
+        "cleanupInterval": 3600000
+      }
+    },
+    "escalation": {
+      "enabled": true,
+      "policies": {
+        "critical": {
+          "immediate": ["slack", "email", "pagerduty"],
+          "after5min": ["slack"],
+          "after15min": ["email", "pagerduty"]
+        },
+        "high": {
+          "immediate": ["slack", "email"],
+          "after10min": ["slack"],
+          "after30min": ["email"]
+        },
+        "medium": {
+          "immediate": ["slack"],
+          "after30min": ["email"]
+        }
+      }
+    }
+  },
+
+  "analytics": {
+    "enabled": true,
+    "realTime": true,
+    "retention": {
+      "metrics": 7776000000,
+      "alerts": 2592000000,
+      "insights": 15552000000
+    },
+    "aggregation": {
+      "intervals": ["1m", "5m", "15m", "1h", "6h", "1d"],
+      "functions": ["avg", "min", "max", "percentile_95", "percentile_99"]
+    },
+    "insights": {
+      "enabled": true,
+      "generationInterval": 3600000,
+      "types": {
+        "performance_trends": {
+          "enabled": true,
+          "analysisWindow": 604800000,
+          "confidenceThreshold": 0.8
+        },
+        "bottleneck_patterns": {
+          "enabled": true,
+          "minOccurrences": 3,
+          "patternWindow": 86400000
+        },
+        "optimization_opportunities": {
+          "enabled": true,
+          "impactThreshold": 0.1,
+          "costBenefitRatio": 2.0
+        },
+        "predictive_alerts": {
+          "enabled": true,
+          "predictionHorizon": 3600000,
+          "falsePositiveTolerance": 0.05
+        }
+      }
+    },
+    "reporting": {
+      "enabled": true,
+      "schedule": "0 9 * * 1",
+      "formats": ["html", "pdf", "json"],
+      "recipients": ["team@company.com"],
+      "retention": 2592000000
+    }
+  },
+
+  "performance": {
+    "optimization": {
+      "enabled": true,
+      "caching": {
+        "enabled": true,
+        "strategy": "lru",
+        "maxSize": 100000,
+        "ttl": 3600000
+      },
+      "compression": {
+        "enabled": true,
+        "algorithm": "gzip",
+        "level": 6,
+        "minSize": 1024
+      },
+      "connectionPooling": {
+        "enabled": true,
+        "maxConnections": 100,
+        "idleTimeout": 30000
+      },
+      "batchProcessing": {
+        "enabled": true,
+        "maxBatchSize": 100,
+        "maxWaitTime": 5000
+      }
+    },
+    "scaling": {
+      "autoScaling": {
+        "enabled": true,
+        "minInstances": 2,
+        "maxInstances": 20,
+        "cpuThreshold": 70,
+        "memoryThreshold": 80,
+        "scaleUpCooldown": 300,
+        "scaleDownCooldown": 600
+      },
+      "loadBalancing": {
+        "enabled": true,
+        "algorithm": "least_connections",
+        "healthChecks": {
+          "enabled": true,
+          "interval": 30000,
+          "timeout": 5000,
+          "unhealthyThreshold": 3,
+          "healthyThreshold": 2
+        }
+      }
+    },
+    "limits": {
+      "maxConcurrentWorkflows": 1000,
+      "maxMetricsPerSecond": 10000,
+      "maxAlertsPerMinute": 60,
+      "maxApiRequestsPerSecond": 100,
+      "maxDashboardUsers": 100
+    }
+  },
+
+  "security": {
+    "authentication": {
+      "enabled": true,
+      "methods": ["oauth2", "apiKey", "jwt"],
+      "tokenExpiration": 3600000,
+      "refreshTokenEnabled": true,
+      "mfa": {
+        "enabled": false,
+        "required": false
+      }
+    },
+    "authorization": {
+      "enabled": true,
+      "roles": {
+        "admin": {
+          "permissions": ["read", "write", "delete", "manage_workflows", "view_alerts", "configure_system", "view_analytics"]
+        },
+        "operator": {
+          "permissions": ["read", "write", "manage_workflows", "view_alerts", "view_analytics"]
+        },
+        "analyst": {
+          "permissions": ["read", "view_alerts", "view_analytics", "export_data"]
+        },
+        "viewer": {
+          "permissions": ["read", "view_alerts"]
+        }
+      }
+    },
+    "encryption": {
+      "enabled": true,
+      "algorithm": "AES-256-GCM",
+      "keyRotation": {
+        "enabled": true,
+        "interval": 2592000000
+      },
+      "dataAtRest": true,
+      "dataInTransit": true
+    },
+    "audit": {
+      "enabled": true,
+      "retention": 31536000000,
+      "events": [
+        "workflow_created",
+        "workflow_updated",
+        "bottleneck_detected",
+        "alert_created",
+        "alert_resolved",
+        "user_login",
+        "configuration_changed"
+      ]
+    }
+  },
+
+  "integration": {
+    "api": {
+      "enabled": true,
+      "version": "v1",
+      "baseUrl": "/api/v1",
+      "cors": {
+        "enabled": true,
+        "origins": ["*"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+        "headers": ["Content-Type", "Authorization", "X-API-Key"],
+        "credentials": true
+      },
+      "rateLimiting": {
+        "enabled": true,
+        "strategy": "sliding_window",
+        "limits": {
+          "anonymous": {
+            "requests": 100,
+            "window": 3600000
+          },
+          "authenticated": {
+            "requests": 1000,
+            "window": 3600000
+          }
+        }
+      },
+      "documentation": {
+        "enabled": true,
+        "path": "/api/docs",
+        "format": "openapi_3.0"
+      }
+    },
+    "webhooks": {
+      "enabled": true,
+      "maxSubscriptions": 100,
+      "retryPolicy": {
+        "maxRetries": 5,
+        "backoffMultiplier": 2,
+        "maxDelay": 300000
+      },
+      "events": [
+        "bottleneck_detected",
+        "bottleneck_resolved",
+        "alert_created",
+        "alert_resolved",
+        "workflow_registered",
+        "performance_anomaly",
+        "ai_insight_generated"
+      ]
+    },
+    "streaming": {
+      "enabled": true,
+      "protocols": ["websocket", "sse", "mqtt"],
+      "heartbeatInterval": 30000,
+      "maxConnections": 1000,
+      "messageRetention": 3600000
+    },
+    "externalSystems": {
+      "prometheus": {
+        "enabled": false,
+        "endpoint": "http://prometheus:9090",
+        "metricsPath": "/metrics",
+        "scrapeInterval": 15000
+      },
+      "grafana": {
+        "enabled": false,
+        "url": "http://grafana:3000",
+        "apiKey": "${GRAFANA_API_KEY}",
+        "dashboardFolder": "Workflow Monitor"
+      },
+      "datadog": {
+        "enabled": false,
+        "apiKey": "${DATADOG_API_KEY}",
+        "appKey": "${DATADOG_APP_KEY}",
+        "tags": ["service:workflow-monitor", "env:production"]
+      },
+      "newRelic": {
+        "enabled": false,
+        "licenseKey": "${NEW_RELIC_LICENSE_KEY}",
+        "appName": "Workflow Bottleneck Detector"
+      }
+    }
+  },
+
+  "simulation": {
+    "enabled": true,
+    "realTimeUpdates": true,
+    "randomEvents": true,
+    "dataVolume": "realistic",
+    "scenarios": {
+      "normal_operation": {
+        "probability": 0.75,
+        "latencyRange": [50, 200],
+        "throughputRange": [80, 120],
+        "errorRate": 0.02,
+        "bottleneckProbability": 0.05
+      },
+      "high_load": {
+        "probability": 0.15,
+        "latencyRange": [200, 800],
+        "throughputRange": [60, 90],
+        "errorRate": 0.08,
+        "bottleneckProbability": 0.3
+      },
+      "performance_degradation": {
+        "probability": 0.08,
+        "latencyRange": [500, 2000],
+        "throughputRange": [30, 70],
+        "errorRate": 0.15,
+        "bottleneckProbability": 0.7
+      },
+      "system_stress": {
+        "probability": 0.02,
+        "latencyRange": [1000, 5000],
+        "throughputRange": [10, 40],
+        "errorRate": 0.25,
+        "bottleneckProbability": 0.9
+      }
+    },
+    "workflows": {
+      "count": 15,
+      "types": {
+        "data_processing": 0.4,
+        "api_integration": 0.3,
+        "batch_processing": 0.2,
+        "real_time": 0.1
+      },
+      "stagesPerWorkflow": {
+        "min": 3,
+        "max": 8
+      }
+    },
+    "anomalies": {
+      "frequency": 0.1,
+      "types": {
+        "latency_spike": 0.4,
+        "throughput_drop": 0.3,
+        "error_burst": 0.2,
+        "resource_exhaustion": 0.1
+      },
+      "duration": {
+        "min": 300000,
+        "max": 1800000
+      }
+    }
+  },
+
+  "ui": {
+    "theme": {
+      "primary": "#f59e0b",
+      "primaryDark": "#d97706",
+      "primaryLight": "#fbbf24",
+      "secondary": "#ea580c",
+      "accent": "#fb923c",
+      "background": "#0f172a",
+      "surface": "#1e293b",
+      "surfaceHover": "#334155",
+      "textPrimary": "#f1f5f9",
+      "textSecondary": "#cbd5e1",
+      "textMuted": "#94a3b8",
+      "success": "#10b981",
+      "warning": "#f59e0b",
+      "error": "#ef4444",
+      "info": "#3b82f6"
+    },
+    "animations": {
+      "enabled": true,
+      "duration": 300,
+      "easing": "ease-out"
+    },
+    "charts": {
+      "type": "canvas",
+      "responsive": true,
+      "animation": true,
+      "colors": [
+        "#f59e0b", "#ea580c", "#fb923c", "#fdba74", "#fed7aa",
+        "#10b981", "#059669", "#34d399", "#6ee7b7", "#a7f3d0"
+      ],
+      "grid": {
+        "color": "#334155",
+        "borderColor": "#475569"
+      }
+    },
+    "dashboard": {
+      "autoRefresh": true,
+      "refreshInterval": 5000,
+      "compactMode": false,
+      "showTrends": true,
+      "maxVisibleAlerts": 10
+    },
+    "notifications": {
+      "position": "top-right",
+      "duration": 5000,
+      "maxVisible": 5,
+      "animations": true
+    }
+  },
+
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "outputs": ["console", "file"],
+    "rotation": {
+      "enabled": true,
+      "maxSize": "100m",
+      "maxFiles": 10,
+      "compress": true
+    },
+    "structured": {
+      "enabled": true,
+      "fields": ["timestamp", "level", "component", "workflowId", "stage", "message", "metadata"]
+    },
+    "performance": {
+      "enabled": true,
+      "slowOperationThreshold": 1000,
+      "memoryUsageTracking": true,
+      "cpuUsageTracking": true
+    }
+  },
+
+  "backup": {
+    "enabled": true,
+    "schedule": "0 2 * * *",
+    "retention": {
+      "daily": 7,
+      "weekly": 4,
+      "monthly": 12,
+      "yearly": 5
+    },
+    "compression": true,
+    "encryption": true,
+    "verification": true,
+    "locations": {
+      "local": "/opt/workflow-monitor/backups",
+      "remote": "s3://workflow-monitor-backups"
+    },
+    "include": {
+      "metrics": true,
+      "alerts": true,
+      "configuration": true,
+      "aiModels": true
+    }
+  },
+
+  "testing": {
+    "unitTests": {
+      "enabled": true,
+      "coverage": 85,
+      "framework": "jest",
+      "parallel": true,
+      "bail": false,
+      "timeout": 10000
+    },
+    "integrationTests": {
+      "enabled": true,
+      "framework": "cypress",
+      "baseUrl": "http://localhost:3000",
+      "video": true,
+      "screenshots": true,
+      "timeout": 30000
+    },
+    "performanceTests": {
+      "enabled": true,
+      "framework": "k6",
+      "scenarios": {
+        "load": {
+          "vus": 100,
+          "duration": "5m",
+          "targetRps": 500
+        },
+        "stress": {
+          "vus": 200,
+          "duration": "10m",
+          "targetRps": 1000
+        },
+        "spike": {
+          "vus": 500,
+          "duration": "2m",
+          "targetRps": 2000
+        }
+      },
+      "thresholds": {
+        "http_req_duration": ["p(95)<500"],
+        "http_req_failed": ["rate<0.1"]
+      }
+    },
+    "aiTests": {
+      "enabled": true,
+      "accuracyThreshold": 0.9,
+      "driftDetection": true,
+      "retrainingThreshold": 0.05,
+      "testDataSplit": 0.3
+    }
+  },
+
+  "deployment": {
+    "environment": "development",
+    "replicas": 2,
+    "resources": {
+      "requests": {
+        "cpu": "1000m",
+        "memory": "2Gi"
+      },
+      "limits": {
+        "cpu": "2000m",
+        "memory": "4Gi"
+      }
+    },
+    "healthChecks": {
+      "readiness": {
+        "path": "/health/ready",
+        "initialDelaySeconds": 30,
+        "periodSeconds": 10,
+        "timeoutSeconds": 5
+      },
+      "liveness": {
+        "path": "/health/live",
+        "initialDelaySeconds": 60,
+        "periodSeconds": 30,
+        "timeoutSeconds": 10
+      }
+    },
+    "scaling": {
+      "hpa": {
+        "enabled": true,
+        "minReplicas": 2,
+        "maxReplicas": 10,
+        "targetCPUUtilizationPercentage": 70,
+        "targetMemoryUtilizationPercentage": 80
+      }
+    },
+    "ingress": {
+      "enabled": true,
+      "className": "nginx",
+      "tls": {
+        "enabled": true,
+        "secretName": "workflow-monitor-tls"
+      }
+    }
+  }
+}

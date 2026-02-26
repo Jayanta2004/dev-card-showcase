@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Workflow Bottleneck Detector</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="title">Autonomous Workflow Bottleneck Detector</h1>
+                    <p class="subtitle">AI-powered bottleneck identification and performance optimization</p>
+                </div>
+                <div class="header-right">
+                    <div class="status-indicator">
+                        <div class="status-dot active"></div>
+                        <span class="status-text">Monitoring Active</span>
+                    </div>
+                    <div class="time-display" id="currentTime">--:--:--</div>
+                </div>
+            </div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-button" data-tab="workflows">Workflows</button>
+            <button class="tab-button" data-tab="bottlenecks">Bottlenecks</button>
+            <button class="tab-button" data-tab="analytics">Analytics</button>
+            <button class="tab-button" data-tab="alerts">Alerts</button>
+        </nav>
+
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content active">
+                <div class="dashboard-grid">
+                    <!-- Overview Cards -->
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Active Workflows</h3>
+                            <div class="metric-icon">⚡</div>
+                        </div>
+                        <div class="metric-value" id="activeWorkflows">0</div>
+                        <div class="metric-trend" id="activeWorkflowsTrend">
+                            <span class="trend-value">+0%</span> vs last hour
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Current Bottlenecks</h3>
+                            <div class="metric-icon">🚨</div>
+                        </div>
+                        <div class="metric-value" id="currentBottlenecks">0</div>
+                        <div class="metric-trend" id="bottlenecksTrend">
+                            <span class="trend-value">+0%</span> vs last hour
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Avg Response Time</h3>
+                            <div class="metric-icon">⏱️</div>
+                        </div>
+                        <div class="metric-value" id="avgResponseTime">0ms</div>
+                        <div class="metric-trend" id="responseTimeTrend">
+                            <span class="trend-value">+0%</span> vs last hour
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Throughput</h3>
+                            <div class="metric-icon">📈</div>
+                        </div>
+                        <div class="metric-value" id="throughput">0/sec</div>
+                        <div class="metric-trend" id="throughputTrend">
+                            <span class="trend-value">+0%</span> vs last hour
+                        </div>
+                    </div>
+
+                    <!-- Performance Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Workflow Performance Overview</h3>
+                            <div class="chart-controls">
+                                <select id="timeRangeSelect" class="control-select">
+                                    <option value="1h">Last Hour</option>
+                                    <option value="6h">Last 6 Hours</option>
+                                    <option value="24h">Last 24 Hours</option>
+                                    <option value="7d">Last 7 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="performanceChart" width="800" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Bottlenecks -->
+                    <div class="list-card">
+                        <div class="list-header">
+                            <h3>Top Performance Issues</h3>
+                            <button class="refresh-button" id="refreshBottlenecks">🔄</button>
+                        </div>
+                        <div class="bottlenecks-list" id="topBottlenecks">
+                            <div class="empty-state">
+                                <div class="empty-icon">📊</div>
+                                <p>No bottlenecks detected</p>
+                                <small>Monitoring active workflows...</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Alerts -->
+                    <div class="list-card">
+                        <div class="list-header">
+                            <h3>Recent Alerts</h3>
+                            <button class="view-all-button" id="viewAllAlerts">View All</button>
+                        </div>
+                        <div class="alerts-list" id="recentAlerts">
+                            <div class="empty-state">
+                                <div class="empty-icon">🔔</div>
+                                <p>No recent alerts</p>
+                                <small>System operating normally</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflows Tab -->
+            <div id="workflows-tab" class="tab-content">
+                <div class="workflows-header">
+                    <div class="workflows-controls">
+                        <input type="text" id="workflowSearch" placeholder="Search workflows..." class="search-input">
+                        <select id="workflowStatusFilter" class="control-select">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="paused">Paused</option>
+                            <option value="error">Error</option>
+                        </select>
+                        <button class="primary-button" id="addWorkflowButton">+ Add Workflow</button>
+                    </div>
+                </div>
+
+                <div class="workflows-grid" id="workflowsGrid">
+                    <div class="empty-state">
+                        <div class="empty-icon">🔄</div>
+                        <p>No workflows configured</p>
+                        <button class="primary-button" id="createFirstWorkflow">Create First Workflow</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottlenecks Tab -->
+            <div id="bottlenecks-tab" class="tab-content">
+                <div class="bottlenecks-header">
+                    <div class="bottlenecks-controls">
+                        <select id="bottleneckSeverityFilter" class="control-select">
+                            <option value="all">All Severities</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <select id="bottleneckTypeFilter" class="control-select">
+                            <option value="all">All Types</option>
+                            <option value="latency">Latency</option>
+                            <option value="throughput">Throughput</option>
+                            <option value="error_rate">Error Rate</option>
+                            <option value="resource">Resource</option>
+                        </select>
+                        <button class="secondary-button" id="exportBottlenecks">Export Report</button>
+                    </div>
+                </div>
+
+                <div class="bottlenecks-analysis">
+                    <div class="analysis-chart">
+                        <div class="chart-header">
+                            <h3>Bottleneck Distribution</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="bottleneckChart" width="600" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bottlenecks-table-container">
+                        <table class="bottlenecks-table" id="bottlenecksTable">
+                            <thead>
+                                <tr>
+                                    <th>Workflow</th>
+                                    <th>Stage</th>
+                                    <th>Type</th>
+                                    <th>Severity</th>
+                                    <th>Impact</th>
+                                    <th>Duration</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bottlenecksTableBody">
+                                <tr>
+                                    <td colspan="7" class="empty-row">
+                                        <div class="empty-state">
+                                            <div class="empty-icon">🔍</div>
+                                            <p>No bottlenecks detected</p>
+                                            <small>System is performing optimally</small>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics-tab" class="tab-content">
+                <div class="analytics-grid">
+                    <div class="analytics-controls">
+                        <select id="analyticsTimeRange" class="control-select">
+                            <option value="1h">Last Hour</option>
+                            <option value="6h">Last 6 Hours</option>
+                            <option value="24h">Last 24 Hours</option>
+                            <option value="7d">Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
+                        </select>
+                        <select id="analyticsMetric" class="control-select">
+                            <option value="latency">Latency</option>
+                            <option value="throughput">Throughput</option>
+                            <option value="error_rate">Error Rate</option>
+                            <option value="resource_usage">Resource Usage</option>
+                        </select>
+                    </div>
+
+                    <div class="analytics-chart">
+                        <div class="chart-header">
+                            <h3>Performance Trends</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="analyticsChart" width="800" height="400"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="analytics-insights">
+                        <div class="insights-header">
+                            <h3>AI Insights</h3>
+                            <div class="insights-controls">
+                                <button class="refresh-button" id="refreshInsights">🔄</button>
+                            </div>
+                        </div>
+                        <div class="insights-list" id="insightsList">
+                            <div class="insight-item">
+                                <div class="insight-icon">🧠</div>
+                                <div class="insight-content">
+                                    <h4>Analyzing workflow patterns...</h4>
+                                    <p>AI is processing performance data to identify optimization opportunities.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analytics-metrics">
+                        <div class="metrics-grid">
+                            <div class="metric-item">
+                                <h4>Peak Performance</h4>
+                                <div class="metric-value-large" id="peakPerformance">0%</div>
+                                <small>of optimal throughput</small>
+                            </div>
+                            <div class="metric-item">
+                                <h4>Efficiency Score</h4>
+                                <div class="metric-value-large" id="efficiencyScore">0%</div>
+                                <small>resource utilization</small>
+                            </div>
+                            <div class="metric-item">
+                                <h4>Bottleneck Frequency</h4>
+                                <div class="metric-value-large" id="bottleneckFrequency">0</div>
+                                <small>per hour</small>
+                            </div>
+                            <div class="metric-item">
+                                <h4>Recovery Time</h4>
+                                <div class="metric-value-large" id="recoveryTime">0ms</div>
+                                <small>average</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Tab -->
+            <div id="alerts-tab" class="tab-content">
+                <div class="alerts-header">
+                    <div class="alerts-controls">
+                        <select id="alertsFilter" class="control-select">
+                            <option value="all">All Alerts</option>
+                            <option value="critical">Critical</option>
+                            <option value="warning">Warning</option>
+                            <option value="info">Info</option>
+                        </select>
+                        <select id="alertsTimeFilter" class="control-select">
+                            <option value="1h">Last Hour</option>
+                            <option value="6h">Last 6 Hours</option>
+                            <option value="24h">Last 24 Hours</option>
+                            <option value="7d">Last 7 Days</option>
+                        </select>
+                        <button class="secondary-button" id="clearAllAlerts">Clear All</button>
+                    </div>
+                </div>
+
+                <div class="alerts-container">
+                    <div class="alerts-timeline" id="alertsTimeline">
+                        <div class="empty-state">
+                            <div class="empty-icon">🔔</div>
+                            <p>No alerts in selected time range</p>
+                            <small>All systems operating normally</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="workflowModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="workflowModalTitle">Add Workflow</h3>
+                <button class="modal-close" id="closeWorkflowModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="workflowForm">
+                    <div class="form-group">
+                        <label for="workflowName">Workflow Name</label>
+                        <input type="text" id="workflowName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="workflowDescription">Description</label>
+                        <textarea id="workflowDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="workflowType">Type</label>
+                        <select id="workflowType">
+                            <option value="data_processing">Data Processing</option>
+                            <option value="api_integration">API Integration</option>
+                            <option value="batch_processing">Batch Processing</option>
+                            <option value="real_time">Real-time Processing</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expectedLatency">Expected Latency (ms)</label>
+                        <input type="number" id="expectedLatency" min="1" value="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="monitoringEnabled">Enable Monitoring</label>
+                        <input type="checkbox" id="monitoringEnabled" checked>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-button" id="cancelWorkflow">Cancel</button>
+                <button class="primary-button" id="saveWorkflow">Save Workflow</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bottleneckModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Bottleneck Analysis</h3>
+                <button class="modal-close" id="closeBottleneckModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="bottleneck-details" id="bottleneckDetails">
+                    <div class="bottleneck-metrics">
+                        <div class="metric-item">
+                            <h4>Current Latency</h4>
+                            <div class="metric-value" id="bottleneckLatency">0ms</div>
+                        </div>
+                        <div class="metric-item">
+                            <h4>Expected Latency</h4>
+                            <div class="metric-value" id="bottleneckExpected">0ms</div>
+                        </div>
+                        <div class="metric-item">
+                            <h4>Deviation</h4>
+                            <div class="metric-value" id="bottleneckDeviation">0%</div>
+                        </div>
+                    </div>
+                    <div class="bottleneck-chart">
+                        <canvas id="bottleneckDetailChart" width="500" height="300"></canvas>
+                    </div>
+                    <div class="bottleneck-recommendations">
+                        <h4>AI Recommendations</h4>
+                        <div id="bottleneckRecommendations">
+                            <p>Analyzing bottleneck patterns...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-button" id="exportBottleneckReport">Export Report</button>
+                <button class="primary-button" id="applyOptimization">Apply Optimization</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="controller.js"></script>
+</body>
+</html>
