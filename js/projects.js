@@ -1965,6 +1965,19 @@ const staticProjects = [
             name: "Gupta-02",
             github: "https://github.com/Gupta-02"
         }
+    },
+    {
+        title: "Data Retention Compliance Auditor",
+        description:
+            "An automated compliance auditing tool that continuously monitors data retention policies, identifies violations, and ensures regulatory compliance across financial, user data, logs, and communication records with real-time alerts and remediation workflows.",
+        tags: ["HTML", "CSS", "JavaScript", "Compliance", "Data Governance", "Security", "Audit"],
+        links: {
+            live: "./projects/data-retention-compliance-auditor/index.html",
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
     }
 
 ];
