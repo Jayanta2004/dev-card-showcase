@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Planet Defense Game</title>
+
+<style>
+body{
+  margin:0;
+  background:radial-gradient(circle at top,#1a0033,#000010);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  font-family:Segoe UI;
+  color:white;
+}
+
+#gameContainer{
+  background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 0 30px #00ffff;
+}
+
+h1{
+  text-align:center;
+  color:#00ffff;
+  text-shadow:0 0 10px cyan;
+}
+
+canvas{
+  background:black;
+  border:3px solid #ff00ff;
+  border-radius:15px;
+  display:block;
+  margin:auto;
+  box-shadow:0 0 20px #ff00ff;
+}
+
+#info{
+  display:flex;
+  justify-content:space-between;
+  margin-top:10px;
+  font-size:18px;
+}
+
+button{
+  margin-top:10px;
+  width:100%;
+  padding:10px;
+  font-size:18px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(45deg,#ff00ff,#00ffff);
+  color:black;
+  cursor:pointer;
+  box-shadow:0 0 10px cyan;
+}
+
+button:hover{
+  transform:scale(1.05);
+}
+
+#gameOver{
+  text-align:center;
+  font-size:22px;
+  color:#ff5555;
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="gameContainer">
+  <h1>🌍 Planet Defense</h1>
+
+  <canvas id="gameCanvas" width="500" height="400"></canvas>
+
+  <div id="info">
+    <div>Score: <span id="score">0</span></div>
+    <div>Lives: <span id="lives">3</span></div>
+  </div>
+
+  <button onclick="startGame()">Start / Restart</button>
+  <div id="gameOver">💀 Game Over</div>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let asteroids = [];
+let lasers = [];
+let score = 0;
+let lives = 3;
+let gameRunning = false;
+
+const planet = {
+  x: canvas.width/2,
+  y: canvas.height - 40,
+  radius: 25
+};
+
+function drawPlanet(){
+  ctx.beginPath();
+  ctx.arc(planet.x, planet.y, planet.radius, 0, Math.PI*2);
+  ctx.fillStyle = "#00ffcc";
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = "#00ffff";
+  ctx.fill();
+  ctx.closePath();
+}
+
+function createAsteroid(){
+  const size = Math.random()*15 + 10;
+  asteroids.push({
+    x: Math.random() * canvas.width,
+    y: -20,
+    radius: size,
+    speed: Math.random()*2 + 1
+  });
+}
+
+function drawAsteroids(){
+  asteroids.forEach(a=>{
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, a.radius, 0, Math.PI*2);
+    ctx.fillStyle = "#ff00ff";
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "#ff00ff";
+    ctx.fill();
+    ctx.closePath();
+  });
+}
+
+function updateAsteroids(){
+  for(let i=asteroids.length-1;i>=0;i--){
+    asteroids[i].y += asteroids[i].speed;
+
+    if(asteroids[i].y > canvas.height){
+      asteroids.splice(i,1);
+      lives--;
+      updateUI();
+      if(lives<=0){
+        endGame();
+      }
+    }
+  }
+}
+
+function shootLaser(x,y){
+  lasers.push({
+    x:x,
+    y:y,
+    speed:5
+  });
+}
+
+function drawLasers(){
+  lasers.forEach(l=>{
+    ctx.beginPath();
+    ctx.rect(l.x-2, l.y, 4, 15);
+    ctx.fillStyle="#00ffff";
+    ctx.fill();
+    ctx.closePath();
+  });
+}
+
+function updateLasers(){
+  for(let i=lasers.length-1;i>=0;i--){
+    lasers[i].y -= lasers[i].speed;
+    if(lasers[i].y < 0){
+      lasers.splice(i,1);
+    }
+  }
+}
+
+function detectCollision(){
+  for(let i=asteroids.length-1;i>=0;i--){
+    for(let j=lasers.length-1;j>=0;j--){
+      const dx = asteroids[i].x - lasers[j].x;
+      const dy = asteroids[i].y - lasers[j].y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if(dist < asteroids[i].radius){
+        asteroids.splice(i,1);
+        lasers.splice(j,1);
+        score++;
+        updateUI();
+        break;
+      }
+    }
+  }
+}
+
+function drawBackground(){
+  ctx.fillStyle="rgba(0,0,0,0.3)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function updateUI(){
+  document.getElementById("score").innerText = score;
+  document.getElementById("lives").innerText = lives;
+}
+
+function gameLoop(){
+  if(!gameRunning) return;
+
+  drawBackground();
+  drawPlanet();
+  drawAsteroids();
+  drawLasers();
+  updateAsteroids();
+  updateLasers();
+  detectCollision();
+
+  requestAnimationFrame(gameLoop);
+}
+
+canvas.addEventListener("click",function(e){
+  if(!gameRunning) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  shootLaser(x, planet.y-20);
+});
+
+function startGame(){
+  asteroids=[];
+  lasers=[];
+  score=0;
+  lives=3;
+  gameRunning=true;
+  document.getElementById("gameOver").style.display="none";
+  updateUI();
+
+  setInterval(()=>{
+    if(gameRunning){
+      createAsteroid();
+    }
+  },1000);
+
+  gameLoop();
+}
+
+function endGame(){
+  gameRunning=false;
+  document.getElementById("gameOver").style.display="block";
+}
+
+</script>
+
+</body>
+</html>
