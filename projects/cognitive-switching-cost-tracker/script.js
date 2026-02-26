@@ -5,6 +5,7 @@ class CognitiveSwitchTracker {
         this.switches = JSON.parse(localStorage.getItem('cognitive-switches')) || [];
         this.currentTask = localStorage.getItem('current-task') || null;
         this.AVERAGE_SWITCH_COST = 25; // minutes based on research
+        this.importedData = null;
 
         this.init();
     }
@@ -12,6 +13,7 @@ class CognitiveSwitchTracker {
     init() {
         this.setupEventListeners();
         this.setupModalEventListeners();
+        this.setupImportExportListeners();
         this.updateUI();
         this.renderCharts();
         this.displayRecentSwitches();
@@ -36,10 +38,150 @@ class CognitiveSwitchTracker {
         });
     }
 
+    setupImportExportListeners() {
+        const exportBtn = document.getElementById('export-data-btn');
+        const importBtn = document.getElementById('import-data-btn');
+        const importFile = document.getElementById('import-file');
+
+        exportBtn.addEventListener('click', () => {
+            this.exportData();
+        });
+
+        importBtn.addEventListener('click', () => {
+            importFile.click();
+        });
+
+        importFile.addEventListener('change', (e) => {
+            this.handleFileSelect(e);
+        });
+    }
+
+    exportData() {
+        if (this.switches.length === 0) {
+            this.showNotification('No data to export!', 'error');
+            return;
+        }
+
+        const exportData = {
+            switches: this.switches,
+            currentTask: this.currentTask,
+            exportDate: new Date().toISOString(),
+            version: '1.0'
+        };
+
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `cognitive-switches-backup-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        this.showNotification('Data exported successfully!', 'success');
+    }
+
+    handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                this.validateAndPreviewImport(importedData);
+            } catch (error) {
+                this.showNotification('Invalid JSON file format!', 'error');
+            }
+        };
+        reader.readAsText(file);
+        
+        event.target.value = '';
+    }
+
+    validateAndPreviewImport(data) {
+        if (!data.switches || !Array.isArray(data.switches)) {
+            this.showNotification('Invalid file format: Missing switches array!', 'error');
+            return;
+        }
+
+        const isValid = data.switches.every(s => 
+            s.id && s.timestamp && s.previousTask && s.currentTask && s.reason && s.cognitiveLoad && s.switchCost
+        );
+
+        if (!isValid) {
+            this.showNotification('Invalid file format: Corrupted switch data!', 'error');
+            return;
+        }
+
+        this.importedData = data;
+
+        this.showImportPreview(data);
+    }
+
+    showImportPreview(data) {
+        const modal = document.getElementById('import-confirm-modal');
+        const summary = document.getElementById('import-summary');
+        
+        const existingCount = this.switches.length;
+        const newCount = data.switches.length;
+        const uniqueCount = this.getUniqueSwitchesCount(data.switches);
+        
+        summary.innerHTML = `
+            <strong>Import Summary:</strong><br>
+            • Existing records: ${existingCount}<br>
+            • New records to import: ${data.switches.length}<br>
+            • Unique records after merge: ${uniqueCount}<br>
+            • Export date: ${new Date(data.exportDate).toLocaleString() || 'Unknown'}<br>
+            <br>
+            <span style="color: #666;">The import will merge data without duplicates.</span>
+        `;
+
+        modal.classList.add('show');
+    }
+
+    getUniqueSwitchesCount(newSwitches) {
+        const existingIds = new Set(this.switches.map(s => s.id));
+        const uniqueNew = newSwitches.filter(s => !existingIds.has(s.id));
+        return this.switches.length + uniqueNew.length;
+    }
+
+    importData() {
+        if (!this.importedData) return;
+
+        const existingIds = new Set(this.switches.map(s => s.id));
+        const newSwitches = this.importedData.switches.filter(s => !existingIds.has(s.id));
+        
+        this.switches = [...newSwitches, ...this.switches];
+        this.switches.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        if (this.switches.length > 100) {
+            this.switches = this.switches.slice(0, 100);
+        }
+
+        if (!this.currentTask && this.importedData.currentTask) {
+            this.currentTask = this.importedData.currentTask;
+        }
+
+        this.saveData();
+        this.destroyCharts();
+        this.updateUI();
+        this.renderCharts();
+        this.displayRecentSwitches();
+        this.showNotification(`Successfully imported ${newSwitches.length} new records!`, 'success');
+        this.importedData = null;
+    }
+
     setupModalEventListeners() {
         const modal = document.getElementById('confirm-modal');
+        const importModal = document.getElementById('import-confirm-modal');
         const cancelBtn = document.getElementById('modal-cancel');
         const confirmBtn = document.getElementById('modal-confirm');
+        const importCancel = document.getElementById('import-cancel');
+        const importConfirm = document.getElementById('import-confirm');
 
         cancelBtn.addEventListener('click', () => {
             this.hideConfirmationModal();
@@ -50,15 +192,35 @@ class CognitiveSwitchTracker {
             this.hideConfirmationModal();
         });
 
+        importCancel.addEventListener('click', () => {
+            this.hideImportModal();
+        });
+
+        importConfirm.addEventListener('click', () => {
+            this.importData();
+            this.hideImportModal();
+        });
+
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 this.hideConfirmationModal();
             }
         });
 
+        importModal.addEventListener('click', (e) => {
+            if (e.target === importModal) {
+                this.hideImportModal();
+            }
+        });
+
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('show')) {
-                this.hideConfirmationModal();
+            if (e.key === 'Escape') {
+                if (modal.classList.contains('show')) {
+                    this.hideConfirmationModal();
+                }
+                if (importModal.classList.contains('show')) {
+                    this.hideImportModal();
+                }
             }
         });
     }
@@ -71,6 +233,12 @@ class CognitiveSwitchTracker {
     hideConfirmationModal() {
         const modal = document.getElementById('confirm-modal');
         modal.classList.remove('show');
+    }
+
+    hideImportModal() {
+        const modal = document.getElementById('import-confirm-modal');
+        modal.classList.remove('show');
+        this.importedData = null;
     }
 
     clearAllData() {
