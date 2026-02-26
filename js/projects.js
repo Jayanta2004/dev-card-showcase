@@ -1928,6 +1928,18 @@ const staticProjects = [
             name: "Gupta-02",
             github: "https://github.com/Gupta-02"
         }
+    },
+    {
+        title: "Adaptive Model Precision Regulator ⚡",
+        description: "Dynamically adjust model inference granularity based on task criticality and resource availability to balance performance and computational expense.",
+        tags: ["HTML", "CSS", "JavaScript", "AI/ML", "Performance", "Optimization"],
+        links: {
+            live: "./projects/adaptive-model-precision-regulator/index.html"
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
     }
 
 ];
