@@ -50,6 +50,14 @@ class CognitiveSaturationTracker {
         this.init();
     }
 
+    getUTCDateString(date = new Date()) {
+        return new Date(date.toISOString().split('T')[0]).toISOString().split('T')[0];
+    }
+
+    isSameUTCDay(date1, date2) {
+        return this.getUTCDateString(date1) === this.getUTCDateString(date2);
+    }
+
     handleStorageEvent(e) {
         if (e.storageArea === localStorage && e.key && e.key.includes('cognitive')) {
             if (e.newValue === null) {
@@ -371,22 +379,23 @@ class CognitiveSaturationTracker {
         const dates = [];
         const loads = [];
         const breaks = [];
+        const todayUTC = this.getUTCDateString();
 
         for (let i = 6; i >= 0; i--) {
             const date = new Date();
             date.setDate(date.getDate() - i);
-            const dateStr = date.toDateString();
+            const dateUTC = this.getUTCDateString(date);
 
             dates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
 
             const dayActivities = this.activities.filter(activity =>
-                new Date(activity.timestamp).toDateString() === dateStr
+                this.getUTCDateString(new Date(activity.timestamp)) === dateUTC
             );
             const dayLoad = dayActivities.reduce((sum, activity) => sum + activity.cognitiveLoad, 0);
             loads.push(dayLoad);
 
             const dayBreaks = this.breaks.filter(breakItem =>
-                new Date(breakItem.timestamp).toDateString() === dateStr
+                this.getUTCDateString(new Date(breakItem.timestamp)) === dateUTC
             );
             breaks.push(dayBreaks.length);
         }
@@ -426,7 +435,7 @@ class CognitiveSaturationTracker {
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Cognitive Load Trends (Last 7 Days)',
+                        text: 'Cognitive Load Trends (Last 7 Days - UTC)',
                         font: { size: 16, weight: 'bold' }
                     },
                     tooltip: {
@@ -495,10 +504,12 @@ class CognitiveSaturationTracker {
 
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const thirtyDaysAgoUTC = this.getUTCDateString(thirtyDaysAgo);
 
-        const recentActivities = this.activities.filter(activity =>
-            new Date(activity.timestamp) >= thirtyDaysAgo
-        );
+        const recentActivities = this.activities.filter(activity => {
+            const activityDateUTC = this.getUTCDateString(new Date(activity.timestamp));
+            return activityDateUTC >= thirtyDaysAgoUTC;
+        });
 
         const activityTypes = {};
         const activityColors = {
@@ -565,7 +576,7 @@ class CognitiveSaturationTracker {
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Activity Distribution by Cognitive Load (Last 30 Days)',
+                        text: 'Activity Distribution by Cognitive Load (Last 30 Days - UTC)',
                         font: { size: 16, weight: 'bold' }
                     },
                     legend: {
@@ -644,8 +655,8 @@ class CognitiveSaturationTracker {
 
                     const hourActivities = this.activities.filter(activity => {
                         const activityDate = new Date(activity.timestamp);
-                        return activityDate.toDateString() === date.toDateString() &&
-                               activityDate.getHours() === (hour + 8);
+                        return this.isSameUTCDay(activityDate, date) &&
+                               activityDate.getUTCHours() === (hour + 8);
                     });
 
                     const totalLoad = hourActivities.reduce((sum, a) => sum + a.cognitiveLoad, 0);
@@ -705,7 +716,7 @@ class CognitiveSaturationTracker {
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Peak Cognitive Hours Heat Map (Last 4 Weeks)',
+                        text: 'Peak Cognitive Hours Heat Map (Last 4 Weeks - UTC)',
                         font: { size: 16, weight: 'bold' }
                     },
                     legend: {
@@ -722,7 +733,7 @@ class CognitiveSaturationTracker {
                                 const date = new Date();
                                 date.setDate(date.getDate() - (4 - week - 1) * 7 - (6 - day));
                                 
-                                return `${date.toLocaleDateString()} - ${hours[hour]}`;
+                                return `${date.toLocaleDateString()} - ${hours[hour]} UTC`;
                             },
                             label: (context) => {
                                 const value = context.raw.v;
@@ -1309,9 +1320,10 @@ class CognitiveSaturationTracker {
     }
 
     updateSaturationLevel() {
-        const today = new Date().toDateString();
+        const todayUTC = this.getUTCDateString();
+        
         const todayActivities = this.activities.filter(activity =>
-            new Date(activity.timestamp).toDateString() === today
+            this.getUTCDateString(new Date(activity.timestamp)) === todayUTC
         );
 
         const totalLoad = todayActivities.reduce((sum, activity) => sum + activity.cognitiveLoad, 0);
@@ -1439,11 +1451,10 @@ class CognitiveSaturationTracker {
     }
 
     updateStats() {
-        const today = new Date().toDateString();
+        const todayUTC = this.getUTCDateString();
 
-        // Today's load
         const todayActivities = this.activities.filter(activity =>
-            new Date(activity.timestamp).toDateString() === today
+            this.getUTCDateString(new Date(activity.timestamp)) === todayUTC
         );
         const todayLoad = todayActivities.reduce((sum, activity) => sum + activity.cognitiveLoad, 0);
         document.getElementById('todayLoad').textContent = Math.round(todayLoad);
@@ -1451,22 +1462,24 @@ class CognitiveSaturationTracker {
         // Weekly average
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
-        const weekActivities = this.activities.filter(activity =>
-            new Date(activity.timestamp) >= weekAgo
-        );
+        const weekAgoUTC = this.getUTCDateString(weekAgo);
+        
+        const weekActivities = this.activities.filter(activity => {
+            const activityDateUTC = this.getUTCDateString(new Date(activity.timestamp));
+            return activityDateUTC >= weekAgoUTC;
+        });
         const weeklyAvg = weekActivities.length > 0 ?
             weekActivities.reduce((sum, activity) => sum + activity.cognitiveLoad, 0) / 7 : 0;
         document.getElementById('weeklyAvg').textContent = Math.round(weeklyAvg);
 
         // Alerts today
         const todayAlerts = this.alerts.filter(alert =>
-            new Date(alert.timestamp).toDateString() === today
+            this.getUTCDateString(new Date(alert.timestamp)) === todayUTC
         );
         document.getElementById('alertsToday').textContent = todayAlerts.length;
 
-        // Break efficiency (breaks taken vs high saturation periods)
         const todayBreaks = this.breaks.filter(breakItem =>
-            new Date(breakItem.timestamp).toDateString() === today
+            this.getUTCDateString(new Date(breakItem.timestamp)) === todayUTC
         );
         const highSaturationPeriods = todayActivities.filter(activity => activity.cognitiveLoad > 100).length;
         const breakEfficiency = highSaturationPeriods > 0 ?
@@ -1521,7 +1534,7 @@ class CognitiveSaturationTracker {
                             <span class="activity-type-icon ${activityClass}" style="background-color: ${activityColor}"></span>
                             <span class="activity-type" style="color: ${activityColor}">${formattedType}</span>
                         </div>
-                        <span class="activity-time">${new Date(activity.timestamp).toLocaleString()}</span>
+                        <span class="activity-time">${new Date(activity.timestamp).toLocaleString()} UTC</span>
                     </div>
                     <div class="activity-details">
                         <i class="fas fa-clock" style="color: #667eea; width: 16px;"></i> Duration: ${activity.duration} min | 
