@@ -891,4 +891,54 @@ document.addEventListener('DOMContentLoaded', function() {
             hideShortcutsOverlay();
         }
     });
+
+    /* ===============================
+       NAVBAR DROPDOWN (More / Resources)
+       =============================== */
+    document.addEventListener("DOMContentLoaded", () => {
+        const dropdownButtons = document.querySelectorAll(".drop-btn");
+
+        dropdownButtons.forEach(btn => {
+            btn.addEventListener("click", e => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const menu = btn.nextElementSibling;
+
+                // Close other dropdowns
+                document.querySelectorAll(".dropdown-menu").forEach(m => {
+                    if (m !== menu) m.style.display = "none";
+                });
+
+                // Toggle current dropdown
+                menu.style.display =
+                    menu.style.display === "block" ? "none" : "block";
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", () => {
+            document.querySelectorAll(".dropdown-menu").forEach(menu => {
+                menu.style.display = "none";
+            });
+        });
+
+        // Load images and add loaded class
+        const images = document.querySelectorAll('.card-img');
+        images.forEach(img => {
+            if (img.complete) {
+                // Image is already loaded from cache
+                img.classList.add('loaded');
+            } else {
+                // Image is loading, wait for load event
+                img.addEventListener('load', function() {
+                    this.classList.add('loaded');
+                });
+                img.addEventListener('error', function() {
+                    // Even on error, make it visible
+                    this.classList.add('loaded');
+                });
+            }
+        });
+    });
 });

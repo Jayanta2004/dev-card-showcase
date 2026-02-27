@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Search Accelerator - Enterprise Search Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-search-plus"></i>
+            <span>Semantic Search Accelerator</span>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="nav-link active" data-section="dashboard">Dashboard</a>
+            <a href="#" class="nav-link" data-section="search">Search</a>
+            <a href="#" class="nav-link" data-section="documents">Documents</a>
+            <a href="#" class="nav-link" data-section="index">Index Management</a>
+            <a href="#" class="nav-link" data-section="analytics">Analytics</a>
+            <a href="#" class="nav-link" data-section="settings">Settings</a>
+        </div>
+        <div class="nav-user">
+            <span id="currentUser">Not logged in</span>
+            <button id="loginBtn" class="btn btn-secondary">Login</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboardSection" class="content-section active">
+            <div class="section-header">
+                <h1>Search Dashboard</h1>
+                <div class="header-actions">
+                    <button id="refreshDashboardBtn" class="btn btn-primary">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button id="exportDashboardBtn" class="btn btn-secondary">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="status-bar">
+                <div class="status-indicator active"></div>
+                <span class="status-text">System Online</span>
+                <div class="status-metrics">
+                    <span>Index Size: <strong id="indexSize">2.4M</strong> documents</span>
+                    <span>Query Rate: <strong id="queryRate">1.2K</strong>/min</span>
+                    <span>Avg Response: <strong id="avgResponse">45ms</strong></span>
+                </div>
+            </div>
+
+            <!-- Key Metrics Cards -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="totalQueries">1,247,892</div>
+                        <div class="metric-label">Total Queries</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i> +12.5%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="avgQueryTime">42ms</div>
+                        <div class="metric-label">Avg Query Time</div>
+                        <div class="metric-change negative">
+                            <i class="fas fa-arrow-down"></i> -2.1%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="indexedDocuments">2,456,789</div>
+                        <div class="metric-label">Indexed Documents</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i> +8.3%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="searchAccuracy">94.7%</div>
+                        <div class="metric-label">Search Accuracy</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i> +1.2%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <div class="chart-container">
+                    <h3>Query Performance Trends</h3>
+                    <canvas id="queryPerformanceChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Search Volume by Hour</h3>
+                    <canvas id="searchVolumeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity & Top Queries -->
+            <div class="activity-row">
+                <div class="activity-panel">
+                    <h3>Recent Search Activity</h3>
+                    <div id="recentActivity" class="activity-feed">
+                        <!-- Activity items will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="activity-panel">
+                    <h3>Top Search Queries</h3>
+                    <div id="topQueries" class="query-list">
+                        <!-- Top queries will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="health-panel">
+                <h3>System Health</h3>
+                <div class="health-metrics">
+                    <div class="health-metric">
+                        <label>CPU Usage</label>
+                        <div class="progress-bar">
+                            <div id="cpuUsage" class="progress-fill" style="width: 45%"></div>
+                        </div>
+                        <span id="cpuUsageValue" class="metric-value">45%</span>
+                    </div>
+                    <div class="health-metric">
+                        <label>Memory Usage</label>
+                        <div class="progress-bar">
+                            <div id="memoryUsage" class="progress-fill" style="width: 62%"></div>
+                        </div>
+                        <span id="memoryUsageValue" class="metric-value">62%</span>
+                    </div>
+                    <div class="health-metric">
+                        <label>Disk Usage</label>
+                        <div class="progress-bar">
+                            <div id="diskUsage" class="progress-fill" style="width: 78%"></div>
+                        </div>
+                        <span id="diskUsageValue" class="metric-value">78%</span>
+                    </div>
+                    <div class="health-metric">
+                        <label>Network I/O</label>
+                        <div class="progress-bar">
+                            <div id="networkUsage" class="progress-fill" style="width: 34%"></div>
+                        </div>
+                        <span id="networkUsageValue" class="metric-value">34%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search Section -->
+        <section id="searchSection" class="content-section">
+            <div class="section-header">
+                <h1>Semantic Search</h1>
+                <div class="header-actions">
+                    <button id="advancedSearchBtn" class="btn btn-secondary">
+                        <i class="fas fa-sliders-h"></i> Advanced
+                    </button>
+                    <button id="saveSearchBtn" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Interface -->
+            <div class="search-interface">
+                <div class="search-bar">
+                    <div class="search-input-group">
+                        <input type="text" id="searchQuery" placeholder="Enter your search query..." class="search-input">
+                        <button id="searchBtn" class="btn btn-primary search-button">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                    <div class="search-options">
+                        <select id="searchMode" class="search-select">
+                            <option value="semantic">Semantic Search</option>
+                            <option value="keyword">Keyword Search</option>
+                            <option value="hybrid">Hybrid Search</option>
+                            <option value="vector">Vector Search</option>
+                        </select>
+                        <select id="resultLimit" class="search-select">
+                            <option value="10">10 results</option>
+                            <option value="25">25 results</option>
+                            <option value="50">50 results</option>
+                            <option value="100">100 results</option>
+                        </select>
+                        <div class="search-filters">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="exactMatch"> Exact Match
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="caseSensitive"> Case Sensitive
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Filters -->
+                <div class="search-filters-panel">
+                    <div class="filter-group">
+                        <h4>Content Types</h4>
+                        <div class="filter-options" id="contentTypeFilters">
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="document" checked> Documents
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="webpage" checked> Web Pages
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="email"> Email
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="code"> Code Files
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h4>Date Range</h4>
+                        <div class="date-filters">
+                            <input type="date" id="dateFrom" class="date-input">
+                            <span>to</span>
+                            <input type="date" id="dateTo" class="date-input">
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h4>Relevance Threshold</h4>
+                        <input type="range" id="relevanceThreshold" min="0" max="1" step="0.1" value="0.7" class="slider">
+                        <span id="thresholdValue">0.7</span>
+                    </div>
+                </div>
+
+                <!-- Search Results -->
+                <div class="search-results">
+                    <div class="results-header">
+                        <div class="results-count">
+                            <span id="resultsCount">0</span> results found
+                            <span id="searchTime">(0.00s)</span>
+                        </div>
+                        <div class="results-sort">
+                            <select id="sortBy" class="sort-select">
+                                <option value="relevance">Sort by Relevance</option>
+                                <option value="date">Sort by Date</option>
+                                <option value="title">Sort by Title</option>
+                                <option value="size">Sort by Size</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="resultsList" class="results-list">
+                        <!-- Search results will be populated here -->
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination">
+                        <button id="prevPageBtn" class="btn btn-secondary" disabled>
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <span id="pageInfo" class="page-info">Page 1 of 1</span>
+                        <button id="nextPageBtn" class="btn btn-secondary" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Documents Section -->
+        <section id="documentsSection" class="content-section">
+            <div class="section-header">
+                <h1>Document Management</h1>
+                <div class="header-actions">
+                    <button id="uploadDocumentBtn" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload Document
+                    </button>
+                    <button id="bulkImportBtn" class="btn btn-secondary">
+                        <i class="fas fa-file-import"></i> Bulk Import
+                    </button>
+                    <button id="exportDocumentsBtn" class="btn btn-secondary">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Document Filters -->
+            <div class="document-filters">
+                <div class="filter-row">
+                    <input type="text" id="documentSearch" placeholder="Search documents..." class="filter-input">
+                    <select id="documentTypeFilter" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="pdf">PDF</option>
+                        <option value="docx">Word Document</option>
+                        <option value="txt">Text File</option>
+                        <option value="html">HTML</option>
+                        <option value="json">JSON</option>
+                    </select>
+                    <select id="documentStatusFilter" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="indexed">Indexed</option>
+                        <option value="processing">Processing</option>
+                        <option value="failed">Failed</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                    <button id="applyDocumentFiltersBtn" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </div>
+
+            <!-- Document Grid -->
+            <div class="document-grid" id="documentGrid">
+                <!-- Document cards will be populated by JavaScript -->
+            </div>
+
+            <!-- Document Details Panel -->
+            <div id="documentDetailsPanel" class="details-panel">
+                <div class="panel-header">
+                    <h3 id="documentDetailsTitle">Document Details</h3>
+                    <button class="close-panel-btn" onclick="closeDocumentDetails()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="documentDetailsContent" class="panel-content">
+                    <!-- Document details will be populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Index Management Section -->
+        <section id="indexSection" class="content-section">
+            <div class="section-header">
+                <h1>Index Management</h1>
+                <div class="header-actions">
+                    <button id="createIndexBtn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Index
+                    </button>
+                    <button id="rebuildIndexBtn" class="btn btn-warning">
+                        <i class="fas fa-sync-alt"></i> Rebuild Index
+                    </button>
+                    <button id="optimizeIndexBtn" class="btn btn-secondary">
+                        <i class="fas fa-wrench"></i> Optimize
+                    </button>
+                </div>
+            </div>
+
+            <!-- Index Overview -->
+            <div class="index-overview">
+                <div class="index-stats">
+                    <div class="stat-card">
+                        <h4>Total Documents</h4>
+                        <div class="stat-value" id="totalDocs">2,456,789</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Index Size</h4>
+                        <div class="stat-value" id="indexSizeStat">45.2 GB</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Last Updated</h4>
+                        <div class="stat-value" id="lastUpdate">2 hours ago</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Index Health</h4>
+                        <div class="stat-value healthy" id="indexHealth">Excellent</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Index Configuration -->
+            <div class="index-config">
+                <h3>Index Configuration</h3>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label>Index Name</label>
+                        <input type="text" id="indexName" value="main_search_index" readonly>
+                    </div>
+                    <div class="config-item">
+                        <label>Vector Dimensions</label>
+                        <input type="number" id="vectorDimensions" value="768">
+                    </div>
+                    <div class="config-item">
+                        <label>Similarity Metric</label>
+                        <select id="similarityMetric">
+                            <option value="cosine">Cosine Similarity</option>
+                            <option value="euclidean">Euclidean Distance</option>
+                            <option value="dot_product">Dot Product</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <label>Chunk Size</label>
+                        <input type="number" id="chunkSize" value="512">
+                    </div>
+                    <div class="config-item">
+                        <label>Overlap Size</label>
+                        <input type="number" id="overlapSize" value="50">
+                    </div>
+                    <div class="config-item">
+                        <label>Max Results</label>
+                        <input type="number" id="maxResults" value="1000">
+                    </div>
+                </div>
+                <div class="config-actions">
+                    <button id="saveIndexConfigBtn" class="btn btn-primary">Save Configuration</button>
+                    <button id="resetIndexConfigBtn" class="btn btn-secondary">Reset to Defaults</button>
+                </div>
+            </div>
+
+            <!-- Index Operations -->
+            <div class="index-operations">
+                <h3>Index Operations</h3>
+                <div class="operations-grid">
+                    <div class="operation-card">
+                        <h4>Rebuild Index</h4>
+                        <p>Completely rebuild the search index from all documents</p>
+                        <button id="startRebuildBtn" class="btn btn-warning">Start Rebuild</button>
+                        <div class="operation-progress" id="rebuildProgress" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="rebuildProgressFill"></div>
+                            </div>
+                            <span id="rebuildStatus">Initializing...</span>
+                        </div>
+                    </div>
+
+                    <div class="operation-card">
+                        <h4>Optimize Index</h4>
+                        <p>Optimize index structure for better performance</p>
+                        <button id="startOptimizeBtn" class="btn btn-secondary">Start Optimization</button>
+                        <div class="operation-progress" id="optimizeProgress" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="optimizeProgressFill"></div>
+                            </div>
+                            <span id="optimizeStatus">Initializing...</span>
+                        </div>
+                    </div>
+
+                    <div class="operation-card">
+                        <h4>Backup Index</h4>
+                        <p>Create a backup of the current index</p>
+                        <button id="startBackupBtn" class="btn btn-primary">Create Backup</button>
+                        <div class="operation-progress" id="backupProgress" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="backupProgressFill"></div>
+                            </div>
+                            <span id="backupStatus">Initializing...</span>
+                        </div>
+                    </div>
+
+                    <div class="operation-card">
+                        <h4>Index Statistics</h4>
+                        <p>View detailed index performance statistics</p>
+                        <button id="viewStatsBtn" class="btn btn-info">View Statistics</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analyticsSection" class="content-section">
+            <div class="section-header">
+                <h1>Search Analytics</h1>
+                <div class="header-actions">
+                    <select id="analyticsTimeRange" class="time-range-select">
+                        <option value="1h">Last Hour</option>
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                        <option value="90d">Last 90 Days</option>
+                    </select>
+                    <button id="generateAnalyticsReportBtn" class="btn btn-primary">
+                        <i class="fas fa-chart-bar"></i> Generate Report
+                    </button>
+                    <button id="exportAnalyticsBtn" class="btn btn-secondary">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Analytics Charts -->
+            <div class="analytics-charts">
+                <div class="chart-row">
+                    <div class="chart-container large">
+                        <h3>Query Volume Over Time</h3>
+                        <canvas id="queryVolumeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-row">
+                    <div class="chart-container">
+                        <h3>Search Performance</h3>
+                        <canvas id="searchPerformanceChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Content Type Distribution</h3>
+                        <canvas id="contentTypeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-row">
+                    <div class="chart-container">
+                        <h3>Top Search Terms</h3>
+                        <canvas id="topTermsChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>User Engagement</h3>
+                        <canvas id="userEngagementChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-row">
+                    <div class="chart-container">
+                        <h3>Search Accuracy Trends</h3>
+                        <canvas id="accuracyTrendsChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>System Resource Usage</h3>
+                        <canvas id="resourceUsageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Insights -->
+            <div class="insights-panel">
+                <h3>Key Insights</h3>
+                <div id="keyInsights" class="insights-grid">
+                    <!-- Insights will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="performance-metrics">
+                <h3>Performance Metrics</h3>
+                <div class="metrics-table">
+                    <table id="performanceTable">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Current</th>
+                                <th>Target</th>
+                                <th>Status</th>
+                                <th>Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Metrics will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settingsSection" class="content-section">
+            <div class="section-header">
+                <h1>System Settings</h1>
+                <div class="header-actions">
+                    <button id="saveSettingsBtn" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                    <button id="resetSettingsBtn" class="btn btn-warning">
+                        <i class="fas fa-undo"></i> Reset to Defaults
+                    </button>
+                    <button id="exportSettingsBtn" class="btn btn-secondary">
+                        <i class="fas fa-download"></i> Export Settings
+                    </button>
+                    <button id="importSettingsBtn" class="btn btn-secondary">
+                        <i class="fas fa-upload"></i> Import Settings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Settings Tabs -->
+            <div class="settings-tabs">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="general">General</button>
+                    <button class="tab-btn" data-tab="search">Search</button>
+                    <button class="tab-btn" data-tab="index">Index</button>
+                    <button class="tab-btn" data-tab="security">Security</button>
+                    <button class="tab-btn" data-tab="performance">Performance</button>
+                </div>
+
+                <div class="tab-content">
+                    <!-- General Settings -->
+                    <div id="generalTab" class="tab-panel active">
+                        <h3>General Settings</h3>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <label>System Name</label>
+                                <input type="text" id="systemName" value="Semantic Search Accelerator">
+                            </div>
+                            <div class="setting-item">
+                                <label>Default Language</label>
+                                <select id="defaultLanguage">
+                                    <option value="en">English</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                    <option value="zh">Chinese</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>Timezone</label>
+                                <select id="timezone">
+                                    <option value="UTC">UTC</option>
+                                    <option value="EST">Eastern Time</option>
+                                    <option value="PST">Pacific Time</option>
+                                    <option value="GMT">GMT</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>Enable Logging</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enableLogging" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Settings -->
+                    <div id="searchTab" class="tab-panel">
+                        <h3>Search Configuration</h3>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <label>Default Search Mode</label>
+                                <select id="defaultSearchMode">
+                                    <option value="semantic">Semantic Search</option>
+                                    <option value="keyword">Keyword Search</option>
+                                    <option value="hybrid">Hybrid Search</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>Max Results per Page</label>
+                                <input type="number" id="maxResultsPerPage" value="25" min="10" max="100">
+                            </div>
+                            <div class="setting-item">
+                                <label>Relevance Threshold</label>
+                                <input type="range" id="defaultRelevanceThreshold" min="0" max="1" step="0.1" value="0.7">
+                                <span id="thresholdDisplay">0.7</span>
+                            </div>
+                            <div class="setting-item">
+                                <label>Enable Fuzzy Matching</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enableFuzzyMatching" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Enable Auto-complete</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enableAutocomplete" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Index Settings -->
+                    <div id="indexTab" class="tab-panel">
+                        <h3>Index Configuration</h3>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <label>Auto Index Updates</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="autoIndexUpdates" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Index Update Frequency</label>
+                                <select id="indexUpdateFrequency">
+                                    <option value="realtime">Real-time</option>
+                                    <option value="hourly">Hourly</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>Max Index Size (GB)</label>
+                                <input type="number" id="maxIndexSize" value="100" min="10" max="1000">
+                            </div>
+                            <div class="setting-item">
+                                <label>Index Compression</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enableCompression" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Settings -->
+                    <div id="securityTab" class="tab-panel">
+                        <h3>Security Configuration</h3>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <label>Enable Authentication</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enableAuth" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Session Timeout (minutes)</label>
+                                <input type="number" id="sessionTimeout" value="60" min="5" max="480">
+                            </div>
+                            <div class="setting-item">
+                                <label>Enable Encryption</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enableEncryption" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Rate Limiting</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enableRateLimiting" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Settings -->
+                    <div id="performanceTab" class="tab-panel">
+                        <h3>Performance Configuration</h3>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <label>Cache Enabled</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enableCache" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Cache Size (MB)</label>
+                                <input type="number" id="cacheSize" value="512" min="64" max="4096">
+                            </div>
+                            <div class="setting-item">
+                                <label>Max Concurrent Searches</label>
+                                <input type="number" id="maxConcurrentSearches" value="100" min="10" max="1000">
+                            </div>
+                            <div class="setting-item">
+                                <label>Query Timeout (seconds)</label>
+                                <input type="number" id="queryTimeout" value="30" min="5" max="300">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Upload Document Modal -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Upload Document</h3>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-area">
+                    <div class="upload-dropzone" id="uploadDropzone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drag & drop files here or click to browse</p>
+                        <input type="file" id="fileInput" multiple style="display: none;">
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose Files
+                        </button>
+                    </div>
+                    <div class="upload-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="autoIndexUpload"> Auto-index after upload
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="extractMetadata"> Extract metadata
+                        </label>
+                    </div>
+                </div>
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="uploadProgressFill"></div>
+                    </div>
+                    <div class="upload-status" id="uploadStatus">Uploading...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelUploadBtn" class="btn btn-secondary">Cancel</button>
+                <button id="startUploadBtn" class="btn btn-primary">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Search Modal -->
+    <div id="advancedSearchModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Advanced Search</h3>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="advanced-search-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Search Query</label>
+                            <input type="text" id="advancedQuery" placeholder="Enter search terms...">
+                        </div>
+                        <div class="form-group">
+                            <label>Search Mode</label>
+                            <select id="advancedSearchMode">
+                                <option value="semantic">Semantic Search</option>
+                                <option value="keyword">Keyword Search</option>
+                                <option value="hybrid">Hybrid Search</option>
+                                <option value="boolean">Boolean Search</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Content Types</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" value="document" checked> Documents</label>
+                                <label><input type="checkbox" value="webpage" checked> Web Pages</label>
+                                <label><input type="checkbox" value="email"> Email</label>
+                                <label><input type="checkbox" value="code"> Code</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Language</label>
+                            <select id="searchLanguage">
+                                <option value="en">English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="zh">Chinese</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date Range</label>
+                            <div class="date-range">
+                                <input type="date" id="advancedDateFrom">
+                                <span>to</span>
+                                <input type="date" id="advancedDateTo">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>File Size</label>
+                            <div class="size-range">
+                                <input type="number" id="minSize" placeholder="Min (KB)">
+                                <span>to</span>
+                                <input type="number" id="maxSize" placeholder="Max (KB)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Relevance Settings</label>
+                            <div class="relevance-settings">
+                                <label>Threshold: <span id="advancedThresholdValue">0.7</span></label>
+                                <input type="range" id="advancedRelevanceThreshold" min="0" max="1" step="0.1" value="0.7">
+                                <label><input type="checkbox" id="boostRecent"> Boost recent content</label>
+                                <label><input type="checkbox" id="boostPopular"> Boost popular content</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="resetAdvancedSearchBtn" class="btn btn-secondary">Reset</button>
+                <button id="applyAdvancedSearchBtn" class="btn btn-primary">Apply Search</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input for settings import -->
+    <input type="file" id="settingsFileInput" style="display: none;" accept=".json">
+
+    <script src="script.js"></script>
+</body>
+</html>

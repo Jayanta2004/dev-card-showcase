@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CO₂ Tolerance Trainer - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/co2-tolerance-trainer.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="wind"></i> CO₂ Tolerance Trainer</h1>
+            <p>Measure breath retention and track CO₂ tolerance improvement through timed breath-hold sessions.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Breath Hold Timer -->
+            <section class="tracker-section breath-timer">
+                <h2><i data-lucide="timer"></i> Breath Hold Session</h2>
+                <div class="timer-display">
+                    <div class="timer-circle">
+                        <div class="timer-text" id="timerDisplay">00:00</div>
+                    </div>
+                    <div class="timer-controls">
+                        <button id="startBtn" class="btn-primary">
+                            <i data-lucide="play"></i> Start Hold
+                        </button>
+                        <button id="stopBtn" class="btn-secondary" disabled>
+                            <i data-lucide="square"></i> Stop Hold
+                        </button>
+                    </div>
+                </div>
+                <div class="session-info">
+                    <div class="info-item">
+                        <span class="info-label">Current Session:</span>
+                        <span class="info-value" id="currentSession">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Personal Best:</span>
+                        <span class="info-value" id="personalBest">--</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Session Logger -->
+            <section class="tracker-section session-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Breath Hold Session</h2>
+                <form id="sessionForm" class="session-form">
+                    <div class="form-group">
+                        <label for="sessionDate">Date</label>
+                        <input type="date" id="sessionDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="holdDuration">Hold Duration (seconds)</label>
+                        <input type="number" id="holdDuration" min="1" placeholder="e.g., 45" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionType">Session Type</label>
+                        <select id="sessionType" required>
+                            <option value="voluntary">Voluntary Apnea</option>
+                            <option value="static">Static Apnea</option>
+                            <option value="dynamic">Dynamic Apnea</option>
+                            <option value="co2-table">CO₂ Table</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="preparation">Preparation</label>
+                        <select id="preparation">
+                            <option value="normal">Normal Breathing</option>
+                            <option value="hyperventilation">Hyperventilation</option>
+                            <option value="oxygen-rich">Oxygen Rich</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="comfortLevel">Comfort Level (1-10)</label>
+                        <input type="range" id="comfortLevel" min="1" max="10" value="5">
+                        <div class="comfort-labels">
+                            <span>1</span>
+                            <span>5</span>
+                            <span>10</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes (optional)</label>
+                        <textarea id="notes" placeholder="How did it feel? Any techniques used?"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Log Session
+                    </button>
+                </form>
+            </section>
+
+            <!-- Progress Dashboard -->
+            <section class="tracker-section progress-dashboard">
+                <h2><i data-lucide="trending-up"></i> CO₂ Tolerance Progress</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgHold">0s</div>
+                        <div class="metric-label">Average Hold</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="bestHold">0s</div>
+                        <div class="metric-label">Best Hold</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="totalSessions">0</div>
+                        <div class="metric-label">Total Sessions</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="improvement">--</div>
+                        <div class="metric-label">Improvement</div>
+                    </div>
+                </div>
+                <div class="progress-chart">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Session History -->
+            <section class="tracker-section session-history">
+                <h2><i data-lucide="calendar"></i> Session History</h2>
+                <div class="history-controls">
+                    <button id="viewWeek" class="btn-secondary active">This Week</button>
+                    <button id="viewMonth" class="btn-secondary">This Month</button>
+                    <button id="viewAll" class="btn-secondary">All Time</button>
+                </div>
+                <div class="history-list" id="sessionHistory">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+
+            <!-- Training Insights -->
+            <section class="tracker-section training-insights">
+                <h2><i data-lucide="brain"></i> Training Insights</h2>
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <h3>CO₂ Tolerance Level</h3>
+                        <div class="insight-content" id="toleranceLevel">
+                            <p>Complete more sessions to assess your CO₂ tolerance.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Progress Trends</h3>
+                        <div class="insight-content" id="progressTrends">
+                            <p>Track your improvement over time.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Training Recommendations</h3>
+                        <div class="insight-content" id="trainingRecommendations">
+                            <p>Get personalized training advice.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tips-list" id="tips">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+        </div>
+
+        <!-- CO₂ Tolerance Guide -->
+        <section class="tolerance-guide">
+            <h2><i data-lucide="info"></i> CO₂ Tolerance Training Guide</h2>
+            <div class="guide-content">
+                <div class="guide-section">
+                    <h3>Safety First</h3>
+                    <ul>
+                        <li>Always practice in a safe environment with someone nearby</li>
+                        <li>Stop immediately if you feel dizzy, lightheaded, or uncomfortable</li>
+                        <li>Consult a healthcare professional before starting training</li>
+                        <li>Start with short holds and gradually increase duration</li>
+                    </ul>
+                </div>
+                <div class="guide-section">
+                    <h3>Training Techniques</h3>
+                    <ul>
+                        <li><strong>Voluntary Apnea:</strong> Hold breath after normal exhalation</li>
+                        <li><strong>Static Apnea:</strong> Hold breath in a relaxed position</li>
+                        <li><strong>Dynamic Apnea:</strong> Hold breath while performing light exercise</li>
+                        <li><strong>CO₂ Tables:</strong> Structured training with increasing hold times</li>
+                    </ul>
+                </div>
+                <div class="guide-section">
+                    <h3>Benefits</h3>
+                    <ul>
+                        <li>Improved respiratory efficiency</li>
+                        <li>Better stress management and anxiety reduction</li>
+                        <li>Enhanced endurance for athletes</li>
+                        <li>Increased lung capacity and diaphragm control</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="../js/co2-tolerance-trainer.js"></script>
+</body>
+</html>

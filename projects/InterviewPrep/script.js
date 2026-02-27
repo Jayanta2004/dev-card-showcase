@@ -1,4 +1,4 @@
-// DSA Topics
+/* ---------- DATA ---------- */
 const dsaTopics = [
   "Arrays",
   "Strings",
@@ -11,66 +11,116 @@ const dsaTopics = [
   "Dynamic Programming"
 ];
 
-// HR Questions
 const hrQuestions = [
-  "Tell me about yourself.",
+  "Tell me about yourself",
   "Why should we hire you?",
   "What are your strengths and weaknesses?",
-  "Describe a challenging situation.",
+  "Describe a challenging situation",
   "Where do you see yourself in 5 years?"
 ];
 
-// Mock Questions
 const mockQuestions = [
-  "Explain how a hash map works.",
-  "What is event delegation in JavaScript?",
-  "Explain REST API.",
-  "Difference between SQL and NoSQL?",
-  "Explain closures in JavaScript."
+  "Explain how a HashMap works",
+  "Difference between SQL and NoSQL",
+  "Explain closures in JavaScript",
+  "What is REST API?",
+  "Explain event delegation"
 ];
 
+/* ---------- DSA TRACKER ---------- */
 function loadDSA() {
-  const container = document.getElementById("dsaList");
-  container.innerHTML = "";
+  const list = document.getElementById("dsaList");
+  list.innerHTML = "";
+
+  let completed = 0;
 
   dsaTopics.forEach(topic => {
-    const isChecked = localStorage.getItem(topic) === "true";
+    const checked = localStorage.getItem(topic) === "true";
+    if (checked) completed++;
 
     const div = document.createElement("div");
     div.className = "topic";
-
     div.innerHTML = `
       <span>${topic}</span>
-      <input type="checkbox" ${isChecked ? "checked" : ""} 
-        onchange="toggleProgress('${topic}', this.checked)">
+      <input type="checkbox" ${checked ? "checked" : ""}
+        onchange="toggleTopic('${topic}', this.checked)">
     `;
-
-    container.appendChild(div);
+    list.appendChild(div);
   });
+
+  const percent = (completed / dsaTopics.length) * 100;
+  document.getElementById("progressBar").style.width = percent + "%";
+
+  loadBadges();
 }
 
-function loadHR() {
-  const container = document.getElementById("hrList");
-  container.innerHTML = "";
-
-  hrQuestions.forEach(question => {
-    const div = document.createElement("div");
-    div.className = "topic";
-    div.innerHTML = `<span>${question}</span>`;
-    container.appendChild(div);
-  });
-}
-
-function toggleProgress(topic, value) {
+function toggleTopic(topic, value) {
   localStorage.setItem(topic, value);
+  loadDSA();
 }
 
-function generateMock() {
-  const randomIndex = Math.floor(Math.random() * mockQuestions.length);
+/* ---------- HR QUESTIONS ---------- */
+function loadHR() {
+  const ul = document.getElementById("hrList");
+  ul.innerHTML = "";
+
+  hrQuestions.forEach(q => {
+    const li = document.createElement("li");
+    li.textContent = q;
+    ul.appendChild(li);
+  });
+}
+
+/* ---------- MOCK INTERVIEW ---------- */
+let time = 60;
+let timerInterval;
+
+function startMock() {
+  clearInterval(timerInterval);
+  time = 60;
+
   document.getElementById("mockQuestion").textContent =
-    mockQuestions[randomIndex];
+    mockQuestions[Math.floor(Math.random() * mockQuestions.length)];
+
+  document.getElementById("timer").textContent = "Time: 60s";
+
+  timerInterval = setInterval(() => {
+    time--;
+    document.getElementById("timer").textContent = `Time: ${time}s`;
+
+    if (time === 0) {
+      clearInterval(timerInterval);
+      document.getElementById("mockQuestion").textContent =
+        "⏰ Time up! Answer out loud.";
+    }
+  }, 1000);
 }
 
-// Initialize
+/* ---------- NOTES ---------- */
+function saveNotes() {
+  const notes = document.getElementById("notes").value;
+  localStorage.setItem("notes", notes);
+  document.getElementById("noteStatus").textContent = "✅ Notes saved";
+}
+
+document.getElementById("notes").value =
+  localStorage.getItem("notes") || "";
+
+/* ---------- ACHIEVEMENTS ---------- */
+function loadBadges() {
+  const ul = document.getElementById("badges");
+  ul.innerHTML = "";
+
+  const completed = dsaTopics.filter(
+    t => localStorage.getItem(t) === "true"
+  ).length;
+
+  if (completed >= 3) ul.innerHTML += "<li>🥉 Beginner</li>";
+  if (completed >= 6) ul.innerHTML += "<li>🥈 Intermediate</li>";
+  if (completed === dsaTopics.length)
+    ul.innerHTML += "<li>🥇 DSA Master</li>";
+}
+
+/* ---------- INIT ---------- */
 loadDSA();
 loadHR();

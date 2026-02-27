@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Recovery Time Tracker - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/cognitive-recovery-time-tracker.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="brain"></i> Cognitive Recovery Time Tracker</h1>
+            <p>Track time required for mental recovery after intensive cognitive work sessions. Monitor your mental recharge patterns and optimize deep work scheduling.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Work Session Logger -->
+            <section class="tracker-section work-session-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Work Session</h2>
+                <form id="recoveryForm" class="recovery-form">
+                    <div class="form-group">
+                        <label for="sessionDate">Session Date</label>
+                        <input type="date" id="sessionDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionStart">Session Start Time</label>
+                        <input type="time" id="sessionStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionEnd">Session End Time</label>
+                        <input type="time" id="sessionEnd" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="recoveryTime">Recovery Time (when you felt mentally refreshed)</label>
+                        <input type="datetime-local" id="recoveryTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cognitiveLoad">Cognitive Load (1-10)</label>
+                        <div class="load-input">
+                            <input type="range" id="cognitiveLoad" min="1" max="10" value="5">
+                            <div class="load-display">
+                                <span class="load-value" id="loadValue">5</span>
+                                <span class="load-text" id="loadText">Moderate</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="workType">Work Type</label>
+                        <select id="workType" required>
+                            <option value="">Select type</option>
+                            <option value="programming">Programming/Coding</option>
+                            <option value="writing">Writing/Analysis</option>
+                            <option value="research">Research</option>
+                            <option value="problem-solving">Problem Solving</option>
+                            <option value="learning">Learning/Study</option>
+                            <option value="meetings">Meetings/Discussions</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionDescription">Session Description</label>
+                        <textarea id="sessionDescription" placeholder="Briefly describe the work session" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="recoveryNotes">Recovery Notes (optional)</label>
+                        <textarea id="recoveryNotes" placeholder="How did you recover? What helped you recharge mentally?"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Log Recovery
+                    </button>
+                </form>
+            </section>
+
+            <!-- Cognitive Capacity Dashboard -->
+            <section class="tracker-section capacity-dashboard">
+                <h2><i data-lucide="bar-chart-3"></i> Cognitive Capacity Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgRecoveryTime">--</div>
+                        <div class="metric-label">Avg Recovery Time</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="fastestRecovery">--</div>
+                        <div class="metric-label">Fastest Recovery</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="totalSessions">0</div>
+                        <div class="metric-label">Total Sessions</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="capacityScore">--</div>
+                        <div class="metric-label">Capacity Score</div>
+                    </div>
+                </div>
+                <div class="capacity-indicator">
+                    <h3>Current Cognitive Capacity</h3>
+                    <div id="capacityLevel" class="capacity-level">
+                        <div class="capacity-bar">
+                            <div class="capacity-fill" id="capacityFill"></div>
+                        </div>
+                        <div class="capacity-label" id="capacityLabel">No data available</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recovery Trends -->
+            <section class="tracker-section recovery-trends">
+                <h2><i data-lucide="trending-down"></i> Recovery Time Trends</h2>
+                <div class="chart-controls">
+                    <select id="timeRange">
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="all">All Time</option>
+                    </select>
+                    <button id="refreshChart" class="btn-secondary">
+                        <i data-lucide="refresh-cw"></i> Refresh
+                    </button>
+                </div>
+                <div class="trends-chart">
+                    <canvas id="recoveryChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Session History -->
+            <section class="tracker-section session-history">
+                <h2><i data-lucide="calendar"></i> Work Session History</h2>
+                <div class="history-controls">
+                    <button id="viewRecent" class="btn-secondary active">Recent</button>
+                    <button id="viewAll" class="btn-secondary">All Time</button>
+                </div>
+                <div class="history-list" id="sessionHistory">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+
+            <!-- Cognitive Insights -->
+            <section class="tracker-section cognitive-insights">
+                <h2><i data-lucide="lightbulb"></i> Cognitive Performance Insights</h2>
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <h3>Recovery Patterns</h3>
+                        <div class="insight-content" id="recoveryPatterns">
+                            <p>Based on your recovery times and cognitive load levels.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Work Type Impact</h3>
+                        <div class="insight-content" id="workTypeImpact">
+                            <p>Which types of work affect your recovery the most.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Optimization Tips</h3>
+                        <div class="insight-content" id="optimizationTips">
+                            <p>Suggestions for better work-life balance.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tips-list" id="tips">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Cognitive Benchmarks -->
+        <section class="cognitive-benchmarks">
+            <h2><i data-lucide="target"></i> Cognitive Recovery Benchmarks</h2>
+            <div class="benchmarks-grid" id="benchmarks">
+                <!-- Dynamic content -->
+            </div>
+        </section>
+    </div>
+
+    <script src="../js/cognitive-recovery-time-tracker.js"></script>
+    <script src="../js/include.js"></script>
+</body>
+</html>

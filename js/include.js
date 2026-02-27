@@ -8,10 +8,15 @@ function loadHTML(id, file, callback) {
         .catch(error => console.log("Error loading file:", file));
 }
 
+// Determine base path for navbar and footer
+const currentPath = window.location.pathname;
+const isInProjects = currentPath.includes('/projects/');
+const basePath = isInProjects ? '../' : '';
+
 // Load theme persistence script
 function loadThemeScript() {
     const script = document.createElement('script');
-    script.src = 'theme-persistence/theme.js';
+    script.src = basePath + 'theme-persistence/theme.js';
     script.onload = () => console.log('Theme persistence loaded');
     document.head.appendChild(script);
 }
@@ -19,8 +24,9 @@ function loadThemeScript() {
 // Load theme script immediately
 loadThemeScript();
 
-loadHTML("navbar", "navbar.html", () => {
+// Load navbar and footer
+loadHTML("navbar", basePath + "navbar.html", () => {
     document.dispatchEvent(new Event("navbarLoaded"));
 });
 
-loadHTML("footer", "footer.html");
+loadHTML("footer", basePath + "footer.html");

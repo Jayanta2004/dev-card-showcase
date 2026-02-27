@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context Switch Cost Tracker - FocusGuard Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1><i class="ri-focus-3-line"></i> FocusGuard Pro</h1>
+            <p>Quantify your distractions, estimate your risks & boost productivity.</p>
+            <div class="header-stats">
+                <div class="header-stat">
+                    <i class="ri-trophy-line"></i>
+                    <div>
+                        <small>Focus Streak</small>
+                        <strong id="streak-count">0 days</strong>
+                    </div>
+                </div>
+                <div class="header-stat">
+                    <i class="ri-line-chart-line"></i>
+                    <div>
+                        <small>Productivity Score</small>
+                        <strong id="productivity-score">--</strong>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Context Switch Tracker Section -->
+            <section id="tracker-section" class="card">
+                <div class="card-header">
+                    <h2><i class="ri-refresh-line"></i> Context Switch Tracker</h2>
+                    <span class="badge">Live</span>
+                </div>
+                <div class="card-body">
+                    <div class="task-input-group">
+                        <input type="text" id="task-input" placeholder="What are you working on?">
+                        <select id="task-category" class="task-category">
+                            <option value="coding">💻 Coding</option>
+                            <option value="design">🎨 Design</option>
+                            <option value="writing">✍️ Writing</option>
+                            <option value="meeting">👥 Meeting</option>
+                            <option value="learning">📚 Learning</option>
+                            <option value="other">🔧 Other</option>
+                        </select>
+                        <button id="start-btn" class="btn btn-primary"><i class="ri-play-fill"></i> Start</button>
+                    </div>
+
+                    <div id="session-controls" class="session-controls hidden">
+                        <button id="pause-btn" class="btn btn-warning"><i class="ri-pause-fill"></i> Pause</button>
+                        <button id="resume-btn" class="btn btn-success hidden"><i class="ri-play-fill"></i> Resume</button>
+                        <button id="stop-btn" class="btn btn-danger"><i class="ri-stop-fill"></i> Stop</button>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span class="stat-label">Current Session</span>
+                            <span class="stat-value" id="session-time">00:00:00</span>
+                        </div>
+                        <div class="stat-box warning">
+                            <span class="stat-label">Switches</span>
+                            <span class="stat-value" id="switch-count">0</span>
+                        </div>
+                        <div class="stat-box danger">
+                            <span class="stat-label">Focus Tax Paid</span>
+                            <span class="stat-value" id="focus-tax">0m</span>
+                            <small>Est. recovery time</small>
+                        </div>
+                        <div class="stat-box success">
+                            <span class="stat-label">Focus Quality</span>
+                            <span class="stat-value" id="focus-quality">100%</span>
+                        </div>
+                    </div>
+
+                    <div id="active-task-display" class="hidden">
+                        <div class="pulsing-dot"></div>
+                        <span>Focusing on: <strong id="current-task-name">---</strong></span>
+                    </div>
+
+                    <ul id="log-list" class="log-list">
+                        <!-- Switch logs go here -->
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Deadline Risk Estimator Section -->
+            <section id="estimator-section" class="card">
+                <div class="card-header">
+                    <h2><i class="ri-bar-chart-groupped-line"></i> Deadline Risk Estimator</h2>
+                </div>
+                <div class="card-body">
+                    <form id="risk-form">
+                        <div class="form-group">
+                            <label for="task-size">Task Duration (Hours)</label>
+                            <input type="number" id="task-size" min="1" placeholder="e.g. 20">
+                        </div>
+                        <div class="form-group">
+                            <label for="past-delays">Avg. Past Delay (Hours)</label>
+                            <input type="number" id="past-delays" min="0" placeholder="e.g. 5">
+                        </div>
+                        <div class="form-group">
+                            <label for="buffer-time">Buffer Available (Hours)</label>
+                            <input type="number" id="buffer-time" min="0" placeholder="e.g. 2">
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Calculate Risk</button>
+                    </form>
+
+                    <div id="risk-result" class="risk-result hidden">
+                        <div class="risk-score-circle" id="risk-circle">
+                            <span id="risk-score">0%</span>
+                            <small>Risk</small>
+                        </div>
+                        <div class="risk-details">
+                            <h3 id="risk-level">Low Risk</h3>
+                            <p id="risk-suggestion">Looks good.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Session History Section -->
+            <section id="history-section" class="card full-width">
+                <div class="card-header">
+                    <h2><i class="ri-history-line"></i> Session History</h2>
+                    <div class="header-actions">
+                        <button id="export-btn" class="btn btn-outline"><i class="ri-download-line"></i> Export</button>
+                        <button id="clear-history-btn" class="btn btn-outline"><i class="ri-delete-bin-line"></i> Clear</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="filter-tabs">
+                        <button class="tab-btn active" data-filter="all">All Time</button>
+                        <button class="tab-btn" data-filter="today">Today</button>
+                        <button class="tab-btn" data-filter="week">This Week</button>
+                    </div>
+                    
+                    <div id="history-stats" class="history-stats">
+                        <div class="history-stat-card">
+                            <i class="ri-time-line"></i>
+                            <div>
+                                <small>Total Focus Time</small>
+                                <strong id="total-focus-time">0h 0m</strong>
+                            </div>
+                        </div>
+                        <div class="history-stat-card">
+                            <i class="ri-refresh-line"></i>
+                            <div>
+                                <small>Total Switches</small>
+                                <strong id="total-switches">0</strong>
+                            </div>
+                        </div>
+                        <div class="history-stat-card">
+                            <i class="ri-calendar-line"></i>
+                            <div>
+                                <small>Sessions Completed</small>
+                                <strong id="total-sessions">0</strong>
+                            </div>
+                        </div>
+                        <div class="history-stat-card">
+                            <i class="ri-star-line"></i>
+                            <div>
+                                <small>Avg Quality</small>
+                                <strong id="avg-quality">--%</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="history-list" class="history-list">
+                        <p class="empty-state"><i class="ri-inbox-line"></i> No sessions yet. Start tracking your focus!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Dashboard Section -->
+            <section id="analytics-section" class="card full-width">
+                <div class="card-header">
+                    <h2><i class="ri-pie-chart-line"></i> Analytics Dashboard</h2>
+                </div>
+                <div class="card-body">
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h3>Switch Patterns</h3>
+                            <canvas id="switch-chart" width="300" height="200"></canvas>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Category Breakdown</h3>
+                            <div id="category-breakdown" class="category-breakdown">
+                                <p class="text-muted">Track sessions to see breakdown</p>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Best Focus Times</h3>
+                            <div id="best-times" class="best-times">
+                                <p class="text-muted">Complete more sessions to analyze</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

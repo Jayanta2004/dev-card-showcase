@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HDL vs LDL Comparison Dashboard - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .cholesterol-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .analyzer-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .cholesterol-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-group input {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .metric-item.hdl-good .metric-value { color: #10b981; }
+        .metric-item.hdl-borderline .metric-value { color: #f59e0b; }
+        .metric-item.hdl-poor .metric-value { color: #ef4444; }
+        .metric-item.ldl-optimal .metric-value { color: #10b981; }
+        .metric-item.ldl-near-optimal .metric-value { color: #84cc16; }
+        .metric-item.ldl-borderline .metric-value { color: #f59e0b; }
+        .metric-item.ldl-high .metric-value { color: #ef4444; }
+        .metric-item.ldl-very-high .metric-value { color: #dc2626; }
+
+        .cholesterol-chart {
+            margin-top: 1rem;
+            height: 400px;
+        }
+
+        .readings-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .reading-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reading-info {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .reading-date {
+            font-weight: 500;
+        }
+
+        .reading-values {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .reading-hdl, .reading-ldl {
+            font-weight: bold;
+        }
+
+        .reading-hdl { color: #10b981; }
+        .reading-ldl { color: #ef4444; }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .range-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .range-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .range-color {
+            width: 20px;
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        .range-hdl-optimal { background: #10b981; }
+        .range-hdl-borderline { background: #f59e0b; }
+        .range-hdl-poor { background: #ef4444; }
+        .range-ldl-optimal { background: #10b981; }
+        .range-ldl-near-optimal { background: #84cc16; }
+        .range-ldl-borderline { background: #f59e0b; }
+        .range-ldl-high { background: #ef4444; }
+        .range-ldl-very-high { background: #dc2626; }
+
+        @media (max-width: 768px) {
+            .cholesterol-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .range-indicators {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="activity"></i> HDL vs LDL Comparison Dashboard</h1>
+            <p>Track and compare your HDL (good) and LDL (bad) cholesterol levels over time. Monitor your lipid balance with visual trends and safe range indicators for better heart health management.</p>
+        </header>
+
+        <div class="cholesterol-grid">
+            <!-- Cholesterol Logger -->
+            <section class="analyzer-section cholesterol-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Cholesterol Reading</h2>
+                <form id="cholesterolForm" class="cholesterol-form">
+                    <div class="form-group">
+                        <label for="readingDate">Test Date</label>
+                        <input type="date" id="readingDate" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="hdlLevel">HDL Cholesterol (mg/dL)</label>
+                            <input type="number" id="hdlLevel" min="0" max="200" step="1" placeholder="e.g., 55" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ldlLevel">LDL Cholesterol (mg/dL)</label>
+                            <input type="number" id="ldlLevel" min="0" max="300" step="1" placeholder="e.g., 95" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes (optional)</label>
+                        <textarea id="notes" placeholder="Fasting status, medications, lifestyle changes, etc."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Log Reading
+                    </button>
+                </form>
+            </section>
+
+            <!-- Cholesterol Dashboard -->
+            <section class="analyzer-section cholesterol-dashboard">
+                <h2><i data-lucide="bar-chart-3"></i> Current Status & Trends</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item" id="currentHDL">
+                        <div class="metric-value">--</div>
+                        <div class="metric-label">Current HDL</div>
+                    </div>
+                    <div class="metric-item" id="currentLDL">
+                        <div class="metric-value">--</div>
+                        <div class="metric-label">Current LDL</div>
+                    </div>
+                    <div class="metric-item" id="hdlTrend">
+                        <div class="metric-value">--</div>
+                        <div class="metric-label">HDL Trend</div>
+                    </div>
+                    <div class="metric-item" id="ldlTrend">
+                        <div class="metric-value">--</div>
+                        <div class="metric-label">LDL Trend</div>
+                    </div>
+                </div>
+
+                <div class="range-indicators">
+                    <div class="range-indicator">
+                        <div class="range-color range-hdl-optimal"></div>
+                        <span>HDL: Optimal (≥60)</span>
+                    </div>
+                    <div class="range-indicator">
+                        <div class="range-color range-hdl-borderline"></div>
+                        <span>HDL: Borderline (40-59)</span>
+                    </div>
+                    <div class="range-indicator">
+                        <div class="range-color range-hdl-poor"></div>
+                        <span>HDL: Poor (<40)</span>
+                    </div>
+                    <div class="range-indicator">
+                        <div class="range-color range-ldl-optimal"></div>
+                        <span>LDL: Optimal (<100)</span>
+                    </div>
+                    <div class="range-indicator">
+                        <div class="range-color range-ldl-near-optimal"></div>
+                        <span>LDL: Near Optimal (100-129)</span>
+                    </div>
+                    <div class="range-indicator">
+                        <div class="range-color range-ldl-borderline"></div>
+                        <span>LDL: Borderline (130-159)</span>
+                    </div>
+                    <div class="range-indicator">
+                        <div class="range-color range-ldl-high"></div>
+                        <span>LDL: High (160-189)</span>
+                    </div>
+                    <div class="range-indicator">
+                        <div class="range-color range-ldl-very-high"></div>
+                        <span>LDL: Very High (≥190)</span>
+                    </div>
+                </div>
+
+                <div class="cholesterol-chart">
+                    <canvas id="cholesterolChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Recent Readings -->
+            <section class="analyzer-section recent-readings">
+                <h2><i data-lucide="clock"></i> Recent Readings</h2>
+                <div id="readingsList" class="readings-list">
+                    <!-- Readings will be populated here -->
+                </div>
+            </section>
+
+            <!-- Health Insights -->
+            <section class="analyzer-section health-insights">
+                <h2><i data-lucide="heart"></i> Health Insights</h2>
+                <div id="insightsContent">
+                    <p>Log your first cholesterol reading to see personalized insights and recommendations.</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Include footer -->
+    <div id="footer-container"></div>
+
+    <script>
+        // Load navbar and footer
+        fetch('../navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+                lucide.createIcons();
+            });
+
+        fetch('../footer.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('footer-container').innerHTML = data;
+            });
+
+        // Initialize chart
+        let cholesterolChart = null;
+
+        // Load data from localStorage
+        let readings = JSON.parse(localStorage.getItem('cholesterolReadings') || '[]');
+
+        // Form submission
+        document.getElementById('cholesterolForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const readingDate = document.getElementById('readingDate').value;
+            const hdlLevel = parseInt(document.getElementById('hdlLevel').value);
+            const ldlLevel = parseInt(document.getElementById('ldlLevel').value);
+            const notes = document.getElementById('notes').value;
+
+            const reading = {
+                id: Date.now(),
+                date: readingDate,
+                hdl: hdlLevel,
+                ldl: ldlLevel,
+                notes: notes,
+                timestamp: new Date().toISOString()
+            };
+
+            readings.push(reading);
+            localStorage.setItem('cholesterolReadings', JSON.stringify(readings));
+
+            // Reset form
+            this.reset();
+            document.getElementById('readingDate').value = readingDate; // Keep date
+
+            updateDashboard();
+            updateReadingsList();
+            updateInsights();
+        });
+
+        function getCholesterolStatus(hdl, ldl) {
+            let hdlStatus, ldlStatus;
+
+            if (hdl >= 60) hdlStatus = 'optimal';
+            else if (hdl >= 40) hdlStatus = 'borderline';
+            else hdlStatus = 'poor';
+
+            if (ldl < 100) ldlStatus = 'optimal';
+            else if (ldl < 130) ldlStatus = 'near-optimal';
+            else if (ldl < 160) ldlStatus = 'borderline';
+            else if (ldl < 190) ldlStatus = 'high';
+            else ldlStatus = 'very-high';
+
+            return { hdlStatus, ldlStatus };
+        }
+
+        function updateDashboard() {
+            if (readings.length === 0) {
+                document.getElementById('currentHDL').innerHTML = '<div class="metric-value">--</div><div class="metric-label">Current HDL</div>';
+                document.getElementById('currentLDL').innerHTML = '<div class="metric-value">--</div><div class="metric-label">Current LDL</div>';
+                document.getElementById('hdlTrend').innerHTML = '<div class="metric-value">--</div><div class="metric-label">HDL Trend</div>';
+                document.getElementById('ldlTrend').innerHTML = '<div class="metric-value">--</div><div class="metric-label">LDL Trend</div>';
+                if (cholesterolChart) cholesterolChart.destroy();
+                return;
+            }
+
+            // Sort readings by date
+            readings.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const latest = readings[readings.length - 1];
+            const { hdlStatus, ldlStatus } = getCholesterolStatus(latest.hdl, latest.ldl);
+
+            document.getElementById('currentHDL').innerHTML = `<div class="metric-value hdl-${hdlStatus}">${latest.hdl}</div><div class="metric-label">Current HDL</div>`;
+            document.getElementById('currentLDL').innerHTML = `<div class="metric-value ldl-${ldlStatus}">${latest.ldl}</div><div class="metric-label">Current LDL</div>`;
+
+            // Calculate trends (last 3 readings)
+            const recentReadings = readings.slice(-3);
+            if (recentReadings.length >= 2) {
+                const hdlChange = recentReadings[recentReadings.length - 1].hdl - recentReadings[0].hdl;
+                const ldlChange = recentReadings[recentReadings.length - 1].ldl - recentReadings[0].ldl;
+
+                const hdlTrend = hdlChange > 0 ? `↗ +${hdlChange}` : hdlChange < 0 ? `↘ ${hdlChange}` : `→ 0`;
+                const ldlTrend = ldlChange > 0 ? `↗ +${ldlChange}` : ldlChange < 0 ? `↘ ${ldlChange}` : `→ 0`;
+
+                document.getElementById('hdlTrend').innerHTML = `<div class="metric-value">${hdlTrend}</div><div class="metric-label">HDL Trend</div>`;
+                document.getElementById('ldlTrend').innerHTML = `<div class="metric-value">${ldlTrend}</div><div class="metric-label">LDL Trend</div>`;
+            }
+
+            // Update chart
+            const ctx = document.getElementById('cholesterolChart').getContext('2d');
+            if (cholesterolChart) cholesterolChart.destroy();
+
+            cholesterolChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: readings.map(r => new Date(r.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'HDL Cholesterol (mg/dL)',
+                        data: readings.map(r => r.hdl),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#10b981'
+                    }, {
+                        label: 'LDL Cholesterol (mg/dL)',
+                        data: readings.map(r => r.ldl),
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#ef4444'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'HDL vs LDL Cholesterol Trends'
+                        },
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Cholesterol Level (mg/dL)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            radius: 5,
+                            hoverRadius: 7
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateReadingsList() {
+            const list = document.getElementById('readingsList');
+            list.innerHTML = '';
+
+            // Show last 10 readings
+            const recentReadings = readings.slice(-10).reverse();
+
+            recentReadings.forEach(reading => {
+                const { hdlStatus, ldlStatus } = getCholesterolStatus(reading.hdl, reading.ldl);
+                const item = document.createElement('div');
+                item.className = 'reading-item';
+                item.innerHTML = `
+                    <div class="reading-info">
+                        <div class="reading-date">${new Date(reading.date).toLocaleDateString()}</div>
+                        <div class="reading-values">
+                            <span class="reading-hdl">HDL: ${reading.hdl}</span>
+                            <span class="reading-ldl">LDL: ${reading.ldl}</span>
+                        </div>
+                        ${reading.notes ? `<div class="reading-notes">${reading.notes}</div>` : ''}
+                    </div>
+                    <button class="delete-btn" onclick="deleteReading(${reading.id})">Delete</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function updateInsights() {
+            const insightsDiv = document.getElementById('insightsContent');
+
+            if (readings.length === 0) {
+                insightsDiv.innerHTML = '<p>Log your first cholesterol reading to see personalized insights and recommendations.</p>';
+                return;
+            }
+
+            const latest = readings[readings.length - 1];
+            const { hdlStatus, ldlStatus } = getCholesterolStatus(latest.hdl, latest.ldl);
+
+            let insights = '<div class="insights-content">';
+
+            // HDL Insights
+            insights += '<h3>HDL Cholesterol Analysis</h3>';
+            if (hdlStatus === 'optimal') {
+                insights += '<p class="insight-positive">✅ Excellent HDL level! This provides good protection against heart disease.</p>';
+            } else if (hdlStatus === 'borderline') {
+                insights += '<p class="insight-warning">⚠️ HDL is in the borderline range. Consider lifestyle changes to improve it.</p>';
+            } else {
+                insights += '<p class="insight-negative">❌ HDL is too low. Focus on exercise, healthy fats, and weight management.</p>';
+            }
+
+            // LDL Insights
+            insights += '<h3>LDL Cholesterol Analysis</h3>';
+            if (ldlStatus === 'optimal') {
+                insights += '<p class="insight-positive">✅ Optimal LDL level! Great job maintaining heart health.</p>';
+            } else if (ldlStatus === 'near-optimal') {
+                insights += '<p class="insight-neutral">ℹ️ LDL is near optimal. Small improvements can make a big difference.</p>';
+            } else if (ldlStatus === 'borderline') {
+                insights += '<p class="insight-warning">⚠️ LDL is borderline high. Consider dietary changes and exercise.</p>';
+            } else if (ldlStatus === 'high') {
+                insights += '<p class="insight-negative">❌ LDL is high. Consult with a healthcare provider about management options.</p>';
+            } else {
+                insights += '<p class="insight-negative">🚨 LDL is very high. Immediate medical attention recommended.</p>';
+            }
+
+            // General recommendations
+            insights += '<h3>General Recommendations</h3>';
+            insights += '<ul>';
+            insights += '<li>Maintain a heart-healthy diet rich in fruits, vegetables, and whole grains</li>';
+            insights += '<li>Engage in regular physical activity (150 minutes/week)</li>';
+            insights += '<li>Maintain a healthy weight and avoid smoking</li>';
+            insights += '<li>Get regular cholesterol screenings (every 4-6 years for adults)</li>';
+            insights += '<li>Consult with a healthcare provider for personalized advice</li>';
+            insights += '</ul>';
+
+            insights += '</div>';
+            insightsDiv.innerHTML = insights;
+        }
+
+        function deleteReading(id) {
+            readings = readings.filter(r => r.id !== id);
+            localStorage.setItem('cholesterolReadings', JSON.stringify(readings));
+            updateDashboard();
+            updateReadingsList();
+            updateInsights();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('readingDate').value = new Date().toISOString().split('T')[0];
+            updateDashboard();
+            updateReadingsList();
+            updateInsights();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
