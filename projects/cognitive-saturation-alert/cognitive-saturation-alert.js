@@ -538,6 +538,24 @@ class CognitiveSaturationTracker {
         });
     }
 
+    getActivityColor(activityType) {
+        const colors = {
+            'reading': '#4285F4',
+            'writing': '#EA4335',
+            'problem-solving': '#FBBC05',
+            'decision-making': '#34A853',
+            'learning': '#FF6D00',
+            'multitasking': '#AA00FF',
+            'meetings': '#00BCD4',
+            'other': '#9E9E9E'
+        };
+        return colors[activityType] || '#667eea';
+    }
+
+    formatActivityType(type) {
+        return type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
     renderHistory() {
         const historyContainer = document.getElementById('activityHistory');
         const recentActivities = this.activities.slice(-10).reverse();
@@ -554,10 +572,18 @@ class CognitiveSaturationTracker {
                 </div>
             `;
         } else {
-            historyContainer.innerHTML = recentActivities.map(activity => `
-                <div class="activity-item">
+            historyContainer.innerHTML = recentActivities.map(activity => {
+                const activityColor = this.getActivityColor(activity.type);
+                const formattedType = this.formatActivityType(activity.type);
+                const activityClass = activity.type.replace(/_/g, '-').toLowerCase();
+                
+                return `
+                <div class="activity-item ${activityClass}" style="border-left-color: ${activityColor}">
                     <div class="activity-header">
-                        <span class="activity-type">${activity.type.replace('-', ' ')}</span>
+                        <div class="activity-type-wrapper">
+                            <span class="activity-type-icon ${activityClass}" style="background-color: ${activityColor}"></span>
+                            <span class="activity-type" style="color: ${activityColor}">${formattedType}</span>
+                        </div>
                         <span class="activity-time">${new Date(activity.timestamp).toLocaleString()}</span>
                     </div>
                     <div class="activity-details">
@@ -565,10 +591,10 @@ class CognitiveSaturationTracker {
                         <i class="fas fa-bolt" style="color: #FF9800;"></i> Intensity: ${activity.intensity}/10<br>
                         <i class="fas fa-weight" style="color: #764ba2;"></i> Cognitive Load: ${Math.round(activity.cognitiveLoad)}<br>
                         ${activity.notes ? `<i class="fas fa-sticky-note" style="color: #4CAF50;"></i> Notes: ${activity.notes}` : ''}
-                        ${activity.duration > 120 ? '<br><span style="color: #FF9800; display: inline-block; margin-top: 5px;"><i class="fas fa-exclamation-triangle"></i> Long session - take breaks!</span>' : ''}
+                        ${activity.duration > 120 ? '<br><span class="long-session-badge"><i class="fas fa-exclamation-triangle"></i> Long session - take breaks!</span>' : ''}
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
     }
 
