@@ -220,7 +220,194 @@ console.log('🧠 script loaded, ready to log.');</textarea>
 </div>
 
 <script>
+(function() {
+  // ----- get DOM elements -----
+  const htmlInput = document.getElementById('htmlInput');
+  const cssInput = document.getElementById('cssInput');
+  const jsInput = document.getElementById('jsInput');
+  const previewFrame = document.getElementById('previewFrame');
+  const consolePane = document.getElementById('consolePane');
+  const runBtn = document.getElementById('runCodeBtn');
+  const refreshBtn = document.getElementById('refreshPreviewBtn');
+  const clearConsoleBtn = document.getElementById('clearConsoleBtn');
+  const previewTabBtn = document.getElementById('previewTabBtn');
+  const consoleTabBtn = document.getElementById('consoleTabBtn');
+  const htmlTabBtn = document.getElementById('tabHtmlBtn');
+  const cssTabBtn = document.getElementById('tabCssBtn');
+  const jsTabBtn = document.getElementById('tabJsBtn');
 
+  // ----- state -----
+  let consoleEntries = [];             // stored as HTML strings
+  let activeOutput = 'preview';        // 'preview' or 'console'
+
+  // ----- helper: escape for safe console display -----
+  function escapeHtml(unsafe) {
+    return unsafe.replace(/[&<>"]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      if (m === '"') return '&quot;';
+      return m;
+    });
+  }
+
+  // ----- add a message to console store and re-render -----
+  function addConsoleMessage(text, isError = false) {
+    const icon = isError ? 'fa-circle-exclamation' : 'fa-chevron-right';
+    const cls = isError ? 'error' : '';
+    const lineHtml = `<div class="console-line ${cls}"><i class="fas ${icon}"></i> ${escapeHtml(text)}</div>`;
+    consoleEntries.push(lineHtml);
+    if (consoleEntries.length > 100) consoleEntries.shift();  // keep reasonable
+    renderConsole();
+  }
+
+  // ----- render console pane from stored entries -----
+  function renderConsole() {
+    if (consoleEntries.length === 0) {
+      consolePane.innerHTML = '<div class="console-line"><i class="fas fa-info-circle"></i> [console empty]</div>';
+    } else {
+      consolePane.innerHTML = consoleEntries.join('');
+    }
+  }
+
+  // ----- clear console -----
+  function clearConsole() {
+    consoleEntries = [];
+    addConsoleMessage('console cleared · ready', false);
+  }
+
+  // ----- generate iframe srcdoc from editor values (FIXED: no template literal issues) -----
+  function generatePreviewDocument() {
+    const htmlRaw = htmlInput.value;
+    const cssRaw = cssInput.value;
+    const jsRaw = jsInput.value;
+
+    // Build the injected script that overrides console and forwards to parent.
+    // Must be a plain string without using `</script>` inside that would close the parent script.
+    // We'll use string concatenation to avoid accidental closing.
+    const forwardScript = 
+      '<script>\n' +
+      '(function() {\n' +
+      '  const originalConsole = window.console;\n' +
+      '  function sendLog(level, args) {\n' +
+      '    try {\n' +
+      '      const strings = Array.from(args).map(arg => {\n' +
+      '        try { return String(arg); } catch { return "[unstringable]"; }\n' +
+      '      }).join(" ");\n' +
+      '      window.parent.postMessage({ type: "console", level: level, message: strings }, "*");\n' +
+      '    } catch (e) {}\n' +
+      '  }\n' +
+      '  window.console = {\n' +
+      '    log: function(...args) { sendLog("log", args); originalConsole.log(...args); },\n' +
+      '    info: function(...args) { sendLog("info", args); originalConsole.info(...args); },\n' +
+      '    warn: function(...args) { sendLog("warn", args); originalConsole.warn(...args); },\n' +
+      '    error: function(...args) { sendLog("error", args); originalConsole.error(...args); },\n' +
+      '    debug: function(...args) { sendLog("debug", args); originalConsole.debug(...args); }\n' +
+      '  };\n' +
+      '  window.addEventListener("error", function(e) {\n' +
+      '    sendLog("error", ["Uncaught:", e.message, "at", e.filename + ":" + e.lineno]);\n' +
+      '  });\n' +
+      '})();\n' +
+      '<\/script>';  // escaped closing tag to not break out of parent script
+
+    return '<!DOCTYPE html>\n' +
+      '<html>\n' +
+      '<head>\n' +
+      '  <meta charset="UTF-8">\n' +
+      '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+      '  <style>' + cssRaw + '</style>\n' +
+      '  <style>body { margin: 0; }</style>\n' +
+      '</head>\n' +
+      '<body>\n' +
+      '  ' + htmlRaw + '\n' +
+      '  ' + forwardScript + '\n' +
+      '  <script>' + jsRaw + '<\/script>\n' +
+      '</body>\n' +
+      '</html>';
+  }
+
+  // ----- update preview iframe -----
+  function updatePreview() {
+    const doc = generatePreviewDocument();
+    previewFrame.srcdoc = doc;
+    addConsoleMessage('▶ preview updated at ' + new Date().toLocaleTimeString(), false);
+  }
+
+  // ----- listen to console messages from iframe -----
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'console') {
+      const level = event.data.level || 'log';
+      const msg = event.data.message || '[empty]';
+      let prefix = '';
+      if (level === 'warn') prefix = '⚠️ ';
+      else if (level === 'error') prefix = '❌ ';
+      else if (level === 'info') prefix = 'ℹ️ ';
+      addConsoleMessage(prefix + msg, level === 'error');
+    }
+  });
+
+  // ----- switch between preview and console tabs -----
+  function setOutputTab(tab) {
+    if (tab === 'preview') {
+      previewTabBtn.classList.add('active');
+      consoleTabBtn.classList.remove('active');
+      previewFrame.style.display = 'block';
+      consolePane.classList.remove('visible');
+      activeOutput = 'preview';
+    } else {
+      previewTabBtn.classList.remove('active');
+      consoleTabBtn.classList.add('active');
+      previewFrame.style.display = 'none';
+      consolePane.classList.add('visible');
+      activeOutput = 'console';
+    }
+  }
+  previewTabBtn.addEventListener('click', () => setOutputTab('preview'));
+  consoleTabBtn.addEventListener('click', () => setOutputTab('console'));
+
+  // ----- file tabs UI + focus (no panel hiding) -----
+  function setActiveFileTab(activeId) {
+    [htmlTabBtn, cssTabBtn, jsTabBtn].forEach(btn => btn.classList.remove('active'));
+    if (activeId === 'html') htmlTabBtn.classList.add('active');
+    if (activeId === 'css') cssTabBtn.classList.add('active');
+    if (activeId === 'js') jsTabBtn.classList.add('active');
+  }
+  htmlTabBtn.addEventListener('click', () => { setActiveFileTab('html'); htmlInput.focus(); });
+  cssTabBtn.addEventListener('click', () => { setActiveFileTab('css'); cssInput.focus(); });
+  jsTabBtn.addEventListener('click', () => { setActiveFileTab('js'); jsInput.focus(); });
+
+  // ----- run buttons and keyboard shortcut -----
+  runBtn.addEventListener('click', updatePreview);
+  refreshBtn.addEventListener('click', () => {
+    updatePreview();
+    addConsoleMessage('⟳ preview manually refreshed', false);
+  });
+  clearConsoleBtn.addEventListener('click', clearConsole);
+
+  // Ctrl+Enter run
+  [htmlInput, cssInput, jsInput].forEach(textarea => {
+    textarea.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        updatePreview();
+      }
+    });
+  });
+
+  // ----- initial load -----
+  window.addEventListener('load', () => {
+    // initialize console with a ready message
+    consoleEntries = [];
+    addConsoleMessage('👋 miniIDE ready · logs from iframe appear here', false);
+    updatePreview();
+    setActiveFileTab('html');
+  });
+
+  // ----- parent error fallback (optional) -----
+  window.onerror = function(msg, src, line) {
+    addConsoleMessage('[parent error] ' + msg + ' at ' + src + ':' + line, true);
+  };
+})();
 </script>
 <!-- no stray JS prints – everything is inside the script block -->
 </body>
