@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS ANALYTICS • interactive dashboard</title>
+  <!-- Fonts & Icons (open source) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Chart.js 4 (lightweight & open source) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0817;
+      background-image: radial-gradient(circle at 15% 30%, #1f1b3a 0%, #0c0a18 90%);
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      color: #e3e1f0;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* main dashboard card — deep space panel */
+    .dashboard {
+      max-width: 1600px;
+      width: 100%;
+      background: rgba(12, 10, 25, 0.7);
+      backdrop-filter: blur(18px) saturate(200%);
+      -webkit-backdrop-filter: blur(18px) saturate(200%);
+      border: 1px solid rgba(90, 85, 160, 0.35);
+      border-radius: 3rem 2rem 3rem 2rem;
+      box-shadow: 0 40px 70px -25px #000000, 0 0 0 1px rgba(140, 120, 255, 0.2) inset;
+      padding: 2rem 2rem 2.5rem;
+    }
+
+    /* header section — dynamic title + date */
+    .dash-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2.2rem;
+    }
+
+    .title-group h1 {
+      font-size: 2.4rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      background: linear-gradient(130deg, #ffffff, #cbb9ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title-group h1 i {
+      background: #2b2555;
+      padding: 0.4rem;
+      border-radius: 18px 6px 18px 6px;
+      font-size: 2rem;
+      color: #b1a2ff;
+      -webkit-text-fill-color: currentColor;
+    }
+
+    .live-badge {
+      background: #1d1938;
+      border: 1px solid #5d4fb0;
+      border-radius: 60px;
+      padding: 0.5rem 1.4rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 5px 15px rgba(60, 40, 150, 0.4);
+    }
+
+    .pulse {
+      width: 10px;
+      height: 10px;
+      background: #28d89e;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #28d89e;
+      animation: pulseGlow 2s infinite;
+    }
+
+    @keyframes pulseGlow { 0% { opacity: 0.7; } 50% { opacity: 1; } }
+
+    /* kpi metric cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .metric-card {
+      background: rgba(20, 16, 40, 0.7);
+      border: 1px solid #393467;
+      border-radius: 2rem 0.8rem 2rem 0.8rem;
+      padding: 1.4rem 1.6rem;
+      backdrop-filter: blur(4px);
+      transition: transform 0.15s, border-color 0.2s;
+      box-shadow: 0 18px 25px -20px #020012;
+    }
+
+    .metric-card:hover {
+      border-color: #9b85f0;
+      transform: translateY(-4px);
+    }
+
+    .metric-title {
+      color: #b2a7e6;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+      font-size: 2.7rem;
+      font-weight: 600;
+      line-height: 1.2;
+      background: linear-gradient(145deg, #f3edff, #d7caff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .metric-trend {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      margin-top: 8px;
+      color: #86e0b5;
+    }
+    .metric-trend.warning { color: #f5b47b; }
+    .metric-trend i { font-size: 0.8rem; }
+
+    /* chart panel grid — advanced layout */
+    .charts-primary {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 1.8rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-card {
+      background: rgba(16, 12, 32, 0.6);
+      border: 1px solid #3c3563;
+      border-radius: 2.2rem 1rem 2.2rem 1rem;
+      padding: 1.8rem 1.5rem 1.5rem;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 25px 30px -22px black;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.2rem;
+    }
+
+    .chart-header h3 {
+      font-weight: 500;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chart-header h3 i {
+      color: #a48cf4;
+    }
+
+    .legend-note {
+      font-size: 0.8rem;
+      background: #292344;
+      padding: 0.2rem 1rem;
+      border-radius: 30px;
+    }
+
+    .canvas-container {
+      position: relative;
+      height: 240px;
+      width: 100%;
+    }
+
+    /* secondary row — geo / funnel / extra */
+    .charts-secondary {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 1.8rem;
+      margin-bottom: 2rem;
+    }
+
+    .insight-card {
+      background: #0f0d20;
+      border: 1px solid #41397a;
+      border-radius: 1.8rem 0.6rem 1.8rem 0.6rem;
+      padding: 1.4rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .insight-title {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #b8abf2;
+      margin-bottom: 1rem;
+    }
+
+    .funnel-step {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    .step-bar {
+      height: 10px;
+      background: linear-gradient(90deg, #6d5ac9, #a089ff);
+      border-radius: 20px;
+      transition: width 0.2s;
+    }
+    .step-label {
+      width: 70px;
+      font-size: 0.9rem;
+    }
+    .step-value {
+      font-family: 'JetBrains Mono', monospace;
+      color: #dbceff;
+    }
+
+    .geo-sim {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 0.5rem;
+    }
+    .region {
+      background: #1b1738;
+      border: 1px solid #564b96;
+      border-radius: 30px;
+      padding: 0.4rem 1.2rem;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .region i { color: #58d6a9; }
+
+    .pie-container {
+      height: 160px;
+      margin-top: 0.5rem;
+    }
+
+    /* interactive filter bar */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 2rem;
+      background: #18142fcc;
+      border-radius: 50px 16px 50px 16px;
+      padding: 0.8rem 2rem;
+      border: 1px solid #5a4b99;
+    }
+
+    .filter-label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: #26214a;
+      border: 1px solid #6153b0;
+      border-radius: 40px;
+      padding: 0.5rem 1.4rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.1s;
+      color: #cec2ff;
+    }
+
+    .filter-btn.active {
+      background: #5d4ab2;
+      border-color: #b59eff;
+      color: white;
+      box-shadow: 0 0 16px #6d54d4;
+    }
+
+    .filter-btn:hover {
+      background: #3b3170;
+    }
+
+    .date-range {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #201e3a;
+      padding: 0.4rem 1.2rem;
+      border-radius: 40px;
+    }
+
+    /* footer/annotation */
+    .dash-footer {
+      margin-top: 2rem;
+      text-align: right;
+      font-size: 0.8rem;
+      color: #7a6eb0;
+      border-top: 1px dashed #4f4580;
+      padding-top: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+
+    <!-- header -->
+    <div class="dash-header">
+      <div class="title-group">
+        <h1><i class="fas fa-chart-pie"></i> NEXUS · advanced analytics</h1>
+      </div>
+      <div class="live-badge"><span class="pulse"></span> LIVE · 14 MAY 2026 · 09:42 UTC</div>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-grid" id="kpiRow">
+      <div class="metric-card">
+        <div class="metric-title"><i class="fas fa-eye"></i> total sessions</div>
+        <div class="metric-value" id="sessionsVal">284.5K</div>
+        <div class="metric-trend"><i class="fas fa-arrow-up"></i> +12.3% vs last period</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title"><i class="fas fa-credit-card"></i> revenue</div>
+        <div class="metric-value" id="revenueVal">$6.24M</div>
+        <div class="metric-trend"><i class="fas fa-arrow-up"></i> +8.1%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title"><i class="fas fa-users"></i> conversion</div>
+        <div class="metric-value" id="convVal">3.86%</div>
+        <div class="metric-trend warning"><i class="fas fa-arrow-down"></i> -0.4%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title"><i class="fas fa-clock"></i> avg. time</div>
+        <div class="metric-value" id="timeVal">4m 28s</div>
+        <div class="metric-trend"><i class="fas fa-arrow-up"></i> +32s</div>
+      </div>
+    </div>
+
+    <!-- primary charts row -->
+    <div class="charts-primary">
+      <!-- line / time series -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3><i class="fas fa-chart-line"></i> daily active users (30d)</h3>
+          <span class="legend-note"><i class="fa-regular fa-calendar"></i> may 2026</span>
+        </div>
+        <div class="canvas-container">
+          <canvas id="trendChart" style="width:100%; height:100%; display:block;"></canvas>
+        </div>
+      </div>
+      <!-- bar / device breakdown -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3><i class="fas fa-chart-simple"></i> sessions by device</h3>
+          <span class="legend-note"><i class="fa-regular fa-mobile"></i> cross‑platform</span>
+        </div>
+        <div class="canvas-container">
+          <canvas id="deviceChart" style="width:100%; height:100%;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- secondary complex row: funnel, geo, donut -->
+    <div class="charts-secondary">
+      <!-- funnel / step conversion -->
+      <div class="insight-card">
+        <div class="insight-title"><i class="fas fa-funnel-dollar"></i> conversion funnel</div>
+        <div class="funnel-step">
+          <span class="step-label">visit</span>
+          <div class="step-bar" style="width:100%;"></div>
+          <span class="step-value" id="funnel1">284.5k</span>
+        </div>
+        <div class="funnel-step">
+          <span class="step-label">signup</span>
+          <div class="step-bar" style="width:68%;"></div>
+          <span class="step-value" id="funnel2">193.2k</span>
+        </div>
+        <div class="funnel-step">
+          <span class="step-label">trial</span>
+          <div class="step-bar" style="width:42%;"></div>
+          <span class="step-value" id="funnel3">119.8k</span>
+        </div>
+        <div class="funnel-step">
+          <span class="step-label">paid</span>
+          <div class="step-bar" style="width:18%;"></div>
+          <span class="step-value" id="funnel4">51.2k</span>
+        </div>
+        <div style="margin-top: 0.5rem; color:#9b8cf0"><i class="fa-regular fa-circle-check"></i> funnel health: stable</div>
+      </div>
+      <!-- geo / region interactive (simulated) -->
+      <div class="insight-card">
+        <div class="insight-title"><i class="fas fa-globe"></i> traffic by region</div>
+        <div class="geo-sim">
+          <span class="region"><i class="fas fa-location-dot"></i> NA 42%</span>
+          <span class="region"><i class="fas fa-location-dot"></i> EU 31%</span>
+          <span class="region"><i class="fas fa-location-dot"></i> APAC 19%</span>
+          <span class="region"><i class="fas fa-location-dot"></i> LATAM 5%</span>
+          <span class="region"><i class="fas fa-location-dot"></i> other 3%</span>
+        </div>
+        <div style="margin-top: 1.2rem; height: 5px; background:#201d40; border-radius:10px;">
+          <div style="width:42%; height:5px; background:#a27eff; border-radius:10px;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top: 0.5rem;">
+          <span>🌎 NA dominance</span>
+          <span id="regionGrowth">+5.2% WoW</span>
+        </div>
+      </div>
+      <!-- donut chart (source/medium) -->
+      <div class="insight-card">
+        <div class="insight-title"><i class="fas fa-chart-pie"></i> traffic sources</div>
+        <div class="pie-container">
+          <canvas id="sourceChart" width="200" height="160" style="max-width:100%; height:auto;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- interactive filter bar (advanced interaction) -->
+    <div class="filter-bar">
+      <span class="filter-label"><i class="fas fa-sliders-h"></i> view:</span>
+      <div class="filter-buttons" id="filterGroup">
+        <span class="filter-btn active" data-range="7">7D</span>
+        <span class="filter-btn" data-range="30">30D</span>
+        <span class="filter-btn" data-range="90">90D</span>
+        <span class="filter-btn" data-range="custom">YTD</span>
+      </div>
+      <div class="date-range">
+        <i class="fa-regular fa-calendar"></i> May 1 – May 30, 2026
+        <i class="fa-solid fa-chevron-down" style="font-size:0.8rem;"></i>
+      </div>
+    </div>
+
+    <div class="dash-footer">
+      <i class="fa-regular fa-chart-bar"></i> advanced interactive dashboard • open source charting • real‑time filters
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ----- CHART INITIALIZATION (advanced, interactive) -----
+      const ctxLine = document.getElementById('trendChart').getContext('2d');
+      const ctxBar = document.getElementById('deviceChart').getContext('2d');
+      const ctxPie = document.getElementById('sourceChart').getContext('2d');
+
+      // sample data sets
+      const days30 = Array.from({ length: 30 }, (_, i) => i + 1);
+      
+      // base datasets for 30d
+      const users30 = [8200, 8450, 9100, 9280, 10200, 11500, 12100, 11800, 12450, 13100, 12800, 13500, 14100, 13800, 15200, 15800, 16200, 17100, 16900, 17500, 18200, 19100, 19800, 20500, 21200, 22100, 23500, 24100, 25600, 27000];
+
+      // device bar data
+      const deviceLabels = ['mobile', 'desktop', 'tablet', 'other'];
+      const deviceData = [142000, 98000, 32000, 12500];
+
+      // pie: traffic sources
+      const sourceLabels = ['organic', 'paid', 'direct', 'referral', 'social'];
+      const sourceData = [38, 22, 18, 12, 10];
+
+      // line chart
+      const lineChart = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: days30.map(d => `D${d}`),
+          datasets: [{
+            label: 'active users',
+            data: users30,
+            borderColor: '#9d8aff',
+            backgroundColor: 'rgba(130, 100, 240, 0.05)',
+            borderWidth: 3,
+            pointRadius: 2,
+            pointHoverRadius: 7,
+            pointBackgroundColor: '#cbb5ff',
+            tension: 0.2,
+            fill: true,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { grid: { color: '#35305b' }, ticks: { color: '#b1a6e0' } },
+                   x: { ticks: { color: '#b1a6e0', maxRotation: 45 } } }
+        }
+      });
+
+      // bar chart (device)
+      const barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: deviceLabels,
+          datasets: [{
+            label: 'sessions',
+            data: deviceData,
+            backgroundColor: ['#816ff0', '#60cfb0', '#b281e0', '#c5a0ff'],
+            borderRadius: 8,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { grid: { color: '#36315a' }, ticks: { color: '#bfb3f0' } },
+                   x: { ticks: { color: '#bfb3f0' } } }
+        }
+      });
+
+      // pie chart (source)
+      const pieChart = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+          labels: sourceLabels,
+          datasets: [{
+            data: sourceData,
+            backgroundColor: ['#6886ed', '#a47cf0', '#ed8b9c', '#78d6b3', '#d9a56c'],
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { position: 'bottom', labels: { color: '#d6ccff', font: { size: 9 } } } },
+          cutout: '65%',
+        }
+      });
+
+      // ----- KPI + FILTER INTERACTION (simulate data update) -----
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      const sessionsSpan = document.getElementById('sessionsVal');
+      const revenueSpan = document.getElementById('revenueVal');
+      const convSpan = document.getElementById('convVal');
+      const timeSpan = document.getElementById('timeVal');
+      
+      // funnel values
+      const funnel1 = document.getElementById('funnel1');
+      const funnel2 = document.getElementById('funnel2');
+      const funnel3 = document.getElementById('funnel3');
+      const funnel4 = document.getElementById('funnel4');
+      const regionGrowthSpan = document.getElementById('regionGrowth');
+
+      // data presets for different ranges
+      const rangeData = {
+        '7': { sessions: '68.2K', revenue: '$1.48M', conv: '4.12%', time: '5m 02s', f1:'68.2K', f2:'46.8K', f3:'28.1K', f4:'12.7K', growth:'+2.1% WoW' },
+        '30': { sessions: '284.5K', revenue: '$6.24M', conv: '3.86%', time: '4m 28s', f1:'284.5K', f2:'193.2K', f3:'119.8K', f4:'51.2K', growth:'+5.2% WoW' },
+        '90': { sessions: '802K', revenue: '$17.1M', conv: '3.52%', time: '4m 01s', f1:'802K', f2:'542K', f3:'302K', f4:'132K', growth:'+9% WoW' },
+        'custom': { sessions: '1.42M', revenue: '$31.8M', conv: '3.91%', time: '4m 47s', f1:'1.42M', f2:'982K', f3:'611K', f4:'267K', growth:'+12.3% YTD' }
+      };
+
+      function setActiveFilter(active) {
+        filterBtns.forEach(btn => btn.classList.remove('active'));
+        active.classList.add('active');
+        const range = active.getAttribute('data-range');
+        const data = rangeData[range] || rangeData['30'];
+        
+        // update KPI
+        sessionsSpan.innerText = data.sessions;
+        revenueSpan.innerText = data.revenue;
+        convSpan.innerText = data.conv;
+        timeSpan.innerText = data.time;
+        // funnel
+        funnel1.innerText = data.f1;
+        funnel2.innerText = data.f2;
+        funnel3.innerText = data.f3;
+        funnel4.innerText = data.f4;
+        regionGrowthSpan.innerText = data.growth;
+
+        // optional: change line chart dataset dynamically (simulate)
+        // we'll modify first dataset with slight variations
+        if (range === '7') {
+          lineChart.data.datasets[0].data = [11200, 12400, 13100, 12800, 14200, 15800, 16200];
+          lineChart.data.labels = ['D1','D2','D3','D4','D5','D6','D7'];
+        } else if (range === '30') {
+          lineChart.data.datasets[0].data = users30;
+          lineChart.data.labels = days30.map(d => `D${d}`);
+        } else if (range === '90') {
+          // mock 90day compressed
+          lineChart.data.datasets[0].data = [7500, 8200, 11100, 14200, 16900, 22100, 27000, 31500, 36200, 39800];
+          lineChart.data.labels = ['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10'];
+        } else {
+          // custom YTD
+          lineChart.data.datasets[0].data = [6200, 8900, 12100, 15800, 21200, 27000, 33100, 40200, 48800, 53100];
+          lineChart.data.labels = ['Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov'];
+        }
+        lineChart.update();
+        
+        // small change on pie and bar? maybe to simulate: just alter slightly
+        if (range === '7') {
+          pieChart.data.datasets[0].data = [42, 20, 15, 13, 10];
+          barChart.data.datasets[0].data = [35000, 22000, 7800, 2100];
+        } else if (range === '90') {
+          pieChart.data.datasets[0].data = [34, 24, 19, 14, 9];
+          barChart.data.datasets[0].data = [390000, 272000, 94000, 26000];
+        } else {
+          pieChart.data.datasets[0].data = sourceData;
+          barChart.data.datasets[0].data = deviceData;
+        }
+        pieChart.update();
+        barChart.update();
+      }
+
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          setActiveFilter(btn);
+        });
+      });
+
+      // ensure first active (30D) is synced on load
+      // already class active but just in case call
+      window.addEventListener('load', () => {
+        // initial match
+        setActiveFilter(document.querySelector('.filter-btn.active'));
+      });
+
+      // additional interactive hover/dynamic region effect – just for fun.
+      // update region info on geo click simulation
+      document.querySelectorAll('.region').forEach(reg => {
+        reg.addEventListener('click', () => {
+          alert(`🔍 region detail: ${reg.innerText} (simulated drill-down)`);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
