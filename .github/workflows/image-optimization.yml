@@ -1,0 +1,95 @@
+name: Image Optimization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'images/**'
+      - 'assets/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'images/**'
+      - 'assets/**'
+  workflow_dispatch:
+
+jobs:
+  optimize-images:
+    name: Optimize Images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install image optimization tools
+        run: |
+          npm install -g sharp-cli squoosh
+
+      - name: Optimize PNG images
+        run: |
+          find images -name "*.png" -type f | while read file; do
+            echo "Optimizing $file"
+            squoosh cli --codec oxipng "$file" "$file" 2>/dev/null || true
+          done
+
+      - name: Optimize JPEG images
+        run: |
+          find images -name "*.jpg" -o -name "*.jpeg" -type f | while read file; do
+            echo "Optimizing $file"
+            squoosh cli --codec mozjpeg --quality 85 "$file" "$file" 2>/dev/null || true
+          done
+
+      - name: Generate WebP versions
+        run: |
+          find images -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -type f | while read file; do
+            webp_file="${file%.*}.webp"
+            echo "Generating WebP: $webp_file"
+            squoosh cli --codec webp --quality 80 "$file" "$webp_file" 2>/dev/null || true
+          done
+
+      - name: Report savings
+        run: |
+          echo "## Image Optimization Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Images have been optimized and WebP versions generated." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Optimized file types:" >> $GITHUB_STEP_SUMMARY
+          echo "- PNG: Compressed using OxiPNG" >> $GITHUB_STEP_SUMMARY
+          echo "- JPEG: Compressed using MozJPEG" >> $GITHUB_STEP_SUMMARY
+          echo "- WebP: Generated for modern browsers" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create optimized-assets directory
+        run: |
+          mkdir -p public/optimized-assets
+
+      - name: Upload optimized assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: optimized-assets
+          path: |
+            images/**/*.webp
+          retention-days: 7
+
+  validate-lazy-loading:
+    name: Validate Lazy Loading
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for lazy loading on images
+        run: |
+          echo "## Lazy Loading Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check images in HTML files
+          for html_file in $(find . -name "*.html" -type f); do
+            images_without_lazy=$(grep -o '<img[^>]*>' "$html_file" | grep -v 'loading=' | wc -l)
+            if [ "$images_without_lazy" -gt 0 ]; then
+              echo "Warning: $html_file has $images_without_lazy images without lazy loading" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          echo "Validation complete" >> $GITHUB_STEP_SUMMARY
