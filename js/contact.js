@@ -87,6 +87,22 @@ if (hamburger) {
     hamburger.addEventListener('click', function () {
         this.classList.toggle('active');
         navLinks.classList.toggle('active');
+        const isExpanded = this.classList.contains('active');
+        this.setAttribute('aria-expanded', isExpanded);
+    });
+
+    // Keyboard support for hamburger menu
+    hamburger.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.click();
+        }
+        if (e.key === 'Escape') {
+            this.classList.remove('active');
+            navLinks.classList.remove('active');
+            this.setAttribute('aria-expanded', 'false');
+            this.focus();
+        }
     });
 
     // Close menu when clicking outside
@@ -94,6 +110,7 @@ if (hamburger) {
         if (!hamburger.contains(event.target) && !navLinks.contains(event.target)) {
             hamburger.classList.remove('active');
             navLinks.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
         }
     });
 }
