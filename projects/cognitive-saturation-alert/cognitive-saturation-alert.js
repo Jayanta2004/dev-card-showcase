@@ -363,6 +363,23 @@ class CognitiveSaturationTracker {
 
     takeBreak(type) {
         const durations = { short: 5, medium: 15, long: 30 };
+        
+        if (this.breakTimer) {
+            clearInterval(this.breakTimer);
+            this.breakTimer = null;
+        }
+       
+        if (this.breakStartTime) {
+            const interruptedBreak = {
+                id: Date.now(),
+                duration: Math.floor((Date.now() - this.breakStartTime) / 1000 / 60),
+                timestamp: new Date().toISOString(),
+                interrupted: true
+            };
+            this.breaks.push(interruptedBreak);
+            this.saveData();
+        }
+        
         this.breakDuration = durations[type] * 60; // Convert to seconds
         this.breakStartTime = Date.now();
 
@@ -375,6 +392,10 @@ class CognitiveSaturationTracker {
         const timerSection = document.getElementById('breakTimer');
 
         timerSection.style.display = 'block';
+
+        if (this.breakTimer) {
+            clearInterval(this.breakTimer);
+        }
 
         this.breakTimer = setInterval(() => {
             const elapsed = Math.floor((Date.now() - this.breakStartTime) / 1000);
@@ -398,18 +419,23 @@ class CognitiveSaturationTracker {
             this.breakTimer = null;
         }
 
-        const breakRecord = {
-            id: Date.now(),
-            duration: Math.floor((Date.now() - this.breakStartTime) / 1000 / 60), // minutes
-            timestamp: new Date().toISOString()
-        };
+        if (this.breakStartTime) {
+            const breakRecord = {
+                id: Date.now(),
+                duration: Math.floor((Date.now() - this.breakStartTime) / 1000 / 60),
+                timestamp: new Date().toISOString(),
+                completed: true
+            };
 
-        this.breaks.push(breakRecord);
-        this.saveData();
+            this.breaks.push(breakRecord);
+            this.saveData();
+        }
 
+        this.breakStartTime = null;
+        
         document.getElementById('breakTimer').style.display = 'none';
         this.updateStats();
-        this.updateSaturationLevel(); // Reduce saturation after break
+        this.updateSaturationLevel();
     }
 
     updateStats() {
