@@ -57,8 +57,8 @@ class CognitiveSaturationTracker {
                 </ul>
                 <p class="recommendation">💡 <strong>Recommendation:</strong> Break this into smaller sessions (e.g., ${Math.ceil(duration/60)} x 60-minute sessions with breaks in between).</p>
                 <div class="warning-actions">
-                    <button class="cancel-btn" onclick="tracker.cancelDurationWarning()">Adjust Duration</button>
-                    <button class="confirm-btn" onclick="tracker.confirmLongDuration()">Continue Anyway</button>
+                    <button class="cancel-btn" onclick="window.tracker.cancelDurationWarning()">Adjust Duration</button>
+                    <button class="confirm-btn" onclick="window.tracker.confirmLongDuration()">Continue Anyway</button>
                 </div>
             </div>
         `;
@@ -89,14 +89,15 @@ class CognitiveSaturationTracker {
         }
 
         if (this.pendingActivity) {
+            const duration = this.pendingActivity.duration;
             this.saveActivity(
                 this.pendingActivity.activityType,
                 this.pendingActivity.duration,
                 this.pendingActivity.intensity,
                 this.pendingActivity.notes
             );
+            this.logLongDurationAlert(duration);
             this.pendingActivity = null;
-            this.logLongDurationAlert(this.pendingActivity?.duration || 0);
         }
     }
 
@@ -122,7 +123,7 @@ class CognitiveSaturationTracker {
             intensity: intensity,
             notes: notes,
             timestamp: new Date().toISOString(),
-            cognitiveLoad: this.calculateCognitiveLoad(duration, intensity)
+            cognitiveLoad: this.calculateCognitiveLoad(activityType, duration, intensity)
         };
 
         this.activities.push(activity);
@@ -142,8 +143,7 @@ class CognitiveSaturationTracker {
         this.showNotification('Activity logged successfully!');
     }
 
-    calculateCognitiveLoad(duration, intensity) {
-        // Cognitive load formula: duration (minutes) * intensity (1-10) * activity multiplier
+    calculateCognitiveLoad(activityType, duration, intensity) {
         const activityMultipliers = {
             'reading': 1.2,
             'writing': 1.5,
@@ -155,9 +155,7 @@ class CognitiveSaturationTracker {
             'other': 1.0
         };
 
-        const activityType = document.getElementById('activityType').value;
         const multiplier = activityMultipliers[activityType] || 1.0;
-
         return duration * intensity * multiplier;
     }
 
@@ -354,6 +352,10 @@ class CognitiveSaturationTracker {
             },
             options: {
                 responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
                 scales: {
                     y: {
                         type: 'linear',
@@ -379,7 +381,8 @@ class CognitiveSaturationTracker {
                 },
                 plugins: {
                     legend: {
-                        display: true
+                        display: true,
+                        position: 'top',
                     }
                 }
             }
@@ -390,20 +393,34 @@ class CognitiveSaturationTracker {
         const historyContainer = document.getElementById('activityHistory');
         const recentActivities = this.activities.slice(-10).reverse();
 
-        historyContainer.innerHTML = recentActivities.map(activity => `
-            <div class="activity-item">
-                <div class="activity-header">
-                    <span class="activity-type">${activity.type.replace('-', ' ')}</span>
-                    <span class="activity-time">${new Date(activity.timestamp).toLocaleString()}</span>
+        if (recentActivities.length === 0) {
+            historyContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-brain"></i>
+                    <h3>No Activities Yet</h3>
+                    <p>Start logging your cognitive activities to track your mental load, prevent burnout, and maintain optimal brain function.</p>
+                    <button class="log-btn" onclick="scrollToLogSection()">
+                        <i class="fas fa-plus-circle"></i> Log Your First Activity
+                    </button>
                 </div>
-                <div class="activity-details">
-                    Duration: ${activity.duration} min | Intensity: ${activity.intensity}/10<br>
-                    Cognitive Load: ${Math.round(activity.cognitiveLoad)}<br>
-                    ${activity.notes ? `Notes: ${activity.notes}` : ''}
-                    ${activity.duration > 120 ? '<br><span style="color: #FF9800;">⚠️ Long session</span>' : ''}
+            `;
+        } else {
+            historyContainer.innerHTML = recentActivities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-header">
+                        <span class="activity-type">${activity.type.replace('-', ' ')}</span>
+                        <span class="activity-time">${new Date(activity.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div class="activity-details">
+                        <i class="fas fa-clock" style="color: #667eea; width: 16px;"></i> Duration: ${activity.duration} min | 
+                        <i class="fas fa-bolt" style="color: #FF9800;"></i> Intensity: ${activity.intensity}/10<br>
+                        <i class="fas fa-weight" style="color: #764ba2;"></i> Cognitive Load: ${Math.round(activity.cognitiveLoad)}<br>
+                        ${activity.notes ? `<i class="fas fa-sticky-note" style="color: #4CAF50;"></i> Notes: ${activity.notes}` : ''}
+                        ${activity.duration > 120 ? '<br><span style="color: #FF9800; display: inline-block; margin-top: 5px;"><i class="fas fa-exclamation-triangle"></i> Long session - take breaks!</span>' : ''}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
+        }
     }
 
     checkAlerts() {
@@ -450,6 +467,21 @@ class CognitiveSaturationTracker {
     }
 }
 
+function scrollToLogSection() {
+    document.querySelector('.log-section').scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+    });
+    
+    const logSection = document.querySelector('.log-section');
+    logSection.style.transition = 'box-shadow 0.3s ease';
+    logSection.style.boxShadow = '0 0 0 3px #667eea, 0 5px 15px rgba(0,0,0,0.08)';
+    
+    setTimeout(() => {
+        logSection.style.boxShadow = '0 5px 15px rgba(0,0,0,0.08)';
+    }, 1500);
+}
+
 // Global functions for HTML onclick handlers
 function updateIntensityValue() {
     const value = document.getElementById('cognitiveIntensity').value;
@@ -472,5 +504,3 @@ function endBreak() {
 document.addEventListener('DOMContentLoaded', () => {
     window.tracker = new CognitiveSaturationTracker();
 });
-
-window.tracker = window.tracker || new CognitiveSaturationTracker();
