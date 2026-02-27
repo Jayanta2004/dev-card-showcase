@@ -2069,6 +2069,19 @@ const staticProjects = [
             name: "Gupta-02",
             github: "https://github.com/Gupta-02"
         }
+    },
+    {
+        title: "Distributed Model Performance Tracker",
+        description:
+            "A comprehensive monitoring system for tracking machine learning model performance across distributed deployments. Features real-time metrics collection, drift detection algorithms, automated alerting, and interactive analytics dashboards for AI observability at scale.",
+        tags: ["HTML", "CSS", "JavaScript", "AI", "Machine Learning", "Monitoring", "Analytics", "Distributed Systems"],
+        links: {
+            live: "./projects/distributed-model-performance-tracker/index.html",
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
     }
 
 ];
