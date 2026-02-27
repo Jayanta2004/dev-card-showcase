@@ -1,4 +1,4 @@
-// Cognitive Saturation Alert JavaScript with Multi-Profile Support, Enhanced Visualizations, and Storage Quota Handling
+// Cognitive Saturation Alert JavaScript with Multi-Profile Support, Enhanced Visualizations, and Break Recommendations Engine
 
 class CognitiveSaturationTracker {
     constructor() {
@@ -7,6 +7,18 @@ class CognitiveSaturationTracker {
         this.storageWarningShown = false;
         this.storageQuotaLimit = 5 * 1024 * 1024; 
         this.storageCriticalLimit = 8 * 1024 * 1024; 
+        this.breakRecommendations = [];
+        this.lastRecommendationTime = null;
+        this.activityPatterns = {
+            'problem-solving': { baseDuration: 45, multiplier: 1.8, recommendedBreak: 15 },
+            'decision-making': { baseDuration: 40, multiplier: 1.6, recommendedBreak: 12 },
+            'learning': { baseDuration: 35, multiplier: 1.5, recommendedBreak: 10 },
+            'writing': { baseDuration: 30, multiplier: 1.4, recommendedBreak: 8 },
+            'multitasking': { baseDuration: 25, multiplier: 2.0, recommendedBreak: 12 },
+            'meetings': { baseDuration: 30, multiplier: 1.3, recommendedBreak: 7 },
+            'reading': { baseDuration: 45, multiplier: 1.1, recommendedBreak: 5 },
+            'other': { baseDuration: 30, multiplier: 1.0, recommendedBreak: 5 }
+        };
         
         if (this.profiles.length === 0) {
             const defaultProfile = {
@@ -82,7 +94,7 @@ class CognitiveSaturationTracker {
             
             if (totalSize > this.storageCriticalLimit) {
                 this.showNotification('⚠️ Storage critically full! Automatically cleaning up old data...', 'error');
-                this.cleanupOldData(true); // Force cleanup
+                this.cleanupOldData(true);
                 this.storageWarningShown = true;
             } else if (totalSize > this.storageQuotaLimit && !this.storageWarningShown) {
                 this.showNotification('Storage is getting full. Keeping last 30 days of data.', 'warning');
@@ -300,13 +312,300 @@ class CognitiveSaturationTracker {
     init() {
         this.createProfileSelector();
         this.createChartControls();
+        this.createBreakRecommendationUI();
         this.updateSaturationLevel();
         this.updateStats();
         this.renderAllCharts();
         this.renderHistory();
         this.checkAlerts();
         this.initSoundSettings();
-        this.checkStorageQuota(); // Check quota on init
+        this.checkStorageQuota();
+        this.analyzeBreakPatterns();
+    }
+
+    createBreakRecommendationUI() {
+        const breakSection = document.querySelector('.break-section');
+        if (!breakSection) return;
+
+        if (document.getElementById('breakRecommendations')) return;
+
+        const recommendationHTML = `
+            <div id="breakRecommendations" class="break-recommendations" style="
+                background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 20px;
+                border: 2px solid #667eea30;
+            ">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <i class="fas fa-lightbulb" style="font-size: 2em; color: #FFC107;"></i>
+                    <h3 style="margin: 0; color: #2c3e50;">Smart Break Recommendations</h3>
+                </div>
+                <div id="recommendationContent" style="min-height: 60px;">
+                    <p style="color: #7f8c8d; text-align: center;">Analyzing your activity patterns...</p>
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="window.tracker.applyRecommendedBreak()" id="applyRecommendationBtn" class="break-btn" style="background: #4CAF50; flex: 0 1 auto;" disabled>
+                        <i class="fas fa-play"></i> Take Recommended Break
+                    </button>
+                    <button onclick="window.tracker.dismissRecommendation()" class="break-btn" style="background: #95a5a6; flex: 0 1 auto;">
+                        <i class="fas fa-times"></i> Dismiss
+                    </button>
+                </div>
+            </div>
+        `;
+
+        breakSection.insertAdjacentHTML('afterbegin', recommendationHTML);
+    }
+
+    analyzeBreakPatterns() {
+        const twoHoursAgo = new Date();
+        twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
+        
+        const recentActivities = this.activities
+            .filter(activity => new Date(activity.timestamp) > twoHoursAgo)
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        if (recentActivities.length === 0) return;
+
+        const recentLoad = recentActivities.reduce((sum, activity) => sum + activity.cognitiveLoad, 0);
+        
+        const lastActivity = recentActivities[0];
+        const activityPattern = this.activityPatterns[lastActivity.type] || this.activityPatterns.other;
+
+        let recommendedDuration = activityPattern.recommendedBreak;
+        
+        
+        if (recentLoad > 1000) {
+            recommendedDuration += 10;
+        } else if (recentLoad > 500) {
+            recommendedDuration += 5;
+        }
+
+        const firstActivityTime = new Date(recentActivities[recentActivities.length - 1].timestamp);
+        const continuousWorkMinutes = (Date.now() - firstActivityTime) / (1000 * 60);
+        
+        if (continuousWorkMinutes > 120) {
+            recommendedDuration += 15; 
+        } else if (continuousWorkMinutes > 90) {
+            recommendedDuration += 10; 
+        } else if (continuousWorkMinutes > 60) {
+            recommendedDuration += 5; 
+        }
+
+        const breakEffectiveness = this.calculateBreakEffectiveness();
+        if (breakEffectiveness < 70) {
+            recommendedDuration += 5; 
+        }
+
+        recommendedDuration = Math.min(Math.max(recommendedDuration, 5), 30);
+
+        this.breakRecommendations.push({
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            activityType: lastActivity.type,
+            duration: recommendedDuration,
+            reason: this.getRecommendationReason(lastActivity.type, recentLoad, continuousWorkMinutes),
+            applied: false
+        });
+
+        this.displayRecommendation(recommendedDuration, lastActivity.type, recentLoad, continuousWorkMinutes);
+    }
+
+    calculateBreakEffectiveness() {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const recentBreaks = this.breaks.filter(b => new Date(b.timestamp) > thirtyDaysAgo);
+        if (recentBreaks.length < 5) return 100;
+
+        let effectiveBreaks = 0;
+        
+        recentBreaks.forEach(breakItem => {
+            const breakTime = new Date(breakItem.timestamp);
+            const activitiesAfterBreak = this.activities.filter(activity => {
+                const activityTime = new Date(activity.timestamp);
+                return activityTime > breakTime && 
+                       activityTime < new Date(breakTime.getTime() + 60 * 60 * 1000); 
+            });
+
+            if (activitiesAfterBreak.length > 0) {
+                const avgLoadAfter = activitiesAfterBreak.reduce((sum, a) => sum + a.cognitiveLoad, 0) / activitiesAfterBreak.length;
+                const avgLoadBefore = this.getAverageLoadBeforeBreak(breakTime);
+                
+                if (avgLoadAfter < avgLoadBefore * 0.8) {
+                    effectiveBreaks++;
+                }
+            }
+        });
+
+        return (effectiveBreaks / recentBreaks.length) * 100;
+    }
+
+    getAverageLoadBeforeBreak(breakTime) {
+        const twoHoursBefore = new Date(breakTime.getTime() - 2 * 60 * 60 * 1000);
+        const activitiesBefore = this.activities.filter(activity => {
+            const activityTime = new Date(activity.timestamp);
+            return activityTime > twoHoursBefore && activityTime < breakTime;
+        });
+
+        if (activitiesBefore.length === 0) return 100;
+        return activitiesBefore.reduce((sum, a) => sum + a.cognitiveLoad, 0) / activitiesBefore.length;
+    }
+
+    getRecommendationReason(activityType, load, continuousTime) {
+        const reasons = [];
+        
+        const activityNames = {
+            'problem-solving': 'problem-solving',
+            'decision-making': 'decision-making',
+            'learning': 'learning',
+            'writing': 'creative writing',
+            'multitasking': 'multitasking',
+            'meetings': 'meetings',
+            'reading': 'reading',
+            'other': 'general work'
+        };
+
+        reasons.push(`Based on your recent ${activityNames[activityType] || 'work'} session`);
+        
+        if (load > 1000) {
+            reasons.push('high cognitive load detected');
+        } else if (load > 500) {
+            reasons.push('moderate cognitive load detected');
+        }
+
+        if (continuousTime > 120) {
+            reasons.push('very long work session');
+        } else if (continuousTime > 90) {
+            reasons.push('extended work period');
+        } else if (continuousTime > 60) {
+            reasons.push('over 1 hour of continuous work');
+        }
+
+        return reasons.join(' • ');
+    }
+
+    displayRecommendation(duration, activityType, load, continuousTime) {
+        const content = document.getElementById('recommendationContent');
+        const applyBtn = document.getElementById('applyRecommendationBtn');
+        
+        if (!content || !applyBtn) return;
+
+        const activityNames = {
+            'problem-solving': 'problem-solving',
+            'decision-making': 'decision-making',
+            'learning': 'learning',
+            'writing': 'creative writing',
+            'multitasking': 'multitasking',
+            'meetings': 'meetings',
+            'reading': 'reading',
+            'other': 'general work'
+        };
+
+        const loadLevel = load > 1000 ? '🔴 Very High' : (load > 500 ? '🟡 Moderate' : '🟢 Normal');
+        const timeFormatted = continuousTime > 120 ? `${Math.round(continuousTime/60)} hours` : 
+                             (continuousTime > 60 ? `${Math.floor(continuousTime/60)}h ${Math.round(continuousTime%60)}m` : 
+                             `${Math.round(continuousTime)} minutes`);
+
+        content.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 12px; border-radius: 8px;">
+                    <div style="
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        background: ${this.getActivityColor(activityType)}20;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.5em;
+                    ">
+                        <i class="fas fa-clock" style="color: ${this.getActivityColor(activityType)}"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; color: #2c3e50; font-size: 1.3em;">${duration} Minute Break</div>
+                        <div style="color: #7f8c8d; font-size: 0.9em;">Recommended based on your activity patterns</div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                        <div style="color: #7f8c8d; font-size: 0.85em;">Activity Type</div>
+                        <div style="font-weight: 600; color: #2c3e50; display: flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-tasks" style="color: ${this.getActivityColor(activityType)}"></i>
+                            ${this.formatActivityType(activityType)}
+                        </div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                        <div style="color: #7f8c8d; font-size: 0.85em;">Cognitive Load</div>
+                        <div style="font-weight: 600; color: ${load > 1000 ? '#F44336' : (load > 500 ? '#FF9800' : '#4CAF50')}">
+                            ${loadLevel}
+                        </div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                        <div style="color: #7f8c8d; font-size: 0.85em;">Work Duration</div>
+                        <div style="font-weight: 600; color: #2c3e50;">${timeFormatted}</div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                        <div style="color: #7f8c8d; font-size: 0.85em;">Recommended</div>
+                        <div style="font-weight: 600; color: #4CAF50;">${duration} minutes</div>
+                    </div>
+                </div>
+                
+                <div style="background: #667eea10; padding: 10px; border-radius: 6px; border-left: 4px solid #667eea;">
+                    <i class="fas fa-info-circle" style="color: #667eea; margin-right: 5px;"></i>
+                    <span style="color: #34495e;">${this.getRecommendationReason(activityType, load, continuousTime)}</span>
+                </div>
+            </div>
+        `;
+
+        applyBtn.disabled = false;
+        applyBtn.dataset.duration = duration;
+        this.lastRecommendationTime = Date.now();
+    }
+
+    applyRecommendedBreak() {
+        const applyBtn = document.getElementById('applyRecommendationBtn');
+        if (!applyBtn || applyBtn.disabled) return;
+
+        const duration = parseInt(applyBtn.dataset.duration);
+        
+        let breakType = 'short';
+        if (duration >= 15) breakType = 'medium';
+        if (duration >= 25) breakType = 'long';
+
+        this.takeBreak(breakType);
+        
+        if (this.breakRecommendations.length > 0) {
+            this.breakRecommendations[this.breakRecommendations.length - 1].applied = true;
+        }
+
+        this.showNotification(`Starting recommended ${duration}-minute break`, 'success');
+    }
+
+    dismissRecommendation() {
+        const content = document.getElementById('recommendationContent');
+        const applyBtn = document.getElementById('applyRecommendationBtn');
+        
+        if (content) {
+            content.innerHTML = `<p style="color: #7f8c8d; text-align: center;">Recommendation dismissed. Analyzing your activity patterns...</p>`;
+        }
+        
+        if (applyBtn) {
+            applyBtn.disabled = true;
+        }
+
+        this.showNotification('Recommendation dismissed', 'info');
+    }
+
+    updateRecommendations() {
+        if (this.lastRecommendationTime && 
+            Date.now() - this.lastRecommendationTime < 15 * 60 * 1000) {
+            return;
+        }
+
+        this.analyzeBreakPatterns();
     }
 
     createChartControls() {
@@ -641,7 +940,7 @@ class CognitiveSaturationTracker {
 
         const weeks = 4;
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const hours = Array.from({ length: 12 }, (_, i) => `${i+8}:00`); // 8 AM to 7 PM
+        const hours = Array.from({ length: 12 }, (_, i) => `${i+8}:00`);
 
         const heatData = [];
         const backgrounds = [];
@@ -1018,6 +1317,7 @@ class CognitiveSaturationTracker {
         this.renderHistory();
         this.checkAlerts();
         this.checkStorageQuota(); 
+        this.analyzeBreakPatterns();
 
         this.showNotification(`Switched to profile: ${profile.name}`, 'success');
     }
@@ -1199,6 +1499,7 @@ class CognitiveSaturationTracker {
         }
 
         this.saveActivity(activityType, duration, intensity, notes);
+        setTimeout(() => this.analyzeBreakPatterns(), 1000);
     }
 
     showDurationWarning(duration, activityType, intensity, notes) {
@@ -1258,6 +1559,7 @@ class CognitiveSaturationTracker {
             );
             this.logLongDurationAlert(duration);
             this.pendingActivity = null;
+            setTimeout(() => this.analyzeBreakPatterns(), 1000);
         }
     }
 
@@ -1397,6 +1699,7 @@ class CognitiveSaturationTracker {
 
         this.startBreakTimer();
         this.showNotification(`Starting ${durations[type]}-minute break`);
+        this.dismissRecommendation();
     }
 
     startBreakTimer() {
@@ -1448,6 +1751,7 @@ class CognitiveSaturationTracker {
         document.getElementById('breakTimer').style.display = 'none';
         this.updateStats();
         this.updateSaturationLevel();
+        setTimeout(() => this.analyzeBreakPatterns(), 2000);
     }
 
     updateStats() {
@@ -1565,6 +1869,7 @@ class CognitiveSaturationTracker {
             this.showNotification(alert.message, 'error');
             this.playNotificationSound(alertLevel === 'critical' ? 'alert' : 'notification');
             this.updateStats();
+            this.analyzeBreakPatterns();
         }
     }
 
