@@ -2071,12 +2071,36 @@ const staticProjects = [
         }
     },
     {
-        title: "Predictive Data Integrity Sentinel",
+        title: "Distributed Model Performance Tracker",
         description:
-            "Proactively detects potential data corruption before it impacts system reliability through real-time monitoring, predictive modeling, and anomaly detection. Features data trend analysis, automated alerting, integrity scoring, and comprehensive analytics for mission-critical databases and data pipelines.",
-        tags: ["HTML", "CSS", "JavaScript", "Data Integrity", "AI", "Monitoring", "Anomaly Detection", "Predictive Analytics"],
+            "A comprehensive monitoring system for tracking machine learning model performance across distributed deployments. Features real-time metrics collection, drift detection algorithms, automated alerting, and interactive analytics dashboards for AI observability at scale.",
+        tags: ["HTML", "CSS", "JavaScript", "AI", "Machine Learning", "Monitoring", "Analytics", "Distributed Systems"],
         links: {
-            live: "./projects/predictive-data-integrity-sentinel/index.html",
+            live: "./projects/distributed-model-performance-tracker/index.html",
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
+    },
+    {
+        title: "Response Orchestrator #5956",
+        description: "An automated incident coordination system that connects detection signals to structured remediation workflows across infrastructure layers. Features alert pipelines, predefined response playbooks, and automated containment actions including access revocation, traffic isolation, and credential rotation.",
+        tags: ["HTML", "CSS", "JavaScript", "Security", "Automation", "Incident Response"],
+        links: {
+            live: "./projects/response-orchestrator/index.html"
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
+    },
+    {
+        title: "ECHOVERSE · Immersive Resonance Chamber #5971",
+        description: "An interactive digital environment where users can explore layered ambient sound compositions that dynamically evolve based on movement, cursor interaction, or touch gestures. Features Web Audio API integration, spatial audio positioning, and real-time sound modulation.",
+        tags: ["HTML", "CSS", "JavaScript", "Web Audio API", "Interactive Audio", "Spatial Audio", "Sound Design"],
+        links: {
+            live: "./projects/echoverse-immersive-resonance-chamber/index.html"
         },
         author: {
             name: "Gupta-02",
