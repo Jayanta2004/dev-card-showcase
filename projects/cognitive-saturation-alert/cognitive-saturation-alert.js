@@ -1,10 +1,33 @@
-// Cognitive Saturation Alert JavaScript
+// Cognitive Saturation Alert JavaScript with Multi-Profile Support
 
 class CognitiveSaturationTracker {
     constructor() {
-        this.activities = JSON.parse(localStorage.getItem('cognitiveActivities')) || [];
-        this.breaks = JSON.parse(localStorage.getItem('cognitiveBreaks')) || [];
-        this.alerts = JSON.parse(localStorage.getItem('cognitiveAlerts')) || [];
+        this.profiles = JSON.parse(localStorage.getItem('cognitiveProfiles')) || [];
+        this.currentProfileId = localStorage.getItem('currentProfileId');
+        
+        if (this.profiles.length === 0) {
+            const defaultProfile = {
+                id: 'default-' + Date.now(),
+                name: 'Default User',
+                role: 'personal',
+                color: '#667eea',
+                description: 'Default profile for cognitive tracking',
+                createdAt: new Date().toISOString(),
+                lastActive: new Date().toISOString()
+            };
+            this.profiles.push(defaultProfile);
+            localStorage.setItem('cognitiveProfiles', JSON.stringify(this.profiles));
+            this.currentProfileId = defaultProfile.id;
+            localStorage.setItem('currentProfileId', this.currentProfileId);
+        }
+        
+        if (!this.currentProfileId && this.profiles.length > 0) {
+            this.currentProfileId = this.profiles[0].id;
+            localStorage.setItem('currentProfileId', this.currentProfileId);
+        }
+
+        this.loadProfileData();
+        
         this.currentSaturation = 0;
         this.breakTimer = null;
         this.breakDuration = 0;
@@ -14,11 +37,29 @@ class CognitiveSaturationTracker {
         this.lastSoundTime = 0;
         this.soundCooldown = 5 * 60 * 1000; 
         this.audioContext = null;
+        this.chart = null;
 
         this.init();
     }
 
+    loadProfileData() {
+        const currentProfile = this.getCurrentProfile();
+        if (!currentProfile) return;
+
+        this.activities = JSON.parse(localStorage.getItem(`cognitiveActivities_${this.currentProfileId}`)) || [];
+        this.breaks = JSON.parse(localStorage.getItem(`cognitiveBreaks_${this.currentProfileId}`)) || [];
+        this.alerts = JSON.parse(localStorage.getItem(`cognitiveAlerts_${this.currentProfileId}`)) || [];
+        
+        currentProfile.lastActive = new Date().toISOString();
+        localStorage.setItem('cognitiveProfiles', JSON.stringify(this.profiles));
+    }
+
+    getCurrentProfile() {
+        return this.profiles.find(p => p.id === this.currentProfileId);
+    }
+
     init() {
+        this.createProfileSelector();
         this.updateSaturationLevel();
         this.updateStats();
         this.renderChart();
@@ -27,8 +68,153 @@ class CognitiveSaturationTracker {
         this.initSoundSettings();
     }
 
+    createProfileSelector() {
+        const container = document.querySelector('.saturation-container');
+        if (!container) return;
+
+        if (document.getElementById('profileSelector')) return;
+
+        const currentProfile = this.getCurrentProfile();
+        
+        const selectorHTML = `
+            <div class="profile-selector" id="profileSelector" style="
+                background: white;
+                border-radius: 10px;
+                padding: 15px 20px;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 15px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                border-left: 4px solid ${currentProfile?.color || '#667eea'};
+            ">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 50%;
+                            background: ${currentProfile?.color || '#667eea'};
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 1.2em;
+                        ">
+                            ${currentProfile?.name.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: #2c3e50;">${currentProfile?.name || 'Default User'}</div>
+                            <div style="font-size: 0.85em; color: #7f8c8d;">
+                                <i class="fas fa-${this.getRoleIcon(currentProfile?.role)}"></i> 
+                                ${currentProfile?.role ? currentProfile.role.charAt(0).toUpperCase() + currentProfile.role.slice(1) : 'Personal'}
+                            </div>
+                        </div>
+                    </div>
+                    <select id="profileSwitcher" style="
+                        padding: 8px 15px;
+                        border: 2px solid #e9ecef;
+                        border-radius: 8px;
+                        font-size: 0.95em;
+                        outline: none;
+                        min-width: 200px;
+                        cursor: pointer;
+                    ">
+                        ${this.profiles.map(profile => `
+                            <option value="${profile.id}" ${profile.id === this.currentProfileId ? 'selected' : ''}>
+                                ${profile.name} (${profile.role})
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="window.location.href='profiles.html'" style="
+                        background: #f8f9fa;
+                        border: 2px solid #e9ecef;
+                        padding: 8px 15px;
+                        border-radius: 8px;
+                        color: #2c3e50;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 5px;
+                        transition: all 0.2s ease;
+                    ">
+                        <i class="fas fa-users-cog"></i> Manage Profiles
+                    </button>
+                </div>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('afterbegin', selectorHTML);
+
+        const switcher = document.getElementById('profileSwitcher');
+        if (switcher) {
+            switcher.addEventListener('change', (e) => {
+                this.switchProfile(e.target.value);
+            });
+        }
+    }
+
+    getRoleIcon(role) {
+        const icons = {
+            'work': 'briefcase',
+            'personal': 'user',
+            'family': 'users',
+            'project': 'project-diagram',
+            'other': 'tag'
+        };
+        return icons[role] || 'user';
+    }
+
+    switchProfile(profileId) {
+        if (profileId === this.currentProfileId) return;
+
+        const profile = this.profiles.find(p => p.id === profileId);
+        if (!profile) return;
+
+        this.saveProfileData();
+
+        this.currentProfileId = profileId;
+        localStorage.setItem('currentProfileId', profileId);
+
+        profile.lastActive = new Date().toISOString();
+        localStorage.setItem('cognitiveProfiles', JSON.stringify(this.profiles));
+
+        this.loadProfileData();
+
+        this.updateProfileSelector();
+        this.updateSaturationLevel();
+        this.updateStats();
+        this.renderChart();
+        this.renderHistory();
+        this.checkAlerts();
+
+        this.showNotification(`Switched to profile: ${profile.name}`, 'success');
+    }
+
+    updateProfileSelector() {
+        const selector = document.getElementById('profileSelector');
+        if (selector) {
+            selector.remove();
+        }
+        this.createProfileSelector();
+    }
+
+    saveProfileData() {
+        if (!this.currentProfileId) return;
+
+        localStorage.setItem(`cognitiveActivities_${this.currentProfileId}`, JSON.stringify(this.activities));
+        localStorage.setItem(`cognitiveBreaks_${this.currentProfileId}`, JSON.stringify(this.breaks));
+        localStorage.setItem(`cognitiveAlerts_${this.currentProfileId}`, JSON.stringify(this.alerts));
+    }
+
     initSoundSettings() {
-        const savedSoundSetting = localStorage.getItem('soundNotificationsEnabled');
+        const savedSoundSetting = localStorage.getItem(`soundNotificationsEnabled_${this.currentProfileId}`);
         if (savedSoundSetting !== null) {
             this.soundEnabled = savedSoundSetting === 'true';
         }
@@ -38,7 +224,7 @@ class CognitiveSaturationTracker {
             soundToggle.checked = this.soundEnabled;
             soundToggle.addEventListener('change', (e) => {
                 this.soundEnabled = e.target.checked;
-                localStorage.setItem('soundNotificationsEnabled', this.soundEnabled);
+                localStorage.setItem(`soundNotificationsEnabled_${this.currentProfileId}`, this.soundEnabled);
 
                 if (this.soundEnabled) {
                     this.playNotificationSound('notification', true);
@@ -48,10 +234,10 @@ class CognitiveSaturationTracker {
         
         const soundType = document.getElementById('soundType');
         if (soundType) {
-            const savedSoundType = localStorage.getItem('notificationSoundType') || 'notification';
+            const savedSoundType = localStorage.getItem(`notificationSoundType_${this.currentProfileId}`) || 'notification';
             soundType.value = savedSoundType;
             soundType.addEventListener('change', (e) => {
-                localStorage.setItem('notificationSoundType', e.target.value);
+                localStorage.setItem(`notificationSoundType_${this.currentProfileId}`, e.target.value);
                 this.playNotificationSound(e.target.value, true);
             });
         }
@@ -587,10 +773,11 @@ class CognitiveSaturationTracker {
         const recentActivities = this.activities.slice(-10).reverse();
 
         if (recentActivities.length === 0) {
+            const currentProfile = this.getCurrentProfile();
             historyContainer.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-brain"></i>
-                    <h3>No Activities Yet</h3>
+                    <h3>No Activities Yet for ${currentProfile?.name || 'This Profile'}</h3>
                     <p>Start logging your cognitive activities to track your mental load, prevent burnout, and maintain optimal brain function.</p>
                     <button class="log-btn" onclick="scrollToLogSection()">
                         <i class="fas fa-plus-circle"></i> Log Your First Activity
@@ -652,9 +839,11 @@ class CognitiveSaturationTracker {
     }
 
     saveData() {
-        localStorage.setItem('cognitiveActivities', JSON.stringify(this.activities));
-        localStorage.setItem('cognitiveBreaks', JSON.stringify(this.breaks));
-        localStorage.setItem('cognitiveAlerts', JSON.stringify(this.alerts));
+        if (!this.currentProfileId) return;
+        
+        localStorage.setItem(`cognitiveActivities_${this.currentProfileId}`, JSON.stringify(this.activities));
+        localStorage.setItem(`cognitiveBreaks_${this.currentProfileId}`, JSON.stringify(this.breaks));
+        localStorage.setItem(`cognitiveAlerts_${this.currentProfileId}`, JSON.stringify(this.alerts));
     }
 
     showNotification(message, type = 'success') {
