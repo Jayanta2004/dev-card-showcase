@@ -129,11 +129,53 @@ document.addEventListener("DOMContentLoaded", () => {
         let currentFilter = 'all';
         let currentSearch = '';
         let selectedSkills = new Set();
+        let debounceTimer;
 
         function filterCards() {
-            currentSearch = document.getElementById("searchInput").value.toLowerCase();
-            applyFilters();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                currentSearch = document.getElementById("searchInput").value.toLowerCase();
+                updateClearButton();
+                applyFilters();
+            }, 300);
         }
+
+        function updateClearButton() {
+            const clearBtn = document.getElementById('clearSearch');
+            const searchInput = document.getElementById('searchInput');
+            if (clearBtn && searchInput) {
+                clearBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
+            }
+        }
+
+        function clearSearch() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                currentSearch = '';
+                updateClearButton();
+                applyFilters();
+                searchInput.focus();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const clearBtn = document.getElementById('clearSearch');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', clearSearch);
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+            });
+        });
 
         function filterByRole(role) {
     currentFilter = role;
@@ -155,11 +197,13 @@ document.addEventListener("DOMContentLoaded", () => {
         function applyFilters() {
             const cards = document.querySelectorAll(".card");
             const noResults = document.getElementById("noResults");
+            const resultCount = document.getElementById("searchResultCount");
             let visibleCount = 0;
 
             cards.forEach(card => {
                 const nameElement = card.querySelector("h2");
                 const roleElement = card.querySelector(".role");
+                const bioElement = card.querySelector("p");
                 
                 // Skip if elements don't exist
                 if (!nameElement || !roleElement) {
@@ -169,9 +213,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 const name = nameElement.innerText.toLowerCase();
                 const role = roleElement.innerText.toLowerCase();
+                const bio = bioElement ? bioElement.innerText.toLowerCase() : '';
                 const cardSkills = card.dataset.skills ? card.dataset.skills.split(',') : [];
 
-                const matchesSearch = name.includes(currentSearch);
+                const matchesSearch = currentSearch === '' || 
+                    name.includes(currentSearch) ||
+                    role.includes(currentSearch) ||
+                    bio.includes(currentSearch);
                 const matchesFilter = currentFilter === 'all' ||
                     role.includes(currentFilter);
                 
@@ -187,6 +235,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
+            // Update search result count
+            if (resultCount && currentSearch !== '') {
+                resultCount.textContent = `Found ${visibleCount} contributor${visibleCount !== 1 ? 's' : ''}`;
+            } else if (resultCount) {
+                resultCount.textContent = '';
+            }
+
             // Show/hide no results message
             if (noResults) {
                 if (visibleCount === 0) {
@@ -197,6 +252,55 @@ document.addEventListener("DOMContentLoaded", () => {
                     noResults.classList.remove('show');
                 }
             }
+
+            // Apply highlighting to search terms
+            highlightSearchTerms();
+        }
+
+        function highlightSearchTerms() {
+            const cards = document.querySelectorAll(".card");
+            cards.forEach(card => {
+                const nameElement = card.querySelector("h2");
+                const roleElement = card.querySelector(".role");
+                const bioElement = card.querySelector("p");
+                
+                // Reset original text content first
+                if (nameElement) {
+                    nameElement.innerHTML = nameElement.textContent;
+                }
+                if (roleElement) {
+                    roleElement.innerHTML = roleElement.textContent;
+                }
+                if (bioElement) {
+                    bioElement.innerHTML = bioElement.textContent;
+                }
+
+                // Apply highlighting if there's a search term
+                if (currentSearch && currentSearch.length > 0) {
+                    if (nameElement) {
+                        nameElement.innerHTML = nameElement.textContent.replace(
+                            new RegExp(`(${escapeRegExp(currentSearch)})`, 'gi'),
+                            '<span class="search-highlight">$1</span>'
+                        );
+                    }
+                    if (roleElement) {
+                        roleElement.innerHTML = roleElement.textContent.replace(
+                            new RegExp(`(${escapeRegExp(currentSearch)})`, 'gi'),
+                            '<span class="search-highlight">$1</span>'
+                        );
+                    }
+                    if (bioElement) {
+                        bioElement.innerHTML = bioElement.textContent.replace(
+                            new RegExp(`(${escapeRegExp(currentSearch)})`, 'gi'),
+                            '<span class="search-highlight">$1</span>'
+                        );
+                    }
+                }
+            });
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         // Skill filter functions
