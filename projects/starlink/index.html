@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constellation · Satellite Mesh Network</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+            background-color: black;
+        }
+        #constellation-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            background: rgba(0, 5, 15, 0.75);
+            backdrop-filter: blur(16px);
+            padding: 12px 32px;
+            border-radius: 60px;
+            border: 1px solid rgba(60, 140, 255, 0.4);
+            box-shadow: 0 20px 40px rgba(0,10,30,0.8);
+            color: white;
+        }
+        .badge-constellation {
+            background: #1e3a5f;
+            padding: 5px 14px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            border: 1px solid #3d7eb0;
+        }
+        .stat-orbit {
+            display: flex;
+            gap: 24px;
+        }
+        .stat-orbit div {
+            display: flex;
+            flex-direction: column;
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            color: #9bb9e0;
+            text-transform: uppercase;
+        }
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, #ffffff, #aadaff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #laser-tag {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 10px 22px;
+            border-radius: 50px;
+            border: 1px solid #4f9eff;
+            color: #ccf;
+            font-size: 0.9rem;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pulse-light {
+            width: 12px;
+            height: 12px;
+            background: #00ccff;
+            border-radius: 50%;
+            box-shadow: 0 0 25px #00aaff;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); background: #88eeff; }
+            100% { opacity: 0.6; transform: scale(1); }
+        }
+        .legend-panel {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            background: rgba(12, 20, 35, 0.8);
+            backdrop-filter: blur(6px);
+            color: #e0f0ff;
+            padding: 16px 24px;
+            border-radius: 36px;
+            border: 1px solid #336699;
+            font-size: 0.9rem;
+            z-index: 50;
+            line-height: 1.6;
+        }
+        .legend-panel span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        .bottom-right-stats {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(0, 8, 20, 0.8);
+            backdrop-filter: blur(8px);
+            padding: 20px 28px;
+            border-radius: 40px;
+            border: 1px solid #2f5f9f;
+            color: white;
+            z-index: 50;
+            text-align: right;
+            min-width: 220px;
+        }
+        .mesh-count {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #88ddff;
+            line-height: 1;
+        }
+        .small-hint {
+            font-size: 0.75rem;
+            color: #89a9d0;
+            margin-top: 8px;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="constellation-header">
+        <div class="badge-constellation">🛰️ STARLINK · SIM</div>
+        <div class="stat-orbit">
+            <div>
+                <span class="stat-label">active sats</span>
+                <span class="stat-number" id="sat-count">48</span>
+            </div>
+            <div>
+                <span class="stat-label">orbital planes</span>
+                <span class="stat-number">4</span>
+            </div>
+            <div>
+                <span class="stat-label">avg latency</span>
+                <span class="stat-number" id="avg-latency">28</span><span style="font-size:1rem; color:#b0d0ff;">ms</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="laser-tag">
+        <span class="pulse-light"></span>
+        <span>OPTICAL LINKS: <strong id="link-count">163</strong> active</span>
+    </div>
+
+    <div class="legend-panel">
+        <div><span style="background: #88ddff;"></span> Satellites (4 planes)</div>
+        <div><span style="background: #ff66aa;"></span> Intra‑plane laser links</div>
+        <div><span style="background: #44dd88;"></span> Cross‑plane laser links</div>
+        <div style="margin-top: 8px; font-size:0.8rem;">⚡ Real‑time mesh · 550 km altitude</div>
+    </div>
+
+    <div class="bottom-right-stats">
+        <div style="font-size:1rem; color:#bbddff;">constellation throughput</div>
+        <div class="mesh-count">5.2 <span style="font-size:1.2rem;">Tbps</span></div>
+        <div class="small-hint">inter‑satellite laser mesh</div>
+        <div style="margin-top: 12px; border-top:1px solid #224466; padding-top:8px; color:#b0d0ff;">🜰 coverage: 87% of Earth</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        
+        // --- Scene setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x03030f);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(18, 6, 22);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+        
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0';
+        labelRenderer.domElement.style.left = '0';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+        
+        // --- Controls ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.4;
+        controls.maxDistance = 40;
+        controls.minDistance = 12;
+        
+        // --- Lighting ---
+        const ambient = new THREE.AmbientLight(0x404068);
+        scene.add(ambient);
+        
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.3);
+        sunLight.position.set(10, 20, 10);
+        scene.add(sunLight);
+        
+        const fillLight = new THREE.DirectionalLight(0x88aadd, 0.4);
+        fillLight.position.set(-10, 0, 15);
+        scene.add(fillLight);
+        
+        // --- Stars (distant field) ---
+        const starsGeo = new THREE.BufferGeometry();
+        const starsCount = 4000;
+        const starsPos = new Float32Array(starsCount * 3);
+        for (let i = 0; i < starsCount*3; i+=3) {
+            const r = 120 + Math.random()*80;
+            const theta = Math.random()*Math.PI*2;
+            const phi = Math.acos(2*Math.random()-1);
+            starsPos[i] = Math.sin(phi)*Math.cos(theta)*r;
+            starsPos[i+1] = Math.sin(phi)*Math.sin(theta)*r;
+            starsPos[i+2] = Math.cos(phi)*r;
+        }
+        starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos, 3));
+        const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.25 });
+        const stars = new THREE.Points(starsGeo, starsMat);
+        scene.add(stars);
+        
+        // --- Earth sphere ---
+        const texLoader = new THREE.TextureLoader();
+        const earthMap = texLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
+        const earthSpec = texLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg');
+        const earthNorm = texLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg');
+        const cloudMap = texLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png');
+        
+        const earthGeo = new THREE.SphereGeometry(5, 80, 80);
+        const earthMat = new THREE.MeshPhongMaterial({ map: earthMap, specularMap: earthSpec, specular: 0x333333, normalMap: earthNorm });
+        const earth = new THREE.Mesh(earthGeo, earthMat);
+        earth.rotation.y = 3.8;
+        scene.add(earth);
+        
+        // Clouds layer
+        const cloudGeo = new THREE.SphereGeometry(5.03, 80, 80);
+        const cloudMat = new THREE.MeshPhongMaterial({ map: cloudMap, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+        const clouds = new THREE.Mesh(cloudGeo, cloudMat);
+        clouds.rotation.y = 3.8;
+        scene.add(clouds);
+        
+        // Atmosphere glow
+        const atmosGeo = new THREE.SphereGeometry(5.18, 64, 64);
+        const atmosMat = new THREE.MeshPhongMaterial({ color: 0x4488cc, transparent: true, opacity: 0.1, side: THREE.BackSide });
+        const atmos = new THREE.Mesh(atmosGeo, atmosMat);
+        scene.add(atmos);
+        
+        // --- Constellation parameters ---
+        const planes = 4;
+        const satsPerPlane = 12; // total 48
+        const altitude = 5.9; // earth radius 5 + 0.9 (~550km)
+        const inclination = 0.6; // rad (~34°)
+        
+        // Store satellite positions and objects
+        const satellites = []; // array of { mesh, plane, index }
+        const satPositions = []; // array of Vector3 per sat
+        
+        // Colors for planes
+        const planeColors = [0x88ddff, 0xffaa66, 0x88ffaa, 0xff88cc];
+        
+        // Create satellites
+        for (let p = 0; p < planes; p++) {
+            const planeOffset = (p / planes) * Math.PI * 2;
+            const color = planeColors[p % planeColors.length];
+            
+            for (let i = 0; i < satsPerPlane; i++) {
+                // Angle within plane
+                const angle = (i / satsPerPlane) * Math.PI * 2;
+                
+                // Position in 3D: first create a circular orbit in XZ, then incline by rotating around X?
+                // Simpler: parametric inclined circle: 
+                // x = r * cos(angle) * cos(inclination) 
+                // y = r * sin(angle) * sin(inclination)
+                // z = r * sin(angle) * cos(inclination)  ??? Let's use standard: 
+                // We want a circle inclined relative to equator. Good enough: start with circle in XZ, then rotate around X by inclination.
+                const basePos = new THREE.Vector3(
+                    altitude * Math.cos(angle + planeOffset),
+                    0,
+                    altitude * Math.sin(angle + planeOffset)
+                );
+                
+                // Rotate around X axis by inclination
+                const rotMatrix = new THREE.Matrix4().makeRotationX(inclination);
+                const pos = basePos.clone().applyMatrix4(rotMatrix);
+                
+                // Small random offset to avoid perfect alignment? Not needed.
+                
+                // Create satellite mesh (small sphere + maybe solar panel)
+                const satGroup = new THREE.Group();
+                
+                // Core
+                const coreGeo = new THREE.SphereGeometry(0.12, 6);
+                const coreMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.7 });
+                const core = new THREE.Mesh(coreGeo, coreMat);
+                satGroup.add(core);
+                
+                // Tiny "wings" to suggest panels
+                const panelGeo = new THREE.BoxGeometry(0.3, 0.04, 0.1);
+                const panelMat = new THREE.MeshStandardMaterial({ color: 0xccccdd });
+                const panel1 = new THREE.Mesh(panelGeo, panelMat);
+                panel1.position.set(0.25, 0, 0);
+                satGroup.add(panel1);
+                const panel2 = new THREE.Mesh(panelGeo, panelMat);
+                panel2.position.set(-0.25, 0, 0);
+                satGroup.add(panel2);
+                
+                satGroup.position.copy(pos);
+                scene.add(satGroup);
+                
+                satellites.push({ mesh: satGroup, plane: p, index: i, pos: pos.clone() });
+                satPositions.push(pos.clone());
+            }
+        }
+        
+        // Update HTML counter
+        document.getElementById('sat-count').innerText = satellites.length;
+        
+        // --- Inter-satellite links (laser mesh) ---
+        // We'll create lines for intra-plane (same plane) and cross-plane (neighbour planes)
+        const linkLines = [];
+        
+        function createLink(pos1, pos2, color, opacity = 0.4) {
+            const geo = new THREE.BufferGeometry().setFromPoints([pos1, pos2]);
+            const mat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity });
+            const line = new THREE.Line(geo, mat);
+            scene.add(line);
+            return line;
+        }
+        
+        // Intra-plane links (connect adjacent sats in same plane) - color 0xff66aa
+        for (let p = 0; p < planes; p++) {
+            const planeSats = satellites.filter(s => s.plane === p).sort((a,b) => a.index - b.index);
+            for (let i = 0; i < planeSats.length; i++) {
+                const next = (i + 1) % planeSats.length;
+                createLink(planeSats[i].pos, planeSats[next].pos, 0xff66aa, 0.5);
+            }
+        }
+        
+        // Cross-plane links (connect each sat to 2 sats in neighbouring plane) - color 0x44dd88
+        for (let p = 0; p < planes; p++) {
+            const nextPlane = (p + 1) % planes;
+            const planeSats = satellites.filter(s => s.plane === p).sort((a,b) => a.index - b.index);
+            const nextPlaneSats = satellites.filter(s => s.plane === nextPlane).sort((a,b) => a.index - b.index);
+            
+            for (let i = 0; i < planeSats.length; i++) {
+                // connect to same index and next index for better mesh
+                const idx = i;
+                if (idx < nextPlaneSats.length) {
+                    createLink(planeSats[i].pos, nextPlaneSats[idx].pos, 0x44dd88, 0.3);
+                }
+                const nextIdx = (i + 1) % nextPlaneSats.length;
+                createLink(planeSats[i].pos, nextPlaneSats[nextIdx].pos, 0x44dd88, 0.3);
+            }
+        }
+        
+        // Count links (approximate)
+        const totalLinks = (planes * satsPerPlane * 2) + (planes * satsPerPlane * 2); // rough
+        document.getElementById('link-count').innerText = totalLinks;
+        
+        // --- Add some floating labels for planes? Not necessary, but add a few for context ---
+        for (let p = 0; p < planes; p++) {
+            const pos = new THREE.Vector3(altitude * 1.5, 0, 0);
+            const rot = new THREE.Matrix4().makeRotationX(inclination);
+            pos.applyMatrix4(rot);
+            // Not critical, skip labels for simplicity.
+        }
+        
+        // --- Animate satellites (orbit motion) ---
+        let orbitTime = 0;
+        const orbitSpeed = 0.002;
+        
+        function updateOrbit() {
+            orbitTime += orbitSpeed;
+            
+            // Update each satellite position
+            for (let p = 0; p < planes; p++) {
+                const planeOffset = (p / planes) * Math.PI * 2;
+                for (let i = 0; i < satsPerPlane; i++) {
+                    const angle = (i / satsPerPlane) * Math.PI * 2 + orbitTime; // add time
+                    
+                    const basePos = new THREE.Vector3(
+                        altitude * Math.cos(angle + planeOffset),
+                        0,
+                        altitude * Math.sin(angle + planeOffset)
+                    );
+                    
+                    const rotMatrix = new THREE.Matrix4().makeRotationX(inclination);
+                    const pos = basePos.clone().applyMatrix4(rotMatrix);
+                    
+                    const satIndex = p * satsPerPlane + i;
+                    satellites[satIndex].mesh.position.copy(pos);
+                    satellites[satIndex].pos.copy(pos);
+                    satPositions[satIndex].copy(pos);
+                }
+            }
+            
+            // Update all link lines? They are static geometry, but we need to update points.
+            // Instead of recreating all lines every frame, we can update the geometry. But for performance, we'll just let them be static.
+            // However, to keep links attached, we need to update them. Since this is a demo and we want motion, we'll recreate lines each frame (simpler for this scale).
+            // But 48 sats * ~4 links each = ~200 lines, recreating each frame might be okay. But let's do it more efficiently: we'll clear and redraw every few frames? 
+            // We'll just not animate the links for performance; keep them static relative to sats? They would move with sats if we update.
+            // But we want the mesh to move. Let's rebuild all links every frame (quick and dirty for this demo, 200 lines is fine).
+            
+            // Remove old link lines (we stored them in array)
+            // We didn't store, we just added directly. Let's collect them.
+            // We'll just remove all lines and redraw. Simpler: keep a reference.
+            // For brevity, we'll skip dynamic link update and keep them static? That would look weird.
+            // Actually, we'll do a clean update: remove all lines with a tag.
+            // I'll refactor quickly: 
+        }
+        
+        // For simplicity, we won't animate the links (they would drag behind). Instead, we rotate the whole scene? No.
+        // Let's implement full dynamic update for a better effect.
+        
+        // Re-create links each frame (optimized enough)
+        const linkGroup = new THREE.Group();
+        scene.add(linkGroup);
+        
+        function rebuildLinks() {
+            // Clear previous
+            while(linkGroup.children.length > 0) {
+                linkGroup.remove(linkGroup.children[0]);
+            }
+            
+            // Intra-plane
+            for (let p = 0; p < planes; p++) {
+                const planeSats = satellites.filter(s => s.plane === p).sort((a,b) => a.index - b.index);
+                for (let i = 0; i < planeSats.length; i++) {
+                    const next = (i + 1) % planeSats.length;
+                    const geo = new THREE.BufferGeometry().setFromPoints([planeSats[i].pos, planeSats[next].pos]);
+                    const mat = new THREE.LineBasicMaterial({ color: 0xff66aa, transparent: true, opacity: 0.5 });
+                    const line = new THREE.Line(geo, mat);
+                    linkGroup.add(line);
+                }
+            }
+            
+            // Cross-plane
+            for (let p = 0; p < planes; p++) {
+                const nextPlane = (p + 1) % planes;
+                const planeSats = satellites.filter(s => s.plane === p).sort((a,b) => a.index - b.index);
+                const nextPlaneSats = satellites.filter(s => s.plane === nextPlane).sort((a,b) => a.index - b.index);
+                
+                for (let i = 0; i < planeSats.length; i++) {
+                    const idx = i;
+                    if (idx < nextPlaneSats.length) {
+                        const geo = new THREE.BufferGeometry().setFromPoints([planeSats[i].pos, nextPlaneSats[idx].pos]);
+                        const mat = new THREE.LineBasicMaterial({ color: 0x44dd88, transparent: true, opacity: 0.3 });
+                        const line = new THREE.Line(geo, mat);
+                        linkGroup.add(line);
+                    }
+                    const nextIdx = (i + 1) % nextPlaneSats.length;
+                    const geo = new THREE.BufferGeometry().setFromPoints([planeSats[i].pos, nextPlaneSats[nextIdx].pos]);
+                    const mat = new THREE.LineBasicMaterial({ color: 0x44dd88, transparent: true, opacity: 0.3 });
+                    const line = new THREE.Line(geo, mat);
+                    linkGroup.add(line);
+                }
+            }
+            
+            // Update link count display (approx)
+            document.getElementById('link-count').innerText = linkGroup.children.length;
+        }
+        
+        // Initial build
+        rebuildLinks();
+        
+        // Animate: update positions and rebuild links every frame
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            orbitTime += orbitSpeed;
+            
+            // Update satellite positions
+            for (let p = 0; p < planes; p++) {
+                const planeOffset = (p / planes) * Math.PI * 2;
+                for (let i = 0; i < satsPerPlane; i++) {
+                    const angle = (i / satsPerPlane) * Math.PI * 2 + orbitTime;
+                    
+                    const basePos = new THREE.Vector3(
+                        altitude * Math.cos(angle + planeOffset),
+                        0,
+                        altitude * Math.sin(angle + planeOffset)
+                    );
+                    
+                    const rotMatrix = new THREE.Matrix4().makeRotationX(inclination);
+                    const pos = basePos.clone().applyMatrix4(rotMatrix);
+                    
+                    const satIndex = p * satsPerPlane + i;
+                    satellites[satIndex].mesh.position.copy(pos);
+                    satellites[satIndex].pos.copy(pos);
+                }
+            }
+            
+            // Rebuild links with updated positions
+            rebuildLinks();
+            
+            // Rotate clouds slowly
+            clouds.rotation.y += 0.0001;
+            
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Randomize latency display
+        setInterval(() => {
+            document.getElementById('avg-latency').innerText = Math.floor(Math.random() * 15 + 22);
+        }, 4000);
+        
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
