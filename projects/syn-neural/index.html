@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧬 The Synaptic Symphony</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #120a1f;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .neural-hall {
+            width: 1000px;
+            background: #1f1a2f;
+            border-radius: 80px;
+            padding: 40px;
+            box-shadow: 0 30px 60px #000000cc, 0 0 0 4px #8a6eff, 0 0 50px #8a6eff99;
+            border: 2px solid #b8a9ff;
+        }
+        
+        .neural-network {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .synapse-grid {
+            flex: 2;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+        
+        .neuron {
+            aspect-ratio: 1;
+            background: #2a1f3a;
+            border-radius: 40% 60% 40% 60%;
+            border: 3px solid #8a6eff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #b8a9ff;
+            cursor: pointer;
+            transition: 0.2s;
+            animation: pulse 2s infinite;
+        }
+        .neuron.active {
+            background: #8a6eff;
+            color: white;
+            box-shadow: 0 0 50px #8a6eff;
+            border-color: white;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .neural-stats {
+            flex: 1;
+            background: #1a152a;
+            border-radius: 40px;
+            padding: 20px;
+            border: 3px solid #8a6eff;
+            color: #b8a9ff;
+        }
+        
+        .stat-item {
+            margin: 15px 0;
+            font-size: 18px;
+        }
+        
+        .stat-value {
+            float: right;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .symphony-display {
+            background: #1a152a;
+            border-radius: 60px;
+            padding: 40px;
+            margin: 30px 0;
+            border: 4px solid #8a6eff;
+            min-height: 150px;
+            color: #b8a9ff;
+            font-size: 24px;
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .neural-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .neural-btn {
+            background: #1a152a;
+            border: 3px solid #8a6eff;
+            color: #b8a9ff;
+            font-size: 20px;
+            padding: 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .neural-btn:hover {
+            background: #8a6eff;
+            color: white;
+            box-shadow: 0 0 50px #8a6eff;
+        }
+        
+        .connection-line {
+            position: absolute;
+            height: 2px;
+            background: #8a6eff;
+            transform-origin: left;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="neural-hall">
+        <div class="neural-network">
+            <div class="synapse-grid" id="synapseGrid">
+                <!-- Neurons will be generated -->
+            </div>
+            
+            <div class="neural-stats">
+                <div class="stat-item">ACTIVE NEURONS <span class="stat-value" id="activeCount">0</span></div>
+                <div class="stat-item">SYNAPSES <span class="stat-value" id="synapseCount">0</span></div>
+                <div class="stat-item">FREQUENCY <span class="stat-value" id="frequency">7.8Hz</span></div>
+                <div class="stat-item">HARMONY <span class="stat-value" id="harmony">0.73</span></div>
+            </div>
+        </div>
+        
+        <div class="symphony-display" id="symphonyDisplay">
+            ⚡ Activate neurons to create a symphony ⚡
+        </div>
+        
+        <div class="neural-controls">
+            <button class="neural-btn" id="composeBtn">🎵 COMPOSE</button>
+            <button class="neural-btn" id="resetNeuralBtn">🔄 RESET</button>
+            <button class="neural-btn" id="randomBtn">🎲 RANDOM</button>
+        </div>
+    </div>
+
+    <script>
+        const synapseGrid = document.getElementById('synapseGrid');
+        const symphonyDisplay = document.getElementById('symphonyDisplay');
+        const activeCount = document.getElementById('activeCount');
+        const synapseCount = document.getElementById('synapseCount');
+        const frequency = document.getElementById('frequency');
+        const harmony = document.getElementById('harmony');
+        
+        let neurons = [];
+        let activeNeurons = [];
+        
+        const musicalNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        const musicalWords = ['melody', 'harmony', 'rhythm', 'pulse', 'wave', 'echo', 'resonance'];
+        
+        function createNeurons() {
+            for (let i = 0; i < 15; i++) {
+                const neuron = document.createElement('div');
+                neuron.className = 'neuron';
+                neuron.dataset.index = i;
+                neuron.dataset.note = musicalNotes[i % musicalNotes.length];
+                neuron.dataset.freq = 220 + i * 20;
+                
+                // Different symbols for different neurons
+                const symbols = ['🧠', '⚡', '🌀', '✨', '💭', '🔮', '🎵', '🎶', '♪', '♫', '🔔', '🎹'];
+                neuron.textContent = symbols[i % symbols.length];
+                
+                neuron.addEventListener('click', () => toggleNeuron(i));
+                synapseGrid.appendChild(neuron);
+                neurons.push(neuron);
+            }
+        }
+        
+        function toggleNeuron(index) {
+            const neuron = neurons[index];
+            neuron.classList.toggle('active');
+            
+            if (neuron.classList.contains('active')) {
+                activeNeurons.push(index);
+            } else {
+                activeNeurons = activeNeurons.filter(i => i !== index);
+            }
+            
+            updateStats();
+            playNeuralSound(index);
+        }
+        
+        function updateStats() {
+            activeCount.textContent = activeNeurons.length;
+            
+            // Calculate synapses (connections between active neurons)
+            const connections = activeNeurons.length * (activeNeurons.length - 1) / 2;
+            synapseCount.textContent = connections;
+            
+            // Update frequency based on active neurons
+            const avgFreq = activeNeurons.reduce((sum, i) => sum + parseInt(neurons[i].dataset.freq), 0) / (activeNeurons.length || 1);
+            frequency.textContent = (avgFreq / 100).toFixed(1) + 'Hz';
+            
+            // Harmony calculation
+            const harmonyVal = activeNeurons.length / 15;
+            harmony.textContent = harmonyVal.toFixed(2);
+        }
+        
+        function playNeuralSound(index) {
+            const neuron = neurons[index];
+            const note = neuron.dataset.note;
+            
+            // Visual feedback
+            symphonyDisplay.innerHTML = `🎵 Neuron ${index} fires: ${note}<br>⚡ Creating synaptic resonance...`;
+            
+            // Update display with musical phrase
+            if (activeNeurons.length > 1) {
+                let phrase = '';
+                for (let i = 0; i < activeNeurons.length; i++) {
+                    phrase += neurons[activeNeurons[i]].dataset.note + ' ';
+                }
+                symphonyDisplay.innerHTML = `🎵 Neural melody: ${phrase}<br>🌀 Frequency: ${frequency.textContent}`;
+            }
+        }
+        
+        function compose() {
+            if (activeNeurons.length === 0) {
+                symphonyDisplay.innerHTML = '⚠️ Activate some neurons first...';
+                return;
+            }
+            
+            // Generate a musical phrase
+            let composition = '';
+            for (let i = 0; i < 8; i++) {
+                const randomNeuron = activeNeurons[Math.floor(Math.random() * activeNeurons.length)];
+                composition += neurons[randomNeuron].dataset.note + ' ';
+                
+                // Add musical words
+                if (i % 3 === 2) {
+                    composition += musicalWords[Math.floor(Math.random() * musicalWords.length)] + ' ';
+                }
+            }
+            
+            symphonyDisplay.innerHTML = `🎼 Neural Composition:<br>${composition}<br>✨ A symphony of thought`;
+        }
+        
+        function resetNeural() {
+            neurons.forEach(n => n.classList.remove('active'));
+            activeNeurons = [];
+            updateStats();
+            symphonyDisplay.innerHTML = '⚡ Neural network reset. Ready for new patterns.';
+        }
+        
+        function randomPattern() {
+            resetNeural();
+            
+            // Activate random neurons
+            const numToActivate = 3 + Math.floor(Math.random() * 5);
+            for (let i = 0; i < numToActivate; i++) {
+                const randomIndex = Math.floor(Math.random() * neurons.length);
+                if (!activeNeurons.includes(randomIndex)) {
+                    neurons[randomIndex].classList.add('active');
+                    activeNeurons.push(randomIndex);
+                }
+            }
+            
+            updateStats();
+            compose();
+        }
+        
+        document.getElementById('composeBtn').addEventListener('click', compose);
+        document.getElementById('resetNeuralBtn').addEventListener('click', resetNeural);
+        document.getElementById('randomBtn').addEventListener('click', randomPattern);
+        
+        createNeurons();
+        
+        // Simulate neural firing
+        setInterval(() => {
+            if (activeNeurons.length > 0 && Math.random() > 0.8) {
+                const randomNeuron = activeNeurons[Math.floor(Math.random() * activeNeurons.length)];
+                playNeuralSound(randomNeuron);
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
