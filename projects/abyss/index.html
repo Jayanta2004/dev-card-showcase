@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abyss · Deep Sea Exploration</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Avenir', 'Segoe UI', sans-serif;
+            background-color: #001020;
+            color: white;
+        }
+        #depth-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            background: rgba(0, 10, 25, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid #2a8c9f;
+            border-radius: 40px;
+            padding: 14px 32px;
+            display: flex;
+            gap: 40px;
+            border-left: 6px solid #3ac0d0;
+            box-shadow: 0 0 40px rgba(58,192,208,0.2);
+            pointer-events: none;
+        }
+        .depth-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .depth-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #7ad0e0;
+            letter-spacing: 1px;
+        }
+        .depth-value {
+            font-size: 1.6rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fff, #a0e0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #sonar-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 15, 30, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid #3ac0d0;
+            border-radius: 48px;
+            padding: 20px 32px;
+            z-index: 50;
+            border-right: 6px solid #3ac0d0;
+            min-width: 260px;
+            box-shadow: 0 15px 35px rgba(0,100,130,0.4);
+        }
+        .sonar-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1rem;
+            border-bottom: 1px solid #1a4a5a;
+            padding-bottom: 5px;
+        }
+        .sonar-label {
+            color: #7ad0e0;
+        }
+        .sonar-value {
+            font-weight: 600;
+            color: #e0f0ff;
+        }
+        .pulse-sonar {
+            width: 14px;
+            height: 14px;
+            background: #3ac0d0;
+            border-radius: 50%;
+            box-shadow: 0 0 30px #3ac0d0;
+            animation: sonar-pulse 1.8s infinite;
+        }
+        @keyframes sonar-pulse {
+            0% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); background: #7ae0f0; }
+            100% { opacity: 0.6; transform: scale(1); }
+        }
+        #bio-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(0, 20, 30, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid #9f4a8a;
+            border-radius: 40px;
+            padding: 12px 28px;
+            z-index: 50;
+            border-left: 4px solid #d06ab0;
+            color: #ffc0e0;
+        }
+        .bio-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+            background: #ff88aa;
+            box-shadow: 0 0 15px #ff88aa;
+        }
+        #pressure-stats {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(10, 10, 25, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid #d06ab0;
+            border-radius: 40px;
+            padding: 16px 28px;
+            z-index: 50;
+            text-align: right;
+            border-bottom: 4px solid #c04a9a;
+        }
+        .glow-number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffb0d0, #d06ab0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="depth-panel">
+        <div class="depth-item">
+            <span class="depth-label">depth</span>
+            <span class="depth-value" id="depth-display">3820</span><span style="font-size:1rem;">m</span>
+        </div>
+        <div class="depth-item">
+            <span class="depth-label">pressure</span>
+            <span class="depth-value" id="pressure-display">387</span><span style="font-size:1rem;">atm</span>
+        </div>
+        <div class="depth-item">
+            <span class="depth-label">temp</span>
+            <span class="depth-value" id="temp-display">2.4</span><span style="font-size:1rem;">°C</span>
+        </div>
+    </div>
+
+    <div id="sonar-panel">
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
+            <span class="pulse-sonar"></span>
+            <span style="font-weight: 600; font-size: 1.3rem;">📡 SONAR RETURNS</span>
+        </div>
+        <div class="sonar-row">
+            <span class="sonar-label">large object</span>
+            <span class="sonar-value">240 m NW</span>
+        </div>
+        <div class="sonar-row">
+            <span class="sonar-label">hydrothermal vent</span>
+            <span class="sonar-value">180 m S</span>
+        </div>
+        <div class="sonar-row">
+            <span class="sonar-label">bioluminescent swarm</span>
+            <span class="sonar-value">95 m E</span>
+        </div>
+        <div class="sonar-row">
+            <span class="sonar-label">seafloor</span>
+            <span class="sonar-value">842 m below</span>
+        </div>
+    </div>
+
+    <div id="bio-indicator">
+        <span class="bio-dot"></span> <span style="color:#ffa0c0;">bioluminescent lifeforms detected</span>
+    </div>
+
+    <div id="pressure-stats">
+        <div style="font-size:1rem;">🌊 HULL INTEGRITY</div>
+        <div class="glow-number">98.7<span style="font-size:1rem;">%</span></div>
+        <div style="font-size:0.8rem;">oxygen: 87% · battery: 92%</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        
+        // --- Scene setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x001020);
+        scene.fog = new THREE.FogExp2(0x001020, 0.015);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+        camera.position.set(5, 5, 15);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = false;
+        document.body.appendChild(renderer.domElement);
+        
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0';
+        labelRenderer.domElement.style.left = '0';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+        
+        // --- Controls ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = false;
+        controls.enableZoom = true;
+        controls.maxDistance = 40;
+        controls.minDistance = 5;
+        
+        // --- Lighting (dim, blue) ---
+        const ambient = new THREE.AmbientLight(0x103050);
+        scene.add(ambient);
+        
+        const pointLight = new THREE.PointLight(0x336688, 0.8, 30);
+        pointLight.position.set(2, 3, 5);
+        scene.add(pointLight);
+        
+        // --- Underwater particles (sediment/microbes) ---
+        const partGeo = new THREE.BufferGeometry();
+        const partCount = 2000;
+        const partPos = new Float32Array(partCount * 3);
+        for (let i = 0; i < partCount*3; i+=3) {
+            partPos[i] = (Math.random() - 0.5) * 50;
+            partPos[i+1] = (Math.random() - 0.5) * 30;
+            partPos[i+2] = (Math.random() - 0.5) * 50;
+        }
+        partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+        const partMat = new THREE.PointsMaterial({ color: 0x88aacc, size: 0.1, transparent: true, opacity: 0.3 });
+        const particles = new THREE.Points(partGeo, partMat);
+        scene.add(particles);
+        
+        // --- Seafloor (a large flat plane with some bumps) ---
+        const floorGeo = new THREE.PlaneGeometry(60, 60, 40, 40);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x224466, emissive: 0x112233, wireframe: false, flatShading: true });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -5;
+        scene.add(floor);
+        
+        // Add some rocks
+        for (let i = 0; i < 30; i++) {
+            const rockGeo = new THREE.DodecahedronGeometry(0.2 + Math.random() * 0.5);
+            const rockMat = new THREE.MeshStandardMaterial({ color: 0x446688, emissive: 0x112233 });
+            const rock = new THREE.Mesh(rockGeo, rockMat);
+            rock.position.x = (Math.random() - 0.5) * 25;
+            rock.position.z = (Math.random() - 0.5) * 25;
+            rock.position.y = -5 + rockGeo.parameters.radius * 0.8;
+            rock.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+            scene.add(rock);
+        }
+        
+        // --- Hydrothermal vent (smoker) ---
+        const ventGroup = new THREE.Group();
+        ventGroup.position.set(8, -4, 6);
+        
+        // Vent base
+        const baseGeo = new THREE.CylinderGeometry(0.8, 1.2, 2, 6);
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x885522 });
+        const base = new THREE.Mesh(baseGeo, baseMat);
+        base.position.y = -1;
+        ventGroup.add(base);
+        
+        // Smoke particles
+        const smokeGeo = new THREE.BufferGeometry();
+        const smokeCount = 300;
+        const smokePos = new Float32Array(smokeCount * 3);
+        for (let i = 0; i < smokeCount; i++) {
+            smokePos[i*3] = (Math.random() - 0.5) * 1.5;
+            smokePos[i*3+1] = Math.random() * 4;
+            smokePos[i*3+2] = (Math.random() - 0.5) * 1.5;
+        }
+        smokeGeo.setAttribute('position', new THREE.BufferAttribute(smokePos, 3));
+        const smokeMat = new THREE.PointsMaterial({ color: 0x886644, size: 0.15, transparent: true, blending: THREE.AdditiveBlending });
+        const smoke = new THREE.Points(smokeGeo, smokeMat);
+        ventGroup.add(smoke);
+        
+        scene.add(ventGroup);
+        
+        // Vent label
+        const ventDiv = document.createElement('div');
+        ventDiv.textContent = '🌋 hydrothermal vent';
+        ventDiv.style.color = '#ddaa88';
+        ventDiv.style.background = 'rgba(20,10,5,0.7)';
+        ventDiv.style.borderRadius = '20px';
+        ventDiv.style.padding = '2px 12px';
+        ventDiv.style.fontSize = '12px';
+        const ventLabel = new CSS2DObject(ventDiv);
+        ventLabel.position.set(8, -1, 6);
+        scene.add(ventLabel);
+        
+        // --- Bioluminescent creatures (glowing particles) ---
+        const bioGeo = new THREE.BufferGeometry();
+        const bioCount = 400;
+        const bioPos = new Float32Array(bioCount * 3);
+        const bioColors = new Float32Array(bioCount * 3);
+        for (let i = 0; i < bioCount; i++) {
+            bioPos[i*3] = (Math.random() - 0.5) * 30;
+            bioPos[i*3+1] = (Math.random() - 0.5) * 15;
+            bioPos[i*3+2] = (Math.random() - 0.5) * 30;
+            
+            // Random pastel colors
+            bioColors[i*3] = 0.8 + Math.random() * 0.5;
+            bioColors[i*3+1] = 0.5 + Math.random() * 0.5;
+            bioColors[i*3+2] = 0.8 + Math.random() * 0.5;
+        }
+        bioGeo.setAttribute('position', new THREE.BufferAttribute(bioPos, 3));
+        bioGeo.setAttribute('color', new THREE.BufferAttribute(bioColors, 3));
+        const bioMat = new THREE.PointsMaterial({ size: 0.2, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending });
+        const bio = new THREE.Points(bioGeo, bioMat);
+        scene.add(bio);
+        
+        // --- Submarine model (simple) ---
+        const subGroup = new THREE.Group();
+        
+        // Hull
+        const hullGeo = new THREE.CylinderGeometry(1.2, 1.2, 2.5, 8);
+        const hullMat = new THREE.MeshStandardMaterial({ color: 0xcc6600 });
+        const hull = new THREE.Mesh(hullGeo, hullMat);
+        hull.rotation.x = Math.PI/2;
+        hull.position.y = 0;
+        subGroup.add(hull);
+        
+        // Conning tower
+        const towerGeo = new THREE.CylinderGeometry(0.6, 0.6, 1.0, 6);
+        const towerMat = new THREE.MeshStandardMaterial({ color: 0xaa5533 });
+        const tower = new THREE.Mesh(towerGeo, towerMat);
+        tower.position.y = 0.8;
+        tower.position.z = 0.2;
+        subGroup.add(tower);
+        
+        // Light
+        const lightGeo = new THREE.SphereGeometry(0.2);
+        const lightMat = new THREE.MeshStandardMaterial({ color: 0xffdd99, emissive: 0x442200 });
+        const light = new THREE.Mesh(lightGeo, lightMat);
+        light.position.z = 1.5;
+        subGroup.add(light);
+        
+        subGroup.position.set(0, 0, 0);
+        scene.add(subGroup);
+        
+        // Sub label
+        const subDiv = document.createElement('div');
+        subDiv.textContent = '🚤 ALVIN-2';
+        subDiv.style.background = '#332211';
+        subDiv.style.color = '#ffaa66';
+        subDiv.style.border = '2px solid #cc6600';
+        subDiv.style.borderRadius = '20px';
+        subDiv.style.padding = '2px 12px';
+        const subLabel = new CSS2DObject(subDiv);
+        subLabel.position.set(0, 2.0, 0);
+        subGroup.add(subLabel);
+        
+        // --- Animate ---
+        let time = 0;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.01;
+            
+            // Float submarine gently
+            subGroup.position.y = Math.sin(time * 0.5) * 0.2;
+            subGroup.rotation.z = Math.sin(time * 0.3) * 0.05;
+            subGroup.rotation.x = Math.sin(time * 0.4) * 0.03;
+            
+            // Rotate particles
+            particles.rotation.y += 0.0002;
+            
+            // Animate smoke
+            const positions = smoke.geometry.attributes.position.array;
+            for (let i = 1; i < positions.length; i+=3) {
+                positions[i] += 0.02; // rise
+                if (positions[i] > 4) positions[i] = 0;
+            }
+            smoke.geometry.attributes.position.needsUpdate = true;
+            
+            // Update depth display
+            const depth = 3820 + Math.sin(time) * 20;
+            document.getElementById('depth-display').innerText = Math.floor(depth);
+            document.getElementById('pressure-display').innerText = Math.floor(depth * 0.1013);
+            document.getElementById('temp-display').innerText = (2.4 + Math.sin(time*0.3)*0.2).toFixed(1);
+            
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
