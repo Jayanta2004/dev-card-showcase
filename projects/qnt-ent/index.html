@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛️ Quantum Entanglement Communicator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #030712;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Space Mono', 'Courier New', monospace;
+        }
+        
+        .quantum-lab {
+            width: 1000px;
+            background: #0f172a;
+            border: 3px solid #4ade80;
+            border-radius: 40px;
+            padding: 30px;
+            box-shadow: 0 0 80px #4ade8033, inset 0 0 50px #4ade801a;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quantum-lab::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(0deg, rgba(74,222,128,0.03) 0px, rgba(74,222,128,0.03) 2px, transparent 2px, transparent 4px);
+            pointer-events: none;
+        }
+        
+        .particle-chambers {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .chamber {
+            flex: 1;
+            background: #1e293b;
+            border: 2px solid #4ade80;
+            border-radius: 30px;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .chamber-label {
+            position: absolute;
+            top: -15px;
+            left: 30px;
+            background: #0f172a;
+            color: #4ade80;
+            padding: 5px 20px;
+            border-radius: 30px;
+            border: 2px solid #4ade80;
+            font-size: 18px;
+            letter-spacing: 2px;
+        }
+        
+        .particle-canvas-container {
+            background: #0b1120;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .particle-canvas {
+            width: 100%;
+            height: 200px;
+            background: #030712;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 30px #4ade80;
+            transition: all 0.1s;
+        }
+        
+        .state-indicator {
+            display: flex;
+            justify-content: space-between;
+            color: #4ade80;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        .spin-state {
+            font-size: 24px;
+            text-align: center;
+            padding: 10px;
+            border: 2px solid #4ade80;
+            border-radius: 20px;
+        }
+        
+        .entanglement-meter {
+            height: 30px;
+            background: #1e293b;
+            border-radius: 30px;
+            margin: 30px 0;
+            overflow: hidden;
+            border: 2px solid #4ade80;
+        }
+        
+        .meter-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #4ade80, #60a5fa);
+            transition: width 0.3s;
+        }
+        
+        .control-panel {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .quantum-btn {
+            background: transparent;
+            border: 3px solid #4ade80;
+            color: #4ade80;
+            font-size: 24px;
+            padding: 20px 40px;
+            border-radius: 60px;
+            font-family: 'Space Mono', monospace;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+        .quantum-btn:hover {
+            background: #4ade80;
+            color: #0f172a;
+            box-shadow: 0 0 60px #4ade80;
+        }
+        
+        .quantum-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+            color: #4ade80;
+        }
+        
+        .stat-box {
+            border: 2px solid #4ade80;
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="quantum-lab">
+        <div class="particle-chambers">
+            <div class="chamber">
+                <div class="chamber-label">PARTICLE A</div>
+                <div class="particle-canvas-container">
+                    <div class="particle-canvas" id="chamberA">
+                        <div class="particle" id="particleA" style="top: 90px; left: 150px;"></div>
+                    </div>
+                </div>
+                <div class="state-indicator">
+                    <span>SPIN</span>
+                    <span class="spin-state" id="spinA">↑</span>
+                </div>
+            </div>
+            
+            <div class="chamber">
+                <div class="chamber-label">PARTICLE B</div>
+                <div class="particle-canvas-container">
+                    <div class="particle-canvas" id="chamberB">
+                        <div class="particle" id="particleB" style="top: 90px; left: 150px;"></div>
+                    </div>
+                </div>
+                <div class="state-indicator">
+                    <span>SPIN</span>
+                    <span class="spin-state" id="spinB">↓</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="entanglement-meter">
+            <div class="meter-fill" id="entanglementMeter" style="width: 100%;"></div>
+        </div>
+        
+        <div class="quantum-stats">
+            <div class="stat-box">
+                <div>ENTANGLEMENT</div>
+                <div class="stat-value" id="entanglementStat">100%</div>
+            </div>
+            <div class="stat-box">
+                <div>COHERENCE</div>
+                <div class="stat-value" id="coherenceStat">98%</div>
+            </div>
+            <div class="stat-box">
+                <div>QUBITS</div>
+                <div class="stat-value" id="qubitStat">2</div>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <button class="quantum-btn" id="measureBtn">⚛️ MEASURE</button>
+            <button class="quantum-btn" id="entangleBtn">🔗 ENTANGLE</button>
+            <button class="quantum-btn" id="resetBtn">⟲ RESET</button>
+        </div>
+        
+        <div style="text-align: center; color: #4ade80; margin-top: 20px; font-size: 14px;">
+            ⚡ observing changes the state ⚡
+        </div>
+    </div>
+
+    <script>
+        const particleA = document.getElementById('particleA');
+        const particleB = document.getElementById('particleB');
+        const spinA = document.getElementById('spinA');
+        const spinB = document.getElementById('spinB');
+        const meter = document.getElementById('entanglementMeter');
+        const entanglementStat = document.getElementById('entanglementStat');
+        const coherenceStat = document.getElementById('coherenceStat');
+        
+        let entangled = true;
+        let spinState = ['↑', '↓']; // A, B (always opposite when entangled)
+        let particlePosA = { x: 150, y: 90 };
+        let particlePosB = { x: 150, y: 90 };
+        
+        function updateParticles() {
+            // Update spin displays
+            spinA.textContent = spinState[0];
+            spinB.textContent = spinState[1];
+            
+            // Update particle colors based on spin
+            particleA.style.background = spinState[0] === '↑' ? '#4ade80' : '#f87171';
+            particleB.style.background = spinState[1] === '↑' ? '#4ade80' : '#f87171';
+            
+            particleA.style.boxShadow = spinState[0] === '↑' ? '0 0 30px #4ade80' : '0 0 30px #f87171';
+            particleB.style.boxShadow = spinState[1] === '↑' ? '0 0 30px #4ade80' : '0 0 30px #f87171';
+            
+            // Update positions (jiggle)
+            particleA.style.left = particlePosA.x + 'px';
+            particleA.style.top = particlePosA.y + 'px';
+            particleB.style.left = particlePosB.x + 'px';
+            particleB.style.top = particlePosB.y + 'px';
+        }
+        
+        function measure() {
+            if (entangled) {
+                // When entangled, measurement collapses both
+                const randomSpin = Math.random() > 0.5 ? '↑' : '↓';
+                spinState[0] = randomSpin;
+                spinState[1] = randomSpin === '↑' ? '↓' : '↑';
+                
+                // Entanglement degrades slightly
+                entangled = false;
+                meter.style.width = '70%';
+                entanglementStat.textContent = '70%';
+                coherenceStat.textContent = Math.floor(70 + Math.random() * 10) + '%';
+            } else {
+                // Independent particles
+                spinState[0] = Math.random() > 0.5 ? '↑' : '↓';
+                spinState[1] = Math.random() > 0.5 ? '↑' : '↓';
+            }
+            
+            // Particles jump
+            particlePosA.x = 100 + Math.random() * 100;
+            particlePosA.y = 50 + Math.random() * 100;
+            particlePosB.x = 100 + Math.random() * 100;
+            particlePosB.y = 50 + Math.random() * 100;
+            
+            updateParticles();
+        }
+        
+        function entangle() {
+            entangled = true;
+            // Force opposite spins
+            const baseSpin = Math.random() > 0.5 ? '↑' : '↓';
+            spinState[0] = baseSpin;
+            spinState[1] = baseSpin === '↑' ? '↓' : '↑';
+            
+            meter.style.width = '100%';
+            entanglementStat.textContent = '100%';
+            coherenceStat.textContent = '98%';
+            
+            // Particles align in motion
+            particlePosA.x = 150;
+            particlePosA.y = 90;
+            particlePosB.x = 150;
+            particlePosB.y = 90;
+            
+            updateParticles();
+        }
+        
+        function reset() {
+            entangle(); // Reset to entangled state
+            spinState = ['↑', '↓'];
+            meter.style.width = '100%';
+            entanglementStat.textContent = '100%';
+            coherenceStat.textContent = '98%';
+            updateParticles();
+        }
+        
+        // Animate particles (Brownian motion)
+        function animateParticles() {
+            if (!entangled) {
+                // Independent motion
+                particlePosA.x += (Math.random() - 0.5) * 10;
+                particlePosA.y += (Math.random() - 0.5) * 10;
+                particlePosB.x += (Math.random() - 0.5) * 10;
+                particlePosB.y += (Math.random() - 0.5) * 10;
+            } else {
+                // Correlated motion (mirror)
+                const dx = (Math.random() - 0.5) * 8;
+                const dy = (Math.random() - 0.5) * 8;
+                particlePosA.x += dx;
+                particlePosA.y += dy;
+                particlePosB.x -= dx; // Opposite direction (entangled)
+                particlePosB.y -= dy;
+            }
+            
+            // Keep in bounds
+            particlePosA.x = Math.max(20, Math.min(280, particlePosA.x));
+            particlePosA.y = Math.max(20, Math.min(180, particlePosA.y));
+            particlePosB.x = Math.max(20, Math.min(280, particlePosB.x));
+            particlePosB.y = Math.max(20, Math.min(180, particlePosB.y));
+            
+            updateParticles();
+            requestAnimationFrame(animateParticles);
+        }
+        
+        document.getElementById('measureBtn').addEventListener('click', measure);
+        document.getElementById('entangleBtn').addEventListener('click', entangle);
+        document.getElementById('resetBtn').addEventListener('click', reset);
+        
+        // Initialize
+        reset();
+        animateParticles();
+    </script>
+</body>
+</html>
