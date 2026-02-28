@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗺️ The Memory Cartographer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #2e4a3a;
+            background: linear-gradient(145deg, #3a5f4a, #1a3a2a);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Cinzel', 'Times New Roman', serif;
+        }
+        
+        .map-studio {
+            width: 1000px;
+            background: #c4a484;
+            background: linear-gradient(145deg, #e0c9a5, #b59b7a);
+            border-radius: 120px 120px 60px 60px;
+            padding: 40px;
+            box-shadow: 0 40px 60px #1a2a1a, inset 0 0 0 15px #dbbc87, inset 0 0 0 30px #b39264;
+            border: 10px solid #7a5f3a;
+            position: relative;
+        }
+        
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            color: #3a2a1a;
+        }
+        
+        .compass {
+            font-size: 60px;
+            animation: wobble 5s ease-in-out infinite;
+        }
+        @keyframes wobble {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+        
+        #memoryMap {
+            width: 100%;
+            height: 400px;
+            background: #e8d7b0;
+            border-radius: 60px;
+            border: 12px double #7a5f3a;
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair;
+            box-shadow: inset 0 0 50px #b39264;
+        }
+        
+        .map-landmark {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: #b35e3a;
+            border-radius: 50% 50% 0 50%;
+            transform: rotate(45deg);
+            border: 4px solid #7a3a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            cursor: move;
+            transition: 0.1s;
+            box-shadow: 2px 4px 4px #3a2a1a;
+        }
+        .map-landmark span {
+            transform: rotate(-45deg);
+        }
+        
+        .cartography-tools {
+            display: flex;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .tool {
+            flex: 1;
+            background: #7a5f3a;
+            border-radius: 40px;
+            padding: 20px;
+            text-align: center;
+            border: 6px solid #4a3723;
+            color: #e8d7b0;
+            font-size: 24px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tool:hover {
+            background: #9b7a56;
+            transform: translateY(-5px);
+        }
+        
+        .map-legend {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .legend-item {
+            background: #b39264;
+            border-radius: 40px;
+            padding: 15px;
+            text-align: center;
+            color: #e8d7b0;
+            border: 4px solid #7a5f3a;
+        }
+    </style>
+</head>
+<body>
+    <div class="map-studio">
+        <div class="map-header">
+            <span class="compass">🧭</span>
+            <h1>MEMORY MAP</h1>
+            <span>⚓</span>
+        </div>
+        
+        <div id="memoryMap" onclick="placeLandmark(event)">
+            <!-- Landmarks will appear here -->
+        </div>
+        
+        <div class="cartography-tools">
+            <div class="tool" id="mountainBtn">⛰️ MOUNTAIN</div>
+            <div class="tool" id="riverBtn">🌊 RIVER</div>
+            <div class="tool" id="forestBtn">🌲 FOREST</div>
+            <div class="tool" id="cityBtn">🏰 CITY</div>
+        </div>
+        
+        <div class="map-legend">
+            <div class="legend-item">⚔️ adventures: 7</div>
+            <div class="legend-item">💎 treasures: 3</div>
+            <div class="legend-item">👣 paths: 12</div>
+            <div class="legend-item">🌟 stars: 9</div>
+        </div>
+    </div>
+
+    <script>
+        const memoryMap = document.getElementById('memoryMap');
+        let landmarks = [];
+        let currentTool = '⛰️';
+        
+        const toolIcons = {
+            '⛰️': '⛰️',
+            '🌊': '🌊',
+            '🌲': '🌲',
+            '🏰': '🏰'
+        };
+        
+        function placeLandmark(event) {
+            const rect = memoryMap.getBoundingClientRect();
+            const x = event.clientX - rect.left - 30; // Center the landmark
+            const y = event.clientY - rect.top - 30;
+            
+            // Keep within bounds
+            const boundedX = Math.max(0, Math.min(rect.width - 60, x));
+            const boundedY = Math.max(0, Math.min(rect.height - 60, y));
+            
+            const landmark = document.createElement('div');
+            landmark.className = 'map-landmark';
+            landmark.style.left = boundedX + 'px';
+            landmark.style.top = boundedY + 'px';
+            
+            const icon = document.createElement('span');
+            icon.textContent = currentTool;
+            landmark.appendChild(icon);
+            
+            // Make draggable
+            let isDragging = false;
+            let offsetX, offsetY;
+            
+            landmark.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                offsetX = e.clientX - landmark.offsetLeft;
+                offsetY = e.clientY - landmark.offsetTop;
+                e.stopPropagation();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const newX = e.clientX - offsetX - rect.left;
+                    const newY = e.clientY - offsetY - rect.top;
+                    
+                    landmark.style.left = Math.max(0, Math.min(rect.width - 60, newX)) + 'px';
+                    landmark.style.top = Math.max(0, Math.min(rect.height - 60, newY)) + 'px';
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            // Double click to remove
+            landmark.addEventListener('dblclick', () => {
+                landmark.remove();
+            });
+            
+            memoryMap.appendChild(landmark);
+            landmarks.push(landmark);
+        }
+        
+        document.getElementById('mountainBtn').addEventListener('click', () => {
+            currentTool = '⛰️';
+        });
+        
+        document.getElementById('riverBtn').addEventListener('click', () => {
+            currentTool = '🌊';
+        });
+        
+        document.getElementById('forestBtn').addEventListener('click', () => {
+            currentTool = '🌲';
+        });
+        
+        document.getElementById('cityBtn').addEventListener('click', () => {
+            currentTool = '🏰';
+        });
+        
+        // Add some initial landmarks
+        setTimeout(() => {
+            const center = memoryMap.getBoundingClientRect();
+            const event = new MouseEvent('click', {
+                clientX: center.left + 200,
+                clientY: center.top + 150
+            });
+            memoryMap.dispatchEvent(event);
+            
+            setTimeout(() => {
+                const event2 = new MouseEvent('click', {
+                    clientX: center.left + 400,
+                    clientY: center.top + 250
+                });
+                memoryMap.dispatchEvent(event2);
+            }, 100);
+        }, 500);
+    </script>
+</body>
+</html>
