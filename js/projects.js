@@ -2106,6 +2106,18 @@ const staticProjects = [
             name: "Gupta-02",
             github: "https://github.com/Gupta-02"
         }
+    },
+    {
+        title: "BIOSONIC TERRAIN · Environmental Audio Mapper #5975",
+        description: "An immersive environmental audio mapping system where users navigate through procedurally generated biomes (forest, desert, tundra, mountain, wetland, grassland) and experience adaptive soundscapes that dynamically change based on location, proximity to biome centers, and weather conditions. Features Web Audio API integration, terrain navigation, weather effects, exploration statistics, and real-time audio layer management.",
+        tags: ["HTML", "CSS", "JavaScript", "Web Audio API", "Environmental Audio", "Terrain Generation", "Interactive Navigation", "Weather Effects", "Audio Synthesis", "Canvas Rendering", "Biome Mapping", "Spatial Audio"],
+        links: {
+            live: "./projects/biosonic-terrain-environmental-audio-mapper/index.html"
+        },
+        author: {
+            name: "Gupta-02",
+            github: "https://github.com/Gupta-02"
+        }
     }
 
 ];

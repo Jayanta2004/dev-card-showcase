@@ -1,363 +1,321 @@
-// cognitive-resilience-under-stress-tracker.js
-
-let sessions = JSON.parse(localStorage.getItem('resilienceSessions')) || [];
-let currentSession = null;
+// Global variables
+let currentStressLevel = 5;
 let currentTask = null;
 let taskStartTime = null;
-let taskResults = [];
-let stressLevel = 5;
+let responses = [];
+let sessions = JSON.parse(localStorage.getItem('resilienceSessions')) || [];
+let chart = null;
 
-document.getElementById('stressLevel').addEventListener('input', function() {
-    stressLevel = parseInt(this.value);
-    document.getElementById('stressValue').textContent = stressLevel;
-    updateStressIndicators();
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    updateStressDisplay();
+    updateStatistics();
+    initializeChart();
+    displaySessions();
 });
 
-function updateStressIndicators() {
+function initializeEventListeners() {
+    const stressSlider = document.getElementById('stressLevel');
+    stressSlider.addEventListener('input', function(e) {
+        currentStressLevel = parseInt(e.target.value);
+        updateStressDisplay();
+    });
+
+    const indicators = document.querySelectorAll('.indicator');
+    indicators.forEach(indicator => {
+        indicator.addEventListener('click', function() {
+            const level = this.getAttribute('data-level');
+            let stressValue = 5; // default
+            
+            if (level === '1-3') stressValue = 2;
+            else if (level === '4-6') stressValue = 5;
+            else if (level === '7-10') stressValue = 8;
+            
+            document.getElementById('stressLevel').value = stressValue;
+            currentStressLevel = stressValue;
+            updateStressDisplay();
+        });
+    });
+}
+
+function updateStressDisplay() {
+    document.getElementById('stressValue').textContent = currentStressLevel;
+
     const indicators = document.querySelectorAll('.indicator');
     indicators.forEach(indicator => {
         indicator.classList.remove('active');
+        
+        const level = indicator.getAttribute('data-level');
+        if ((level === '1-3' && currentStressLevel >= 1 && currentStressLevel <= 3) ||
+            (level === '4-6' && currentStressLevel >= 4 && currentStressLevel <= 6) ||
+            (level === '7-10' && currentStressLevel >= 7 && currentStressLevel <= 10)) {
+            indicator.classList.add('active');
+        }
     });
-
-    let activeIndicator;
-    if (stressLevel <= 3) {
-        activeIndicator = document.querySelector('[data-level="1-3"]');
-    } else if (stressLevel <= 6) {
-        activeIndicator = document.querySelector('[data-level="4-6"]');
-    } else {
-        activeIndicator = document.querySelector('[data-level="7-10"]');
-    }
-    activeIndicator.classList.add('active');
 }
 
 function startMathTask() {
-    if (currentSession) return;
-
-    currentSession = {
-        id: Date.now(),
-        stressLevel: stressLevel,
-        taskType: 'math',
-        startTime: new Date().toISOString(),
-        results: [],
-        endTime: null
+    currentTask = {
+        type: 'math',
+        question: generateMathQuestion(),
+        answer: null
     };
-
-    taskResults = [];
-    generateMathProblem();
-    document.getElementById('taskInput').style.display = 'flex';
-    document.getElementById('saveSessionBtn').disabled = true;
-    disableTaskButtons();
-}
-
-function generateMathProblem() {
-    const operations = ['+', '-', '*'];
+    
     const num1 = Math.floor(Math.random() * 20) + 1;
     const num2 = Math.floor(Math.random() * 20) + 1;
-    const operation = operations[Math.floor(Math.random() * operations.length)];
-
-    let problem, answer;
-    switch (operation) {
-        case '+':
-            problem = `${num1} + ${num2}`;
-            answer = num1 + num2;
-            break;
-        case '-':
-            problem = `${Math.max(num1, num2)} - ${Math.min(num1, num2)}`;
-            answer = Math.max(num1, num2) - Math.min(num1, num2);
-            break;
-        case '*':
-            problem = `${num1} * ${num2}`;
-            answer = num1 * num2;
-            break;
+    const operator = ['+', '-', '*'][Math.floor(Math.random() * 3)];
+    
+    let answer;
+    switch(operator) {
+        case '+': answer = num1 + num2; break;
+        case '-': answer = num1 - num2; break;
+        case '*': answer = num1 * num2; break;
     }
+    
+    currentTask.answer = answer;
+    
+    document.getElementById('taskDisplay').innerHTML = `
+        <p>Solve: ${num1} ${operator} ${num2} = ?</p>
+    `;
+    
+    showTaskInput();
+    taskStartTime = Date.now();
+}
 
-    currentTask = { problem, answer, type: 'math' };
-    taskStartTime = new Date();
+function startMemoryTask() {
+    const memorySequence = generateMemorySequence();
+    currentTask = {
+        type: 'memory',
+        sequence: memorySequence,
+        answer: memorySequence
+    };
+    
+    document.getElementById('taskDisplay').innerHTML = `
+        <p>Memorize this sequence: <strong>${memorySequence}</strong></p>
+        <p class="memory-hint" style="font-size: 14px; color: #666;">The input will appear in 3 seconds...</p>
+    `;
+    
+    setTimeout(() => {
+        document.getElementById('taskDisplay').innerHTML = `
+            <p>Enter the sequence you memorized:</p>
+        `;
+        showTaskInput();
+        taskStartTime = Date.now();
+    }, 3000);
+}
 
-    document.getElementById('taskDisplay').innerHTML = `<h3>Solve: ${problem} = ?</h3>`;
+function startReactionTask() {
+    currentTask = {
+        type: 'reaction',
+        answer: 'reaction'
+    };
+    
+    document.getElementById('taskDisplay').innerHTML = `
+        <p>Wait for the signal...</p>
+    `;
+    
+    setTimeout(() => {
+        document.getElementById('taskDisplay').innerHTML = `
+            <p style="color: #28a745; font-size: 24px; font-weight: bold;">CLICK NOW!</p>
+        `;
+        taskStartTime = Date.now();
+        showTaskInput();
+        document.getElementById('answerInput').placeholder = 'Type "ready" and click Submit';
+    }, Math.random() * 3000 + 2000);
+}
+
+function generateMathQuestion() {
+    const num1 = Math.floor(Math.random() * 20) + 1;
+    const num2 = Math.floor(Math.random() * 20) + 1;
+    const operator = ['+', '-', '*'][Math.floor(Math.random() * 3)];
+    return { num1, num2, operator };
+}
+
+function generateMemorySequence() {
+    const length = 5;
+    let sequence = '';
+    for (let i = 0; i < length; i++) {
+        sequence += String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    }
+    return sequence;
+}
+
+function showTaskInput() {
+    document.getElementById('taskInput').style.display = 'flex';
     document.getElementById('answerInput').value = '';
     document.getElementById('answerInput').focus();
 }
 
-function startMemoryTask() {
-    if (currentSession) return;
-
-    currentSession = {
-        id: Date.now(),
-        stressLevel: stressLevel,
-        taskType: 'memory',
-        startTime: new Date().toISOString(),
-        results: [],
-        endTime: null
-    };
-
-    taskResults = [];
-    generateMemorySequence();
-    document.getElementById('taskInput').style.display = 'flex';
-    document.getElementById('saveSessionBtn').disabled = true;
-    disableTaskButtons();
-}
-
-function generateMemorySequence() {
-    const sequence = [];
-    for (let i = 0; i < 5; i++) {
-        sequence.push(Math.floor(Math.random() * 9) + 1);
-    }
-
-    currentTask = { sequence: sequence.join(' '), answer: sequence.join(''), type: 'memory' };
-    taskStartTime = new Date();
-
-    document.getElementById('taskDisplay').innerHTML = `
-        <h3>Memorize this sequence:</h3>
-        <div style="font-size: 24px; font-weight: bold; margin: 20px 0;">${sequence.join(' ')}</div>
-        <p style="color: red;">You have 5 seconds to memorize...</p>
-    `;
-
-    setTimeout(() => {
-        document.getElementById('taskDisplay').innerHTML = `
-            <h3>Enter the sequence:</h3>
-            <p>Type the numbers you just saw (without spaces)</p>
-        `;
-        document.getElementById('answerInput').focus();
-    }, 5000);
-}
-
-function startReactionTask() {
-    if (currentSession) return;
-
-    currentSession = {
-        id: Date.now(),
-        stressLevel: stressLevel,
-        taskType: 'reaction',
-        startTime: new Date().toISOString(),
-        results: [],
-        endTime: null
-    };
-
-    taskResults = [];
-    startReactionTest();
-    document.getElementById('taskInput').style.display = 'none';
-    document.getElementById('saveSessionBtn').disabled = true;
-    disableTaskButtons();
-}
-
-function startReactionTest() {
-    let trials = 5;
-    let trialCount = 0;
-    const results = [];
-
-    function runTrial() {
-        if (trialCount >= trials) {
-            // Test complete
-            taskResults = results;
-            updateResults();
-            document.getElementById('saveSessionBtn').disabled = false;
-            enableTaskButtons();
+function submitAnswer() {
+    if (!currentTask || !taskStartTime) return;
+    
+    const answer = document.getElementById('answerInput').value.trim();
+    
+    if (currentTask.type === 'math') {
+        if (answer === '') {
+            alert('Please enter a valid number');
             return;
         }
-
-        const delay = Math.random() * 3000 + 1000; // 1-4 seconds
-        document.getElementById('taskDisplay').innerHTML = `
-            <h3>Reaction Time Test</h3>
-            <p>Wait for the screen to turn green, then click as fast as you can!</p>
-            <div id="reactionBox" style="width: 200px; height: 200px; background: red; margin: 20px auto; border-radius: 10px;"></div>
-        `;
-
-        setTimeout(() => {
-            const startTime = performance.now();
-            const box = document.getElementById('reactionBox');
-            box.style.background = 'green';
-            box.style.cursor = 'pointer';
-            box.onclick = () => {
-                const reactionTime = performance.now() - startTime;
-                results.push(reactionTime);
-                box.style.background = 'gray';
-                box.style.cursor = 'default';
-                trialCount++;
-                setTimeout(runTrial, 1000);
-            };
-        }, delay);
-    }
-
-    runTrial();
-}
-
-function submitAnswer() {
-    if (!currentTask) return;
-
-    const userAnswer = document.getElementById('answerInput').value.trim();
-    const responseTime = (new Date() - taskStartTime) / 1000;
-
-    let correct = false;
-    if (currentTask.type === 'math') {
-        correct = parseInt(userAnswer) === currentTask.answer;
-    } else if (currentTask.type === 'memory') {
-        correct = userAnswer === currentTask.answer;
-    }
-
-    taskResults.push({
-        correct,
-        responseTime,
-        task: currentTask
-    });
-
-    if (taskResults.length < 5) {
-        // Generate next problem
-        if (currentTask.type === 'math') {
-            generateMathProblem();
-        } else if (currentTask.type === 'memory') {
-            generateMemorySequence();
+        if (isNaN(answer)) {
+            alert('Please enter a valid number');
+            return;
         }
-    } else {
-        // Task complete
-        updateResults();
-        document.getElementById('taskInput').style.display = 'none';
-        document.getElementById('saveSessionBtn').disabled = false;
-        enableTaskButtons();
     }
+    
+    const responseTime = (Date.now() - taskStartTime) / 1000;
+    
+    let isCorrect = false;
+    
+    switch(currentTask.type) {
+        case 'math':
+            isCorrect = parseInt(answer) === currentTask.answer;
+            break;
+        case 'memory':
+            isCorrect = answer.toUpperCase() === currentTask.answer;
+            break;
+        case 'reaction':
+            isCorrect = answer.toLowerCase() === 'ready';
+            break;
+    }
+    
+    responses.push({
+        task: currentTask.type,
+        stressLevel: currentStressLevel,
+        responseTime: responseTime,
+        correct: isCorrect,
+        timestamp: new Date().toISOString()
+    });
+    
+    updateResults();
+    
+    document.getElementById('taskInput').style.display = 'none';
+    document.getElementById('taskDisplay').innerHTML = `
+        <p>${isCorrect ? '✅ Correct!' : '❌ Incorrect'} (Response time: ${responseTime.toFixed(2)}s)</p>
+        <p>Select another task to continue.</p>
+    `;
+    
+    if (responses.length > 0) {
+        document.getElementById('saveSessionBtn').disabled = false;
+    }
+    
+    currentTask = null;
+    taskStartTime = null;
 }
 
 function updateResults() {
-    if (!currentSession || taskResults.length === 0) return;
-
-    const correctAnswers = taskResults.filter(r => r.correct).length;
-    const accuracy = Math.round((correctAnswers / taskResults.length) * 100);
-    const avgResponseTime = taskResults.reduce((sum, r) => sum + r.responseTime, 0) / taskResults.length;
-
-    // Calculate resilience score (higher is better)
-    // Factors: accuracy, response time, stress level
-    const baseScore = accuracy;
-    const timeBonus = Math.max(0, 10 - avgResponseTime); // Bonus for faster responses
-    const stressPenalty = stressLevel * 2; // Penalty for higher stress
-    const resilienceScore = Math.round(baseScore + timeBonus - stressPenalty);
-
-    document.getElementById('accuracyResult').textContent = `${accuracy}%`;
-    document.getElementById('responseTimeResult').textContent = `${avgResponseTime.toFixed(1)}s`;
+    if (responses.length === 0) return;
+    
+    const correctCount = responses.filter(r => r.correct).length;
+    const accuracy = (correctCount / responses.length) * 100;
+    document.getElementById('accuracyResult').textContent = `${accuracy.toFixed(1)}%`;
+    
+    const avgResponseTime = responses.reduce((sum, r) => sum + r.responseTime, 0) / responses.length;
+    document.getElementById('responseTimeResult').textContent = `${avgResponseTime.toFixed(2)}s`;
+    
+    const stressAdjustment = 1 - (currentStressLevel / 20); 
+    const resilienceScore = Math.round(accuracy * (1 / avgResponseTime) * stressAdjustment * 10);
     document.getElementById('resilienceScore').textContent = resilienceScore;
-
-    currentSession.results = taskResults;
-    currentSession.accuracy = accuracy;
-    currentSession.avgResponseTime = avgResponseTime;
-    currentSession.resilienceScore = resilienceScore;
 }
 
 function saveSession() {
-    if (!currentSession) return;
-
-    currentSession.endTime = new Date().toISOString();
-    sessions.push(currentSession);
+    if (responses.length === 0) return;
+    
+    const session = {
+        id: Date.now(),
+        date: new Date().toLocaleString(),
+        responses: [...responses],
+        averageStress: responses.reduce((sum, r) => sum + r.stressLevel, 0) / responses.length,
+        accuracy: parseFloat(document.getElementById('accuracyResult').textContent),
+        avgResponseTime: parseFloat(document.getElementById('responseTimeResult').textContent),
+        resilienceScore: parseInt(document.getElementById('resilienceScore').textContent)
+    };
+    
+    sessions.push(session);
     localStorage.setItem('resilienceSessions', JSON.stringify(sessions));
-
-    updateStats();
-    updateChart();
-    updateHistory();
-
-    currentSession = null;
-    document.getElementById('taskDisplay').innerHTML = '<p>Session saved! Select a task to begin a new session.</p>';
+    
+    responses = [];
     document.getElementById('saveSessionBtn').disabled = true;
+    document.getElementById('accuracyResult').textContent = '0%';
+    document.getElementById('responseTimeResult').textContent = '0s';
+    document.getElementById('resilienceScore').textContent = '0';
+    
+    updateStatistics();
+    updateChart();
+    displaySessions();
+    
+    alert('Session saved successfully!');
 }
 
-function disableTaskButtons() {
-    document.getElementById('mathTaskBtn').disabled = true;
-    document.getElementById('memoryTaskBtn').disabled = true;
-    document.getElementById('reactionTaskBtn').disabled = true;
-}
-
-function enableTaskButtons() {
-    document.getElementById('mathTaskBtn').disabled = false;
-    document.getElementById('memoryTaskBtn').disabled = false;
-    document.getElementById('reactionTaskBtn').disabled = false;
-}
-
-function updateStats() {
+function updateStatistics() {
     if (sessions.length === 0) return;
-
+    
     const avgResilience = sessions.reduce((sum, s) => sum + s.resilienceScore, 0) / sessions.length;
     const bestScore = Math.max(...sessions.map(s => s.resilienceScore));
-
-    document.getElementById('avgResilience').textContent = Math.round(avgResilience);
+    
+    document.getElementById('avgResilience').textContent = avgResilience.toFixed(1);
     document.getElementById('bestScore').textContent = bestScore;
     document.getElementById('totalSessions').textContent = sessions.length;
 }
 
-function updateChart() {
+function initializeChart() {
     const ctx = document.getElementById('resilienceChart').getContext('2d');
-
-    const labels = sessions.map(s => new Date(s.startTime).toLocaleDateString());
-    const scores = sessions.map(s => s.resilienceScore);
-    const stressLevels = sessions.map(s => s.stressLevel);
-
-    new Chart(ctx, {
+    chart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels,
+            labels: [],
             datasets: [{
                 label: 'Resilience Score',
-                data: scores,
+                data: [],
                 borderColor: '#4fd1ff',
-                backgroundColor: 'rgba(79, 209, 255, 0.1)',
-                yAxisID: 'y'
-            }, {
-                label: 'Stress Level',
-                data: stressLevels,
-                borderColor: '#ff6b6b',
-                backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                yAxisID: 'y1'
+                tension: 0.1
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: 'Resilience Score'
-                    }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: {
-                        display: true,
-                        text: 'Stress Level'
-                    },
-                    grid: {
-                        drawOnChartArea: false,
-                    },
+                    beginAtZero: true
                 }
             }
         }
     });
+    updateChart();
 }
 
-function updateHistory() {
+function updateChart() {
+    if (!chart) return;
+    
+    const labels = sessions.map(s => new Date(s.date).toLocaleDateString());
+    const data = sessions.map(s => s.resilienceScore);
+    
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.update();
+}
+
+function displaySessions() {
     const historyDiv = document.getElementById('sessionsHistory');
     historyDiv.innerHTML = '';
-
+    
+    if (sessions.length === 0) {
+        historyDiv.innerHTML = '<p>No sessions yet. Complete some tasks and save your first session!</p>';
+        return;
+    }
+    
     const recentSessions = sessions.slice(-5).reverse();
-
+    
     recentSessions.forEach(session => {
-        const sessionDiv = document.createElement('div');
-        sessionDiv.className = 'session-item';
-        sessionDiv.innerHTML = `
-            <h4>${new Date(session.startTime).toLocaleString()}</h4>
-            <p><strong>Task:</strong> ${session.taskType}</p>
-            <p><strong>Stress Level:</strong> ${session.stressLevel}/10</p>
-            <p><strong>Accuracy:</strong> ${session.accuracy}%</p>
+        const sessionEl = document.createElement('div');
+        sessionEl.className = 'session-item';
+        sessionEl.innerHTML = `
+            <h4>Session: ${session.date}</h4>
             <p><strong>Resilience Score:</strong> ${session.resilienceScore}</p>
+            <p><strong>Accuracy:</strong> ${session.accuracy.toFixed(1)}%</p>
+            <p><strong>Avg Response Time:</strong> ${session.avgResponseTime.toFixed(2)}s</p>
+            <p><strong>Avg Stress Level:</strong> ${session.averageStress.toFixed(1)}</p>
+            <p><strong>Tasks Completed:</strong> ${session.responses.length}</p>
         `;
-        historyDiv.appendChild(sessionDiv);
+        historyDiv.appendChild(sessionEl);
     });
 }
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    updateStressIndicators();
-    updateStats();
-    updateChart();
-    updateHistory();
-});
