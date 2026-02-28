@@ -150,6 +150,18 @@ function submitAnswer() {
     if (!currentTask || !taskStartTime) return;
     
     const answer = document.getElementById('answerInput').value.trim();
+    
+    if (currentTask.type === 'math') {
+        if (answer === '') {
+            alert('Please enter a valid number');
+            return;
+        }
+        if (isNaN(answer)) {
+            alert('Please enter a valid number');
+            return;
+        }
+    }
+    
     const responseTime = (Date.now() - taskStartTime) / 1000;
     
     let isCorrect = false;
