@@ -5,6 +5,7 @@ let taskStartTime = null;
 let responses = [];
 let sessions = JSON.parse(localStorage.getItem('resilienceSessions')) || [];
 let resilienceChart = null; 
+let countdownInterval = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
@@ -55,6 +56,11 @@ function updateStressDisplay() {
 }
 
 function startMathTask() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+    
     currentTask = {
         type: 'math',
         question: generateMathQuestion(),
@@ -83,6 +89,11 @@ function startMathTask() {
 }
 
 function startMemoryTask() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+    
     const memorySequence = generateMemorySequence();
     currentTask = {
         type: 'memory',
@@ -90,21 +101,76 @@ function startMemoryTask() {
         answer: memorySequence
     };
     
+    const baseTime = 5000; 
+    const stressReduction = currentStressLevel * 300; 
+    const memorizationTime = Math.max(2000, baseTime - stressReduction); 
+    
     document.getElementById('taskDisplay').innerHTML = `
-        <p>Memorize this sequence: <strong>${memorySequence}</strong></p>
-        <p class="memory-hint" style="font-size: 14px; color: #666;">The input will appear in 3 seconds...</p>
+        <p>Memorize this sequence: <strong style="font-size: 24px;">${memorySequence}</strong></p>
+        <div class="memory-timer" style="margin-top: 15px;">
+            <p style="font-size: 14px; color: #666;">Time remaining: <span id="countdownTimer">${(memorizationTime/1000).toFixed(1)}</span> seconds</p>
+            <p style="font-size: 12px; color: #999;">Stress level ${currentStressLevel} - Memorization time adjusted</p>
+            <div style="width: 100%; height: 4px; background: #ddd; border-radius: 2px; margin-top: 5px;">
+                <div id="countdownProgress" style="width: 100%; height: 100%; background: #4fd1ff; border-radius: 2px; transition: width 0.1s linear;"></div>
+            </div>
+        </div>
     `;
     
+    let timeLeft = memorizationTime / 1000;
+    const startTime = Date.now();
+    const endTime = startTime + memorizationTime;
+    
+    countdownInterval = setInterval(() => {
+        const now = Date.now();
+        timeLeft = Math.max(0, (endTime - now) / 1000);
+        
+        const timerElement = document.getElementById('countdownTimer');
+        const progressElement = document.getElementById('countdownProgress');
+        
+        if (timerElement && progressElement) {
+            timerElement.textContent = timeLeft.toFixed(1);
+            const progressPercent = (timeLeft / (memorizationTime/1000)) * 100;
+            progressElement.style.width = `${progressPercent}%`;
+            
+            if (timeLeft < 2) {
+                progressElement.style.background = '#ff4444';
+            } else if (timeLeft < 4) {
+                progressElement.style.background = '#ffaa00';
+            }
+        }
+        
+        if (now >= endTime) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+            
+            document.getElementById('taskDisplay').innerHTML = `
+                <p>Enter the sequence you memorized:</p>
+            `;
+            showTaskInput();
+            taskStartTime = Date.now();
+        }
+    }, 100);
+    
     setTimeout(() => {
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+        
         document.getElementById('taskDisplay').innerHTML = `
             <p>Enter the sequence you memorized:</p>
         `;
         showTaskInput();
         taskStartTime = Date.now();
-    }, 3000);
+    }, memorizationTime);
 }
 
 function startReactionTask() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+    
     currentTask = {
         type: 'reaction',
         answer: 'reaction'
@@ -157,12 +223,12 @@ function showFeedback(isCorrect) {
     if (isCorrect) {
         feedbackElement.innerHTML = `
             <i class="fas fa-check-circle"></i>
-            <span>Correct!</span>
+            <span>Correct! +${Math.round(10 * (1 + currentStressLevel/10))} resilience</span>
         `;
     } else {
         feedbackElement.innerHTML = `
             <i class="fas fa-times-circle"></i>
-            <span>Incorrect</span>
+            <span>Incorrect. The answer was: ${currentTask.answer}</span>
         `;
     }
     
@@ -173,7 +239,7 @@ function showFeedback(isCorrect) {
         setTimeout(() => {
             feedbackContainer.innerHTML = '';
         }, 300);
-    }, 1000);
+    }, 1500);
 }
 
 function submitAnswer() {
@@ -182,14 +248,15 @@ function submitAnswer() {
     const answer = document.getElementById('answerInput').value.trim();
     
     if (currentTask.type === 'math') {
-        if (answer === '') {
+        if (answer === '' || isNaN(answer)) {
             alert('Please enter a valid number');
             return;
         }
-        if (isNaN(answer)) {
-            alert('Please enter a valid number');
-            return;
-        }
+    }
+    
+    if (currentTask.type === 'reaction' && answer.toLowerCase() !== 'ready') {
+        alert('Please type "ready" to complete the reaction test');
+        return;
     }
     
     const responseTime = (Date.now() - taskStartTime) / 1000;
@@ -207,6 +274,7 @@ function submitAnswer() {
             isCorrect = answer.toLowerCase() === 'ready';
             break;
     }
+    
     showFeedback(isCorrect);
     
     responses.push({
@@ -231,6 +299,11 @@ function submitAnswer() {
     
     currentTask = null;
     taskStartTime = null;
+    
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
 }
 
 function updateResults() {
@@ -386,5 +459,9 @@ window.addEventListener('beforeunload', function() {
     if (resilienceChart) {
         resilienceChart.destroy();
         resilienceChart = null;
+    }
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
     }
 });
