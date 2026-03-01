@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☁️ The Cloud Seeder - Weather Manipulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a3f5a;
+            background: linear-gradient(145deg, #2a5f7a, #0a2f4a);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .sky-lab {
+            width: 1000px;
+            background: #5f9ea0;
+            background: linear-gradient(145deg, #7fb0b0, #3f7a7a);
+            border-radius: 120px 120px 60px 60px;
+            padding: 40px;
+            box-shadow: 0 40px 60px #0a1f2a, inset 0 0 0 15px #b0e0e0, inset 0 0 0 30px #7fbfbf;
+            border: 12px solid #2f6f6f;
+            position: relative;
+        }
+        
+        .sky-canvas {
+            width: 100%;
+            height: 300px;
+            background: #87CEEB;
+            background: linear-gradient(145deg, #b0e0ff, #5f9ea0);
+            border-radius: 60px;
+            border: 8px solid #2f6f6f;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 100px;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2));
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .cloud::before, .cloud::after {
+            content: "";
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+        .cloud:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 30px white);
+        }
+        
+        .weather-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: #2f6f6f;
+            border-radius: 40px;
+            padding: 20px;
+            text-align: center;
+            border: 6px solid #1f4f4f;
+            color: white;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .weather-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .weather-btn {
+            background: #1f4f4f;
+            border: none;
+            color: white;
+            font-size: 24px;
+            padding: 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            border-bottom: 8px solid #0f2f2f;
+            transition: 0.05s linear;
+        }
+        .weather-btn:active {
+            border-bottom-width: 2px;
+            transform: translateY(6px);
+        }
+        
+        .precipitation-indicator {
+            background: #0f2f2f;
+            border-radius: 60px;
+            padding: 20px;
+            color: white;
+            text-align: center;
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        
+        .rain-drop {
+            position: absolute;
+            color: #87CEEB;
+            font-size: 20px;
+            animation: rain 1s linear infinite;
+        }
+        @keyframes rain {
+            0% { transform: translateY(-20px); opacity: 1; }
+            100% { transform: translateY(300px); opacity: 0; }
+        }
+        
+        .snow-flake {
+            position: absolute;
+            color: white;
+            font-size: 20px;
+            animation: snow 3s linear infinite;
+        }
+        @keyframes snow {
+            0% { transform: translateY(-20px) rotate(0deg); }
+            100% { transform: translateY(300px) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="sky-lab">
+        <div class="sky-canvas" id="skyCanvas">
+            <!-- Clouds will be generated here -->
+        </div>
+        
+        <div class="weather-stats">
+            <div class="stat-card">
+                <div>☁️ CLOUD COVER</div>
+                <div class="stat-value" id="cloudCover">65%</div>
+            </div>
+            <div class="stat-card">
+                <div>💧 HUMIDITY</div>
+                <div class="stat-value" id="humidity">72%</div>
+            </div>
+            <div class="stat-card">
+                <div>🌡️ TEMP</div>
+                <div class="stat-value" id="temperature">18°C</div>
+            </div>
+            <div class="stat-card">
+                <div>💨 WIND</div>
+                <div class="stat-value" id="windSpeed">12km/h</div>
+            </div>
+        </div>
+        
+        <div class="weather-controls">
+            <button class="weather-btn" id="seedClouds">🌱 SEED CLOUDS</button>
+            <button class="weather-btn" id="makeRain">☔ MAKE RAIN</button>
+            <button class="weather-btn" id="makeSnow">❄️ MAKE SNOW</button>
+            <button class="weather-btn" id="clearSkies">☀️ CLEAR SKIES</button>
+            <button class="weather-btn" id="increaseWind">💨 INCREASE WIND</button>
+            <button class="weather-btn" id="lightning">⚡ LIGHTNING</button>
+        </div>
+        
+        <div class="precipitation-indicator" id="precipitation">
+            Current conditions: Partly cloudy
+        </div>
+    </div>
+
+    <script>
+        const skyCanvas = document.getElementById('skyCanvas');
+        const cloudCover = document.getElementById('cloudCover');
+        const humidity = document.getElementById('humidity');
+        const temperature = document.getElementById('temperature');
+        const windSpeed = document.getElementById('windSpeed');
+        const precipitation = document.getElementById('precipitation');
+        
+        let clouds = [];
+        let weatherState = 'clear';
+        let temp = 18;
+        let wind = 12;
+        let humid = 72;
+        
+        function createCloud() {
+            const cloud = document.createElement('div');
+            cloud.className = 'cloud';
+            
+            // Random size and position
+            const width = 80 + Math.random() * 100;
+            const height = 40 + Math.random() * 30;
+            const x = Math.random() * (skyCanvas.offsetWidth - width);
+            const y = Math.random() * (skyCanvas.offsetHeight - height - 50) + 20;
+            
+            cloud.style.width = width + 'px';
+            cloud.style.height = height + 'px';
+            cloud.style.left = x + 'px';
+            cloud.style.top = y + 'px';
+            
+            // Add cloud puffs
+            cloud.style.boxShadow = `
+                ${width * 0.3}px ${height * 0.2}px 0 0 white,
+                ${width * 0.6}px -${height * 0.1}px 0 0 white,
+                -${width * 0.2}px -${height * 0.1}px 0 0 white
+            `;
+            
+            cloud.addEventListener('click', () => {
+                cloud.remove();
+                updateCloudCover();
+            });
+            
+            skyCanvas.appendChild(cloud);
+            clouds.push(cloud);
+            updateCloudCover();
+        }
+        
+        function updateCloudCover() {
+            const cover = Math.min(100, clouds.length * 12);
+            cloudCover.textContent = cover + '%';
+            
+            if (cover < 20) precipitation.textContent = 'Clear skies';
+            else if (cover < 40) precipitation.textContent = 'Partly cloudy';
+            else if (cover < 60) precipitation.textContent = 'Mostly cloudy';
+            else precipitation.textContent = 'Overcast';
+        }
+        
+        function seedClouds() {
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => createCloud(), i * 500);
+            }
+            humid = Math.min(95, humid + 5);
+            humidity.textContent = humid + '%';
+        }
+        
+        function makeRain() {
+            if (clouds.length === 0) {
+                precipitation.textContent = 'No clouds to make rain!';
+                return;
+            }
+            
+            // Add rain drops
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const drop = document.createElement('div');
+                    drop.className = 'rain-drop';
+                    drop.textContent = '💧';
+                    drop.style.left = Math.random() * 100 + '%';
+                    drop.style.animationDelay = Math.random() + 's';
+                    skyCanvas.appendChild(drop);
+                    
+                    setTimeout(() => drop.remove(), 3000);
+                }, i * 50);
+            }
+            
+            humid = Math.min(100, humid + 10);
+            humidity.textContent = humid + '%';
+            precipitation.textContent = '🌧️ It\'s raining!';
+        }
+        
+        function makeSnow() {
+            if (temp > 0) {
+                temp -= 5;
+                temperature.textContent = temp + '°C';
+            }
+            
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const flake = document.createElement('div');
+                    flake.className = 'snow-flake';
+                    flake.textContent = '❄️';
+                    flake.style.left = Math.random() * 100 + '%';
+                    flake.style.animationDelay = Math.random() + 's';
+                    skyCanvas.appendChild(flake);
+                    
+                    setTimeout(() => flake.remove(), 3000);
+                }, i * 100);
+            }
+            
+            precipitation.textContent = '❄️ Snow falling gently';
+        }
+        
+        function clearSkies() {
+            clouds.forEach(cloud => cloud.remove());
+            clouds = [];
+            updateCloudCover();
+            humid = 60;
+            humidity.textContent = humid + '%';
+            precipitation.textContent = 'Clear blue sky';
+        }
+        
+        function increaseWind() {
+            wind += 5;
+            windSpeed.textContent = wind + 'km/h';
+            
+            // Move clouds with wind
+            clouds.forEach(cloud => {
+                const currentLeft = parseInt(cloud.style.left);
+                cloud.style.left = (currentLeft + 20) + 'px';
+                
+                // Wrap around
+                if (currentLeft > skyCanvas.offsetWidth) {
+                    cloud.style.left = '-100px';
+                }
+            });
+        }
+        
+        function createLightning() {
+            const flash = document.createElement('div');
+            flash.style.position = 'absolute';
+            flash.style.top = '0';
+            flash.style.left = '0';
+            flash.style.width = '100%';
+            flash.style.height = '100%';
+            flash.style.background = 'white';
+            flash.style.opacity = '0.8';
+            flash.style.zIndex = '100';
+            skyCanvas.appendChild(flash);
+            
+            setTimeout(() => flash.remove(), 200);
+            
+            precipitation.textContent = '⚡ Lightning strikes!';
+        }
+        
+        document.getElementById('seedClouds').addEventListener('click', seedClouds);
+        document.getElementById('makeRain').addEventListener('click', makeRain);
+        document.getElementById('makeSnow').addEventListener('click', makeSnow);
+        document.getElementById('clearSkies').addEventListener('click', clearSkies);
+        document.getElementById('increaseWind').addEventListener('click', increaseWind);
+        document.getElementById('lightning').addEventListener('click', createLightning);
+        
+        // Create initial clouds
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => createCloud(), i * 300);
+        }
+        
+        // Temperature cycles
+        setInterval(() => {
+            if (weatherState !== 'snow') {
+                temp += (Math.random() - 0.5) * 2;
+                temp = Math.max(-10, Math.min(35, temp));
+                temperature.textContent = Math.round(temp) + '°C';
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
