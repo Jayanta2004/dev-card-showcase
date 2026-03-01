@@ -1,0 +1,423 @@
+/* ═══════════════════════════════════════════════════════════
+   Orbit-Dash · style.css
+   Cyberpunk/Space theme — Glassmorphism HUD + full-screen canvas
+   ═══════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────
+   1. CSS RESET
+   ──────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;          /* No scrollbars — full-screen game */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ────────────────────────────────────────────
+   2. DESIGN TOKENS (CSS Custom Properties)
+   ──────────────────────────────────────────── */
+:root {
+  /* Core palette */
+  --clr-bg:             #070014;    /* Deep space purple-black      */
+  --clr-bg-glass:       rgba(7, 0, 20, 0.6);
+  --clr-accent-cyan:    #00e5ff;
+  --clr-accent-magenta: #ff00ff;
+  --clr-accent-green:   #39ff14;
+  --clr-text-primary:   #e8eaf6;
+  --clr-text-muted:     rgba(232, 234, 246, 0.5);
+  --clr-white:          #ffffff;
+
+  /* Glassmorphism */
+  --glass-bg:     rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-blur:   16px;
+
+  /* Glow shadows */
+  --glow-cyan:    0 0 12px rgba(0, 229, 255, 0.7),
+                  0 0 40px rgba(0, 229, 255, 0.3);
+  --glow-magenta: 0 0 12px rgba(255, 0, 255, 0.7),
+                  0 0 40px rgba(255, 0, 255, 0.3);
+
+  /* Typography */
+  --font-display: 'Orbitron', 'Courier New', monospace;
+  --font-ui:      'Space Grotesk', system-ui, sans-serif;
+
+  /* Spacing scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.75rem;
+  --space-xl: 2.5rem;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-med:  300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ────────────────────────────────────────────
+   3. BASE — BODY & CANVAS
+   ──────────────────────────────────────────── */
+body {
+  background: var(--clr-bg);
+  font-family: var(--font-ui);
+  color: var(--clr-text-primary);
+  position: relative;        /* Stacking context for overlays */
+}
+
+#game-canvas {
+  display: block;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;        /* Prevent scroll on touch devices */
+  z-index: 0;
+}
+
+/* ────────────────────────────────────────────
+   4. HUD — Score / Best (top-center, glassmorphism)
+   ──────────────────────────────────────────── */
+#hud {
+  position: fixed;
+  top: var(--space-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+
+  /* Subtle top glow line */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 4px 32px rgba(0, 0, 0, 0.4);
+}
+
+.hud-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 56px;
+}
+
+.hud-label {
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--clr-text-muted);
+  text-transform: uppercase;
+}
+
+.hud-value {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--clr-accent-cyan);
+  text-shadow: var(--glow-cyan);
+  line-height: 1;
+  transition: color var(--transition-fast);
+}
+
+#best-value {
+  color: var(--clr-accent-magenta);
+  text-shadow: var(--glow-magenta);
+}
+
+.hud-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--glass-border);
+}
+
+/* ────────────────────────────────────────────
+   5. CONTROL HINT — bottom-left
+   ──────────────────────────────────────────── */
+#control-hint {
+  position: fixed;
+  bottom: var(--space-lg);
+  left: var(--space-lg);
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--clr-text-muted);
+
+  /* Fade in after a short delay */
+  animation: fadeInUp 1s 1.5s both;
+}
+
+.hint-key {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(8px);
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--clr-accent-cyan);
+}
+
+.hint-sep {
+  font-size: 0.65rem;
+  opacity: 0.5;
+}
+
+.hint-text {
+  opacity: 0.6;
+}
+
+/* ────────────────────────────────────────────
+   6. OVERLAY — Start / Game-Over modal
+   ──────────────────────────────────────────── */
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(7, 0, 20, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  /* Entry animation */
+  animation: overlayIn 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+#overlay.hidden {
+  display: none;
+}
+
+.overlay-card {
+  position: relative;
+  width: min(420px, 90vw);
+  padding: var(--space-xl) var(--space-lg);
+
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.055) 0%,
+    rgba(255,255,255,0.018) 100%
+  );
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    0 8px 64px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(0, 229, 255, 0.06);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  text-align: center;
+
+  animation: cardPop 500ms 100ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Decorative spinning orbit ring */
+.overlay-ring {
+  position: absolute;
+  inset: -24px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(0, 229, 255, 0.2);
+  animation: spinRing 12s linear infinite;
+  pointer-events: none;
+}
+
+.overlay-ring::before {
+  content: '';
+  position: absolute;
+  top: -4px; left: 50%;
+  width: 8px; height: 8px;
+  transform: translate(-50%, -50%);
+  background: var(--clr-accent-cyan);
+  border-radius: 50%;
+  box-shadow: var(--glow-cyan);
+}
+
+.overlay-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--clr-white);
+  text-shadow:
+    0 0 20px rgba(0, 229, 255, 0.8),
+    0 0 60px rgba(0, 229, 255, 0.35);
+  line-height: 1.1;
+}
+
+.overlay-msg {
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--clr-text-muted);
+  line-height: 1.7;
+  max-width: 30ch;
+}
+
+.overlay-btn {
+  margin-top: var(--space-sm);
+  padding: 0.75rem 2.5rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--clr-bg);
+  background: var(--clr-accent-cyan);
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+
+  box-shadow:
+    0 0 20px rgba(0, 229, 255, 0.5),
+    0 4px 16px rgba(0, 0, 0, 0.3);
+
+  transition:
+    transform var(--transition-med),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.overlay-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255,255,255,0.35) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  transition: transform 500ms ease;
+}
+
+.overlay-btn:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 0 30px rgba(0, 229, 255, 0.7),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.overlay-btn:hover::before {
+  transform: translateX(100%);
+}
+
+.overlay-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.overlay-credit {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.05em;
+  margin-top: var(--space-xs);
+}
+
+/* ────────────────────────────────────────────
+   7. KEYFRAME ANIMATIONS
+   ──────────────────────────────────────────── */
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes cardPop {
+  from { opacity: 0; transform: scale(0.88) translateY(20px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+
+@keyframes spinRing {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ────────────────────────────────────────────
+   8. SCORE POP ANIMATION (applied via JS)
+   ──────────────────────────────────────────── */
+@keyframes scorePop {
+  0%   { transform: scale(1);   }
+  40%  { transform: scale(1.5); }
+  100% { transform: scale(1);   }
+}
+
+.score-pop {
+  animation: scorePop 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ────────────────────────────────────────────
+   9. RESPONSIVE ADJUSTMENTS
+   ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+  #hud {
+    top: var(--space-md);
+    padding: var(--space-xs) var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .hud-value {
+    font-size: 1.1rem;
+  }
+
+  #control-hint {
+    bottom: var(--space-md);
+    left: var(--space-md);
+    font-size: 0.65rem;
+  }
+
+  .overlay-card {
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  .overlay-ring {
+    display: none; /* Avoid visual clutter on small screens */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

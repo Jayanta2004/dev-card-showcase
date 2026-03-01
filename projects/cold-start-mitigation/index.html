@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cold-Start Mitigation Layer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>❄️ Cold-Start Mitigation Layer</h1>
+                <p class="subtitle">Intelligent service prewarming based on predicted demand patterns</p>
+            </div>
+            <div class="header-controls">
+                <button id="enableMitigation" class="btn btn-primary">Enable Mitigation</button>
+                <button id="simulateDemand" class="btn btn-secondary">Simulate Demand</button>
+                <button id="generateReport" class="btn btn-tertiary">Report</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Performance Overview -->
+            <section class="performance-overview">
+                <div class="perf-card cold-reduced">
+                    <div class="perf-icon">⚡</div>
+                    <div class="perf-info">
+                        <h3>Cold-Start Reduction</h3>
+                        <p class="perf-value" id="coldStartReduction">0%</p>
+                    </div>
+                </div>
+                <div class="perf-card latency">
+                    <div class="perf-icon">⏱️</div>
+                    <div class="perf-info">
+                        <h3>Avg Response Time</h3>
+                        <p class="perf-value" id="avgLatency">--ms</p>
+                    </div>
+                </div>
+                <div class="perf-card cost">
+                    <div class="perf-icon">💰</div>
+                    <div class="perf-info">
+                        <h3>Monthly Cost Savings</h3>
+                        <p class="perf-value" id="costSavings">$0</p>
+                    </div>
+                </div>
+                <div class="perf-card efficiency">
+                    <div class="perf-icon">📊</div>
+                    <div class="perf-info">
+                        <h3>Efficiency Ratio</h3>
+                        <p class="perf-value" id="efficiencyRatio">0%</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabs Navigation -->
+            <section class="tabs-section">
+                <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+                <button class="tab-button" data-tab="services">Services</button>
+                <button class="tab-button" data-tab="demand">Demand Forecast</button>
+                <button class="tab-button" data-tab="warming">Warming Schedule</button>
+                <button class="tab-button" data-tab="metrics">Performance Metrics</button>
+            </section>
+
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <div class="section-title">System Overview</div>
+                <canvas id="performanceChart" class="chart-canvas"></canvas>
+                <div class="dashboard-grid">
+                    <div class="dashboard-panel">
+                        <h3>Mitigation Status</h3>
+                        <div id="mitigationStatus" class="status-box">
+                            <div class="status-item">
+                                <span class="label">Status:</span>
+                                <span class="value" id="mitStatus">Disabled</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="label">Active Services:</span>
+                                <span class="value" id="activeServices">0</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="label">Prewarmed:</span>
+                                <span class="value" id="preventedColds">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-panel">
+                        <h3>Next Warming Window</h3>
+                        <div id="nextWindow" class="status-box">
+                            <div class="status-item">
+                                <span class="label">Time:</span>
+                                <span class="value" id="nextWindowTime">--</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="label">Services:</span>
+                                <span class="value" id="nextWindowServices">0</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="label">Confidence:</span>
+                                <span class="value" id="nextWindowConfidence">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Services Tab -->
+            <section id="services" class="tab-content">
+                <div class="section-title">Service Health & Status</div>
+                <div class="services-grid" id="servicesGrid">
+                    <div class="placeholder">Loading services...</div>
+                </div>
+            </section>
+
+            <!-- Demand Forecast Tab -->
+            <section id="demand" class="tab-content">
+                <div class="section-title">Demand Pattern Analysis</div>
+                <canvas id="demandChart" class="chart-canvas"></canvas>
+                <div class="demand-analysis">
+                    <div class="analysis-box">
+                        <h4>Peak Hours</h4>
+                        <p id="peakHours">--</p>
+                    </div>
+                    <div class="analysis-box">
+                        <h4>Predicted Surges</h4>
+                        <p id="predictedSurges">--</p>
+                    </div>
+                    <div class="analysis-box">
+                        <h4>Baseline Load</h4>
+                        <p id="baselineLoad">--</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Warming Schedule Tab -->
+            <section id="warming" class="tab-content">
+                <div class="section-title">Prewarming Schedule</div>
+                <div class="warming-controls">
+                    <button class="btn btn-small" onclick="window.mitigation.addWarmingWindow()">+ Window</button>
+                    <button class="btn btn-small" onclick="window.mitigation.optimizeSchedule()">Optimize</button>
+                    <button class="btn btn-small" onclick="window.mitigation.clearSchedule()">Clear</button>
+                </div>
+                <div class="warming-list" id="warmingList">
+                    <div class="placeholder">No warming windows scheduled</div>
+                </div>
+            </section>
+
+            <!-- Metrics Tab -->
+            <section id="metrics" class="tab-content">
+                <div class="section-title">Performance Metrics</div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h4>Cold Starts Without Mitigation</h4>
+                        <p class="metric-trend" id="coldStartsWithout">0</p>
+                        <p class="metric-label">Avg Latency: <span id="coldLatency">--ms</span></p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Cold Starts With Mitigation</h4>
+                        <p class="metric-trend" id="coldStartsWith">0</p>
+                        <p class="metric-label">Avg Latency: <span id="warmLatency">--ms</span></p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Prewarming Efficiency</h4>
+                        <p class="metric-trend" id="warmingEfficiency">0%</p>
+                        <p class="metric-label">Accuracy: <span id="predictAccuracy">--</span></p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Cost Per Request</h4>
+                        <p class="metric-trend" id="costPerRequest">$0</p>
+                        <p class="metric-label">Monthly: <span id="monthlyCost">$0</span></p>
+                    </div>
+                </div>
+
+                <div class="metrics-breakdown">
+                    <h4>Latency Distribution</h4>
+                    <div class="comparison-bars">
+                        <div class="bar-group">
+                            <label>0-100ms</label>
+                            <div class="bar">
+                                <div class="bar-fill" id="latency0100"></div>
+                            </div>
+                            <span id="latency0100-pct">0%</span>
+                        </div>
+                        <div class="bar-group">
+                            <label>100-500ms</label>
+                            <div class="bar">
+                                <div class="bar-fill" id="latency100500"></div>
+                            </div>
+                            <span id="latency100500-pct">0%</span>
+                        </div>
+                        <div class="bar-group">
+                            <label>500-1000ms</label>
+                            <div class="bar">
+                                <div class="bar-fill" id="latency5001000"></div>
+                            </div>
+                            <span id="latency5001000-pct">0%</span>
+                        </div>
+                        <div class="bar-group">
+                            <label>1000ms+</label>
+                            <div class="bar">
+                                <div class="bar-fill" id="latency1000plus"></div>
+                            </div>
+                            <span id="latency1000plus-pct">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>System Status: <span id="systemStatus">Idle</span> | Uptime: <span id="uptime">0:00</span></p>
+            <p>Mitigation Enabled: <span id="mitigationEnabled">No</span> | Cost Efficiency: <span id="costEfficiency">--</span></p>
+        </footer>
+    </div>
+
+    <!-- Modal for Service Details -->
+    <div id="serviceModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="serviceTitle">Service Details</h2>
+            <div id="serviceDetails"></div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="window.mitigation.warmService()">Prewarm Now</button>
+                <button class="btn btn-secondary" onclick="window.mitigation.closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="mitigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            window.mitigation = new ColdStartMitigationLayer();
+            window.mitigation.initialize();
+
+            document.getElementById('enableMitigation').addEventListener('click', () => window.mitigation.toggleMitigation());
+            document.getElementById('simulateDemand').addEventListener('click', () => window.mitigation.simulateDemand());
+            document.getElementById('generateReport').addEventListener('click', () => window.mitigation.generateReport());
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const tabName = e.target.dataset.tab;
+                    
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    document.getElementById(tabName).classList.add('active');
+                });
+            });
+
+            document.querySelector('.modal-close').addEventListener('click', () => window.mitigation.closeModal());
+            window.addEventListener('click', (e) => {
+                const modal = document.getElementById('serviceModal');
+                if (e.target === modal) window.mitigation.closeModal();
+            });
+        });
+    </script>
+</body>
+</html>

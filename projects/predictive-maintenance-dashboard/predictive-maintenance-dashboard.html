@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Maintenance Dashboard #5003</title>
+    <link rel="stylesheet" href="predictive-maintenance-dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-cogs"></i>
+                    <h1>Predictive Maintenance Dashboard</h1>
+                    <span class="version">#5003</span>
+                </div>
+                <div class="header-controls">
+                    <div class="system-status">
+                        <div id="systemStatus" class="status-healthy"></div>
+                        <span id="systemStatusText">All Systems Operational</span>
+                    </div>
+                    <button id="emergencyShutdownBtn" class="btn btn-danger">
+                        <i class="fas fa-power-off"></i> Emergency Shutdown
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="#dashboard" class="nav-link active">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#equipment" class="nav-link">
+                            <i class="fas fa-tools"></i>
+                            <span>Equipment</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#maintenance" class="nav-link">
+                            <i class="fas fa-wrench"></i>
+                            <span>Maintenance</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#analytics" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#sensors" class="nav-link">
+                            <i class="fas fa-microchip"></i>
+                            <span>Sensors</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#alerts" class="nav-link">
+                            <i class="fas fa-bell"></i>
+                            <span>Alerts</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#reports" class="nav-link">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#settings" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="section-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> System Dashboard</h2>
+                    <div class="section-actions">
+                        <button id="refreshDashboardBtn" class="btn btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button id="exportDashboardBtn" class="btn btn-primary">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Key Metrics -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Equipment Health</h3>
+                            <i class="fas fa-heartbeat metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="equipmentHealthValue">87%</div>
+                        <div class="metric-change positive" id="equipmentHealthChange">+2.1%</div>
+                        <div class="metric-subtitle">Overall system health</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Active Alerts</h3>
+                            <i class="fas fa-exclamation-triangle metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="activeAlertsValue">12</div>
+                        <div class="metric-change negative" id="activeAlertsChange">+3</div>
+                        <div class="metric-subtitle">Require attention</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>MTBF</h3>
+                            <i class="fas fa-clock metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="mtbfValue">1,247h</div>
+                        <div class="metric-change positive" id="mtbfChange">+156h</div>
+                        <div class="metric-subtitle">Mean time between failures</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Maintenance Cost</h3>
+                            <i class="fas fa-dollar-sign metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="maintenanceCostValue">$45.2K</div>
+                        <div class="metric-change negative" id="maintenanceCostChange">-$8.3K</div>
+                        <div class="metric-subtitle">This month</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Downtime</h3>
+                            <i class="fas fa-pause-circle metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="downtimeValue">2.3h</div>
+                        <div class="metric-change positive" id="downtimeChange">-0.8h</div>
+                        <div class="metric-subtitle">This month</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Predictions</h3>
+                            <i class="fas fa-brain metric-icon"></i>
+                        </div>
+                        <div class="metric-value" id="predictionsValue">98.7%</div>
+                        <div class="metric-change positive" id="predictionsChange">+1.2%</div>
+                        <div class="metric-subtitle">Accuracy rate</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <h3>Equipment Health Trends</h3>
+                        <canvas id="healthTrendsChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Failure Predictions</h3>
+                        <canvas id="failurePredictionsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Critical Equipment -->
+                <div class="critical-equipment">
+                    <h3>Critical Equipment Status</h3>
+                    <div id="criticalEquipmentList" class="equipment-status-list">
+                        <!-- Critical equipment will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="activity-container">
+                    <h3>Recent Activity</h3>
+                    <div id="activityList" class="activity-list">
+                        <!-- Activity items will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Equipment Section -->
+            <section id="equipment" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-tools"></i> Equipment Management</h2>
+                    <div class="section-actions">
+                        <button id="addEquipmentBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Equipment
+                        </button>
+                        <button id="bulkImportBtn" class="btn btn-secondary">
+                            <i class="fas fa-upload"></i> Bulk Import
+                        </button>
+                        <button id="exportEquipmentBtn" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Equipment Filters -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <label for="equipmentTypeFilter">Type:</label>
+                        <select id="equipmentTypeFilter">
+                            <option value="all">All Types</option>
+                            <option value="pump">Pumps</option>
+                            <option value="motor">Motors</option>
+                            <option value="conveyor">Conveyors</option>
+                            <option value="compressor">Compressors</option>
+                            <option value="generator">Generators</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="healthFilter">Health Status:</label>
+                        <select id="healthFilter">
+                            <option value="all">All Status</option>
+                            <option value="healthy">Healthy</option>
+                            <option value="warning">Warning</option>
+                            <option value="critical">Critical</option>
+                            <option value="maintenance">Under Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="locationFilter">Location:</label>
+                        <select id="locationFilter">
+                            <option value="all">All Locations</option>
+                            <option value="factory-a">Factory A</option>
+                            <option value="factory-b">Factory B</option>
+                            <option value="warehouse-1">Warehouse 1</option>
+                            <option value="warehouse-2">Warehouse 2</option>
+                        </select>
+                    </div>
+                    <button id="applyFiltersBtn" class="btn btn-primary">Apply Filters</button>
+                </div>
+
+                <!-- Equipment Grid -->
+                <div id="equipmentGrid" class="equipment-grid">
+                    <!-- Equipment cards will be populated by JavaScript -->
+                </div>
+
+                <!-- Equipment Stats -->
+                <div class="equipment-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Equipment:</span>
+                        <span class="stat-value" id="totalEquipment">156</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Healthy:</span>
+                        <span class="stat-value healthy" id="healthyEquipment">134</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Warning:</span>
+                        <span class="stat-value warning" id="warningEquipment">18</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Critical:</span>
+                        <span class="stat-value critical" id="criticalEquipment">4</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Maintenance Section -->
+            <section id="maintenance" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-wrench"></i> Maintenance Management</h2>
+                    <div class="section-actions">
+                        <button id="scheduleMaintenanceBtn" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus"></i> Schedule Maintenance
+                        </button>
+                        <button id="createWorkOrderBtn" class="btn btn-secondary">
+                            <i class="fas fa-clipboard-list"></i> Create Work Order
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Maintenance Calendar -->
+                <div class="maintenance-calendar">
+                    <div class="calendar-header">
+                        <button id="prevMonthBtn" class="btn btn-secondary">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <h3 id="currentMonth">December 2026</h3>
+                        <button id="nextMonthBtn" class="btn btn-secondary">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div id="calendarGrid" class="calendar-grid">
+                        <!-- Calendar will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Upcoming Maintenance -->
+                <div class="upcoming-maintenance">
+                    <h3>Upcoming Maintenance</h3>
+                    <div id="upcomingMaintenanceList" class="maintenance-list">
+                        <!-- Upcoming maintenance will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Maintenance History -->
+                <div class="maintenance-history">
+                    <h3>Recent Maintenance Activities</h3>
+                    <div id="maintenanceHistoryList" class="maintenance-list">
+                        <!-- Maintenance history will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-line"></i> Predictive Analytics</h2>
+                    <div class="section-actions">
+                        <button id="runPredictionBtn" class="btn btn-primary">
+                            <i class="fas fa-brain"></i> Run Prediction
+                        </button>
+                        <button id="exportAnalyticsBtn" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Export Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Analytics Charts -->
+                <div class="analytics-charts">
+                    <div class="chart-container full-width">
+                        <h3>Failure Probability Over Time</h3>
+                        <canvas id="failureProbabilityChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Equipment Lifespan Analysis</h3>
+                        <canvas id="lifespanChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Cost-Benefit Analysis</h3>
+                        <canvas id="costBenefitChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Prediction Models -->
+                <div class="prediction-models">
+                    <h3>Active Prediction Models</h3>
+                    <div id="predictionModelsList" class="models-list">
+                        <!-- Prediction models will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Risk Assessment -->
+                <div class="risk-assessment">
+                    <h3>Risk Assessment Matrix</h3>
+                    <div class="risk-matrix">
+                        <div class="risk-quadrant low-risk">
+                            <h4>Low Risk</h4>
+                            <div class="risk-count" id="lowRiskCount">89</div>
+                            <p>Monitor regularly</p>
+                        </div>
+                        <div class="risk-quadrant medium-risk">
+                            <h4>Medium Risk</h4>
+                            <div class="risk-count" id="mediumRiskCount">45</div>
+                            <p>Schedule maintenance</p>
+                        </div>
+                        <div class="risk-quadrant high-risk">
+                            <h4>High Risk</h4>
+                            <div class="risk-count" id="highRiskCount">18</div>
+                            <p>Immediate attention</p>
+                        </div>
+                        <div class="risk-quadrant critical-risk">
+                            <h4>Critical Risk</h4>
+                            <div class="risk-count" id="criticalRiskCount">4</div>
+                            <p>Emergency shutdown</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sensors Section -->
+            <section id="sensors" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-microchip"></i> Sensor Management</h2>
+                    <div class="section-actions">
+                        <button id="addSensorBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Sensor
+                        </button>
+                        <button id="calibrateSensorsBtn" class="btn btn-secondary">
+                            <i class="fas fa-balance-scale"></i> Calibrate
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sensor Grid -->
+                <div id="sensorGrid" class="sensor-grid">
+                    <!-- Sensor cards will be populated by JavaScript -->
+                </div>
+
+                <!-- Sensor Stats -->
+                <div class="sensor-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Sensors:</span>
+                        <span class="stat-value" id="totalSensors">342</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Active:</span>
+                        <span class="stat-value healthy" id="activeSensors">328</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Faulty:</span>
+                        <span class="stat-value critical" id="faultySensors">14</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Data Points/Hour:</span>
+                        <span class="stat-value" id="dataPointsHour">2.1M</span>
+                    </div>
+                </div>
+
+                <!-- Sensor Data Stream -->
+                <div class="sensor-data-stream">
+                    <h3>Live Sensor Data</h3>
+                    <div id="sensorDataStream" class="data-stream">
+                        <!-- Live sensor data will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alerts Section -->
+            <section id="alerts" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-bell"></i> Alert Management</h2>
+                    <div class="section-actions">
+                        <button id="createAlertBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Alert
+                        </button>
+                        <button id="acknowledgeAllBtn" class="btn btn-secondary">
+                            <i class="fas fa-check-double"></i> Acknowledge All
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Alert Filters -->
+                <div class="alert-filters">
+                    <div class="filter-group">
+                        <label for="alertSeverityFilter">Severity:</label>
+                        <select id="alertSeverityFilter">
+                            <option value="all">All Severities</option>
+                            <option value="info">Info</option>
+                            <option value="warning">Warning</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="alertStatusFilter">Status:</label>
+                        <select id="alertStatusFilter">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="acknowledged">Acknowledged</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                    </div>
+                    <button id="applyAlertFiltersBtn" class="btn btn-primary">Apply Filters</button>
+                </div>
+
+                <!-- Active Alerts -->
+                <div class="alerts-container">
+                    <h3>Active Alerts</h3>
+                    <div id="activeAlertsList" class="alerts-list">
+                        <!-- Active alerts will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Alert History -->
+                <div class="alert-history">
+                    <h3>Alert History</h3>
+                    <div id="alertHistoryList" class="alerts-list">
+                        <!-- Alert history will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-file-alt"></i> Reports & Analytics</h2>
+                    <div class="section-actions">
+                        <button id="generateReportBtn" class="btn btn-primary">
+                            <i class="fas fa-file-pdf"></i> Generate Report
+                        </button>
+                        <button id="scheduleReportBtn" class="btn btn-secondary">
+                            <i class="fas fa-calendar-alt"></i> Schedule Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report Templates -->
+                <div class="report-templates">
+                    <h3>Report Templates</h3>
+                    <div class="templates-grid">
+                        <div class="template-card" data-template="health">
+                            <i class="fas fa-heartbeat"></i>
+                            <h4>Equipment Health Report</h4>
+                            <p>Comprehensive health analysis of all equipment</p>
+                        </div>
+                        <div class="template-card" data-template="maintenance">
+                            <i class="fas fa-wrench"></i>
+                            <h4>Maintenance Report</h4>
+                            <p>Maintenance activities and cost analysis</p>
+                        </div>
+                        <div class="template-card" data-template="predictive">
+                            <i class="fas fa-brain"></i>
+                            <h4>Predictive Analytics Report</h4>
+                            <p>Failure predictions and risk assessment</p>
+                        </div>
+                        <div class="template-card" data-template="cost">
+                            <i class="fas fa-dollar-sign"></i>
+                            <h4>Cost-Benefit Analysis</h4>
+                            <p>ROI analysis of predictive maintenance</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generated Reports -->
+                <div class="generated-reports">
+                    <h3>Recent Reports</h3>
+                    <div id="reportsList" class="reports-list">
+                        <!-- Generated reports will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-cog"></i> System Settings</h2>
+                    <div class="section-actions">
+                        <button id="saveSettingsBtn" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <button id="resetSettingsBtn" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Settings Grid -->
+                <div class="settings-grid">
+                    <div class="settings-group">
+                        <h3>System Configuration</h3>
+                        <div class="setting-item">
+                            <label for="systemName">System Name:</label>
+                            <input type="text" id="systemName" value="Predictive Maintenance System">
+                        </div>
+                        <div class="setting-item">
+                            <label for="facilityLocation">Facility Location:</label>
+                            <select id="facilityLocation">
+                                <option value="factory-a" selected>Factory A - Main Campus</option>
+                                <option value="factory-b">Factory B - East Wing</option>
+                                <option value="warehouse-1">Warehouse 1 - Distribution</option>
+                                <option value="warehouse-2">Warehouse 2 - Storage</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label for="timezone">Timezone:</label>
+                            <select id="timezone">
+                                <option value="UTC-8" selected>PST (UTC-8)</option>
+                                <option value="UTC-5">EST (UTC-5)</option>
+                                <option value="UTC+0">GMT (UTC+0)</option>
+                                <option value="UTC+1">CET (UTC+1)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Predictive Analytics</h3>
+                        <div class="setting-item toggle">
+                            <label for="enablePredictions">Enable Predictions:</label>
+                            <input type="checkbox" id="enablePredictions" checked>
+                        </div>
+                        <div class="setting-item toggle">
+                            <label for="autoMaintenance">Auto-Schedule Maintenance:</label>
+                            <input type="checkbox" id="autoMaintenance" checked>
+                        </div>
+                        <div class="setting-item">
+                            <label for="predictionThreshold">Prediction Confidence Threshold:</label>
+                            <input type="number" id="predictionThreshold" value="85" min="50" max="99">%
+                        </div>
+                        <div class="setting-item">
+                            <label for="maintenanceLeadTime">Maintenance Lead Time (days):</label>
+                            <input type="number" id="maintenanceLeadTime" value="7" min="1" max="30">
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Alert Configuration</h3>
+                        <div class="setting-item toggle">
+                            <label for="emailAlerts">Email Alerts:</label>
+                            <input type="checkbox" id="emailAlerts" checked>
+                        </div>
+                        <div class="setting-item toggle">
+                            <label for="smsAlerts">SMS Alerts:</label>
+                            <input type="checkbox" id="smsAlerts">
+                        </div>
+                        <div class="setting-item">
+                            <label for="alertEmail">Alert Email:</label>
+                            <input type="email" id="alertEmail" value="maintenance@company.com">
+                        </div>
+                        <div class="setting-item">
+                            <label for="alertPhone">Alert Phone:</label>
+                            <input type="tel" id="alertPhone" value="+1-555-0123">
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Data Management</h3>
+                        <div class="setting-item">
+                            <label for="dataRetention">Data Retention (months):</label>
+                            <input type="number" id="dataRetention" value="24" min="1" max="120">
+                        </div>
+                        <div class="setting-item">
+                            <label for="backupFrequency">Backup Frequency:</label>
+                            <select id="backupFrequency">
+                                <option value="daily" selected>Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="setting-item toggle">
+                            <label for="dataEncryption">Data Encryption:</label>
+                            <input type="checkbox" id="dataEncryption" checked>
+                        </div>
+                        <div class="setting-item toggle">
+                            <label for="anomalyDetection">Anomaly Detection:</label>
+                            <input type="checkbox" id="anomalyDetection" checked>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Predictive Maintenance Dashboard #5003</h4>
+                    <p>AI-powered predictive maintenance system for industrial equipment monitoring and failure prevention.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>System Health</h4>
+                    <div class="health-indicators">
+                        <div class="health-item">
+                            <span class="health-dot healthy"></span>
+                            <span>Database</span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-dot healthy"></span>
+                            <span>API Services</span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-dot warning"></span>
+                            <span>Sensor Network</span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-dot healthy"></span>
+                            <span>ML Models</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Stats</h4>
+                    <div class="stats-summary">
+                        <div class="stat-mini">
+                            <span class="stat-number">156</span>
+                            <span class="stat-label">Equipment</span>
+                        </div>
+                        <div class="stat-mini">
+                            <span class="stat-number">342</span>
+                            <span class="stat-label">Sensors</span>
+                        </div>
+                        <div class="stat-mini">
+                            <span class="stat-number">98.7%</span>
+                            <span class="stat-label">Uptime</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Predictive Maintenance Dashboard. Powered by AI-driven analytics.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Equipment Modal -->
+    <div id="addEquipmentModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Add New Equipment</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addEquipmentForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="equipmentName">Equipment Name:</label>
+                            <input type="text" id="equipmentName" placeholder="e.g., Pump Station A1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="equipmentType">Type:</label>
+                            <select id="equipmentType" required>
+                                <option value="">Select Type</option>
+                                <option value="pump">Pump</option>
+                                <option value="motor">Motor</option>
+                                <option value="conveyor">Conveyor</option>
+                                <option value="compressor">Compressor</option>
+                                <option value="generator">Generator</option>
+                                <option value="valve">Valve</option>
+                                <option value="transformer">Transformer</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="equipmentModel">Model:</label>
+                            <input type="text" id="equipmentModel" placeholder="e.g., XYZ-2000">
+                        </div>
+                        <div class="form-group">
+                            <label for="equipmentLocation">Location:</label>
+                            <select id="equipmentLocation" required>
+                                <option value="">Select Location</option>
+                                <option value="factory-a">Factory A</option>
+                                <option value="factory-b">Factory B</option>
+                                <option value="warehouse-1">Warehouse 1</option>
+                                <option value="warehouse-2">Warehouse 2</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="installDate">Installation Date:</label>
+                            <input type="date" id="installDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="expectedLifespan">Expected Lifespan (years):</label>
+                            <input type="number" id="expectedLifespan" value="10" min="1" max="50">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="equipmentDescription">Description:</label>
+                        <textarea id="equipmentDescription" rows="3" placeholder="Describe the equipment and its function..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelAddEquipmentBtn" class="btn btn-secondary">Cancel</button>
+                <button id="confirmAddEquipmentBtn" class="btn btn-primary">Add Equipment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Maintenance Modal -->
+    <div id="scheduleMaintenanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Schedule Maintenance</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleMaintenanceForm">
+                    <div class="form-group">
+                        <label for="maintenanceEquipment">Equipment:</label>
+                        <select id="maintenanceEquipment" required>
+                            <option value="">Select Equipment</option>
+                            <!-- Equipment options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="maintenanceType">Type:</label>
+                            <select id="maintenanceType" required>
+                                <option value="preventive">Preventive</option>
+                                <option value="predictive">Predictive</option>
+                                <option value="corrective">Corrective</option>
+                                <option value="emergency">Emergency</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="maintenancePriority">Priority:</label>
+                            <select id="maintenancePriority" required>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="scheduledDate">Scheduled Date:</label>
+                            <input type="datetime-local" id="scheduledDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="estimatedDuration">Estimated Duration (hours):</label>
+                            <input type="number" id="estimatedDuration" value="2" min="0.5" max="24" step="0.5">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenanceDescription">Description:</label>
+                        <textarea id="maintenanceDescription" rows="3" placeholder="Describe the maintenance work required..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="assignedTechnician">Assigned Technician:</label>
+                        <select id="assignedTechnician">
+                            <option value="">Select Technician</option>
+                            <option value="tech1">John Smith</option>
+                            <option value="tech2">Sarah Johnson</option>
+                            <option value="tech3">Mike Davis</option>
+                            <option value="tech4">Lisa Wilson</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelScheduleBtn" class="btn btn-secondary">Cancel</button>
+                <button id="confirmScheduleBtn" class="btn btn-primary">Schedule Maintenance</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h3 id="alertTitle">Alert</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="alertMessage">This is an alert message.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="alertOkBtn" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="predictive-maintenance-dashboard.js"></script>
+</body>
+</html>

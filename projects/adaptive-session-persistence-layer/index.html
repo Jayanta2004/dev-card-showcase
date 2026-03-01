@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Session Persistence Layer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1><i class="fas fa-database"></i> Adaptive Session Persistence Layer</h1>
+                    <p class="subtitle">Intelligent session data management with dynamic persistence scoring</p>
+                </div>
+                <div class="header-right">
+                    <div class="status-indicator">
+                        <span class="status-dot active"></span>
+                        <span class="status-text">Active</span>
+                    </div>
+                    <div class="last-update">Last updated: <span id="last-update">Just now</span></div>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Overview Panel -->
+            <div class="panel overview-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-chart-line"></i> Session Overview</h2>
+                    <div class="panel-controls">
+                        <button id="refresh-overview" class="btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="overview-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-sessions">0</div>
+                        <div class="stat-label">Total Sessions</div>
+                        <div class="stat-trend" id="sessions-trend">
+                            <i class="fas fa-arrow-up"></i> +12%
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="persisted-items">0</div>
+                        <div class="stat-label">Persisted Items</div>
+                        <div class="stat-trend" id="persisted-trend">
+                            <i class="fas fa-arrow-up"></i> +8%
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="storage-saved">0%</div>
+                        <div class="stat-label">Storage Saved</div>
+                        <div class="stat-trend" id="storage-trend">
+                            <i class="fas fa-arrow-down"></i> -15%
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-score">0.0</div>
+                        <div class="stat-label">Avg Persistence Score</div>
+                        <div class="stat-trend" id="score-trend">
+                            <i class="fas fa-arrow-up"></i> +5%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Persistence Controls -->
+            <div class="panel controls-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-sliders-h"></i> Persistence Controls</h2>
+                </div>
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label for="recency-weight">Recency Weight</label>
+                        <div class="slider-container">
+                            <input type="range" id="recency-weight" min="0" max="100" value="35">
+                            <span class="slider-value" id="recency-value">35%</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="usage-weight">Usage Weight</label>
+                        <div class="slider-container">
+                            <input type="range" id="usage-weight" min="0" max="100" value="30">
+                            <span class="slider-value" id="usage-value">30%</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="importance-weight">Importance Weight</label>
+                        <div class="slider-container">
+                            <input type="range" id="importance-weight" min="0" max="100" value="25">
+                            <span class="slider-value" id="importance-value">25%</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="size-weight">Size Weight</label>
+                        <div class="slider-container">
+                            <input type="range" id="size-weight" min="0" max="100" value="10">
+                            <span class="slider-value" id="size-value">10%</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="persistence-threshold">Persistence Threshold</label>
+                        <div class="slider-container">
+                            <input type="range" id="persistence-threshold" min="0" max="100" value="60">
+                            <span class="slider-value" id="threshold-value">60%</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="max-storage">Max Storage (MB)</label>
+                        <input type="number" id="max-storage" value="100" min="10" max="1000">
+                    </div>
+                </div>
+                <div class="control-buttons">
+                    <button id="apply-settings" class="btn-primary">
+                        <i class="fas fa-check"></i> Apply Settings
+                    </button>
+                    <button id="reset-settings" class="btn-secondary">
+                        <i class="fas fa-undo"></i> Reset to Default
+                    </button>
+                    <button id="optimize-settings" class="btn-accent">
+                        <i class="fas fa-magic"></i> Auto-Optimize
+                    </button>
+                </div>
+            </div>
+
+            <!-- Session Items List -->
+            <div class="panel items-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-list"></i> Session Items</h2>
+                    <div class="panel-controls">
+                        <select id="sort-by">
+                            <option value="score">Sort by Score</option>
+                            <option value="recency">Sort by Recency</option>
+                            <option value="usage">Sort by Usage</option>
+                            <option value="size">Sort by Size</option>
+                        </select>
+                        <button id="add-item" class="btn-primary">
+                            <i class="fas fa-plus"></i> Add Item
+                        </button>
+                    </div>
+                </div>
+                <div class="items-container" id="items-container">
+                    <!-- Session items will be populated here -->
+                </div>
+            </div>
+
+            <!-- Persistence Analytics -->
+            <div class="panel analytics-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-chart-bar"></i> Persistence Analytics</h2>
+                    <div class="panel-controls">
+                        <select id="time-range">
+                            <option value="1h">Last Hour</option>
+                            <option value="24h" selected>Last 24 Hours</option>
+                            <option value="7d">Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="analytics-charts">
+                    <div class="chart-container">
+                        <canvas id="persistence-trend" width="400" height="200"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="storage-usage" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="analytics-metrics">
+                    <div class="metric">
+                        <span class="metric-label">Persistence Rate</span>
+                        <span class="metric-value" id="persistence-rate">78%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Avg Session Duration</span>
+                        <span class="metric-value" id="avg-session-duration">24m 32s</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Data Retention</span>
+                        <span class="metric-value" id="data-retention">92%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Decision Engine -->
+            <div class="panel decision-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-brain"></i> Decision Engine</h2>
+                    <div class="panel-controls">
+                        <button id="run-analysis" class="btn-primary">
+                            <i class="fas fa-play"></i> Run Analysis
+                        </button>
+                    </div>
+                </div>
+                <div class="decision-log" id="decision-log">
+                    <!-- Decision log entries will be populated here -->
+                </div>
+            </div>
+
+            <!-- Storage Monitor -->
+            <div class="panel storage-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-hdd"></i> Storage Monitor</h2>
+                </div>
+                <div class="storage-info">
+                    <div class="storage-gauge">
+                        <div class="gauge-container">
+                            <div class="gauge-fill" id="storage-fill" style="width: 45%"></div>
+                        </div>
+                        <div class="gauge-labels">
+                            <span>Used: <span id="storage-used">45 MB</span></span>
+                            <span>Total: <span id="storage-total">100 MB</span></span>
+                        </div>
+                    </div>
+                    <div class="storage-breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Persisted Data</span>
+                            <span class="breakdown-value" id="persisted-data">35 MB</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Temporary Cache</span>
+                            <span class="breakdown-value" id="temp-cache">8 MB</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Metadata</span>
+                            <span class="breakdown-value" id="metadata">2 MB</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="storage-actions">
+                    <button id="cleanup-storage" class="btn-warning">
+                        <i class="fas fa-broom"></i> Cleanup Expired
+                    </button>
+                    <button id="export-data" class="btn-secondary">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Context Insights -->
+            <div class="panel insights-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-lightbulb"></i> Context Insights</h2>
+                    <div class="panel-controls">
+                        <button id="refresh-insights" class="btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <div class="insight-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="insight-content">
+                            <h4>Peak Usage Hours</h4>
+                            <p id="peak-hours">9:00 AM - 11:00 AM, 2:00 PM - 4:00 PM</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="insight-content">
+                            <h4>Most Valuable Data</h4>
+                            <p id="valuable-data">User preferences, shopping cart, form data</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-icon">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                        <div class="insight-content">
+                            <h4>Data Cleanup Potential</h4>
+                            <p id="cleanup-potential">23 MB of expired session data</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="insight-content">
+                            <h4>Optimization Score</h4>
+                            <p id="optimization-score">87% efficiency improvement</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Item Modal -->
+        <div id="add-item-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-plus"></i> Add Session Item</h3>
+                    <button class="close-modal" id="close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="add-item-form">
+                    <div class="form-group">
+                        <label for="item-key">Item Key</label>
+                        <input type="text" id="item-key" required placeholder="e.g., user_preferences">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-value">Item Value</label>
+                        <textarea id="item-value" required placeholder="Session data content..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-importance">Importance (1-10)</label>
+                        <input type="number" id="item-importance" min="1" max="10" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-category">Category</label>
+                        <select id="item-category">
+                            <option value="user-data">User Data</option>
+                            <option value="application-state">Application State</option>
+                            <option value="cache">Cache</option>
+                            <option value="temporary">Temporary</option>
+                            <option value="preferences">Preferences</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancel-add" class="btn-secondary">Cancel</button>
+                        <button type="submit" class="btn-primary">Add Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

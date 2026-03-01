@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>biomorphic sound garden · living frequencies</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0f0d10;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .biome-container {
+            background: #16121c;
+            border-radius: 3rem;
+            padding: 1.8rem;
+            box-shadow: 0 35px 70px #000000, 0 0 0 1px #7f6b92 inset, 0 0 50px #3c2b50;
+        }
+
+        canvas {
+            display: block;
+            width: 960px;
+            height: 540px;
+            border-radius: 2rem;
+            box-shadow: 0 0 0 1px #b197cf, 0 25px 45px -5px black;
+            cursor: crosshair;
+            background: #1a1523;
+        }
+
+        .audio-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 0.5rem 0.5rem 0.5rem 2rem;
+            background: #221d30;
+            border-radius: 4rem;
+            box-shadow: inset 0 3px 10px #07050b, 0 15px 30px #000000cc;
+            color: #e4d0ff;
+        }
+
+        .species {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .organism-badge {
+            background: #352d48;
+            border-radius: 3rem;
+            padding: 0.5rem 1.8rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: 0.1em;
+            color: #dabbff;
+            box-shadow: inset 0 -1px 0 #957ac0;
+        }
+
+        .slider-set {
+            display: flex;
+            gap: 2.2rem;
+        }
+
+        .slider-unit {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .slider-unit span {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        input[type=range] {
+            width: 130px;
+            height: 4px;
+            background: #3e3355;
+            border-radius: 10px;
+            -webkit-appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #eaccff;
+            border-radius: 50%;
+            box-shadow: 0 0 18px #c58aff;
+            border: 1px solid white;
+            cursor: grab;
+        }
+
+        .button-cluster {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .bio-btn {
+            background: #352e4a;
+            border: none;
+            color: #ecd9ff;
+            font-size: 1.6rem;
+            width: 3.2rem;
+            height: 3.2rem;
+            border-radius: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: inset 0 -2px 4px #0b0812, 0 6px 14px black;
+            transition: 0.07s;
+        }
+
+        .bio-btn:hover {
+            background: #4f4070;
+            color: white;
+            transform: scale(1.02);
+            box-shadow: inset 0 -1px 5px #cbadff, 0 10px 20px black;
+        }
+
+        #audioStatus {
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 120px;
+            text-align: right;
+            color: #caadff;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="biome-container">
+    <canvas id="soundGarden" width="960" height="540"></canvas>
+
+    <div class="audio-panel">
+        <div class="species">
+            <span class="organism-badge">🌱 SONIC BIOME v1</span>
+            <div class="slider-set">
+                <div class="slider-unit">
+                    <span>🌿 GROWTH</span>
+                    <input type="range" id="growthRate" min="0.2" max="2.2" value="1.1" step="0.02">
+                </div>
+                <div class="slider-unit">
+                    <span>🎵 REACT</span>
+                    <input type="range" id="audioReact" min="0.0" max="2.5" value="1.3" step="0.05">
+                </div>
+            </div>
+        </div>
+        <div class="button-cluster">
+            <button class="bio-btn" id="seedBtn" title="reseed organism">⟳</button>
+            <button class="bio-btn" id="humBtn" title="send frequency hum">🎶</button>
+        </div>
+        <span id="audioStatus">⏸ waiting</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ==========  BIOMORPHIC SOUND GARDEN ==========
+        // Unique: living organisms that react to microphone input + mouse + sliders.
+        // Combines: organic particles (cells), dynamic filaments, frequency response.
+        
+        const canvas = document.getElementById('soundGarden');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+
+        // ==========  parameters ==========
+        const CELL_COUNT = 320;                    // organisms
+        const FILAMENT_COUNT = 140;                 // connecting hyphae
+        
+        let growth = 1.1;                            // from slider (size/motion)
+        let audioSensitivity = 1.3;                   // from slider
+
+        // organism array
+        let cells = [];
+        // filament array (connecting lines)
+        let filaments = [];
+
+        // audio analysis
+        let audioContext = null;
+        let analyser = null;
+        let microphone = null;
+        let audioData = null;
+        let audioEnabled = false;
+        let audioAverage = 0.0;
+        let audioHistory = [];                         // for smoothing
+
+        // ==========  initialize garden ==========
+        function reseed() {
+            cells = [];
+            for (let i = 0; i < CELL_COUNT; i++) {
+                cells.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8,
+                    baseRadius: 4 + Math.random() * 14,
+                    pulsePhase: Math.random() * 6.28,
+                    frequency: 0.2 + Math.random() * 1.5,
+                    colorHue: 260 + Math.random() * 60, // purple to pink
+                });
+            }
+
+            // filaments: connect random cells
+            filaments = [];
+            for (let i = 0; i < FILAMENT_COUNT; i++) {
+                const a = Math.floor(Math.random() * cells.length);
+                const b = Math.floor(Math.random() * cells.length);
+                if (a !== b) {
+                    filaments.push({
+                        a, b,
+                        thickness: 0.5 + Math.random() * 2,
+                        opacity: 0.2 + Math.random() * 0.3,
+                    });
+                }
+            }
+        }
+
+        // ==========  audio initialization ==========
+        async function enableAudio() {
+            if (audioEnabled) return;
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                const bufferLength = analyser.frequencyBinCount;
+                audioData = new Uint8Array(bufferLength);
+
+                microphone = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const source = audioContext.createMediaStreamSource(microphone);
+                source.connect(analyser);
+                // analyser.connect(audioContext.destination); // not needed, avoid feedback
+
+                audioEnabled = true;
+                document.getElementById('audioStatus').innerText = '🎤 LIVE';
+                if (audioContext.state === 'suspended') await audioContext.resume();
+            } catch (err) {
+                console.warn('Microphone access denied or not available');
+                document.getElementById('audioStatus').innerText = '🎤 NO MIC';
+                audioEnabled = false;
+            }
+        }
+
+        // manual hum (simulates audio spike)
+        function sendHum() {
+            if (!audioEnabled) {
+                enableAudio(); // try to enable
+            }
+            // create synthetic spike
+            audioAverage = 0.7 + Math.random() * 0.5;
+            document.getElementById('audioStatus').innerText = '🎵 HUM';
+            setTimeout(() => {
+                if (audioEnabled) document.getElementById('audioStatus').innerText = '🎤 LIVE';
+                else document.getElementById('audioStatus').innerText = '⏸ waiting';
+            }, 300);
+        }
+
+        // ==========  get audio level (smoothed) ==========
+        function updateAudioLevel() {
+            if (!audioEnabled || !analyser || !audioData) {
+                // gentle random movement when no mic
+                audioAverage = 0.2 + 0.1 * Math.sin(Date.now() * 0.003);
+                return;
+            }
+
+            try {
+                analyser.getByteFrequencyData(audioData);
+                let sum = 0;
+                for (let i = 0; i < audioData.length; i++) {
+                    sum += audioData[i];
+                }
+                let avg = sum / (audioData.length * 255); // 0..1
+                // smooth
+                audioHistory.push(avg);
+                if (audioHistory.length > 8) audioHistory.shift();
+                let smoothAvg = audioHistory.reduce((a, b) => a + b, 0) / audioHistory.length;
+                audioAverage = smoothAvg * 1.5; // amplify
+                if (audioAverage > 1.0) audioAverage = 1.0;
+            } catch (e) {
+                audioAverage = 0.2;
+            }
+        }
+
+        // ==========  update organisms (cells + filaments) ==========
+        function updateBiome() {
+            // base motion + audio reaction
+            const audioFactor = audioAverage * audioSensitivity * 1.2;
+            
+            for (let i = 0; i < cells.length; i++) {
+                const c = cells[i];
+                
+                // random walk + audio pulse
+                c.vx += (Math.random() - 0.5) * 0.3 + (Math.random() - 0.5) * audioFactor * 0.7;
+                c.vy += (Math.random() - 0.5) * 0.3 + (Math.random() - 0.5) * audioFactor * 0.7;
+                
+                // growth slider influence
+                c.vx *= (0.98 + growth * 0.01);
+                c.vy *= (0.98 + growth * 0.01);
+                
+                // mouse interaction (attract / repel)
+                if (mouseX > 0 && mouseY > 0 && mouseX < W && mouseY < H) {
+                    const dx = c.x - mouseX;
+                    const dy = c.y - mouseY;
+                    const dist = Math.hypot(dx, dy) + 1;
+                    if (dist < 110) {
+                        const force = (mouseDown ? -0.018 : 0.014) * (1 - dist/130) * 5 * growth;
+                        c.vx += (dx / dist) * force;
+                        c.vy += (dy / dist) * force;
+                    }
+                }
+                
+                // move
+                c.x += c.vx;
+                c.y += c.vy;
+                
+                // soft bounds
+                if (c.x < 10) { c.x = 10 + (10 - c.x) * 0.2; c.vx *= -0.3; }
+                if (c.x > W - 10) { c.x = W - 10 - (c.x - (W - 10)) * 0.2; c.vx *= -0.3; }
+                if (c.y < 10) { c.y = 10 + (10 - c.y) * 0.2; c.vy *= -0.3; }
+                if (c.y > H - 10) { c.y = H - 10 - (c.y - (H - 10)) * 0.2; c.vy *= -0.3; }
+                
+                // damping
+                c.vx *= 0.99;
+                c.vy *= 0.99;
+                c.pulsePhase += 0.02 * c.frequency * (1 + audioFactor);
+            }
+
+            // update filament endpoints (just visual, but we can adjust opacity based on audio)
+            for (let f of filaments) {
+                // slight dynamic opacity change
+                f.opacity = 0.15 + 0.2 * Math.sin(Date.now() * 0.002 + f.a) + audioAverage * 0.2;
+            }
+        }
+
+        // ==========  drawing ==========
+        function drawGarden() {
+            // deep background
+            ctx.fillStyle = '#171225';
+            ctx.fillRect(0, 0, W, H);
+            
+            // draw filaments first (organic connections)
+            for (let f of filaments) {
+                const cellA = cells[f.a];
+                const cellB = cells[f.b];
+                if (!cellA || !cellB) continue;
+                
+                const dx = cellA.x - cellB.x;
+                const dy = cellA.y - cellB.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist > 180) continue; // don't draw too long connections
+                
+                ctx.beginPath();
+                ctx.moveTo(cellA.x, cellA.y);
+                ctx.lineTo(cellB.x, cellB.y);
+                ctx.strokeStyle = `rgba(210, 170, 255, ${f.opacity * 0.7})`;
+                ctx.lineWidth = f.thickness * (0.8 + 0.4 * Math.sin(Date.now() * 0.005 + f.a));
+                ctx.stroke();
+            }
+            
+            // draw cells (organisms)
+            for (let i = 0; i < cells.length; i++) {
+                const c = cells[i];
+                
+                // size modulated by audio and growth slider
+                const audioMod = 1 + audioAverage * audioSensitivity * 0.8;
+                const pulse = 0.8 + 0.3 * Math.sin(c.pulsePhase + Date.now() * 0.006);
+                const radius = c.baseRadius * (0.6 + 0.2 * growth) * pulse * audioMod;
+                
+                // color shifting
+                const hue = c.colorHue + 20 * Math.sin(c.pulsePhase * 0.5 + audioAverage * 4);
+                
+                // glow
+                ctx.shadowColor = `hsl(${hue}, 90%, 75%)`;
+                ctx.shadowBlur = 20 + 10 * audioAverage;
+                
+                // main body
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = `hsla(${hue}, 85%, 70%, 0.85)`;
+                ctx.fill();
+                
+                // inner highlight
+                ctx.shadowBlur = 12;
+                ctx.beginPath();
+                ctx.arc(c.x - 2, c.y - 2, radius * 0.3, 0, 2 * Math.PI);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fill();
+                
+                // tiny nucleus
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(c.x - 1, c.y - 1, radius * 0.15, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+            }
+            
+            ctx.shadowBlur = 0;
+            
+            // draw mouse aura
+            if (mouseX > 0 && mouseY > 0 && mouseX < W && mouseY < H) {
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 26 + 8 * Math.sin(Date.now() * 0.01), 0, 2 * Math.PI);
+                ctx.strokeStyle = mouseDown ? '#ffafc0' : '#dec5ff';
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([8, 8]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        // ==========  mouse handlers ==========
+        let mouseX = -1000, mouseY = -1000, mouseDown = false;
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            mouseX = (e.clientX - rect.left) * scaleX;
+            mouseY = (e.clientY - rect.top) * scaleY;
+            mouseDown = e.buttons === 1;
+        });
+        canvas.addEventListener('mouseleave', () => { mouseX = -1000; mouseDown = false; });
+        canvas.addEventListener('mousedown', (e) => { if (e.button === 0) mouseDown = true; });
+        canvas.addEventListener('mouseup', () => { mouseDown = false; });
+
+        // ==========  UI controls ==========
+        document.getElementById('growthRate').addEventListener('input', (e) => growth = parseFloat(e.target.value));
+        document.getElementById('audioReact').addEventListener('input', (e) => audioSensitivity = parseFloat(e.target.value));
+        document.getElementById('seedBtn').addEventListener('click', reseed);
+        document.getElementById('humBtn').addEventListener('click', sendHum);
+
+        // optional: enable audio on first click anywhere (user gesture)
+        canvas.addEventListener('click', () => {
+            if (!audioEnabled) enableAudio();
+        });
+
+        // ==========  animation loop ==========
+        let lastTimestamp = performance.now();
+        let frameCount = 0;
+        let fps = 0;
+
+        function animate(now) {
+            // audio update
+            updateAudioLevel();
+            
+            // update organisms (double step for smoothness)
+            for (let step = 0; step < 2; step++) updateBiome();
+
+            // draw
+            drawGarden();
+
+            // fps
+            frameCount++;
+            if (now - lastTimestamp >= 400) {
+                fps = Math.round((frameCount * 1000) / (now - lastTimestamp));
+                let statusText = audioEnabled ? '🎤 LIVE' : '⏸ waiting';
+                document.getElementById('audioStatus').innerHTML = `${statusText} | ${fps} fps`;
+                frameCount = 0;
+                lastTimestamp = now;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // initial seed
+        reseed();
+        audioHistory = [0.2, 0.2, 0.2];
+        animate(performance.now());
+    })();
+</script>
+</body>
+</html>

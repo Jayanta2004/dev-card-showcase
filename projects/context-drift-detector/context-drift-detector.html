@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context Drift Detector</title>
+    <link rel="stylesheet" href="context-drift-detector.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="detector-header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-compass"></i>
+                <h1>Context Drift Detector</h1>
+            </div>
+            <nav class="main-nav">
+                <a href="#analyze" class="nav-link active">Analyze</a>
+                <a href="#history" class="nav-link">History</a>
+                <a href="#settings" class="nav-link">Settings</a>
+                <a href="#about" class="nav-link">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="analyze" class="analyze-section">
+            <div class="container">
+                <div class="analysis-header">
+                    <h2>Context Drift Analysis</h2>
+                    <p>Detect and visualize context changes in text, conversations, or documents</p>
+                </div>
+
+                <div class="input-section">
+                    <div class="input-controls">
+                        <div class="control-group">
+                            <label for="inputType">Input Type:</label>
+                            <select id="inputType">
+                                <option value="text">Plain Text</option>
+                                <option value="conversation">Conversation</option>
+                                <option value="document">Document</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="analysisMode">Analysis Mode:</label>
+                            <select id="analysisMode">
+                                <option value="sentence">Sentence Level</option>
+                                <option value="paragraph">Paragraph Level</option>
+                                <option value="window">Sliding Window</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="sensitivity">Sensitivity:</label>
+                            <input type="range" id="sensitivity" min="0.1" max="2.0" step="0.1" value="1.0">
+                            <span id="sensitivityValue">1.0</span>
+                        </div>
+                    </div>
+
+                    <div class="text-input">
+                        <label for="inputText">Input Text:</label>
+                        <textarea id="inputText" placeholder="Enter your text here... The detector will analyze context changes and identify drift points."></textarea>
+                        <div class="input-actions">
+                            <button id="analyzeBtn" class="btn-primary">
+                                <i class="fas fa-search"></i> Analyze Context
+                            </button>
+                            <button id="clearBtn" class="btn-secondary">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                            <button id="loadSampleBtn" class="btn-secondary">
+                                <i class="fas fa-file-alt"></i> Load Sample
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="resultsSection" class="results-section" style="display: none;">
+                    <div class="results-header">
+                        <h3>Analysis Results</h3>
+                        <div class="results-summary">
+                            <div class="summary-item">
+                                <span class="summary-label">Drift Points:</span>
+                                <span id="driftCount" class="summary-value">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Coherence Score:</span>
+                                <span id="coherenceScore" class="summary-value">0%</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Topics Detected:</span>
+                                <span id="topicCount" class="summary-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="visualization-section">
+                        <div class="chart-container">
+                            <h4>Context Similarity Over Time</h4>
+                            <canvas id="similarityChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Topic Distribution</h4>
+                            <canvas id="topicChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="drift-analysis">
+                        <h4>Context Drift Points</h4>
+                        <div id="driftPoints" class="drift-list"></div>
+                    </div>
+
+                    <div class="text-highlighting">
+                        <h4>Annotated Text</h4>
+                        <div id="annotatedText" class="annotated-content"></div>
+                    </div>
+
+                    <div class="export-section">
+                        <button id="exportReportBtn" class="btn-primary">
+                            <i class="fas fa-download"></i> Export Report
+                        </button>
+                        <button id="saveAnalysisBtn" class="btn-secondary">
+                            <i class="fas fa-save"></i> Save Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="history" class="history-section">
+            <div class="container">
+                <h2>Analysis History</h2>
+                <div class="history-controls">
+                    <button id="clearHistoryBtn" class="btn-secondary">Clear History</button>
+                    <button id="exportHistoryBtn" class="btn-secondary">Export All</button>
+                </div>
+                <div id="historyList" class="history-list"></div>
+            </div>
+        </section>
+
+        <section id="settings" class="settings-section">
+            <div class="container">
+                <h2>Settings</h2>
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <h3>Analysis Parameters</h3>
+                        <div class="setting-item">
+                            <label for="minSimilarity">Minimum Similarity Threshold:</label>
+                            <input type="range" id="minSimilarity" min="0" max="1" step="0.05" value="0.3">
+                            <span id="minSimilarityValue">0.3</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="windowSize">Analysis Window Size:</label>
+                            <input type="number" id="windowSize" min="1" max="20" value="3">
+                        </div>
+                        <div class="setting-item">
+                            <label for="maxTopics">Maximum Topics to Detect:</label>
+                            <input type="number" id="maxTopics" min="1" max="10" value="5">
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3>Visualization</h3>
+                        <div class="setting-item">
+                            <label for="chartType">Chart Type:</label>
+                            <select id="chartType">
+                                <option value="line">Line Chart</option>
+                                <option value="bar">Bar Chart</option>
+                                <option value="radar">Radar Chart</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label for="colorScheme">Color Scheme:</label>
+                            <select id="colorScheme">
+                                <option value="default">Default</option>
+                                <option value="dark">Dark</option>
+                                <option value="colorblind">Colorblind Friendly</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3>Export Options</h3>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="includeCharts" checked> Include Charts in Export
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="includeAnnotations" checked> Include Text Annotations
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="autoSave"> Auto-save Analyses
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-actions">
+                    <button id="saveSettingsBtn" class="btn-primary">Save Settings</button>
+                    <button id="resetSettingsBtn" class="btn-secondary">Reset to Default</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about-section">
+            <div class="container">
+                <h2>About Context Drift Detector</h2>
+                <div class="about-content">
+                    <div class="about-text">
+                        <p>The Context Drift Detector is an advanced tool designed to analyze text and identify points where the context or topic changes significantly. This is particularly useful for:</p>
+                        <ul>
+                            <li>AI conversation monitoring</li>
+                            <li>Document coherence analysis</li>
+                            <li>Content quality assessment</li>
+                            <li>Writing improvement</li>
+                            <li>Research paper analysis</li>
+                        </ul>
+                    </div>
+                    <div class="features-list">
+                        <h3>Key Features</h3>
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <i class="fas fa-brain"></i>
+                                <h4>Semantic Analysis</h4>
+                                <p>Uses advanced algorithms to understand meaning and context</p>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-chart-line"></i>
+                                <h4>Real-time Visualization</h4>
+                                <p>Interactive charts showing context changes over time</p>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-tags"></i>
+                                <h4>Topic Detection</h4>
+                                <p>Automatically identifies and categorizes topics</p>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-file-export"></i>
+                                <h4>Export Reports</h4>
+                                <p>Generate detailed analysis reports</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="detector-footer">
+        <div class="container">
+            <p>&copy; 2026 Context Drift Detector. Built with advanced NLP techniques.</p>
+        </div>
+    </footer>
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="modal">
+        <div class="modal-content">
+            <div class="loading-spinner">
+                <i class="fas fa-compass fa-spin"></i>
+                <p>Analyzing context drift...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="context-drift-detector.js"></script>
+</body>
+</html>

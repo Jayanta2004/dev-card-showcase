@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Emotion Matcher Game</title>
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  background:linear-gradient(135deg,#ffe4e6,#fff7ed,#ecfeff);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-family:"Segoe UI",sans-serif;
+}
+
+#gameBox{
+  background:#fff1f2;
+  padding:20px;
+  border-radius:25px;
+  box-shadow:0 0 25px #fda4af;
+  width:550px;
+}
+
+h1{
+  text-align:center;
+  color:#be123c;
+  margin-bottom:10px;
+}
+
+canvas{
+  background:#fff7ed;
+  border-radius:15px;
+  border:3px solid #fb7185;
+  display:block;
+  margin:auto;
+}
+
+#hud{
+  display:flex;
+  justify-content:space-between;
+  margin-top:10px;
+  font-weight:bold;
+  color:#9f1239;
+}
+
+#controls{
+  display:flex;
+  justify-content:space-around;
+  margin-top:10px;
+}
+
+.zone{
+  width:100px;
+  padding:10px;
+  border-radius:12px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  color:white;
+}
+
+#happy{ background:#facc15; }
+#angry{ background:#ef4444; }
+#sad{ background:#60a5fa; }
+#cool{ background:#34d399; }
+
+button{
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border:none;
+  border-radius:12px;
+  background:#fb7185;
+  color:white;
+  font-size:18px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#f43f5e;
+}
+
+#msg{
+  text-align:center;
+  margin-top:8px;
+  font-size:18px;
+  color:#881337;
+}
+</style>
+</head>
+
+<body>
+
+<div id="gameBox">
+  <h1>😊 Emotion Matcher</h1>
+  <canvas id="canvas" width="500" height="350"></canvas>
+
+  <div id="hud">
+    <div>Score: <span id="score">0</span></div>
+    <div>Lives: <span id="lives">3</span></div>
+  </div>
+
+  <div id="controls">
+    <div class="zone" id="happy">A = 😊</div>
+    <div class="zone" id="angry">S = 😡</div>
+    <div class="zone" id="sad">D = 😢</div>
+    <div class="zone" id="cool">F = 😎</div>
+  </div>
+
+  <button onclick="startGame()">Start / Restart</button>
+  <div id="msg">Match emoji with correct key!</div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let emojis = ["😊","😡","😢","😎"];
+let currentEmoji = null;
+let yPos = 0;
+let speed = 2;
+
+let score = 0;
+let lives = 3;
+let running = false;
+
+function randomEmoji(){
+  return emojis[Math.floor(Math.random()*emojis.length)];
+}
+
+function drawEmoji(){
+  ctx.font = "50px serif";
+  ctx.fillText(currentEmoji, canvas.width/2 - 20, yPos);
+}
+
+function drawBackground(){
+  ctx.fillStyle="rgba(255,247,237,0.6)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function spawnEmoji(){
+  currentEmoji = randomEmoji();
+  yPos = -20;
+}
+
+function updateEmoji(){
+  yPos += speed;
+
+  if(yPos > canvas.height - 30){
+    lives--;
+    updateHUD();
+    spawnEmoji();
+
+    if(lives<=0){
+      endGame();
+    }
+  }
+}
+
+function checkMatch(key){
+  if(!running) return;
+
+  let correct = false;
+
+  if(key==="a" && currentEmoji==="😊") correct=true;
+  if(key==="s" && currentEmoji==="😡") correct=true;
+  if(key==="d" && currentEmoji==="😢") correct=true;
+  if(key==="f" && currentEmoji==="😎") correct=true;
+
+  if(correct){
+    score++;
+    speed += 0.2;
+    spawnEmoji();
+  }else{
+    lives--;
+  }
+
+  updateHUD();
+
+  if(lives<=0){
+    endGame();
+  }
+}
+
+function updateHUD(){
+  document.getElementById("score").innerText = score;
+  document.getElementById("lives").innerText = lives;
+}
+
+function gameLoop(){
+  if(!running) return;
+
+  drawBackground();
+  drawEmoji();
+  updateEmoji();
+
+  requestAnimationFrame(gameLoop);
+}
+
+document.addEventListener("keydown",e=>{
+  checkMatch(e.key.toLowerCase());
+});
+
+function startGame(){
+  score = 0;
+  lives = 3;
+  speed = 2;
+  running = true;
+  document.getElementById("msg").innerText="Match emoji with correct key!";
+  updateHUD();
+  spawnEmoji();
+  gameLoop();
+}
+
+function endGame(){
+  running = false;
+  document.getElementById("msg").innerText="💀 Game Over! Final Score: "+score;
+}
+</script>
+
+</body>
+</html>

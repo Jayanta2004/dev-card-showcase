@@ -94,3 +94,37 @@ document.querySelectorAll('.step-card').forEach(card => {
     observer.observe(card);
 });
 
+
+document.addEventListener("navbarLoaded", () => {
+    const themeToggle = document.getElementById("themeToggle");
+    const body = document.body;
+
+    if (!themeToggle) return;
+
+    function setTheme(theme) {
+        body.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        const icon = themeToggle.querySelector('.theme-icon') || themeToggle;
+        if (icon.classList.contains('fa-moon')) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        } else if (icon.classList.contains('fa-sun')) {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+        } else {
+            icon.innerHTML = '<i class="fas ' + (theme === "dark" ? "fa-moon" : "fa-sun") + ' theme-icon"></i>';
+        }
+    }
+
+    function toggleTheme() {
+        const currentTheme = body.getAttribute("data-theme") || "dark";
+        setTheme(currentTheme === "dark" ? "light" : "dark");
+    }
+
+    setTheme(localStorage.getItem("theme") || "dark");
+    themeToggle.addEventListener("click", toggleTheme);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadProjects();
+});

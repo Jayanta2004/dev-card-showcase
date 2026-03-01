@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Computing Simulator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #e0f7fa;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 210, 255, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 25px;
+            margin-bottom: 30px;
+            min-height: 700px;
+        }
+        
+        @media (max-width: 1400px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+        }
+        
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            color: #00d2ff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid rgba(0, 210, 255, 0.2);
+            padding-bottom: 10px;
+        }
+        
+        .panel-title i {
+            color: #3a7bd5;
+        }
+        
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #a0e7ff;
+            font-size: 1.1rem;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .slider-value {
+            min-width: 50px;
+            text-align: center;
+            font-weight: 600;
+            color: #00d2ff;
+            font-size: 1.1rem;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 10px;
+            -webkit-appearance: none;
+            background: rgba(0, 210, 255, 0.1);
+            border-radius: 5px;
+            outline: none;
+            border: 1px solid rgba(0, 210, 255, 0.3);
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #00d2ff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        }
+        
+        select, button {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(0, 210, 255, 0.3);
+            color: #e0f7fa;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d2ff'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 20px;
+            padding-right: 45px;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #00d2ff;
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+        }
+        
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            border: none;
+            margin-top: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #00d2ff, #3a7bd5);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(to right, #00b8e6, #2a6bc4);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 210, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0f7fa;
+            border: 2px solid rgba(0, 210, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0, 210, 255, 0.1);
+            transform: translateY(-3px);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(to right, #e63956, #e63a1f);
+            transform: translateY(-3px);
+        }
+        
+        .visualization-container {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cloud-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cloud-region {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.5s;
+            z-index: 1;
+        }
+        
+        .region-us-east {
+            top: 20%;
+            left: 15%;
+            background: radial-gradient(circle, #3a7bd5, #0f4c8a);
+        }
+        
+        .region-us-west {
+            top: 60%;
+            left: 15%;
+            background: radial-gradient(circle, #00d2ff, #0088aa);
+        }
+        
+        .region-eu-west {
+            top: 20%;
+            right: 15%;
+            background: radial-gradient(circle, #7b4397, #4a1e63);
+        }
+        
+        .region-asia-pacific {
+            top: 60%;
+            right: 15%;
+            background: radial-gradient(circle, #f46b45, #c04824);
+        }
+        
+        .vm-container {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s;
+            z-index: 2;
+        }
+        
+        .vm {
+            width: 70px;
+            height: 70px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            cursor: move;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .vm.running {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            animation: pulse 2s infinite;
+        }
+        
+        .vm.stopped {
+            background: linear-gradient(135deg, #757575, #424242);
+        }
+        
+        .vm.overloaded {
+            background: linear-gradient(135deg, #f44336, #c62828);
+            animation: shake 0.5s infinite;
+        }
+        
+        .vm i {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .vm-name {
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        
+        .container-service {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #2196F3, #0D47A1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: absolute;
+            z-index: 3;
+        }
+        
+        .load-balancer {
+            width: 120px;
+            height: 60px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #FF9800, #EF6C00);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: absolute;
+            z-index: 2;
+        }
+        
+        .database {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #9C27B0, #6A1B9A);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: absolute;
+            z-index: 2;
+        }
+        
+        .network-line {
+            position: absolute;
+            background: rgba(0, 210, 255, 0.6);
+            height: 3px;
+            transform-origin: 0 0;
+            z-index: 0;
+        }
+        
+        .data-flow {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #00d2ff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00d2ff;
+            z-index: 1;
+            animation: flow 3s linear infinite;
+        }
+        
+        .stats-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(0, 210, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00d2ff;
+            margin: 10px 0 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #a0e7ff;
+        }
+        
+        .cost-meter {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .cost-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: #4CAF50;
+            margin: 10px 0;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+        
+        .cost-label {
+            text-align: center;
+            color: #a0e7ff;
+            font-size: 1.1rem;
+        }
+        
+        .event-log {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .event-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            border-left: 4px solid #00d2ff;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .event-item.success {
+            border-left-color: #4CAF50;
+        }
+        
+        .event-item.warning {
+            border-left-color: #FF9800;
+        }
+        
+        .event-item.error {
+            border-left-color: #f44336;
+        }
+        
+        .scenario-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .scenario-btn {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(0, 210, 255, 0.3);
+            border-radius: 8px;
+            color: #e0f7fa;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .scenario-btn:hover {
+            background: rgba(0, 210, 255, 0.1);
+            transform: translateY(-3px);
+        }
+        
+        .workload-slider {
+            margin-top: 20px;
+        }
+        
+        .workload-indicator {
+            height: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .workload-fill {
+            height: 100%;
+            background: linear-gradient(to right, #4CAF50, #FF9800, #f44336);
+            border-radius: 10px;
+            width: 30%;
+            transition: width 0.5s;
+        }
+        
+        .workload-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: #a0e7ff;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+        
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+            100% { transform: translateX(0); }
+        }
+        
+        @keyframes flow {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100px); opacity: 0; }
+        }
+        
+        .auto-scale-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 152, 0, 0.2);
+            color: #FF9800;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            display: none;
+        }
+        
+        .auto-scale-active {
+            display: flex;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            background: rgba(0, 210, 255, 0.9);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.5s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .drag-over {
+            border: 2px dashed #00d2ff !important;
+            background-color: rgba(0, 210, 255, 0.1) !important;
+        }
+        
+        .resource-details {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .resource-details.active {
+            display: block;
+        }
+        
+        .resource-title {
+            font-size: 1.2rem;
+            color: #00d2ff;
+            margin-bottom: 10px;
+        }
+        
+        .resource-info {
+            font-size: 0.9rem;
+            color: #a0e7ff;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                gap: 20px;
+            }
+            
+            .panel {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .scenario-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .cloud-region {
+                width: 130px;
+                height: 130px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            display: none;
+        }
+        
+        .tutorial-content {
+            background: linear-gradient(135deg, #0f2027, #203a43);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 2px solid #00d2ff;
+            box-shadow: 0 20px 60px rgba(0, 210, 255, 0.3);
+        }
+        
+        .tutorial-title {
+            color: #00d2ff;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+        
+        .tutorial-text {
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #a0e7ff;
+        }
+        
+        .close-tutorial {
+            display: block;
+            margin: 0 auto;
+            padding: 12px 30px;
+            background: #00d2ff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .close-tutorial:hover {
+            background: #00b8e6;
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-cloud"></i> Cloud Computing Simulator</h1>
+            <p class="subtitle">Visualize and simulate cloud infrastructure, virtual machines, containers, load balancing, auto-scaling, and networking in real-time. Adjust resources and see how your cloud responds.</p>
+        </header>
+        
+        <div class="dashboard">
+            <div class="panel controls-panel">
+                <h2 class="panel-title"><i class="fas fa-sliders-h"></i> Cloud Controls</h2>
+                
+                <div class="control-group">
+                    <label class="control-label">Cloud Region</label>
+                    <select id="cloudRegion">
+                        <option value="us-east">US East (N. Virginia)</option>
+                        <option value="us-west">US West (Oregon)</option>
+                        <option value="eu-west">EU West (Ireland)</option>
+                        <option value="asia-pacific">Asia Pacific (Tokyo)</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Virtual Machines: <span id="vmCountValue">4</span></label>
+                    <div class="slider-container">
+                        <input type="range" id="vmCount" min="1" max="12" value="4">
+                        <span class="slider-value" id="vmCountDisplay">4</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Container Instances: <span id="containerCountValue">3</span></label>
+                    <div class="slider-container">
+                        <input type="range" id="containerCount" min="0" max="10" value="3">
+                        <span class="slider-value" id="containerCountDisplay">3</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Database Replicas: <span id="dbCountValue">2</span></label>
+                    <div class="slider-container">
+                        <input type="range" id="dbCount" min="1" max="5" value="2">
+                        <span class="slider-value" id="dbCountDisplay">2</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Auto-Scaling</label>
+                    <select id="autoScaling">
+                        <option value="off">Disabled</option>
+                        <option value="cpu">CPU-Based Scaling</option>
+                        <option value="load">Load-Based Scaling</option>
+                        <option value="schedule">Scheduled Scaling</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Load Balancer</label>
+                    <select id="loadBalancer">
+                        <option value="round-robin">Round Robin</option>
+                        <option value="least-connections">Least Connections</option>
+                        <option value="ip-hash">IP Hash</option>
+                        <option value="off">Disabled</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary" id="deployResources">
+                    <i class="fas fa-rocket"></i> Deploy Resources
+                </button>
+                
+                <button class="btn btn-secondary" id="resetSimulation">
+                    <i class="fas fa-redo"></i> Reset Simulation
+                </button>
+                
+                <button class="btn btn-secondary" id="showTutorial">
+                    <i class="fas fa-question-circle"></i> Show Tutorial
+                </button>
+                
+                <div class="workload-slider">
+                    <label class="control-label">Simulated Workload: <span id="workloadValue">30%</span></label>
+                    <div class="slider-container">
+                        <input type="range" id="workload" min="0" max="100" value="30">
+                    </div>
+                    <div class="workload-indicator">
+                        <div class="workload-fill" id="workloadFill"></div>
+                    </div>
+                    <div class="workload-labels">
+                        <span>Low</span>
+                        <span>Medium</span>
+                        <span>High</span>
+                        <span>Critical</span>
+                    </div>
+                </div>
+                
+                <div class="scenario-buttons">
+                    <div class="scenario-btn" data-scenario="normal">Normal Traffic</div>
+                    <div class="scenario-btn" data-scenario="spike">Traffic Spike</div>
+                    <div class="scenario-btn" data-scenario="ddos">DDoS Attack</div>
+                    <div class="scenario-btn" data-scenario="maintenance">Maintenance</div>
+                </div>
+            </div>
+            
+            <div class="panel visualization-container">
+                <h2 class="panel-title"><i class="fas fa-project-diagram"></i> Cloud Visualization</h2>
+                
+                <div class="auto-scale-indicator" id="autoScaleIndicator">
+                    <i class="fas fa-expand-alt"></i> Auto-scaling active
+                </div>
+                
+                <div class="cloud-canvas" id="cloudCanvas">
+                    <!-- Cloud regions -->
+                    <div class="cloud-region region-us-east">
+                        <i class="fas fa-flag-usa fa-2x"></i>
+                        <div>US East</div>
+                        <div style="font-size: 0.8rem; font-weight: normal;">Virginia</div>
+                    </div>
+                    
+                    <div class="cloud-region region-us-west">
+                        <i class="fas fa-flag-usa fa-2x"></i>
+                        <div>US West</div>
+                        <div style="font-size: 0.8rem; font-weight: normal;">Oregon</div>
+                    </div>
+                    
+                    <div class="cloud-region region-eu-west">
+                        <i class="fas fa-flag-eu fa-2x"></i>
+                        <div>EU West</div>
+                        <div style="font-size: 0.8rem; font-weight: normal;">Ireland</div>
+                    </div>
+                    
+                    <div class="cloud-region region-asia-pacific">
+                        <i class="fas fa-globe-asia fa-2x"></i>
+                        <div>Asia Pacific</div>
+                        <div style="font-size: 0.8rem; font-weight: normal;">Tokyo</div>
+                    </div>
+                    
+                    <!-- Resources will be dynamically added here -->
+                </div>
+                
+                <div class="resource-details" id="resourceDetails">
+                    <div class="resource-title" id="resourceTitle">Resource Details</div>
+                    <div class="resource-info" id="resourceInfo">
+                        Click on a resource to see details about it.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel stats-panel">
+                <h2 class="panel-title"><i class="fas fa-chart-bar"></i> Cloud Metrics</h2>
+                
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <i class="fas fa-microchip fa-2x" style="color: #00d2ff;"></i>
+                        <div class="stat-value" id="cpuUsage">42%</div>
+                        <div class="stat-label">CPU Utilization</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <i class="fas fa-memory fa-2x" style="color: #00d2ff;"></i>
+                        <div class="stat-value" id="memoryUsage">67%</div>
+                        <div class="stat-label">Memory Usage</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <i class="fas fa-hdd fa-2x" style="color: #00d2ff;"></i>
+                        <div class="stat-value" id="storageUsage">35%</div>
+                        <div class="stat-label">Storage Used</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <i class="fas fa-network-wired fa-2x" style="color: #00d2ff;"></i>
+                        <div class="stat-value" id="networkUsage">1.2 Gbps</div>
+                        <div class="stat-label">Network Traffic</div>
+                    </div>
+                </div>
+                
+                <div class="cost-meter">
+                    <div class="cost-label">Estimated Hourly Cost</div>
+                    <div class="cost-display" id="hourlyCost">$4.82</div>
+                    <div class="cost-label">Monthly Projection: <span id="monthlyCost">$3,472</span></div>
+                </div>
+                
+                <div class="event-log">
+                    <h3 style="color: #00d2ff; margin-bottom: 10px; font-size: 1.1rem;">Event Log</h3>
+                    <div id="eventLog">
+                        <div class="event-item success">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Simulation started successfully</span>
+                        </div>
+                        <div class="event-item">
+                            <i class="fas fa-info-circle"></i>
+                            <span>4 VMs deployed in US East region</span>
+                        </div>
+                        <div class="event-item">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Load balancer configured (Round Robin)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tutorial Overlay -->
+    <div class="tutorial-overlay" id="tutorialOverlay">
+        <div class="tutorial-content">
+            <h2 class="tutorial-title"><i class="fas fa-graduation-cap"></i> Cloud Simulator Tutorial</h2>
+            <div class="tutorial-text">
+                <p><strong>Welcome to the Cloud Computing Simulator!</strong> This tool helps you understand how cloud infrastructure works by visualizing key concepts.</p>
+                
+                <p><strong>How to use:</strong></p>
+                <ol>
+                    <li>Adjust the sliders to change the number of virtual machines, containers, and databases</li>
+                    <li>Select different auto-scaling and load balancing strategies</li>
+                    <li>Click "Deploy Resources" to apply your configuration</li>
+                    <li>Use the workload slider to simulate different traffic levels</li>
+                    <li>Try the scenario buttons to simulate real-world situations</li>
+                    <li>Click on any resource (VM, container, database) to see details</li>
+                    <li>Drag VMs between regions to see how cloud migration works</li>
+                </ol>
+                
+                <p><strong>Key Concepts Simulated:</strong></p>
+                <ul>
+                    <li><strong>Virtual Machines (VMs):</strong> Green boxes that can run applications</li>
+                    <li><strong>Containers:</strong> Blue boxes that package applications with dependencies</li>
+                    <li><strong>Load Balancer:</strong> Orange box that distributes traffic across resources</li>
+                    <li><strong>Databases:</strong> Purple circles that store application data</li>
+                    <li><strong>Auto-scaling:</strong> Automatically adds/removes resources based on load</li>
+                    <li><strong>Cloud Regions:</strong> Different geographical locations for redundancy</li>
+                </ul>
+                
+                <p>Watch how the metrics change as you adjust the simulation parameters!</p>
+            </div>
+            <button class="close-tutorial" id="closeTutorial">Got it! Let's start simulating</button>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-text">Resources deployed successfully!</span>
+    </div>
+
+    <script>
+        // Cloud simulation state
+        let cloudState = {
+            vms: [],
+            containers: [],
+            databases: [],
+            loadBalancer: null,
+            workload: 30,
+            autoScaling: false,
+            currentRegion: 'us-east',
+            costs: {
+                vmHourly: 0.12,
+                containerHourly: 0.05,
+                dbHourly: 0.18,
+                lbHourly: 0.08,
+                networkGb: 0.09
+            },
+            stats: {
+                cpuUsage: 42,
+                memoryUsage: 67,
+                storageUsage: 35,
+                networkUsage: 1.2
+            },
+            events: [],
+            simulationInterval: null,
+            dataFlows: []
+        };
+        
+        // Initialize the simulator
+        function initSimulator() {
+            // Load saved state if available
+            const savedState = localStorage.getItem('cloudSimulatorState');
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    Object.assign(cloudState, parsed);
+                    
+                    // Update UI with saved values
+                    document.getElementById('vmCount').value = cloudState.vms.length;
+                    document.getElementById('vmCountValue').textContent = cloudState.vms.length;
+                    document.getElementById('vmCountDisplay').textContent = cloudState.vms.length;
+                    
+                    document.getElementById('containerCount').value = cloudState.containers.length;
+                    document.getElementById('containerCountValue').textContent = cloudState.containers.length;
+                    document.getElementById('containerCountDisplay').textContent = cloudState.containers.length;
+                    
+                    document.getElementById('dbCount').value = cloudState.databases.length;
+                    document.getElementById('dbCountValue').textContent = cloudState.databases.length;
+                    document.getElementById('dbCountDisplay').textContent = cloudState.databases.length;
+                    
+                    document.getElementById('workload').value = cloudState.workload;
+                    document.getElementById('workloadValue').textContent = cloudState.workload + '%';
+                    document.getElementById('workloadFill').style.width = cloudState.workload + '%';
+                    
+                    // Add saved events to log
+                    cloudState.events.forEach(event => {
+                        addEventToLog(event.text, event.type);
+                    });
+                } catch (e) {
+                    console.log('Could not load saved state, starting fresh');
+                }
+            }
+            
+            // Deploy initial resources
+            deployResources();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Start simulation
+            startSimulation();
+            
+            // Show tutorial on first visit
+            const hasSeenTutorial = localStorage.getItem('hasSeenCloudTutorial');
+            if (!hasSeenTutorial) {
+                setTimeout(() => {
+                    document.getElementById('tutorialOverlay').style.display = 'flex';
+                }, 1000);
+            }
+        }
+        
+        // Deploy cloud resources based on current settings
+        function deployResources() {
+            const canvas = document.getElementById('cloudCanvas');
+            
+            // Clear existing resources (except regions)
+            document.querySelectorAll('.vm-container, .container-service, .load-balancer, .database, .network-line, .data-flow').forEach(el => {
+                el.remove();
+            });
+            
+            // Reset arrays
+            cloudState.vms = [];
+            cloudState.containers = [];
+            cloudState.databases = [];
+            cloudState.loadBalancer = null;
+            cloudState.dataFlows = [];
+            
+            // Get current values
+            const vmCount = parseInt(document.getElementById('vmCount').value);
+            const containerCount = parseInt(document.getElementById('containerCount').value);
+            const dbCount = parseInt(document.getElementById('dbCount').value);
+            const loadBalancerType = document.getElementById('loadBalancer').value;
+            const autoScalingType = document.getElementById('autoScaling').value;
+            const region = document.getElementById('cloudRegion').value;
+            
+            cloudState.currentRegion = region;
+            cloudState.autoScaling = autoScalingType !== 'off';
+            
+            // Highlight selected region
+            document.querySelectorAll('.cloud-region').forEach(el => {
+                el.style.opacity = '0.7';
+                el.style.transform = 'scale(1)';
+            });
+            
+            const selectedRegion = document.querySelector(`.region-${region}`);
+            if (selectedRegion) {
+                selectedRegion.style.opacity = '1';
+                selectedRegion.style.transform = 'scale(1.05)';
+            }
+            
+            // Create load balancer if enabled
+            if (loadBalancerType !== 'off') {
+                createLoadBalancer(loadBalancerType);
+            }
+            
+            // Create virtual machines
+            for (let i = 0; i < vmCount; i++) {
+                createVM(i, region);
+            }
+            
+            // Create containers
+            for (let i = 0; i < containerCount; i++) {
+                createContainer(i, region);
+            }
+            
+            // Create databases
+            for (let i = 0; i < dbCount; i++) {
+                createDatabase(i, region);
+            }
+            
+            // Create network connections
+            createNetworkConnections();
+            
+            // Update stats
+            updateStats();
+            
+            // Update costs
+            updateCosts();
+            
+            // Add event to log
+            addEventToLog(`Deployed ${vmCount} VMs, ${containerCount} containers, ${dbCount} databases in ${region} region`, 'info');
+            
+            if (loadBalancerType !== 'off') {
+                addEventToLog(`Load balancer configured (${loadBalancerType})`, 'info');
+            }
+            
+            if (cloudState.autoScaling) {
+                addEventToLog(`Auto-scaling enabled (${autoScalingType})`, 'success');
+                document.getElementById('autoScaleIndicator').classList.add('auto-scale-active');
+            } else {
+                document.getElementById('autoScaleIndicator').classList.remove('auto-scale-active');
+            }
+            
+            // Show notification
+            showNotification('Cloud resources deployed successfully!');
+            
+            // Save state
+            saveState();
+        }
+        
+        // Create a virtual machine
+        function createVM(id, region) {
+            const canvas = document.getElementById('cloudCanvas');
+            const regionElement = document.querySelector(`.region-${region}`);
+            
+            if (!regionElement) return;
+            
+            const regionRect = regionElement.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Calculate position within region
+            const regionCenterX = regionRect.left - canvasRect.left + regionRect.width / 2;
+            const regionCenterY = regionRect.top - canvasRect.top + regionRect.height / 2;
+            
+            // Random position within region
+            const offsetX = (Math.random() - 0.5) * 100;
+            const offsetY = (Math.random() - 0.5) * 100;
+            
+            const vmContainer = document.createElement('div');
+            vmContainer.className = 'vm-container';
+            vmContainer.style.left = `${regionCenterX + offsetX}px`;
+            vmContainer.style.top = `${regionCenterY + offsetY}px`;
+            vmContainer.dataset.id = id;
+            vmContainer.dataset.type = 'vm';
+            vmContainer.dataset.region = region;
+            
+            const vm = document.createElement('div');
+            vm.className = 'vm running';
+            vm.innerHTML = `
+                <i class="fas fa-server"></i>
+                <div>VM-${id + 1}</div>
+                <div class="vm-name">${getVMType(id)}</div>
+            `;
+            
+            // Add click handler for details
+            vm.addEventListener('click', function(e) {
+                e.stopPropagation();
+                showResourceDetails('vm', id);
+            });
+            
+            // Make VMs draggable
+            vm.setAttribute('draggable', 'true');
+            vm.addEventListener('dragstart', handleDragStart);
+            
+            vmContainer.appendChild(vm);
+            canvas.appendChild(vmContainer);
+            
+            // Add to state
+            cloudState.vms.push({
+                id: id,
+                type: getVMType(id),
+                region: region,
+                status: 'running',
+                cpu: 30 + Math.random() * 40,
+                memory: 40 + Math.random() * 50,
+                cost: cloudState.costs.vmHourly
+            });
+            
+            return vmContainer;
+        }
+        
+        // Create a container
+        function createContainer(id, region) {
+            const canvas = document.getElementById('cloudCanvas');
+            const regionElement = document.querySelector(`.region-${region}`);
+            
+            if (!regionElement) return;
+            
+            const regionRect = regionElement.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Calculate position within region
+            const regionCenterX = regionRect.left - canvasRect.left + regionRect.width / 2;
+            const regionCenterY = regionRect.top - canvasRect.top + regionRect.height / 2;
+            
+            // Position containers around VMs
+            const offsetX = (Math.random() - 0.5) * 120;
+            const offsetY = (Math.random() - 0.5) * 120;
+            
+            const container = document.createElement('div');
+            container.className = 'container-service';
+            container.style.left = `${regionCenterX + offsetX}px`;
+            container.style.top = `${regionCenterY + offsetY}px`;
+            container.dataset.id = id;
+            container.dataset.type = 'container';
+            container.dataset.region = region;
+            container.innerHTML = `
+                <i class="fab fa-docker"></i>
+                <div style="font-size: 0.7rem; margin-top: 3px;">App-${id + 1}</div>
+            `;
+            
+            // Add click handler for details
+            container.addEventListener('click', function(e) {
+                e.stopPropagation();
+                showResourceDetails('container', id);
+            });
+            
+            canvas.appendChild(container);
+            
+            // Add to state
+            cloudState.containers.push({
+                id: id,
+                region: region,
+                status: 'running',
+                service: `App-${id + 1}`,
+                cost: cloudState.costs.containerHourly
+            });
+            
+            return container;
+        }
+        
+        // Create a database
+        function createDatabase(id, region) {
+            const canvas = document.getElementById('cloudCanvas');
+            const regionElement = document.querySelector(`.region-${region}`);
+            
+            if (!regionElement) return;
+            
+            const regionRect = regionElement.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Calculate position within region
+            const regionCenterX = regionRect.left - canvasRect.left + regionRect.width / 2;
+            const regionCenterY = regionRect.top - canvasRect.top + regionRect.height / 2;
+            
+            // Position databases separately
+            const offsetX = (id % 2 === 0 ? -1 : 1) * 150;
+            const offsetY = (id < 2 ? -1 : 1) * 80;
+            
+            const database = document.createElement('div');
+            database.className = 'database';
+            database.style.left = `${regionCenterX + offsetX}px`;
+            database.style.top = `${regionCenterY + offsetY}px`;
+            database.dataset.id = id;
+            database.dataset.type = 'database';
+            database.dataset.region = region;
+            database.innerHTML = `
+                <i class="fas fa-database"></i>
+                <div style="font-size: 0.8rem; margin-top: 5px;">DB-${id + 1}</div>
+            `;
+            
+            // Add click handler for details
+            database.addEventListener('click', function(e) {
+                e.stopPropagation();
+                showResourceDetails('database', id);
+            });
+            
+            canvas.appendChild(database);
+            
+            // Add to state
+            cloudState.databases.push({
+                id: id,
+                region: region,
+                type: id === 0 ? 'Primary' : 'Replica',
+                status: 'running',
+                cost: cloudState.costs.dbHourly
+            });
+            
+            return database;
+        }
+        
+        // Create load balancer
+        function createLoadBalancer(type) {
+            const canvas = document.getElementById('cloudCanvas');
+            const regionElement = document.querySelector(`.region-${cloudState.currentRegion}`);
+            
+            if (!regionElement) return;
+            
+            const regionRect = regionElement.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Position load balancer above the region
+            const lbX = regionRect.left - canvasRect.left + regionRect.width / 2;
+            const lbY = regionRect.top - canvasRect.top - 60;
+            
+            const loadBalancer = document.createElement('div');
+            loadBalancer.className = 'load-balancer';
+            loadBalancer.style.left = `${lbX}px`;
+            loadBalancer.style.top = `${lbY}px`;
+            loadBalancer.dataset.type = 'loadBalancer';
+            loadBalancer.innerHTML = `
+                <i class="fas fa-balance-scale"></i>
+                <div style="font-size: 0.8rem; margin-top: 5px;">Load Balancer</div>
+                <div style="font-size: 0.7rem; font-weight: normal;">${type}</div>
+            `;
+            
+            // Add click handler for details
+            loadBalancer.addEventListener('click', function(e) {
+                e.stopPropagation();
+                showResourceDetails('loadBalancer', 0);
+            });
+            
+            canvas.appendChild(loadBalancer);
+            
+            // Add to state
+            cloudState.loadBalancer = {
+                type: type,
+                region: cloudState.currentRegion,
+                connections: cloudState.vms.length + cloudState.containers.length
+            };
+            
+            return loadBalancer;
+        }
+        
+        // Create network connections between resources
+        function createNetworkConnections() {
+            const canvas = document.getElementById('cloudCanvas');
+            
+            // Connect VMs to load balancer if exists
+            if (cloudState.loadBalancer) {
+                const lb = document.querySelector('.load-balancer');
+                if (lb) {
+                    const lbRect = lb.getBoundingClientRect();
+                    const canvasRect = canvas.getBoundingClientRect();
+                    
+                    const lbCenterX = lbRect.left - canvasRect.left + lbRect.width / 2;
+                    const lbCenterY = lbRect.top - canvasRect.top + lbRect.height / 2;
+                    
+                    // Connect to each VM
+                    document.querySelectorAll('.vm').forEach(vm => {
+                        const vmRect = vm.getBoundingClientRect();
+                        const vmCenterX = vmRect.left - canvasRect.left + vmRect.width / 2;
+                        const vmCenterY = vmRect.top - canvasRect.top + vmRect.height / 2;
+                        
+                        createNetworkLine(lbCenterX, lbCenterY, vmCenterX, vmCenterY);
+                    });
+                    
+                    // Connect to each container
+                    document.querySelectorAll('.container-service').forEach(container => {
+                        const containerRect = container.getBoundingClientRect();
+                        const containerCenterX = containerRect.left - canvasRect.left + containerRect.width / 2;
+                        const containerCenterY = containerRect.top - canvasRect.top + containerRect.height / 2;
+                        
+                        createNetworkLine(lbCenterX, lbCenterY, containerCenterX, containerCenterY);
+                    });
+                }
+            }
+            
+            // Connect databases to each other (for replication)
+            const databases = document.querySelectorAll('.database');
+            if (databases.length > 1) {
+                for (let i = 0; i < databases.length; i++) {
+                    for (let j = i + 1; j < databases.length; j++) {
+                        const db1Rect = databases[i].getBoundingClientRect();
+                        const db2Rect = databases[j].getBoundingClientRect();
+                        const canvasRect = canvas.getBoundingClientRect();
+                        
+                        const db1CenterX = db1Rect.left - canvasRect.left + db1Rect.width / 2;
+                        const db1CenterY = db1Rect.top - canvasRect.top + db1Rect.height / 2;
+                        
+                        const db2CenterX = db2Rect.left - canvasRect.left + db2Rect.width / 2;
+                        const db2CenterY = db2Rect.top - canvasRect.top + db2Rect.height / 2;
+                        
+                        createNetworkLine(db1CenterX, db1CenterY, db2CenterX, db2CenterY, true);
+                    }
+                }
+            }
+        }
+        
+        // Create a network line between two points
+        function createNetworkLine(x1, y1, x2, y2, dashed = false) {
+            const canvas = document.getElementById('cloudCanvas');
+            
+            // Calculate distance and angle
+            const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+            
+            const line = document.createElement('div');
+            line.className = 'network-line';
+            line.style.width = `${distance}px`;
+            line.style.left = `${x1}px`;
+            line.style.top = `${y1}px`;
+            line.style.transform = `rotate(${angle}deg)`;
+            
+            if (dashed) {
+                line.style.background = 'repeating-linear-gradient(to right, rgba(0, 210, 255, 0.6), rgba(0, 210, 255, 0.6) 5px, transparent 5px, transparent 10px)';
+            }
+            
+            canvas.appendChild(line);
+            
+            // Create data flow animation
+            createDataFlow(x1, y1, x2, y2, angle, distance);
+            
+            return line;
+        }
+        
+        // Create animated data flow along a network line
+        function createDataFlow(x1, y1, x2, y2, angle, distance) {
+            const canvas = document.getElementById('cloudCanvas');
+            
+            const dataFlow = document.createElement('div');
+            dataFlow.className = 'data-flow';
+            dataFlow.style.left = `${x1}px`;
+            dataFlow.style.top = `${y1}px`;
+            
+            // Randomize animation duration
+            const duration = 2 + Math.random() * 2;
+            dataFlow.style.animation = `flow ${duration}s linear infinite`;
+            
+            // Random delay for visual effect
+            dataFlow.style.animationDelay = `${Math.random() * 2}s`;
+            
+            canvas.appendChild(dataFlow);
+            
+            // Store for cleanup
+            cloudState.dataFlows.push(dataFlow);
+            
+            return dataFlow;
+        }
+        
+        // Show resource details when clicked
+        function showResourceDetails(type, id) {
+            const detailsPanel = document.getElementById('resourceDetails');
+            const title = document.getElementById('resourceTitle');
+            const info = document.getElementById('resourceInfo');
+            
+            let resource;
+            let details = '';
+            
+            switch(type) {
+                case 'vm':
+                    resource = cloudState.vms.find(vm => vm.id === id);
+                    if (resource) {
+                        title.textContent = `Virtual Machine: VM-${id + 1}`;
+                        details = `
+                            <strong>Type:</strong> ${resource.type}<br>
+                            <strong>Region:</strong> ${resource.region}<br>
+                            <strong>Status:</strong> <span style="color: #4CAF50;">${resource.status}</span><br>
+                            <strong>CPU Usage:</strong> ${resource.cpu.toFixed(1)}%<br>
+                            <strong>Memory Usage:</strong> ${resource.memory.toFixed(1)}%<br>
+                            <strong>Hourly Cost:</strong> $${resource.cost.toFixed(2)}<br><br>
+                            <em>Drag to move between regions. Click to see details.</em>
+                        `;
+                    }
+                    break;
+                    
+                case 'container':
+                    resource = cloudState.containers.find(container => container.id === id);
+                    if (resource) {
+                        title.textContent = `Container: ${resource.service}`;
+                        details = `
+                            <strong>Service:</strong> ${resource.service}<br>
+                            <strong>Region:</strong> ${resource.region}<br>
+                            <strong>Status:</strong> <span style="color: #4CAF50;">${resource.status}</span><br>
+                            <strong>Hourly Cost:</strong> $${resource.cost.toFixed(2)}<br><br>
+                            <em>Containers package applications with all dependencies for consistent deployment across environments.</em>
+                        `;
+                    }
+                    break;
+                    
+                case 'database':
+                    resource = cloudState.databases.find(db => db.id === id);
+                    if (resource) {
+                        title.textContent = `Database: ${resource.type} (DB-${id + 1})`;
+                        details = `
+                            <strong>Type:</strong> ${resource.type}<br>
+                            <strong>Region:</strong> ${resource.region}<br>
+                            <strong>Status:</strong> <span style="color: #4CAF50;">${resource.status}</span><br>
+                            <strong>Hourly Cost:</strong> $${resource.cost.toFixed(2)}<br><br>
+                            <em>Database replicas provide redundancy and improve read performance.</em>
+                        `;
+                    }
+                    break;
+                    
+                case 'loadBalancer':
+                    resource = cloudState.loadBalancer;
+                    if (resource) {
+                        title.textContent = 'Load Balancer';
+                        details = `
+                            <strong>Type:</strong> ${resource.type}<br>
+                            <strong>Region:</strong> ${resource.region}<br>
+                            <strong>Active Connections:</strong> ${resource.connections}<br>
+                            <strong>Hourly Cost:</strong> $${cloudState.costs.lbHourly.toFixed(2)}<br><br>
+                            <em>Distributes incoming traffic across multiple targets (VMs, containers) to ensure high availability.</em>
+                        `;
+                    }
+                    break;
+            }
+            
+            info.innerHTML = details;
+            detailsPanel.classList.add('active');
+        }
+        
+        // Update cloud statistics based on current state
+        function updateStats() {
+            // Update based on workload
+            const workload = cloudState.workload;
+            
+            // Calculate CPU usage (increases with workload)
+            let cpuBase = 30;
+            if (workload > 70) cpuBase = 60;
+            else if (workload > 40) cpuBase = 45;
+            
+            cloudState.stats.cpuUsage = cpuBase + Math.random() * 20;
+            
+            // Memory usage
+            let memoryBase = 50;
+            if (workload > 70) memoryBase = 70;
+            else if (workload > 40) memoryBase = 60;
+            
+            cloudState.stats.memoryUsage = memoryBase + Math.random() * 20;
+            
+            // Network usage (in Gbps)
+            cloudState.stats.networkUsage = (workload / 100) * 2.5 + Math.random() * 0.5;
+            
+            // Update UI
+            document.getElementById('cpuUsage').textContent = cloudState.stats.cpuUsage.toFixed(0) + '%';
+            document.getElementById('memoryUsage').textContent = cloudState.stats.memoryUsage.toFixed(0) + '%';
+            document.getElementById('storageUsage').textContent = cloudState.stats.storageUsage.toFixed(0) + '%';
+            document.getElementById('networkUsage').textContent = cloudState.stats.networkUsage.toFixed(1) + ' Gbps';
+            
+            // Update VM status based on load
+            updateVMStatus();
+        }
+        
+        // Update VM status (running, stopped, overloaded)
+        function updateVMStatus() {
+            const vms = document.querySelectorAll('.vm');
+            const workload = cloudState.workload;
+            
+            vms.forEach((vm, index) => {
+                // Remove all status classes
+                vm.classList.remove('running', 'stopped', 'overloaded');
+                
+                // Determine status based on workload and index
+                if (workload > 80 && index < 2) {
+                    // First 2 VMs overloaded at high workload
+                    vm.classList.add('overloaded');
+                    if (cloudState.vms[index]) {
+                        cloudState.vms[index].status = 'overloaded';
+                    }
+                } else if (workload < 10 && index >= vms.length - 2) {
+                    // Last 2 VMs stopped at very low workload
+                    vm.classList.add('stopped');
+                    if (cloudState.vms[index]) {
+                        cloudState.vms[index].status = 'stopped';
+                    }
+                } else {
+                    // Others running
+                    vm.classList.add('running');
+                    if (cloudState.vms[index]) {
+                        cloudState.vms[index].status = 'running';
+                    }
+                }
+            });
+            
+            // Handle auto-scaling
+            handleAutoScaling();
+        }
+        
+        // Handle auto-scaling based on workload
+        function handleAutoScaling() {
+            if (!cloudState.autoScaling) return;
+            
+            const workload = cloudState.workload;
+            const vmCount = cloudState.vms.length;
+            const autoScalingType = document.getElementById('autoScaling').value;
+            
+            let shouldScale = false;
+            let scaleDirection = ''; // 'up' or 'down'
+            
+            if (autoScalingType === 'cpu' && cloudState.stats.cpuUsage > 70) {
+                shouldScale = true;
+                scaleDirection = 'up';
+            } else if (autoScalingType === 'cpu' && cloudState.stats.cpuUsage < 30) {
+                shouldScale = true;
+                scaleDirection = 'down';
+            } else if (autoScalingType === 'load' && workload > 75) {
+                shouldScale = true;
+                scaleDirection = 'up';
+            } else if (autoScalingType === 'load' && workload < 25) {
+                shouldScale = true;
+                scaleDirection = 'down';
+            }
+            
+            if (shouldScale) {
+                if (scaleDirection === 'up' && vmCount < 12) {
+                    // Scale up - add a VM
+                    const newId = cloudState.vms.length;
+                    createVM(newId, cloudState.currentRegion);
+                    
+                    // Update load balancer connections
+                    if (cloudState.loadBalancer) {
+                        cloudState.loadBalancer.connections++;
+                    }
+                    
+                    // Update UI
+                    document.getElementById('vmCount').value = cloudState.vms.length;
+                    document.getElementById('vmCountValue').textContent = cloudState.vms.length;
+                    document.getElementById('vmCountDisplay').textContent = cloudState.vms.length;
+                    
+                    // Add event
+                    addEventToLog(`Auto-scaling: Added VM-${newId + 1} (High ${autoScalingType === 'cpu' ? 'CPU' : 'load'})`, 'success');
+                    
+                    // Update network connections
+                    createNetworkConnections();
+                } else if (scaleDirection === 'down' && vmCount > 1) {
+                    // Scale down - remove last VM
+                    const removedVm = cloudState.vms.pop();
+                    
+                    // Remove from DOM
+                    const vmElement = document.querySelector(`.vm-container[data-id="${removedVm.id}"]`);
+                    if (vmElement) vmElement.remove();
+                    
+                    // Update load balancer connections
+                    if (cloudState.loadBalancer) {
+                        cloudState.loadBalancer.connections--;
+                    }
+                    
+                    // Update UI
+                    document.getElementById('vmCount').value = cloudState.vms.length;
+                    document.getElementById('vmCountValue').textContent = cloudState.vms.length;
+                    document.getElementById('vmCountDisplay').textContent = cloudState.vms.length;
+                    
+                    // Add event
+                    addEventToLog(`Auto-scaling: Removed VM-${removedVm.id + 1} (Low ${autoScalingType === 'cpu' ? 'CPU' : 'load'})`, 'warning');
+                    
+                    // Update network connections
+                    createNetworkConnections();
+                }
+                
+                // Update costs and stats
+                updateCosts();
+                updateStats();
+            }
+        }
+        
+        // Update cost calculations
+        function updateCosts() {
+            const vmCost = cloudState.vms.length * cloudState.costs.vmHourly;
+            const containerCost = cloudState.containers.length * cloudState.costs.containerHourly;
+            const dbCost = cloudState.databases.length * cloudState.costs.dbHourly;
+            const lbCost = cloudState.loadBalancer ? cloudState.costs.lbHourly : 0;
+            const networkCost = cloudState.stats.networkUsage * cloudState.costs.networkGb;
+            
+            const hourlyTotal = vmCost + containerCost + dbCost + lbCost + networkCost;
+            const monthlyTotal = hourlyTotal * 24 * 30;
+            
+            // Update UI
+            document.getElementById('hourlyCost').textContent = '$' + hourlyTotal.toFixed(2);
+            document.getElementById('monthlyCost').textContent = '$' + monthlyTotal.toFixed(0);
+        }
+        
+        // Add event to log
+        function addEventToLog(text, type = 'info') {
+            const eventLog = document.getElementById('eventLog');
+            const eventItem = document.createElement('div');
+            
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            else if (type === 'warning') icon = 'exclamation-triangle';
+            else if (type === 'error') icon = 'exclamation-circle';
+            
+            eventItem.className = `event-item ${type}`;
+            eventItem.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${text}</span>
+            `;
+            
+            // Add to top of log
+            eventLog.insertBefore(eventItem, eventLog.firstChild);
+            
+            // Limit log to 10 items
+            while (eventLog.children.length > 10) {
+                eventLog.removeChild(eventLog.lastChild);
+            }
+            
+            // Store in state
+            cloudState.events.unshift({ text, type, timestamp: new Date().toISOString() });
+            
+            // Limit stored events
+            if (cloudState.events.length > 20) {
+                cloudState.events.pop();
+            }
+        }
+        
+        // Show notification
+        function showNotification(text) {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notification-text');
+            
+            notificationText.textContent = text;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Get VM type based on ID
+        function getVMType(id) {
+            const types = ['General Purpose', 'Compute Optimized', 'Memory Optimized', 'Storage Optimized', 'GPU Instance'];
+            return types[id % types.length];
+        }
+        
+        // Handle drag start for VMs
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', 'vm');
+            e.dataTransfer.effectAllowed = 'move';
+            
+            // Add drag-over listeners to regions
+            document.querySelectorAll('.cloud-region').forEach(region => {
+                region.addEventListener('dragover', handleDragOver);
+                region.addEventListener('dragleave', handleDragLeave);
+                region.addEventListener('drop', handleDrop);
+            });
+        }
+        
+        // Handle drag over region
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.classList.add('drag-over');
+        }
+        
+        // Handle drag leave region
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+        
+        // Handle drop on region
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            // Get the VM being dragged (simplified - in a real app you'd track which VM)
+            const vmContainer = document.querySelector('.vm-container:hover');
+            if (vmContainer) {
+                const newRegion = this.classList[1].replace('region-', '');
+                
+                // Update VM region
+                vmContainer.dataset.region = newRegion;
+                
+                // Move VM to new region
+                const regionRect = this.getBoundingClientRect();
+                const canvasRect = document.getElementById('cloudCanvas').getBoundingClientRect();
+                
+                const regionCenterX = regionRect.left - canvasRect.left + regionRect.width / 2;
+                const regionCenterY = regionRect.top - canvasRect.top + regionRect.height / 2;
+                
+                const offsetX = (Math.random() - 0.5) * 100;
+                const offsetY = (Math.random() - 0.5) * 100;
+                
+                vmContainer.style.left = `${regionCenterX + offsetX}px`;
+                vmContainer.style.top = `${regionCenterY + offsetY}px`;
+                
+                // Update state
+                const vmId = parseInt(vmContainer.dataset.id);
+                const vm = cloudState.vms.find(v => v.id === vmId);
+                if (vm) {
+                    vm.region = newRegion;
+                }
+                
+                // Add event
+                addEventToLog(`VM-${vmId + 1} migrated to ${newRegion} region`, 'info');
+                
+                // Update network connections
+                createNetworkConnections();
+            }
+            
+            // Remove listeners
+            document.querySelectorAll('.cloud-region').forEach(region => {
+                region.removeEventListener('dragover', handleDragOver);
+                region.removeEventListener('dragleave', handleDragLeave);
+                region.removeEventListener('drop', handleDrop);
+            });
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Control sliders
+            document.getElementById('vmCount').addEventListener('input', function() {
+                document.getElementById('vmCountValue').textContent = this.value;
+                document.getElementById('vmCountDisplay').textContent = this.value;
+            });
+            
+            document.getElementById('containerCount').addEventListener('input', function() {
+                document.getElementById('containerCountValue').textContent = this.value;
+                document.getElementById('containerCountDisplay').textContent = this.value;
+            });
+            
+            document.getElementById('dbCount').addEventListener('input', function() {
+                document.getElementById('dbCountValue').textContent = this.value;
+                document.getElementById('dbCountDisplay').textContent = this.value;
+            });
+            
+            // Workload slider
+            document.getElementById('workload').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('workloadValue').textContent = value + '%';
+                document.getElementById('workloadFill').style.width = value + '%';
+                cloudState.workload = parseInt(value);
+                
+                // Update stats based on workload
+                updateStats();
+                updateCosts();
+            });
+            
+            // Deploy resources button
+            document.getElementById('deployResources').addEventListener('click', deployResources);
+            
+            // Reset simulation button
+            document.getElementById('resetSimulation').addEventListener('click', function() {
+                if (confirm('Reset the simulation to default state?')) {
+                    // Clear local storage
+                    localStorage.removeItem('cloudSimulatorState');
+                    
+                    // Reset sliders to defaults
+                    document.getElementById('vmCount').value = 4;
+                    document.getElementById('vmCountValue').textContent = '4';
+                    document.getElementById('vmCountDisplay').textContent = '4';
+                    
+                    document.getElementById('containerCount').value = 3;
+                    document.getElementById('containerCountValue').textContent = '3';
+                    document.getElementById('containerCountDisplay').textContent = '3';
+                    
+                    document.getElementById('dbCount').value = 2;
+                    document.getElementById('dbCountValue').textContent = '2';
+                    document.getElementById('dbCountDisplay').textContent = '2';
+                    
+                    document.getElementById('workload').value = 30;
+                    document.getElementById('workloadValue').textContent = '30%';
+                    document.getElementById('workloadFill').style.width = '30%';
+                    
+                    document.getElementById('cloudRegion').value = 'us-east';
+                    document.getElementById('autoScaling').value = 'off';
+                    document.getElementById('loadBalancer').value = 'round-robin';
+                    
+                    // Clear event log
+                    document.getElementById('eventLog').innerHTML = '';
+                    cloudState.events = [];
+                    
+                    // Clear resource details
+                    document.getElementById('resourceDetails').classList.remove('active');
+                    
+                    // Redeploy
+                    deployResources();
+                    
+                    // Add reset event
+                    addEventToLog('Simulation reset to default configuration', 'warning');
+                }
+            });
+            
+            // Scenario buttons
+            document.querySelectorAll('.scenario-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const scenario = this.dataset.scenario;
+                    runScenario(scenario);
+                });
+            });
+            
+            // Tutorial buttons
+            document.getElementById('showTutorial').addEventListener('click', function() {
+                document.getElementById('tutorialOverlay').style.display = 'flex';
+            });
+            
+            document.getElementById('closeTutorial').addEventListener('click', function() {
+                document.getElementById('tutorialOverlay').style.display = 'none';
+                localStorage.setItem('hasSeenCloudTutorial', 'true');
+            });
+            
+            // Click on canvas to close resource details
+            document.getElementById('cloudCanvas').addEventListener('click', function() {
+                document.getElementById('resourceDetails').classList.remove('active');
+            });
+        }
+        
+        // Run a simulation scenario
+        function runScenario(scenario) {
+            let workloadValue;
+            let message;
+            
+            switch(scenario) {
+                case 'normal':
+                    workloadValue = 30;
+                    message = 'Normal traffic pattern simulated';
+                    break;
+                    
+                case 'spike':
+                    workloadValue = 85;
+                    message = 'Traffic spike simulated - watch auto-scaling respond';
+                    break;
+                    
+                case 'ddos':
+                    workloadValue = 95;
+                    message = 'DDoS attack simulated - resources under heavy load';
+                    break;
+                    
+                case 'maintenance':
+                    workloadValue = 10;
+                    message = 'Maintenance window simulated - reduced traffic';
+                    break;
+            }
+            
+            // Update workload slider
+            document.getElementById('workload').value = workloadValue;
+            document.getElementById('workloadValue').textContent = workloadValue + '%';
+            document.getElementById('workloadFill').style.width = workloadValue + '%';
+            cloudState.workload = workloadValue;
+            
+            // Update stats
+            updateStats();
+            updateCosts();
+            
+            // Add event
+            addEventToLog(message, 'info');
+            
+            // Show notification
+            showNotification(`Running "${scenario}" scenario`);
+        }
+        
+        // Start the simulation loop
+        function startSimulation() {
+            if (cloudState.simulationInterval) {
+                clearInterval(cloudState.simulationInterval);
+            }
+            
+            // Update simulation every 2 seconds
+            cloudState.simulationInterval = setInterval(() => {
+                // Randomly fluctuate stats a bit
+                cloudState.stats.cpuUsage += (Math.random() - 0.5) * 5;
+                cloudState.stats.memoryUsage += (Math.random() - 0.5) * 3;
+                cloudState.stats.networkUsage += (Math.random() - 0.5) * 0.2;
+                
+                // Clamp values
+                cloudState.stats.cpuUsage = Math.max(10, Math.min(100, cloudState.stats.cpuUsage));
+                cloudState.stats.memoryUsage = Math.max(20, Math.min(95, cloudState.stats.memoryUsage));
+                cloudState.stats.networkUsage = Math.max(0.1, Math.min(3.5, cloudState.stats.networkUsage));
+                
+                // Update UI
+                document.getElementById('cpuUsage').textContent = cloudState.stats.cpuUsage.toFixed(0) + '%';
+                document.getElementById('memoryUsage').textContent = cloudState.stats.memoryUsage.toFixed(0) + '%';
+                document.getElementById('networkUsage').textContent = cloudState.stats.networkUsage.toFixed(1) + ' Gbps';
+                
+                // Update costs
+                updateCosts();
+                
+                // Update VM status
+                updateVMStatus();
+                
+                // Occasionally add random events
+                if (Math.random() < 0.05) {
+                    const events = [
+                        'Network latency increased by 15ms',
+                        'Database query performance optimized',
+                        'Security patch applied to all VMs',
+                        'Backup completed successfully',
+                        'New container image deployed'
+                    ];
+                    
+                    const randomEvent = events[Math.floor(Math.random() * events.length)];
+                    addEventToLog(randomEvent, Math.random() > 0.7 ? 'success' : 'info');
+                }
+                
+            }, 2000);
+        }
+        
+        // Save current state to localStorage
+        function saveState() {
+            // Don't save data flows
+            const stateToSave = {
+                vms: cloudState.vms,
+                containers: cloudState.containers,
+                databases: cloudState.databases,
+                loadBalancer: cloudState.loadBalancer,
+                workload: cloudState.workload,
+                autoScaling: cloudState.autoScaling,
+                currentRegion: cloudState.currentRegion,
+                stats: cloudState.stats,
+                events: cloudState.events
+            };
+            
+            localStorage.setItem('cloudSimulatorState', JSON.stringify(stateToSave));
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initSimulator);
+    </script>
+</body>
+</html>

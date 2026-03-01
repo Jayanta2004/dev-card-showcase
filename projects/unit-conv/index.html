@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📐 unit converter · length, weight, temperature</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #dbe9f4 0%, #c2dae8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .converter-card {
+            max-width: 700px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 3.5rem;
+            box-shadow: 0 30px 45px -20px #2f5570, 0 0 0 1px #ffffffcc inset;
+            padding: 2.2rem 2.2rem 2.8rem;
+            border: 1px solid #eef9ff;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 550;
+            color: #1c4b6e;
+            letter-spacing: -0.5px;
+        }
+
+        .header span {
+            background: #3282b0;
+            color: white;
+            padding: 0.2rem 1.5rem;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 400;
+        }
+
+        .unit-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 2.2rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: #ebf3fa;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: #1a4a6a;
+            cursor: pointer;
+            border: 1px solid #b7d6f5;
+            box-shadow: 0 5px 0 #a5bed3;
+            transition: 0.08s linear;
+            flex: 1 0 auto;
+        }
+
+        .tab-btn.active {
+            background: #2679b3;
+            color: white;
+            border-color: #c5e2ff;
+            box-shadow: 0 5px 0 #0f3a57;
+            transform: translateY(2px);
+        }
+
+        .tab-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #8faec7;
+        }
+
+        .converter-panel {
+            background: #f3faffed;
+            border-radius: 2.8rem;
+            padding: 1.8rem 2rem;
+            border: 1px solid #d6edff;
+            box-shadow: inset 0 2px 6px #d4e8fa, 0 12px 18px -14px #3d6885;
+        }
+
+        .input-group {
+            margin-bottom: 1.8rem;
+        }
+
+        .label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #215574;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .unit-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .unit-row input {
+            flex: 2;
+            min-width: 180px;
+            padding: 1rem 1.2rem;
+            border-radius: 60px;
+            border: 2px solid #b8d5f2;
+            font-size: 1.2rem;
+            background: white;
+            outline: none;
+            transition: 0.15s;
+        }
+
+        .unit-row input:focus {
+            border-color: #1f70b0;
+            box-shadow: 0 0 0 3px #b1d5ff;
+        }
+
+        .unit-row select {
+            flex: 1;
+            padding: 1rem 1rem;
+            border-radius: 60px;
+            border: 2px solid #b8d5f2;
+            font-size: 1.1rem;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .swap-icon {
+            font-size: 2rem;
+            color: #40759b;
+            text-align: center;
+            margin: 0.2rem 0;
+        }
+
+        .result-area {
+            background: #dceeff;
+            border-radius: 50px;
+            padding: 1.2rem 1.8rem;
+            margin: 1.5rem 0 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 2px solid #a9cef0;
+        }
+
+        .result-label {
+            font-size: 1.2rem;
+            color: #16415c;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #003057;
+        }
+
+        .info-note {
+            font-size: 0.9rem;
+            color: #4f718b;
+            text-align: center;
+            margin-top: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+<div class="converter-card">
+    <div class="header">
+        <h1>📏 unit converter</h1>
+        <span>pro</span>
+    </div>
+
+    <!-- category tabs -->
+    <div class="unit-tabs">
+        <button class="tab-btn active" id="tabLength">📐 length</button>
+        <button class="tab-btn" id="tabWeight">⚖️ weight</button>
+        <button class="tab-btn" id="tabTemp">🌡️ temperature</button>
+    </div>
+
+    <!-- dynamic panel -->
+    <div class="converter-panel" id="panel">
+        <!-- filled by js -->
+    </div>
+
+    <div class="info-note" id="formulaHint">✏️ 1 meter = 3.28084 feet · 1 kilogram = 2.20462 pounds · °C to °F: (°C × 9/5) + 32</div>
+</div>
+
+<script>
+    (function() {
+        // ---------- state ----------
+        let currentCategory = 'length';      // 'length', 'weight', 'temperature'
+
+        // common unit definitions
+        const lengthUnits = [
+            { name: 'meters', factor: 1 },          // base: meter
+            { name: 'kilometers', factor: 0.001 },
+            { name: 'centimeters', factor: 100 },
+            { name: 'millimeters', factor: 1000 },
+            { name: 'miles', factor: 0.000621371 },
+            { name: 'yards', factor: 1.09361 },
+            { name: 'feet', factor: 3.28084 },
+            { name: 'inches', factor: 39.3701 }
+        ];
+
+        const weightUnits = [
+            { name: 'kilograms', factor: 1 },       // base: kilogram
+            { name: 'grams', factor: 1000 },
+            { name: 'milligrams', factor: 1e6 },
+            { name: 'pounds', factor: 2.20462 },
+            { name: 'ounces', factor: 35.274 }
+        ];
+
+        // temperature is special (non-linear), we handle separately
+
+        // DOM elements
+        const tabLength = document.getElementById('tabLength');
+        const tabWeight = document.getElementById('tabWeight');
+        const tabTemp = document.getElementById('tabTemp');
+        const panel = document.getElementById('panel');
+        const formulaHint = document.getElementById('formulaHint');
+
+        // render panel based on current category
+        function renderPanel() {
+            if (currentCategory === 'length') {
+                renderLengthWeight('length', lengthUnits, 'meter');
+            } else if (currentCategory === 'weight') {
+                renderLengthWeight('weight', weightUnits, 'kilogram');
+            } else if (currentCategory === 'temperature') {
+                renderTemperature();
+            }
+        }
+
+        // for length & weight (linear conversion)
+        function renderLengthWeight(category, unitList, baseUnitName) {
+            let leftValue = 1;
+            let leftUnit = unitList[0].name;    // default meters or kg
+            let rightUnit = unitList[4] ? unitList[4].name : unitList[1].name; // miles or pounds if exist
+
+            // attempt to load last used from localStorage?
+            // we can skip to keep simple, but we may want to preserve inputs. we'll keep it simple on render.
+
+            // generate selects
+            let leftOptions = unitList.map(u => `<option value="${u.name}" ${u.name === leftUnit ? 'selected' : ''}>${u.name}</option>`).join('');
+            let rightOptions = unitList.map(u => `<option value="${u.name}" ${u.name === rightUnit ? 'selected' : ''}>${u.name}</option>`).join('');
+
+            const html = `
+                <div class="input-group">
+                    <div class="label">🔽 from</div>
+                    <div class="unit-row">
+                        <input type="number" id="leftInput" value="1" step="any">
+                        <select id="leftUnit">${leftOptions}</select>
+                    </div>
+                </div>
+                <div class="swap-icon">⇅</div>
+                <div class="input-group">
+                    <div class="label">🔼 to</div>
+                    <div class="unit-row">
+                        <input type="number" id="rightInput" value="" readonly style="background:#f2f9ff;" step="any">
+                        <select id="rightUnit">${rightOptions}</select>
+                    </div>
+                </div>
+                <div class="result-area">
+                    <span class="result-label">converted</span>
+                    <span class="result-value" id="resultDisplay">—</span>
+                </div>
+            `;
+            panel.innerHTML = html;
+
+            // attach listeners
+            const leftInput = document.getElementById('leftInput');
+            const leftUnit = document.getElementById('leftUnit');
+            const rightInput = document.getElementById('rightInput');
+            const rightUnit = document.getElementById('rightUnit');
+            const resultSpan = document.getElementById('resultDisplay');
+
+            function updateLinear() {
+                const val = parseFloat(leftInput.value);
+                if (isNaN(val)) {
+                    rightInput.value = '';
+                    resultSpan.textContent = '—';
+                    return;
+                }
+                const fromUnitName = leftUnit.value;
+                const toUnitName = rightUnit.value;
+
+                // find factors
+                const fromUnit = unitList.find(u => u.name === fromUnitName);
+                const toUnit = unitList.find(u => u.name === toUnitName);
+                if (!fromUnit || !toUnit) return;
+
+                // convert: val (from) -> base (factor 1) -> to
+                const baseValue = val / fromUnit.factor;    // because factor is base unit per fromUnit (e.g. 1 meter = 3.28084 feet, so feet factor = 3.28084 -> baseValue = val / factor)
+                const result = baseValue * toUnit.factor;
+
+                rightInput.value = result.toFixed(6);
+                resultSpan.textContent = result.toFixed(4);
+            }
+
+            leftInput.addEventListener('input', updateLinear);
+            leftUnit.addEventListener('change', updateLinear);
+            rightUnit.addEventListener('change', updateLinear);
+
+            // initial update
+            updateLinear();
+            // update formula hint
+            formulaHint.textContent = `⚡ 1 ${baseUnitName} = ${unitList[4] ? unitList[4].factor.toFixed(5) + ' ' + unitList[4].name : ''} ...`;
+        }
+
+        // temperature panel (special formulas)
+        function renderTemperature() {
+            const html = `
+                <div class="input-group">
+                    <div class="label">🌡️ from</div>
+                    <div class="unit-row">
+                        <input type="number" id="tempInput" value="0" step="any">
+                        <select id="tempFromUnit">
+                            <option value="C">Celsius °C</option>
+                            <option value="F">Fahrenheit °F</option>
+                            <option value="K">Kelvin K</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="swap-icon">⇆</div>
+                <div class="input-group">
+                    <div class="label">🎯 to</div>
+                    <div class="unit-row">
+                        <input type="number" id="tempOutput" value="" readonly style="background:#f2f9ff;">
+                        <select id="tempToUnit">
+                            <option value="F">Fahrenheit °F</option>
+                            <option value="C">Celsius °C</option>
+                            <option value="K">Kelvin K</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="result-area">
+                    <span class="result-label">result</span>
+                    <span class="result-value" id="tempResultDisplay">—</span>
+                </div>
+            `;
+            panel.innerHTML = html;
+
+            const tempInput = document.getElementById('tempInput');
+            const tempFrom = document.getElementById('tempFromUnit');
+            const tempTo = document.getElementById('tempToUnit');
+            const tempOutput = document.getElementById('tempOutput');
+            const tempResultSpan = document.getElementById('tempResultDisplay');
+
+            function convertTemp() {
+                const val = parseFloat(tempInput.value);
+                if (isNaN(val)) {
+                    tempOutput.value = '';
+                    tempResultSpan.textContent = '—';
+                    return;
+                }
+                const from = tempFrom.value;
+                const to = tempTo.value;
+
+                // first convert 'from' to Celsius
+                let celsius;
+                if (from === 'C') celsius = val;
+                else if (from === 'F') celsius = (val - 32) * 5/9;
+                else if (from === 'K') celsius = val - 273.15;
+
+                // then from celsius to target
+                let result;
+                if (to === 'C') result = celsius;
+                else if (to === 'F') result = celsius * 9/5 + 32;
+                else if (to === 'K') result = celsius + 273.15;
+
+                tempOutput.value = result.toFixed(2);
+                tempResultSpan.textContent = result.toFixed(2);
+            }
+
+            tempInput.addEventListener('input', convertTemp);
+            tempFrom.addEventListener('change', convertTemp);
+            tempTo.addEventListener('change', convertTemp);
+            convertTemp(); // initial
+
+            formulaHint.textContent = '🌡️ °C to °F: (°C × 9/5) + 32 · °F to °C: (°F − 32) × 5/9 · K = °C + 273.15';
+        }
+
+        // tab switching
+        function setActiveTab(category) {
+            [tabLength, tabWeight, tabTemp].forEach(tab => tab.classList.remove('active'));
+            if (category === 'length') tabLength.classList.add('active');
+            if (category === 'weight') tabWeight.classList.add('active');
+            if (category === 'temperature') tabTemp.classList.add('active');
+            currentCategory = category;
+            renderPanel();
+        }
+
+        tabLength.addEventListener('click', () => setActiveTab('length'));
+        tabWeight.addEventListener('click', () => setActiveTab('weight'));
+        tabTemp.addEventListener('click', () => setActiveTab('temperature'));
+
+        // initial render
+        setActiveTab('length');
+    })();
+</script>
+</body>
+</html>

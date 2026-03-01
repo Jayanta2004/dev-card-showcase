@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeditateMate · mindfulness tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e2f0f0 0%, #d1e7e7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        /* main card — soft, calm, zen */
+        .meditate-app {
+            max-width: 950px;
+            width: 100%;
+            background: rgba(250, 255, 250, 0.8);
+            backdrop-filter: blur(16px) saturate(140%);
+            -webkit-backdrop-filter: blur(16px) saturate(140%);
+            border-radius: 3.5rem;
+            box-shadow: 0 35px 60px -30px #30555580, 0 0 0 1px #c4e0e0 inset;
+            border: 1px solid #c0e0d6;
+            padding: 2.2rem 2rem;
+        }
+
+        /* header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 2.2rem;
+            flex-wrap: wrap;
+        }
+        .zen-icon {
+            font-size: 3rem;
+            filter: drop-shadow(0 6px 8px #69a5a5);
+            animation: breathe 6s infinite ease-in-out;
+        }
+        @keyframes breathe {
+            0%,100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .title {
+            font-size: 2.4rem;
+            font-weight: 600;
+            background: linear-gradient(140deg, #2d7a7a, #4f9b9b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            margin-right: auto;
+        }
+        .streak-badge {
+            background: #c6ecec;
+            border-radius: 60px;
+            padding: 0.5rem 1.8rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #146b6b;
+            border: 1px solid #9ed6d6;
+            box-shadow: 0 4px 12px #b0dfdf;
+        }
+
+        /* meditation timer */
+        .timer-container {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 3rem;
+            padding: 2rem 2rem 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid #afe0e0;
+            text-align: center;
+        }
+        .timer-circle {
+            background: #ffffffb3;
+            border-radius: 50%;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 15px 30px #a3cfcf, inset 0 -4px 10px #b3dcdc;
+            border: 3px solid #bae6e6;
+        }
+        .timer-display {
+            font-size: 3.2rem;
+            font-weight: 300;
+            font-family: 'JetBrains Mono', monospace;
+            color: #1f6b6b;
+            letter-spacing: 4px;
+        }
+        .timer-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #469494;
+            margin-top: 0.3rem;
+        }
+        .timer-presets {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            margin: 1.5rem 0 1rem;
+            flex-wrap: wrap;
+        }
+        .preset-btn {
+            background: #d9f0f0;
+            border: 2px solid #94cdcd;
+            border-radius: 40px;
+            padding: 0.6rem 1.8rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #147070;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .preset-btn.active {
+            background: #469e9e;
+            border-color: #226b6b;
+            color: white;
+            box-shadow: 0 6px 14px #6db9b9;
+        }
+        .timer-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1.5rem 0 0.5rem;
+            flex-wrap: wrap;
+        }
+        .timer-btn {
+            background: white;
+            border: 2px solid #97d4d4;
+            border-radius: 60px;
+            padding: 0.9rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1b6f6f;
+            cursor: pointer;
+            min-width: 130px;
+        }
+        .timer-btn.primary {
+            background: #359999;
+            border-color: #1f6b6b;
+            color: white;
+            box-shadow: 0 8px 18px #6db4b4;
+        }
+
+        /* log section */
+        .log-section {
+            background: #e2f4f4cc;
+            border-radius: 2.5rem;
+            padding: 1.8rem 2rem;
+            margin: 2rem 0;
+        }
+        .log-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #176b6b;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .log-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .log-input {
+            flex: 2 1 200px;
+            background: white;
+            border: 2px solid #bae0e0;
+            border-radius: 50px;
+            padding: 0.9rem 1.8rem;
+            font-size: 1rem;
+            outline: none;
+        }
+        .log-input:focus {
+            border-color: #46a3a3;
+            box-shadow: 0 0 0 4px #bfecec;
+        }
+        .log-select {
+            flex: 1 1 120px;
+            background: white;
+            border: 2px solid #bae0e0;
+            border-radius: 50px;
+            padding: 0.9rem 1.5rem;
+            font-size: 1rem;
+            color: #146363;
+        }
+        .log-btn {
+            background: #359999;
+            border: none;
+            border-radius: 50px;
+            padding: 0.9rem 2.5rem;
+            font-weight: 600;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        /* stats */
+        .stats-row {
+            display: flex;
+            gap: 1.5rem;
+            background: #ffffffb3;
+            border-radius: 3rem;
+            padding: 1.2rem 2rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+            border: 1px solid #bae0e0;
+        }
+        .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            color: #1b6b6b;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #217a7a;
+        }
+
+        /* history */
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1.8rem 0 1rem;
+        }
+        .history-header h3 {
+            font-size: 1.4rem;
+            color: #1a6161;
+        }
+        .clear-btn {
+            background: #d2eeee;
+            border: 1px solid #84c2c2;
+            border-radius: 40px;
+            padding: 0.4rem 1.5rem;
+            color: #1d7272;
+            cursor: pointer;
+        }
+
+        .entries-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        .history-item {
+            background: white;
+            border-radius: 2rem;
+            padding: 1rem 1.8rem;
+            border-left: 10px solid #7fc9c9;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 4px 12px #b4dfdf;
+        }
+        .item-icon {
+            font-size: 2rem;
+        }
+        .item-content {
+            flex: 3 1 200px;
+        }
+        .item-title {
+            font-weight: 600;
+            color: #196767;
+        }
+        .item-meta {
+            font-size: 0.8rem;
+            color: #558f8f;
+            display: flex;
+            gap: 1rem;
+        }
+        .item-minutes {
+            background: #e2f3f3;
+            border-radius: 30px;
+            padding: 0.3rem 1.2rem;
+            font-weight: 500;
+            color: #1d7a7a;
+        }
+        .empty-history {
+            text-align: center;
+            padding: 2rem;
+            background: #e1f0f0;
+            border-radius: 3rem;
+            color: #468b8b;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 1.8rem;
+            color: #519c9c;
+            border-top: 1px dashed #b1dddd;
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="meditate-app" id="meditateApp">
+        <!-- header -->
+        <div class="header">
+            <span class="zen-icon">🧘</span>
+            <span class="title">MeditateMate</span>
+            <span class="streak-badge" id="streakDisplay">🔥 0 day streak</span>
+        </div>
+
+        <!-- meditation timer -->
+        <div class="timer-container">
+            <div class="timer-circle">
+                <div class="timer-display" id="timerDisplay">5:00</div>
+                <div class="timer-label">minutes</div>
+            </div>
+
+            <div class="timer-presets" id="presetContainer">
+                <button class="preset-btn" data-minutes="2">2 min</button>
+                <button class="preset-btn active" data-minutes="5">5 min</button>
+                <button class="preset-btn" data-minutes="10">10 min</button>
+                <button class="preset-btn" data-minutes="15">15 min</button>
+                <button class="preset-btn" data-minutes="20">20 min</button>
+            </div>
+
+            <div class="timer-controls">
+                <button class="timer-btn primary" id="startPauseBtn">▶ Start</button>
+                <button class="timer-btn" id="resetBtn">⟲ Reset</button>
+            </div>
+        </div>
+
+        <!-- log meditation -->
+        <div class="log-section">
+            <div class="log-title"><span>🧘</span> log your practice</div>
+            <div class="log-form">
+                <input type="text" class="log-input" id="sessionInput" placeholder="type of meditation (e.g. mindfulness)" maxlength="40">
+                <select class="log-select" id="durationSelect">
+                    <option value="5">5 min</option>
+                    <option value="10">10 min</option>
+                    <option value="15">15 min</option>
+                    <option value="20">20 min</option>
+                    <option value="30">30 min</option>
+                </select>
+                <button class="log-btn" id="logSessionBtn"><span>✓</span> log</button>
+            </div>
+        </div>
+
+        <!-- stats -->
+        <div class="stats-row">
+            <div class="stat-item"><span class="stat-number" id="totalSessions">0</span> total sits</div>
+            <div class="stat-item"><span class="stat-number" id="totalMinutes">0</span> mindful mins</div>
+            <div class="stat-item"><span class="stat-number" id="avgMins">0</span> avg / day</div>
+        </div>
+
+        <!-- history -->
+        <div class="history-header">
+            <h3>📖 meditation log</h3>
+            <button class="clear-btn" id="clearHistoryBtn">clear</button>
+        </div>
+
+        <div class="entries-list" id="historyList">
+            <!-- dynamic -->
+        </div>
+
+        <footer>
+            ☸️ be present · one breath at a time
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // ========== STATE ==========
+            const STORAGE_KEY = 'meditatemate_sessions';
+            
+            // Timer variables
+            let timerInterval = null;
+            let timerRunning = false;
+            let timerPaused = false;
+            let minutes = 5;
+            let seconds = 0;
+            
+            // Sessions array
+            let sessions = [];
+            
+            // DOM elements
+            const timerDisplay = document.getElementById('timerDisplay');
+            const startPauseBtn = document.getElementById('startPauseBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const presetBtns = document.querySelectorAll('.preset-btn');
+            const sessionInput = document.getElementById('sessionInput');
+            const durationSelect = document.getElementById('durationSelect');
+            const logSessionBtn = document.getElementById('logSessionBtn');
+            const totalSessionsSpan = document.getElementById('totalSessions');
+            const totalMinutesSpan = document.getElementById('totalMinutes');
+            const avgMinsSpan = document.getElementById('avgMins');
+            const streakDisplay = document.getElementById('streakDisplay');
+            const historyList = document.getElementById('historyList');
+            const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+            // ========== TIMER FUNCTIONS ==========
+            function formatTime(mins, secs) {
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            function updateTimerDisplay() {
+                timerDisplay.textContent = formatTime(minutes, seconds);
+            }
+
+            function setActivePreset(min) {
+                presetBtns.forEach(btn => {
+                    const btnMin = parseInt(btn.dataset.minutes, 10);
+                    if (btnMin === min) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function setTimer(newMinutes) {
+                if (!timerRunning && !timerPaused) {
+                    minutes = newMinutes;
+                    seconds = 0;
+                    updateTimerDisplay();
+                    setActivePreset(newMinutes);
+                }
+            }
+
+            // Preset click handlers
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mins = parseInt(btn.dataset.minutes, 10);
+                    setTimer(mins);
+                });
+            });
+
+            function startTimer() {
+                if (timerRunning) return;
+                timerRunning = true;
+                timerPaused = false;
+                startPauseBtn.textContent = '⏸ Pause';
+                
+                timerInterval = setInterval(() => {
+                    if (seconds === 0) {
+                        if (minutes === 0) {
+                            // Timer finished
+                            clearInterval(timerInterval);
+                            timerRunning = false;
+                            timerPaused = false;
+                            startPauseBtn.textContent = '▶ Start';
+                            
+                            // Gentle notification
+                            const audio = new Audio('data:audio/wav;base64,UklGRlwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVoAAACAgICAf39/f3+AgI CAgICAf39/f3+AgI CAgICAf39/f3+AgI CAgICAf39/f3+AgI CAgICAf39/f3+AgI CAgICAf39/f3+AgI CAgI=');
+                            audio.play().catch(e => {});
+                            
+                            alert('🧘 Your meditation is complete. Great job!');
+                            
+                            // Pre-fill log with current time
+                            durationSelect.value = String(parseInt(durationSelect.value, 10) || 5);
+                            return;
+                        } else {
+                            minutes--;
+                            seconds = 59;
+                        }
+                    } else {
+                        seconds--;
+                    }
+                    updateTimerDisplay();
+                }, 1000);
+            }
+
+            function pauseTimer() {
+                if (!timerRunning) return;
+                clearInterval(timerInterval);
+                timerRunning = false;
+                timerPaused = true;
+                startPauseBtn.textContent = '▶ Resume';
+            }
+
+            function resetTimer() {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                timerRunning = false;
+                timerPaused = false;
+                
+                // Get active preset or default to 5
+                const activePreset = document.querySelector('.preset-btn.active');
+                minutes = activePreset ? parseInt(activePreset.dataset.minutes, 10) : 5;
+                seconds = 0;
+                updateTimerDisplay();
+                startPauseBtn.textContent = '▶ Start';
+            }
+
+            startPauseBtn.addEventListener('click', () => {
+                if (timerRunning) {
+                    pauseTimer();
+                } else {
+                    startTimer();
+                }
+            });
+
+            resetBtn.addEventListener('click', resetTimer);
+
+            // ========== SESSION STORAGE ==========
+            function loadSessions() {
+                try {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    if (stored) {
+                        sessions = JSON.parse(stored);
+                        if (!Array.isArray(sessions)) sessions = [];
+                    } else {
+                        // Sample data
+                        const today = new Date().toISOString().split('T')[0];
+                        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                        const twoDaysAgo = new Date(Date.now() - 172800000).toISOString().split('T')[0];
+                        sessions = [
+                            { id: '1', type: 'Mindfulness', minutes: 10, date: today, displayDate: 'Today' },
+                            { id: '2', type: 'Loving-kindness', minutes: 15, date: yesterday, displayDate: 'Yesterday' },
+                            { id: '3', type: 'Body scan', minutes: 8, date: twoDaysAgo, displayDate: '2 days ago' }
+                        ];
+                    }
+                } catch (e) {
+                    sessions = [];
+                }
+                sessions.sort((a, b) => (a.date < b.date ? 1 : -1));
+            }
+
+            function saveSessions() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+            }
+
+            // ========== STATS & RENDER ==========
+            function calculateStreak() {
+                if (sessions.length === 0) return 0;
+                
+                const today = new Date().toISOString().split('T')[0];
+                const uniqueDates = [...new Set(sessions.map(s => s.date))].sort().reverse();
+                
+                let streak = 0;
+                let checkDate = new Date(today);
+                
+                while (true) {
+                    const dateStr = checkDate.toISOString().split('T')[0];
+                    if (uniqueDates.includes(dateStr)) {
+                        streak++;
+                        checkDate.setDate(checkDate.getDate() - 1);
+                    } else {
+                        break;
+                    }
+                }
+                return streak;
+            }
+
+            function getAverageDailyMinutes() {
+                if (sessions.length === 0) return 0;
+                
+                // Get unique days in last 30 days
+                const today = new Date();
+                const thirtyDaysAgo = new Date(today);
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+                
+                const recentSessions = sessions.filter(s => new Date(s.date) >= thirtyDaysAgo);
+                if (recentSessions.length === 0) return 0;
+                
+                const totalMins = recentSessions.reduce((acc, s) => acc + s.minutes, 0);
+                return Math.round(totalMins / 30); // avg per day over 30 days
+            }
+
+            function updateStats() {
+                const total = sessions.length;
+                const totalMins = sessions.reduce((acc, s) => acc + s.minutes, 0);
+                const streak = calculateStreak();
+                const avgDaily = getAverageDailyMinutes();
+                
+                totalSessionsSpan.textContent = total;
+                totalMinutesSpan.textContent = totalMins;
+                avgMinsSpan.textContent = avgDaily;
+                streakDisplay.textContent = `🔥 ${streak} day streak`;
+            }
+
+            function renderHistory() {
+                if (sessions.length === 0) {
+                    historyList.innerHTML = '<div class="empty-history">🌱 no sessions yet · begin your practice</div>';
+                    return;
+                }
+                
+                let html = '';
+                sessions.slice(0, 8).forEach(s => {
+                    const displayDate = s.displayDate || s.date;
+                    const type = s.type || 'meditation';
+                    html += `
+                        <div class="history-item">
+                            <span class="item-icon">🧘</span>
+                            <div class="item-content">
+                                <div class="item-title">${escapeHtml(type)}</div>
+                                <div class="item-meta">📅 ${displayDate}</div>
+                            </div>
+                            <div class="item-minutes">${s.minutes} min</div>
+                        </div>
+                    `;
+                });
+                historyList.innerHTML = html;
+            }
+
+            function escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return unsafe.replace(/[&<>"]/g, m => {
+                    if (m === '&') return '&amp;';
+                    if (m === '<') return '&lt;';
+                    if (m === '>') return '&gt;';
+                    return '&quot;';
+                });
+            }
+
+            // ========== LOG SESSION ==========
+            function logSession() {
+                const type = sessionInput.value.trim() || 'mindfulness';
+                const mins = parseInt(durationSelect.value, 10);
+                
+                const today = new Date();
+                const dateISO = today.toISOString().split('T')[0];
+                const displayDate = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                
+                const newSession = {
+                    id: Date.now() + '-' + Math.random().toString(36).substring(2, 8),
+                    type: type,
+                    minutes: mins,
+                    date: dateISO,
+                    displayDate: displayDate
+                };
+                
+                sessions.push(newSession);
+                sessions.sort((a, b) => (a.date < b.date ? 1 : -1));
+                saveSessions();
+                
+                // Clear input
+                sessionInput.value = '';
+                
+                // Update stats and history
+                updateStats();
+                renderHistory();
+            }
+
+            // ========== CLEAR HISTORY ==========
+            function clearHistory() {
+                if (sessions.length === 0) return;
+                if (confirm('Delete all meditation history? This cannot be undone.')) {
+                    sessions = [];
+                    saveSessions();
+                    updateStats();
+                    renderHistory();
+                }
+            }
+
+            // ========== INIT ==========
+            function init() {
+                loadSessions();
+                updateStats();
+                renderHistory();
+                
+                // Set timer to 5 minutes (active preset)
+                minutes = 5;
+                seconds = 0;
+                updateTimerDisplay();
+                
+                // Event listeners
+                logSessionBtn.addEventListener('click', logSession);
+                clearHistoryBtn.addEventListener('click', clearHistory);
+                
+                // Storage sync
+                window.addEventListener('storage', (e) => {
+                    if (e.key === STORAGE_KEY) {
+                        loadSessions();
+                        updateStats();
+                        renderHistory();
+                    }
+                });
+                
+                // Update duration select when timer preset changes (optional)
+                presetBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const mins = btn.dataset.minutes;
+                        durationSelect.value = mins;
+                    });
+                });
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>

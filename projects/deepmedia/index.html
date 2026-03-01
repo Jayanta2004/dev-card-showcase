@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNESTHESIA STUDIO · DEEP MEDIA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #100a1c;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            padding: 20px;
+        }
+
+        /* main container — like a control room for the senses */
+        .synesthete {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(18, 14, 30, 0.75);
+            backdrop-filter: blur(25px) saturate(300%);
+            -webkit-backdrop-filter: blur(25px) saturate(300%);
+            border: 2px solid rgba(200, 130, 255, 0.3);
+            border-radius: 56px 56px 48px 48px;
+            box-shadow: 0 40px 70px -20px #000000cc, 0 0 0 2px rgba(180, 90, 255, 0.2) inset, 0 0 70px #7a2be0;
+            padding: 32px 36px 46px 36px;
+            position: relative;
+            transition: all 0.25s ease;
+        }
+
+        /* energetic border glow */
+        .synesthete::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 8px;
+            background: radial-gradient(circle at 70% 20%, #feac6d, #b77eff, #60b0ff);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        /* header — mood tags & AI state */
+        .mood-board {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px 10px;
+            padding: 0 10px 24px 10px;
+            border-bottom: 3px solid rgba(170, 90, 255, 0.3);
+            margin-bottom: 40px;
+        }
+
+        .tag {
+            background: rgba(45, 20, 70, 0.7);
+            border: 1px solid #b27aff;
+            color: #e2c7ff;
+            border-radius: 60px;
+            padding: 10px 28px;
+            font-weight: 400;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 15px #b45aff;
+        }
+
+        .tag em {
+            color: white;
+            font-style: normal;
+            font-weight: 500;
+            margin-left: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pulse-tag {
+            background: #251b3b;
+            border-color: #fcb36b;
+            color: #ffdec2;
+            box-shadow: 0 0 25px #fcb36b;
+            animation: moodPulse 2.8s infinite alternate;
+        }
+
+        @keyframes moodPulse {
+            0% { box-shadow: 0 0 10px #b27aff, border-color: #b27aff; }
+            100% { box-shadow: 0 0 35px #fafa7a, 0 0 15px #faa; border-color: #fcd47e; }
+        }
+
+        /* three core zones: input (sliders), visualisation, analysis */
+        .synth-grid {
+            display: grid;
+            grid-template-columns: 1fr 2.2fr 1.1fr;
+            gap: 26px;
+            margin-bottom: 40px;
+        }
+
+        /* ----- left panel: haptic controls / emotive knobs ----- */
+        .haptic-panel {
+            background: rgba(20, 10, 35, 0.6);
+            border-radius: 36px;
+            border: 1px solid rgba(190, 130, 255, 0.5);
+            padding: 28px 18px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 15px 0 #11081f;
+        }
+
+        .knob-title {
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            color: #b38eff;
+            text-transform: uppercase;
+            margin-bottom: 28px;
+            border-left: 5px solid #fd8a7e;
+            padding-left: 16px;
+        }
+
+        .slider-group {
+            margin-bottom: 36px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            color: #cfaaff;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .slider-label span:last-child {
+            color: #feda7a;
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-shadow: 0 0 10px gold;
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, #6240a0, #f0a0ff);
+            border-radius: 20px;
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+            border: 1px solid #a97aff;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 0 30px #f5a9ff, 0 0 10px #f5f;
+            border: 2px solid #ae7eff;
+            cursor: pointer;
+        }
+
+        .emoticon-panel {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .emote-btn {
+            background: #221830;
+            border: 2px solid #b37bff;
+            color: #eac8ff;
+            font-size: 1.8rem;
+            padding: 10px 18px;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.15s;
+            flex: 1 0 auto;
+            text-align: center;
+            box-shadow: 0 0 15px #cf9eff;
+        }
+
+        .emote-btn:hover {
+            background: #a36eff;
+            color: #1e102f;
+            border-color: white;
+            box-shadow: 0 0 45px #fbeb7a;
+            transform: scale(0.98);
+        }
+
+        /* ----- center: canvas (abstract visual cortex) ----- */
+        .vision-panel {
+            background: rgba(12, 4, 24, 0.8);
+            border-radius: 48px;
+            border: 2px solid #bc8aff;
+            box-shadow: 0 0 50px #a35eff, inset 0 0 40px #2f0080;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .vision-canvas {
+            width: 100%;
+            aspect-ratio: 1/0.95;
+            background: #030011;
+            border-radius: 36px;
+            display: block;
+            margin-bottom: 20px;
+            border: 2px solid #bf94ff;
+            box-shadow: 0 0 30px #cc9cff;
+            cursor: grab;
+        }
+
+        .vision-canvas:active {
+            cursor: grabbing;
+        }
+
+        .consciousness-bar {
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            color: #c3a0ff;
+            font-size: 0.85rem;
+            padding: 0 5px;
+        }
+
+        .consciousness-bar span {
+            background: #1e1133;
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: 1px solid #a07cff;
+        }
+
+        /* ----- right: analysis / spectral perception ----- */
+        .analysis-panel {
+            background: rgba(20, 10, 35, 0.6);
+            border-radius: 36px;
+            border: 1px solid rgba(255, 170, 120, 0.6);
+            padding: 28px 18px;
+            backdrop-filter: blur(15px);
+        }
+
+        .metric {
+            margin-bottom: 28px;
+        }
+
+        .metric-header {
+            color: #ffdbb5;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            border-bottom: 1px dashed #fba;
+            padding-bottom: 6px;
+            margin-bottom: 15px;
+        }
+
+        .spectrum-bars {
+            display: flex;
+            gap: 6px;
+            height: 130px;
+            align-items: flex-end;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, #fd8, #ffb56b);
+            height: calc(30% + 10px);
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 -5px 20px #ffbc6e;
+            transition: height 0.25s ease;
+            border: 1px solid #ffc285;
+        }
+
+        .ai-sig {
+            font-family: monospace;
+            background: #1c0d2b;
+            padding: 14px;
+            border-radius: 24px;
+            border: 2px solid #c45eff;
+            color: #efdbff;
+            text-align: center;
+            font-size: 1.1rem;
+            word-break: break-word;
+        }
+
+        .signature-glitch {
+            animation: textGlitch 4s infinite steps(1);
+        }
+
+        @keyframes textGlitch {
+            0% { text-shadow: 2px 0 0 #ff00aa, -2px 0 0 #00eeff; }
+            25% { text-shadow: -2px 1px 0 #ff00aa, 2px -1px 0 cyan; }
+            50% { text-shadow: 3px -1px 0 #fa0, -3px 1px 0 #0fa; }
+            75% { text-shadow: -1px 2px 0 white, 1px -2px 0 magenta; }
+            100% { text-shadow: 1px -1px 0 #ff44cc, -1px 1px 0 #44ffcc; }
+        }
+
+        /* footer — brainwave stream */
+        .limbic-footer {
+            margin-top: 36px;
+            background: #130b21cc;
+            border-radius: 100px;
+            padding: 16px 30px;
+            border: 2px solid #aa7cff;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            backdrop-filter: blur(20px);
+        }
+
+        .wave {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            color: #eacdff;
+        }
+
+        .wave span {
+            font-size: 1.6rem;
+            font-weight: 300;
+            font-family: 'JetBrains Mono', monospace;
+            color: #ffdd88;
+        }
+
+        .footnote {
+            color: #a480d3;
+            font-style: italic;
+        }
+
+        @media (max-width: 900px) {
+            .synth-grid { grid-template-columns: 1fr; }
+            .synesthete { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="synesthete">
+        <!-- mood tags evolve -->
+        <div class="mood-board">
+            <div class="tag">🌀 CORTICAL STATE <em id="corticalState">HYPNAGOGIC</em></div>
+            <div class="tag pulse-tag">✨ DOMINANT EMOTION <em id="dominantEmo">AWE</em></div>
+            <div class="tag">⚡ SYNESTHESIA <em id="synRatio">84%</em></div>
+        </div>
+
+        <!-- main interactive grid -->
+        <div class="synth-grid">
+            <!-- left : haptic sliders + mood buttons -->
+            <div class="haptic-panel">
+                <div class="knob-title">⏣  AFFECT KNOBS</div>
+                
+                <div class="slider-group">
+                    <div class="slider-label"><span>COLOUR TEMP</span><span id="tempVal">0.42</span></div>
+                    <input type="range" id="tempSlider" min="0" max="1" step="0.01" value="0.42">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label"><span>EDGE FRACTAL</span><span id="edgeVal">0.73</span></div>
+                    <input type="range" id="edgeSlider" min="0" max="1" step="0.01" value="0.73">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label"><span>NOISE / DREAM</span><span id="noiseVal">0.27</span></div>
+                    <input type="range" id="noiseSlider" min="0" max="1" step="0.01" value="0.27">
+                </div>
+
+                <div class="emoticon-panel">
+                    <div class="emote-btn" data-mood="0">😌</div>
+                    <div class="emote-btn" data-mood="1">🤯</div>
+                    <div class="emote-btn" data-mood="2">😨</div>
+                    <div class="emote-btn" data-mood="3">🥰</div>
+                    <div class="emote-btn" data-mood="4">🤖</div>
+                </div>
+                <div style="margin-top: 20px; color: #b793ff; font-size: 0.7rem; text-align: right;">⟬ tactile induction ⟭</div>
+            </div>
+
+            <!-- center : canvas (visualisation) -->
+            <div class="vision-panel">
+                <canvas id="dreamCanvas" width="500" height="450" class="vision-canvas"></canvas>
+                <div class="consciousness-bar">
+                    <span id="freqTag">θ (theta) 6.2Hz</span>
+                    <span id="complexityTag">complexity 0.83</span>
+                </div>
+            </div>
+
+            <!-- right : analysis & spectral perception -->
+            <div class="analysis-panel">
+                <div class="metric">
+                    <div class="metric-header">⚲  FREQ BANDS</div>
+                    <div class="spectrum-bars" id="spectrumBars">
+                        <div class="bar" style="height:20%"></div>
+                        <div class="bar" style="height:45%"></div>
+                        <div class="bar" style="height:70%"></div>
+                        <div class="bar" style="height:30%"></div>
+                        <div class="bar" style="height:90%"></div>
+                        <div class="bar" style="height:55%"></div>
+                    </div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-header">⌾  DEEP SIGNATURE</div>
+                    <div class="ai-sig signature-glitch" id="deepSig">0x8F3A · B7 · Δ</div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-header">⟴  ASSOCIATION</div>
+                    <div style="color:#fcd57e; font-size:1.3rem; margin:10px 0;" id="assocWord">「 prism  」</div>
+                    <div style="background:#170e26; border-radius:30px; padding:10px; color:#ab84ff; text-align:center;" id="randomPoem">the colour of sound...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- footer : limbic stream -->
+        <div class="limbic-footer">
+            <div class="wave">🧠 LIMBIC <span id="limbic0">0.44</span> Hz</div>
+            <div class="wave">🌊 CORTICAL <span id="limbic1">0.91</span> Hz</div>
+            <div class="footnote" id="footnoteMsg">synesthetic translation active</div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- DREAM STUDIO : UNIQUE MULTISENSE SIMULATOR ----------
+            const canvas = document.getElementById('dreamCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width, height = canvas.height;
+
+            // UI elements
+            const tempSlider = document.getElementById('tempSlider');
+            const edgeSlider = document.getElementById('edgeSlider');
+            const noiseSlider = document.getElementById('noiseSlider');
+            const tempSpan = document.getElementById('tempVal');
+            const edgeSpan = document.getElementById('edgeVal');
+            const noiseSpan = document.getElementById('noiseVal');
+
+            const corticalSpan = document.getElementById('corticalState');
+            const emotionSpan = document.getElementById('dominantEmo');
+            const synRatio = document.getElementById('synRatio');
+            const freqTag = document.getElementById('freqTag');
+            const complexityTag = document.getElementById('complexityTag');
+            const deepSig = document.getElementById('deepSig');
+            const assocWord = document.getElementById('assocWord');
+            const poemSpan = document.getElementById('randomPoem');
+            const limbic0 = document.getElementById('limbic0');
+            const limbic1 = document.getElementById('limbic1');
+            const footnoteMsg = document.getElementById('footnoteMsg');
+            const spectrumBars = document.getElementById('spectrumBars').children;
+
+            // state
+            let temp = 0.42, edge = 0.73, noise = 0.27;
+            let currentMood = 0; // 0..4
+            let frame = 0;
+
+            // ---- helper to randomize everything based on sliders & mood ----
+            function updateAll() {
+                // read sliders
+                temp = parseFloat(tempSlider.value);
+                edge = parseFloat(edgeSlider.value);
+                noise = parseFloat(noiseSlider.value);
+
+                tempSpan.innerText = temp.toFixed(2);
+                edgeSpan.innerText = edge.toFixed(2);
+                noiseSpan.innerText = noise.toFixed(2);
+
+                // generate cortical state based on combo
+                const states = ["HYPNAGOGIC", "PARADOXICAL", "HYPER", "LUCID", "DEEP", "FRAGMENTED"];
+                const idx = Math.floor((temp + edge + noise) * 2) % states.length;
+                corticalSpan.innerText = states[idx];
+
+                // dominant emotion array
+                const emotions = ["AWE", "NUMINOUS", "UNCANNY", "ECSTASY", "MELANCHOLY", "TRANSCENDENCE"];
+                const emoIdx = Math.floor((edge * 10 + noise * 5 + currentMood * 2) % emotions.length);
+                emotionSpan.innerText = emotions[emoIdx];
+
+                // syn ratio
+                const ratioVal = (40 + (temp * 30) + (noise * 20) + (edge * 10)).toFixed(0);
+                synRatio.innerText = ratioVal + '%';
+
+                // freq tag
+                const theta = (4 + temp * 4 + noise * 2).toFixed(1);
+                freqTag.innerText = `θ (theta) ${theta}Hz`;
+
+                // complexity
+                const compl = (0.4 + edge * 0.5 + noise * 0.3).toFixed(2);
+                complexityTag.innerText = `complexity ${compl}`;
+
+                // deep signature
+                const hex1 = Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase().padStart(4,'0');
+                const hex2 = Math.floor(Math.random()*0xFF).toString(16).toUpperCase().padStart(2,'0');
+                deepSig.innerText = `0x${hex1} · ${hex2} · Δ${(temp+edge).toFixed(1)}`;
+
+                // association word
+                const words = ["prism", "echo", "petrichor", "chroma", "spectre", "epiphany", "liminal", "aeon"];
+                const wIdx = Math.floor((temp*10 + edge*8 + noise*5) % words.length);
+                assocWord.innerText = `「 ${words[wIdx]} 」`;
+
+                // poem line
+                const poems = ["the colour of sound...", "a whisper of ultraviolet", "frequencies braid like hair", "silence hums in B-flat", "the taste of thunder", "dreams have texture"];
+                poemSpan.innerText = poems[Math.floor(Math.random() * poems.length)];
+
+                // limbic values
+                limbic0.innerText = (0.2 + temp * 0.7).toFixed(2);
+                limbic1.innerText = (0.5 + edge * 0.7).toFixed(2);
+
+                // footnote
+                const foots = ["synesthetic translation active", "tactile → auditory", "haptic feedback loop", "quantum subjectivity"];
+                footnoteMsg.innerText = foots[Math.floor(Math.random() * foots.length)];
+
+                // update spectrum bars heights (6 bars)
+                for (let i=0; i<spectrumBars.length; i++) {
+                    let barHeight = 20 + (Math.sin(i*2 + frame*0.2) * 15 + 20) + (temp*40) + (noise*30);
+                    barHeight = Math.min(95, Math.max(18, barHeight));
+                    spectrumBars[i].style.height = barHeight + '%';
+                }
+
+                drawCanvas();
+            }
+
+            // ---------- CANVAS DRAWING (ABSTRACT, LAYERED, AFFECTED BY SLIDERS/MOOD) ----------
+            function drawCanvas() {
+                ctx.clearRect(0, 0, width, height);
+
+                // background based on temp (hue)
+                const baseHue = (temp * 200 + 240 + currentMood * 10) % 360;
+                const grad = ctx.createLinearGradient(0, 0, width, height);
+                grad.addColorStop(0, `hsl(${baseHue}, 80%, 10%)`);
+                grad.addColorStop(0.7, `hsl(${baseHue + 50}, 80%, 20%)`);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, width, height);
+
+                // fractal blobs (edge influence)
+                const blobCount = 8 + Math.floor(edge * 20);
+                for (let b=0; b<blobCount; b++) {
+                    const x = (Math.sin(b * 1.3 + frame*0.02) * 70 + 150 + b * 30 + noise * 120) % (width-100) + 40;
+                    const y = (Math.cos(b * 2.1 + frame*0.03) * 60 + 120 + b * 20 + temp * 130) % (height-100) + 40;
+                    const rad = 20 + edge * 80 + Math.sin(b+frame*0.1)*15;
+                    const hueBlob = (baseHue + b * 20 + noise * 80) % 360;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, rad, 0, 2*Math.PI);
+                    ctx.fillStyle = `hsla(${hueBlob}, 90%, 70%, 0.25)`;
+                    ctx.fill();
+                    ctx.strokeStyle = `hsla(${hueBlob+30}, 100%, 70%, 0.6)`;
+                    ctx.lineWidth = 2 + edge*5;
+                    ctx.stroke();
+                }
+
+                // overlapping lines (noise influence)
+                for (let l=0; l<15; l++) {
+                    ctx.beginPath();
+                    const offset = (l * 37 + frame * 2) % width;
+                    ctx.moveTo(offset, 0);
+                    for (let s=0; s<20; s++) {
+                        const xPos = (offset + s*30 + Math.sin(s+l+frame*0.1)*30) % width;
+                        const yPos = s*25 + Math.sin(s*0.7 + temp*5)*40 + noise*80;
+                        ctx.lineTo(xPos, yPos);
+                    }
+                    ctx.strokeStyle = `rgba(255, 200, 180, ${0.1+noise*0.2})`;
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+
+                // point cloud (edge + noise)
+                for (let p=0; p<60; p++) {
+                    const px = (p*23 + frame*3) % width;
+                    const py = (Math.sin(p*0.2+temp*5)*100 + 150 + noise*120) % height;
+                    ctx.fillStyle = `hsl(${baseHue+80}, 90%, 80%)`;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 3+edge*8, 0, 2*Math.PI);
+                    ctx.fill();
+                }
+
+                // signature glitch text
+                ctx.font = "bold 14px 'JetBrains Mono', monospace";
+                ctx.fillStyle = "#ffe5b0";
+                ctx.fillText("⚡  " + Math.floor(noise*1000).toString(16), 30, 70);
+                ctx.fillStyle = "#e0b0ff";
+                ctx.fillText("⟳  " + currentMood, 380, 120);
+
+                // additional layers based on mood
+                if (currentMood == 1) { // 🤯
+                    ctx.fillStyle = "#ffffff20";
+                    ctx.fillRect(0,0,width,height);
+                } else if (currentMood == 3) { // 🥰
+                    ctx.fillStyle = "#ffc0cb30";
+                    ctx.fillRect(0,0,width,height);
+                }
+            }
+
+            // mood buttons
+            document.querySelectorAll('.emote-btn').forEach((btn, index) => {
+                btn.addEventListener('click', () => {
+                    currentMood = index; // 0..4
+                    // also shift sliders a bit for unique response
+                    temp = Math.min(1, Math.max(0, temp + (Math.random()*0.2 - 0.1)));
+                    edge = Math.min(1, Math.max(0, edge + (Math.random()*0.2 - 0.1)));
+                    noise = Math.min(1, Math.max(0, noise + (Math.random()*0.2 - 0.1)));
+                    tempSlider.value = temp;
+                    edgeSlider.value = edge;
+                    noiseSlider.value = noise;
+                    updateAll();
+                });
+            });
+
+            // slider events
+            tempSlider.addEventListener('input', updateAll);
+            edgeSlider.addEventListener('input', updateAll);
+            noiseSlider.addEventListener('input', updateAll);
+
+            // additional layer of mutation: canvas click to randomise further
+            canvas.addEventListener('click', (e) => {
+                // subtle shift
+                temp = Math.min(1, Math.max(0, temp + (Math.random()*0.2 - 0.1)));
+                edge = Math.min(1, Math.max(0, edge + (Math.random()*0.2 - 0.1)));
+                noise = Math.min(1, Math.max(0, noise + (Math.random()*0.2 - 0.1)));
+                tempSlider.value = temp;
+                edgeSlider.value = edge;
+                noiseSlider.value = noise;
+                updateAll();
+            });
+
+            // background animation frame for smooth updates (canvas, spectrum)
+            function animate() {
+                frame++;
+                // slowly drift values (organic feel) if not being dragged (optional)
+                // but we want controlled? we just update canvas with new frame counter.
+                // also slightly adjust spectrum bars via frame (already inside updateAll)
+                // we call updateAll periodically? but we must preserve slider values.
+                // instead just call drawCanvas directly with new frame value, without changing sliders.
+                drawCanvas();   // uses current temp, edge, noise, currentMood, frame
+                // also shift spectrum bars based on frame? but updateAll already does. we can call updateAll without changing sliders? but that would reset random sigs too often. 
+                // instead update only bars signature without fully regenerating all text (to keep responsive)
+                for (let i=0; i<spectrumBars.length; i++) {
+                    let barHeight = 20 + (Math.sin(i*2 + frame*0.2) * 15 + 20) + (temp*40) + (noise*30);
+                    barHeight = Math.min(95, Math.max(18, barHeight));
+                    spectrumBars[i].style.height = barHeight + '%';
+                }
+                // also update deepsig and poem occasionally for liveness
+                if (frame % 30 === 0) {
+                    const hex1 = Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase().padStart(4,'0');
+                    const hex2 = Math.floor(Math.random()*0xFF).toString(16).toUpperCase().padStart(2,'0');
+                    deepSig.innerText = `0x${hex1} · ${hex2} · Δ${(temp+edge).toFixed(1)}`;
+                    const poems = ["the colour of sound...", "a whisper of ultraviolet", "frequencies braid like hair", "silence hums in B-flat", "the taste of thunder", "dreams have texture"];
+                    poemSpan.innerText = poems[Math.floor(Math.random() * poems.length)];
+                }
+                requestAnimationFrame(animate);
+            }
+
+            // initial call
+            updateAll();
+            animate();
+
+            // extra: also update on window resize? no need.
+        })();
+    </script>
+</body>
+</html>

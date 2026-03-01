@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Balancing Advisor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-balance-scale"></i> Load Balancing Advisor</h1>
+            <p class="subtitle">Intelligent traffic distribution optimization across services and nodes</p>
+        </header>
+
+        <!-- Load Overview -->
+        <div class="load-overview">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <div class="metric-content">
+                    <h3>Total Load</h3>
+                    <div class="metric-value" id="totalLoad">2,450</div>
+                    <div class="metric-unit">requests/min</div>
+                    <div class="metric-trend" id="loadTrend"><i class="fas fa-arrow-up"></i> +8%</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="metric-content">
+                    <h3>Avg Response Time</h3>
+                    <div class="metric-value" id="avgResponseTime">145</div>
+                    <div class="metric-unit">ms</div>
+                    <div class="metric-trend positive" id="responseTrend"><i class="fas fa-arrow-down"></i> -5ms</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon warning">
+                    <i class="fas fa-server"></i>
+                </div>
+                <div class="metric-content">
+                    <h3>Active Nodes</h3>
+                    <div class="metric-value" id="activeNodes">6</div>
+                    <div class="metric-unit">/ 8 total</div>
+                    <div class="metric-trend" id="nodesTrend"><i class="fas fa-equals"></i> stable</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon info">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="metric-content">
+                    <h3>Optimization Score</h3>
+                    <div class="metric-value" id="optimizationScore">87</div>
+                    <div class="metric-unit">/ 100</div>
+                    <div class="metric-trend positive" id="optimizationTrend"><i class="fas fa-arrow-up"></i> +3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard-grid">
+            <!-- Node Status Panel -->
+            <div class="panel nodes-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-server"></i> Node Status</h3>
+                    <div class="panel-controls">
+                        <button class="btn-secondary" id="addNode">
+                            <i class="fas fa-plus"></i> Add Node
+                        </button>
+                        <button class="btn-danger" id="removeNode">
+                            <i class="fas fa-minus"></i> Remove
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="nodes-grid" id="nodesGrid">
+                        <!-- Nodes will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load Distribution Panel -->
+            <div class="panel distribution-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-chart-pie"></i> Load Distribution</h3>
+                    <div class="panel-controls">
+                        <select id="distributionView">
+                            <option value="current">Current Load</option>
+                            <option value="optimal">Optimal Distribution</option>
+                            <option value="historical">Historical Trend</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="distribution-chart">
+                        <canvas id="distributionChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="distribution-legend" id="distributionLegend">
+                        <!-- Legend will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Traffic Flow Panel -->
+            <div class="panel traffic-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-route"></i> Traffic Flow</h3>
+                    <div class="panel-controls">
+                        <button class="btn-secondary" id="simulateTraffic">
+                            <i class="fas fa-play"></i> Simulate
+                        </button>
+                        <button class="btn-warning" id="clearTraffic">
+                            <i class="fas fa-stop"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="traffic-visualization" id="trafficVisualization">
+                        <!-- Traffic flow will be visualized here -->
+                    </div>
+                    <div class="traffic-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Requests:</span>
+                            <span class="stat-value" id="totalRequests">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Successful:</span>
+                            <span class="stat-value" id="successfulRequests">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Failed:</span>
+                            <span class="stat-value" id="failedRequests">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load Balancing Strategy Panel -->
+            <div class="panel strategy-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-cogs"></i> Load Balancing Strategy</h3>
+                    <div class="panel-controls">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="autoOptimize" checked>
+                            <span class="toggle-slider"></span>
+                            Auto Optimize
+                        </label>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="strategy-options">
+                        <div class="strategy-item">
+                            <input type="radio" id="roundRobin" name="strategy" value="round-robin" checked>
+                            <label for="roundRobin">
+                                <div class="strategy-info">
+                                    <h4>Round Robin</h4>
+                                    <p>Sequential distribution to each node</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="strategy-item">
+                            <input type="radio" id="leastLoaded" name="strategy" value="least-loaded">
+                            <label for="leastLoaded">
+                                <div class="strategy-info">
+                                    <h4>Least Loaded</h4>
+                                    <p>Route to node with lowest current load</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="strategy-item">
+                            <input type="radio" id="weighted" name="strategy" value="weighted">
+                            <label for="weighted">
+                                <div class="strategy-info">
+                                    <h4>Weighted</h4>
+                                    <p>Distribution based on node capacity</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="strategy-item">
+                            <input type="radio" id="adaptive" name="strategy" value="adaptive">
+                            <label for="adaptive">
+                                <div class="strategy-info">
+                                    <h4>Adaptive</h4>
+                                    <p>AI-driven dynamic optimization</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics Panel -->
+            <div class="panel performance-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-chart-line"></i> Performance Metrics</h3>
+                    <div class="panel-controls">
+                        <select id="timeRange">
+                            <option value="1m">Last Minute</option>
+                            <option value="5m" selected>Last 5 Minutes</option>
+                            <option value="15m">Last 15 Minutes</option>
+                            <option value="1h">Last Hour</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="metrics-chart">
+                        <canvas id="performanceChart" width="400" height="250"></canvas>
+                    </div>
+                    <div class="performance-indicators">
+                        <div class="indicator">
+                            <div class="indicator-label">Throughput</div>
+                            <div class="indicator-bar">
+                                <div class="indicator-fill" id="throughputFill" style="width: 75%"></div>
+                            </div>
+                            <div class="indicator-value" id="throughputValue">1,837 req/min</div>
+                        </div>
+
+                        <div class="indicator">
+                            <div class="indicator-label">Latency</div>
+                            <div class="indicator-bar">
+                                <div class="indicator-fill" id="latencyFill" style="width: 60%"></div>
+                            </div>
+                            <div class="indicator-value" id="latencyValue">145ms avg</div>
+                        </div>
+
+                        <div class="indicator">
+                            <div class="indicator-label">Error Rate</div>
+                            <div class="indicator-bar">
+                                <div class="indicator-fill error" id="errorFill" style="width: 15%"></div>
+                            </div>
+                            <div class="indicator-value" id="errorValue">1.2%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations Panel -->
+            <div class="panel recommendations-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-lightbulb"></i> Recommendations</h3>
+                    <div class="panel-controls">
+                        <button class="btn-primary" id="applyRecommendations">
+                            <i class="fas fa-check"></i> Apply All
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="recommendations-list" id="recommendationsList">
+                        <!-- Recommendations will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="control-section">
+                <h3>Traffic Simulation</h3>
+                <div class="simulation-controls">
+                    <div class="control-group">
+                        <label for="trafficIntensity">Traffic Intensity:</label>
+                        <input type="range" id="trafficIntensity" min="1" max="10" value="5">
+                        <span id="trafficIntensityValue">5</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="trafficPattern">Traffic Pattern:</label>
+                        <select id="trafficPattern">
+                            <option value="steady">Steady</option>
+                            <option value="bursty">Bursty</option>
+                            <option value="spiky">Spiky</option>
+                            <option value="seasonal">Seasonal</option>
+                        </select>
+                    </div>
+
+                    <div class="control-buttons">
+                        <button class="btn-success" id="startSimulation">
+                            <i class="fas fa-play"></i> Start
+                        </button>
+                        <button class="btn-danger" id="stopSimulation">
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                        <button class="btn-warning" id="resetSimulation">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>System Configuration</h3>
+                <div class="config-options">
+                    <div class="config-item">
+                        <label for="maxLoadThreshold">Max Load Threshold:</label>
+                        <input type="number" id="maxLoadThreshold" value="80" min="50" max="95">
+                        <span>%</span>
+                    </div>
+
+                    <div class="config-item">
+                        <label for="scalingSensitivity">Scaling Sensitivity:</label>
+                        <input type="range" id="scalingSensitivity" min="0.1" max="2.0" step="0.1" value="1.0">
+                        <span id="scalingSensitivityValue">1.0</span>
+                    </div>
+
+                    <div class="config-item">
+                        <label for="healthCheckInterval">Health Check Interval:</label>
+                        <input type="number" id="healthCheckInterval" value="30" min="5" max="300">
+                        <span>seconds</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts and Notifications -->
+        <div class="alerts-panel" id="alertsPanel">
+            <!-- Alerts will be populated by JavaScript -->
+        </div>
+
+        <!-- Node Details Modal -->
+        <div class="modal" id="nodeModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Node Details</h3>
+                    <button class="modal-close" id="closeNodeModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="nodeDetails">
+                    <!-- Node details will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

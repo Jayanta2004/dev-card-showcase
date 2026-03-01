@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Hex-Guess: A daily color puzzle for web developers. Guess the 6-digit hex code in 6 tries!" />
+  <title>🎨 Hex-Guess</title>
+
+  <!-- Google Fonts: Inter (SaaS UI), Space Mono (code/hex input) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       HEADER
+       ═══════════════════════════════════════════ -->
+  <header id="app-header">
+    <div class="header-left">
+      <span class="header-logo">🎨</span>
+      <h1 class="header-title">Hex-Guess</h1>
+    </div>
+    <div class="header-right">
+      <!-- Stats button -->
+      <button id="btn-stats" class="icon-btn" aria-label="View statistics" title="Stats">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6"  y1="20" x2="6"  y2="14"/>
+        </svg>
+      </button>
+      <!-- Help button -->
+      <button id="btn-help" class="icon-btn" aria-label="How to play" title="How to play">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN GAME AREA
+       ═══════════════════════════════════════════ -->
+  <main id="app-main">
+
+    <!-- ── COLOR SWATCH PANEL ─────────────────── -->
+    <section id="swatch-panel" aria-label="Target color">
+      <div id="target-swatch" aria-hidden="true">
+        <!-- Revealed after game ends; covered with ? during play -->
+        <span class="swatch-question" id="swatch-question" aria-hidden="true">?</span>
+        <span class="swatch-reveal"   id="swatch-reveal"   aria-hidden="true"></span>
+      </div>
+
+      <!-- Channel labels below swatch -->
+      <div class="channel-labels" aria-hidden="true">
+        <span class="ch-label ch-r">R</span>
+        <span class="ch-label ch-g">G</span>
+        <span class="ch-label ch-b">B</span>
+      </div>
+
+      <!-- Timer to next puzzle -->
+      <div id="next-timer" aria-live="polite">
+        <span class="timer-label">Next puzzle in</span>
+        <span class="timer-value" id="timer-display">--:--:--</span>
+      </div>
+    </section>
+
+    <!-- ── GUESS GRID ─────────────────────────── -->
+    <section id="grid-section" aria-label="Guess history">
+
+      <!-- Legend row (column headers) -->
+      <div class="grid-legend" aria-hidden="true">
+        <span class="legend-swatch">#</span>
+        <span class="legend-ch">R</span>
+        <span class="legend-ch">G</span>
+        <span class="legend-ch">B</span>
+        <span class="legend-hex">Hex</span>
+      </div>
+
+      <!-- 6 guess rows, populated dynamically -->
+      <div id="guess-grid" role="list" aria-label="Guess rows">
+        <!-- Each row built by JS:
+             .guess-row > .row-swatch + .tile(×3) + .row-hex-label
+        -->
+      </div>
+    </section>
+
+    <!-- ── INPUT BAR ──────────────────────────── -->
+    <section id="input-section" aria-label="Hex code input">
+      <div id="input-wrapper">
+        <span class="hash-prefix">#</span>
+        <input
+          type="text"
+          id="hex-input"
+          class="hex-input"
+          maxlength="6"
+          placeholder="FF5733"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          aria-label="Enter 6-digit hex code"
+        />
+        <button id="submit-btn" class="submit-btn" aria-label="Submit guess">
+          ENTER
+        </button>
+      </div>
+
+      <!-- Feedback message (validation errors, win/loss) -->
+      <p id="feedback-msg" class="feedback-msg" aria-live="assertive" role="status"></p>
+    </section>
+
+    <!-- ── PROXIMITY LEGEND ───────────────────── -->
+    <section id="prox-legend" aria-label="Color coding guide">
+      <div class="prox-item">
+        <span class="prox-tile prox-exact"></span>
+        <span class="prox-desc">Exact</span>
+      </div>
+      <div class="prox-item">
+        <span class="prox-tile prox-hot"></span>
+        <span class="prox-desc">Hot (&le;15)</span>
+      </div>
+      <div class="prox-item">
+        <span class="prox-tile prox-warm"></span>
+        <span class="prox-desc">Warm (&le;40)</span>
+      </div>
+      <div class="prox-item">
+        <span class="prox-tile prox-cool"></span>
+        <span class="prox-desc">Cool (&le;80)</span>
+      </div>
+      <div class="prox-item">
+        <span class="prox-tile prox-cold"></span>
+        <span class="prox-desc">Cold (&gt;80)</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       TOAST NOTIFICATION
+       ═══════════════════════════════════════════ -->
+  <div id="toast" class="toast hidden" role="alert" aria-live="assertive"></div>
+
+  <!-- ═══════════════════════════════════════════
+       STATS MODAL
+       ═══════════════════════════════════════════ -->
+  <div id="modal-stats" class="modal hidden" role="dialog" aria-modal="true" aria-label="Your statistics">
+    <div class="modal-card">
+      <button class="modal-close" id="stats-close" aria-label="Close stats">&times;</button>
+      <h2 class="modal-title">📊 Statistics</h2>
+
+      <div class="stats-row">
+        <div class="stat-block">
+          <span class="stat-num" id="stat-played">0</span>
+          <span class="stat-lbl">Played</span>
+        </div>
+        <div class="stat-block">
+          <span class="stat-num" id="stat-winpct">0</span>
+          <span class="stat-lbl">Win %</span>
+        </div>
+        <div class="stat-block">
+          <span class="stat-num" id="stat-streak">0</span>
+          <span class="stat-lbl">Streak</span>
+        </div>
+        <div class="stat-block">
+          <span class="stat-num" id="stat-maxstreak">0</span>
+          <span class="stat-lbl">Best Streak</span>
+        </div>
+      </div>
+
+      <h3 class="dist-title">Guess Distribution</h3>
+      <div id="dist-chart" class="dist-chart" aria-label="Guess distribution chart">
+        <!-- Bars built by JS: 6 rows for guess counts 1–6 -->
+      </div>
+
+      <!-- Share result (copy emoji board) -->
+      <button id="share-btn" class="share-btn hidden">
+        📋 Copy Result
+      </button>
+      <p class="share-confirm hidden" id="share-confirm">Copied to clipboard!</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       HELP MODAL
+       ═══════════════════════════════════════════ -->
+  <div id="modal-help" class="modal hidden" role="dialog" aria-modal="true" aria-label="How to play">
+    <div class="modal-card">
+      <button class="modal-close" id="help-close" aria-label="Close help">&times;</button>
+      <h2 class="modal-title">🎮 How to Play</h2>
+      <ul class="help-list">
+        <li>A mystery color is shown as a swatch.</li>
+        <li>Type a <strong>6-digit hex code</strong> and press Enter.</li>
+        <li>Each guess reveals <strong>R, G, B channel feedback</strong> independently.</li>
+        <li>Use the tile colors + arrows to home in on each channel.</li>
+        <li>Win by guessing the exact hex in <strong>6 tries or fewer</strong>.</li>
+        <li>A new puzzle drops every day at <strong>midnight UTC</strong>.</li>
+      </ul>
+      <div class="help-example">
+        <p class="help-ex-label">Example feedback row:</p>
+        <div class="help-ex-row">
+          <span class="prox-tile prox-exact"  title="R exact"></span>
+          <span class="prox-tile prox-hot"    title="G hot"></span>
+          <span class="prox-tile prox-cold"   title="B cold"></span>
+        </div>
+        <p class="help-ex-desc">R is correct · G is close · B is far off</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal backdrop (shared) -->
+  <div id="modal-backdrop" class="modal-backdrop hidden" aria-hidden="true"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

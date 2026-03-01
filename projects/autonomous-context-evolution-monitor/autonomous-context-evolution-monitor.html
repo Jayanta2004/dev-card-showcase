@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Context Evolution Monitor</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="icon" type="image/png" href="../../Hall of Fame (1).png" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="autonomous-context-evolution-monitor.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <div class="monitor-container">
+        <header>
+            <h1><i class="fas fa-brain"></i> Autonomous Context Evolution Monitor</h1>
+            <p>Advanced monitoring system that continuously evaluates conversational context evolution during long-running interactions using multiple semantic similarity algorithms.</p>
+        </header>
+
+        <div class="dashboard-overview">
+            <div class="metric-card">
+                <h3>Session Status</h3>
+                <div class="status-indicator" id="sessionStatus">Inactive</div>
+            </div>
+            <div class="metric-card">
+                <h3>Current Similarity</h3>
+                <div class="similarity-score" id="currentSimilarity">0.00</div>
+            </div>
+            <div class="metric-card">
+                <h3>Messages Analyzed</h3>
+                <div class="message-count" id="messageCount">0</div>
+            </div>
+            <div class="metric-card">
+                <h3>Deviation Alerts</h3>
+                <div class="alert-count" id="alertCount">0</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="setup-section">
+                    <h2><i class="fas fa-cogs"></i> Session Configuration</h2>
+                    <div class="config-group">
+                        <label for="initialContext">Initial Context/Topic:</label>
+                        <textarea id="initialContext" placeholder="Define the core topic or context for this conversation session. This will serve as the baseline for similarity measurements..." rows="4"></textarea>
+                    </div>
+
+                    <div class="config-group">
+                        <label for="similarityAlgorithm">Similarity Algorithm:</label>
+                        <select id="similarityAlgorithm">
+                            <option value="cosine">Cosine Similarity (TF-IDF)</option>
+                            <option value="jaccard">Jaccard Similarity</option>
+                            <option value="levenshtein">Levenshtein Distance</option>
+                            <option value="semantic">Semantic Embedding</option>
+                        </select>
+                    </div>
+
+                    <div class="config-group">
+                        <label for="threshold">Deviation Threshold (0-1):</label>
+                        <input type="range" id="threshold" min="0" max="1" step="0.05" value="0.3">
+                        <span class="threshold-value" id="thresholdValue">0.30</span>
+                    </div>
+
+                    <div class="config-group">
+                        <label for="analysisWindow">Analysis Window (messages):</label>
+                        <input type="number" id="analysisWindow" min="1" max="50" value="5">
+                    </div>
+
+                    <div class="config-group">
+                        <label for="autoRecalibrate">Auto-Recalibration:</label>
+                        <input type="checkbox" id="autoRecalibrate" checked>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-primary" id="startSessionBtn" onclick="startSession()">
+                            <i class="fas fa-play"></i> Start Monitoring
+                        </button>
+                        <button class="btn-secondary" id="pauseSessionBtn" onclick="pauseSession()" disabled>
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        <button class="btn-danger" id="resetSessionBtn" onclick="resetSession()">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="analysis-section" id="analysisSection" style="display: none;">
+                    <h2><i class="fas fa-chart-line"></i> Context Analysis</h2>
+                    <canvas id="similarityChart" width="400" height="200"></canvas>
+
+                    <div class="analysis-metrics">
+                        <div class="metric-item">
+                            <span class="metric-label">Average Similarity:</span>
+                            <span class="metric-value" id="avgSimilarity">0.00</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Similarity Variance:</span>
+                            <span class="metric-value" id="similarityVariance">0.00</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Trend Direction:</span>
+                            <span class="metric-value" id="trendDirection">Stable</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Context Drift Rate:</span>
+                            <span class="metric-value" id="driftRate">0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="chat-section" id="chatSection" style="display: none;">
+                    <h2><i class="fas fa-comments"></i> Conversation Monitor</h2>
+                    <div class="chat-controls">
+                        <button class="btn-sm" onclick="clearChat()">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                        <button class="btn-sm" onclick="exportChat()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                    <div class="chat-window" id="chatWindow"></div>
+                    <div class="chat-input">
+                        <input type="text" id="messageInput" placeholder="Type your message and press Enter..." onkeypress="handleKeyPress(event)">
+                        <button onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="alerts-section" id="alertsSection" style="display: none;">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Context Alerts</h2>
+                    <div class="alerts-container" id="alertsContainer">
+                        <div class="no-alerts">No alerts yet. Context is stable.</div>
+                    </div>
+                </div>
+
+                <div class="history-section" id="historySection" style="display: none;">
+                    <h2><i class="fas fa-history"></i> Session History</h2>
+                    <div class="history-list" id="historyList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="recalibration-modal" id="recalibrationModal" style="display: none;">
+            <div class="modal-content">
+                <h3><i class="fas fa-exclamation-circle"></i> Context Recalibration Required</h3>
+                <p>The conversation has deviated significantly from the initial context. Similarity score: <span id="modalSimilarity">0.00</span></p>
+                <div class="modal-actions">
+                    <button class="btn-primary" onclick="recalibrateContext()">
+                        <i class="fas fa-sync"></i> Recalibrate Context
+                    </button>
+                    <button class="btn-secondary" onclick="updateBaseline()">
+                        <i class="fas fa-edit"></i> Update Baseline
+                    </button>
+                    <button class="btn-danger" onclick="dismissAlert()">
+                        <i class="fas fa-times"></i> Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-modal" id="settingsModal" style="display: none;">
+            <div class="modal-content">
+                <h3><i class="fas fa-sliders-h"></i> Advanced Settings</h3>
+                <div class="settings-group">
+                    <label for="embeddingModel">Embedding Model:</label>
+                    <select id="embeddingModel">
+                        <option value="tfidf">TF-IDF</option>
+                        <option value="word2vec">Word2Vec</option>
+                        <option value="bert">BERT</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label for="smoothingFactor">Smoothing Factor:</label>
+                    <input type="range" id="smoothingFactor" min="0.1" max="1.0" step="0.1" value="0.2">
+                    <span id="smoothingValue">0.20</span>
+                </div>
+                <div class="settings-group">
+                    <label for="alertThreshold">Alert Sensitivity:</label>
+                    <input type="range" id="alertThreshold" min="0.1" max="0.9" step="0.1" value="0.7">
+                    <span id="alertValue">0.70</span>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-primary" onclick="saveSettings()">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button class="btn-secondary" onclick="closeSettings()">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../footer-loader.js"></script>
+    <script src="autonomous-context-evolution-monitor.js"></script>
+</body>
+</html></content>
+<parameter name="filePath">c:\Users\Gupta\Downloads\dev-card-showcase\projects\autonomous-context-evolution-monitor\index.html

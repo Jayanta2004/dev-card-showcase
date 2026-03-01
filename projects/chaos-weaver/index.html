@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>chaos weaver · strange attractor loom</title>
+    <!-- single file · high-level generative physics + sound reactivity -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0715;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+            padding: 1rem;
+        }
+
+        .weaver-field {
+            position: relative;
+            width: min(98vw, 1300px);
+            aspect-ratio: 16 / 9;
+            background: #05010e;
+            border-radius: 32px 32px 32px 32px;
+            box-shadow: 
+                0 30px 50px -20px #000,
+                0 0 0 1px rgba(170, 0, 255, 0.5) inset,
+                0 0 60px #5d2a9c,
+                0 0 120px #2a0f4a;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .weaver-field:hover {
+            box-shadow: 
+                0 30px 70px -15px #b300ff,
+                0 0 0 2px #ffaae6 inset,
+                0 0 80px #ff44e6,
+                0 0 160px #7700ff;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #physicsCanvas {
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        #audioCanvas {
+            z-index: 1;
+            opacity: 0.7;
+            filter: blur(1px) brightness(1.2);
+        }
+
+        .control-panel {
+            position: absolute;
+            bottom: 24px;
+            right: 28px;
+            z-index: 10;
+            background: rgba(18, 5, 35, 0.6);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            padding: 1rem 2rem 1rem 2rem;
+            border-radius: 60px 12px 60px 12px;
+            border: 1px solid rgba(255, 130, 220, 0.6);
+            box-shadow: 0 18px 30px -12px #000;
+            color: #f0e2ff;
+            font-weight: 300;
+            letter-spacing: 1px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            pointer-events: none;
+        }
+
+        .chaos-tag {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #ffa6f0, #c28eff, #a0d0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px #ffaadc;
+            line-height: 1.2;
+        }
+
+        .stats {
+            display: flex;
+            gap: 32px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .stats div {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .stats span:first-child {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        .stats .value {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #ffea9e;
+            text-shadow: 0 0 15px #f60;
+        }
+
+        .audio-pulse {
+            position: absolute;
+            top: 24px;
+            left: 28px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            border: 1px solid #ff99dd60;
+            color: #ffcaf1;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        .pulse-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ff44b8;
+            box-shadow: 0 0 20px #ff66d5;
+            animation: pulseGlow 0.8s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { opacity: 0.4; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); background: #ffa6f2; box-shadow: 0 0 40px #ffb3fc; }
+        }
+
+        /* hidden file input for audio */
+        #audioFileInput {
+            display: none;
+        }
+
+        .file-trigger {
+            position: absolute;
+            bottom: 28px;
+            left: 28px;
+            z-index: 20;
+            background: rgba(30, 10, 50, 0.7);
+            backdrop-filter: blur(12px);
+            padding: 0.8rem 2rem;
+            border-radius: 40px;
+            border: 1px solid rgba(200, 130, 255, 0.6);
+            color: #f0d5ff;
+            font-size: 1rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            pointer-events: auto;
+        }
+
+        .file-trigger:hover {
+            background: #491e78;
+            border-color: #ffbefa;
+            box-shadow: 0 0 30px #f76eff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="weaver-field">
+        <!-- two canvases: one for attractor (chaos physics) and one for audio waveform -->
+        <canvas id="physicsCanvas"></canvas>
+        <canvas id="audioCanvas"></canvas>
+
+        <!-- UI elements -->
+        <div class="audio-pulse">
+            <div class="pulse-dot" id="pulseDot"></div>
+            <span id="audioStatus">no audio · generative chaos</span>
+        </div>
+
+        <div class="control-panel">
+            <div class="chaos-tag">✧ STRANGE WEAVER ✧</div>
+            <div class="stats">
+                <div>
+                    <span>attractor</span>
+                    <span class="value" id="attractorLabel">lorenz</span>
+                </div>
+                <div>
+                    <span>points</span>
+                    <span class="value" id="pointCount">24k</span>
+                </div>
+                <div>
+                    <span>fps</span>
+                    <span class="value" id="fpsCounter">–</span>
+                </div>
+            </div>
+        </div>
+
+        <label for="audioFileInput" class="file-trigger" id="fileTrigger">🎵 drop audio (or click)</label>
+        <input type="file" id="audioFileInput" accept="audio/*">
+    </div>
+
+    <script>
+        (function() {
+            // ------------------------------------------------------------------
+            // HIGH-LEVEL UNIQUE PROJECT: CHAOS WEAVER
+            // combines strange attractors (Lorenz, Aizawa, Dadras) with
+            // real-time audio waveform reactivity (if file provided) + 
+            // generative particle weaving. self-contained, single file.
+            // ------------------------------------------------------------------
+
+            const physCanvas = document.getElementById('physicsCanvas');
+            const audioCanvas = document.getElementById('audioCanvas');
+            const ctxPhys = physCanvas.getContext('2d');
+            const ctxAudio = audioCanvas.getContext('2d');
+
+            const container = document.querySelector('.weaver-field');
+            const attractorLabel = document.getElementById('attractorLabel');
+            const pointCountSpan = document.getElementById('pointCount');
+            const fpsSpan = document.getElementById('fpsCounter');
+            const audioStatus = document.getElementById('audioStatus');
+            const pulseDot = document.getElementById('pulseDot');
+
+            let width, height;
+
+            // attractor state
+            let points = [];
+            const MAX_POINTS = 27000; // we keep a ring buffer
+            let attractorType = 0; // 0:Lorenz,1:Aizawa,2:Dadras,3:Thomas, will cycle
+            let time = 0;
+            let audioData = null; // will hold waveform if any
+            let audioAmplitude = 0.0; // smoothed
+
+            // Lorenz parameters (classic)
+            const LORENZ = { sigma: 10, rho: 28, beta: 8/3 };
+            // Aizawa (double scroll like)
+            const AIZAWA = { a: 0.95, b: 0.7, c: 0.6, d: 3.5, e: 0.25, f: 0.1 };
+            // Dadras (four-wing)
+            const DADRAS = { a: 3, b: 2.7, c: 1.7, d: 2, e: 9 };
+            // Thomas (half moon)
+            const THOMAS = { b: 0.18 };
+
+            // initial seed
+            let x = 0.1, y = 0.1, z = 0.1;
+            let dt = 0.008; // integration step
+
+            // ring buffer
+            let bufferIndex = 0;
+
+            // audio context and analyzer
+            let audioCtx, analyser, source, audioBufferSource;
+            let audioFile = null;
+            let isAudioPlaying = false;
+
+            // UI: file trigger
+            const fileInput = document.getElementById('audioFileInput');
+            const fileTrigger = document.getElementById('fileTrigger');
+
+            fileTrigger.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleAudioFile);
+
+            async function handleAudioFile(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    if (!audioCtx) {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    if (audioCtx.state === 'suspended') await audioCtx.resume();
+                    
+                    const arrayBuffer = await file.arrayBuffer();
+                    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                    
+                    // stop previous if any
+                    if (audioBufferSource) {
+                        audioBufferSource.stop();
+                        audioBufferSource.disconnect();
+                    }
+                    
+                    source = audioCtx.createBufferSource();
+                    source.buffer = audioBuffer;
+                    
+                    analyser = audioCtx.createAnalyser();
+                    analyser.fftSize = 512;
+                    const bufferLength = analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+                    
+                    source.connect(analyser);
+                    analyser.connect(audioCtx.destination);
+                    
+                    source.loop = true;
+                    source.start(0);
+                    
+                    isAudioPlaying = true;
+                    audioStatus.innerText = 'audio active · morph field';
+                    
+                    // store reference for visualization
+                    audioFile = { analyser, dataArray, bufferLength };
+                    
+                    // update pulse animation
+                    pulseDot.style.animation = 'pulseGlow 0.2s infinite alternate';
+                } catch (err) {
+                    console.warn('audio error', err);
+                    audioStatus.innerText = 'audio error · generative';
+                }
+            }
+
+            // resize
+            function resizeCanvases() {
+                width = container.clientWidth;
+                height = container.clientHeight;
+                physCanvas.width = width;
+                physCanvas.height = height;
+                audioCanvas.width = width;
+                audioCanvas.height = height;
+            }
+            window.addEventListener('resize', resizeCanvases);
+            resizeCanvases();
+
+            // initialize point buffer
+            for (let i = 0; i < MAX_POINTS; i++) {
+                points.push({ x: 0, y: 0, z: 0 });
+            }
+
+            // attractor switching every 8 seconds
+            setInterval(() => {
+                attractorType = (attractorType + 1) % 4;
+                switch (attractorType) {
+                    case 0: attractorLabel.innerText = 'lorenz'; break;
+                    case 1: attractorLabel.innerText = 'aizawa'; break;
+                    case 2: attractorLabel.innerText = 'dadras'; break;
+                    case 3: attractorLabel.innerText = 'thomas'; break;
+                }
+            }, 8000);
+
+            // physics step with audio influence
+            function stepAttractor(audioAmp) {
+                let dx = 0, dy = 0, dz = 0;
+                // audio influence factor (0..0.3)
+                let influence = audioAmp * 0.5; // 0..0.5
+
+                switch (attractorType) {
+                    case 0: // Lorenz
+                        dx = LORENZ.sigma * (y - x);
+                        dy = x * (LORENZ.rho - z) - y;
+                        dz = x * y - LORENZ.beta * z;
+                        break;
+                    case 1: // Aizawa
+                        dx = (z - LORENZ.beta) * x - AIZAWA.d * y;
+                        dy = AIZAWA.d * x + (z - LORENZ.beta) * y;
+                        dz = AIZAWA.c + AIZAWA.a * z - (z*z*z) / 3 - (x*x + y*y) * (1 + AIZAWA.e * z) + AIZAWA.f * z * x*x*x;
+                        break;
+                    case 2: // Dadras
+                        dx = y - DADRAS.a * x + DADRAS.b * y * z;
+                        dy = DADRAS.c * y - x * z + DADRAS.d * z;
+                        dz = DADRAS.e * z - x * y;
+                        break;
+                    case 3: // Thomas
+                        dx = Math.sin(y) - THOMAS.b * x;
+                        dy = Math.sin(z) - THOMAS.b * y;
+                        dz = Math.sin(x) - THOMAS.b * z;
+                        break;
+                }
+
+                // apply audio morph: add twist to vector field
+                if (influence > 0.01) {
+                    dx += influence * (Math.sin(y) * 2.5);
+                    dy += influence * (Math.cos(z) * 2.5);
+                    dz += influence * (Math.sin(x) * 2.5);
+                }
+
+                x += dx * dt;
+                y += dy * dt;
+                z += dz * dt;
+
+                // scale for visualization
+                let scale = 0.24;
+                if (attractorType === 1) scale = 0.4; // aizawa needs smaller
+                if (attractorType === 3) scale = 2.2; // thomas is tiny
+                let px = x * scale;
+                let py = y * scale;
+                let pz = z * scale;
+
+                points[bufferIndex] = { x: px, y: py, z: pz };
+                bufferIndex = (bufferIndex + 1) % MAX_POINTS;
+            }
+
+            // project 3D to 2D
+            function project(px, py, pz) {
+                const perspective = 600;
+                const factor = perspective / (perspective + pz * 3.5 + 400);
+                const xProj = width/2 + px * factor * 2.0;
+                const yProj = height/2 + py * factor * 2.0 * (width/height);
+                return { x: xProj, y: yProj, factor };
+            }
+
+            // audio frame update
+            let audioAmp = 0;
+            function updateAudioAmplitude() {
+                if (audioFile && analyser) {
+                    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    analyser.getByteFrequencyData(dataArray);
+                    let sum = 0;
+                    for (let i = 0; i < dataArray.length; i++) {
+                        sum += dataArray[i];
+                    }
+                    let avg = sum / dataArray.length / 255; // 0..1
+                    // smooth
+                    audioAmp = audioAmp * 0.9 + avg * 0.1;
+                } else {
+                    // generative pseudo amplitude
+                    audioAmp = 0.15 + 0.1 * Math.sin(time * 5) + 0.05 * Math.sin(time * 13);
+                }
+                // make audioAmp available globally
+                audioAmplitude = audioAmp;
+            }
+
+            // draw waveform on bottom layer (audioCanvas)
+            function drawWaveform() {
+                ctxAudio.clearRect(0, 0, width, height);
+                if (audioFile && analyser) {
+                    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    analyser.getByteTimeDomainData(dataArray); // waveform
+                    ctxAudio.beginPath();
+                    let sliceWidth = width / dataArray.length;
+                    let x = 0;
+                    for (let i = 0; i < dataArray.length; i++) {
+                        let v = dataArray[i] / 128.0 - 1; // -1..1
+                        let y = height/2 + v * height * 0.3;
+                        if (i === 0) ctxAudio.moveTo(x, y);
+                        else ctxAudio.lineTo(x, y);
+                        x += sliceWidth;
+                    }
+                    ctxAudio.strokeStyle = '#ffb3f0';
+                    ctxAudio.lineWidth = 2;
+                    ctxAudio.shadowColor = '#ff50d0';
+                    ctxAudio.shadowBlur = 20;
+                    ctxAudio.stroke();
+                } else {
+                    // generative abstract waveform (noise)
+                    ctxAudio.beginPath();
+                    for (let i = 0; i < 100; i++) {
+                        let t = i / 100;
+                        let amp = 0.4 + 0.2 * Math.sin(t * Math.PI * 2 + time * 6) + 0.15 * Math.sin(t * 17 + time * 3);
+                        let y = height/2 + amp * Math.sin(i * 1.5 + time * 8) * 90;
+                        let x = i * width / 100;
+                        if (i === 0) ctxAudio.moveTo(x, y);
+                        else ctxAudio.lineTo(x, y);
+                    }
+                    ctxAudio.strokeStyle = '#bc8aff60';
+                    ctxAudio.lineWidth = 3;
+                    ctxAudio.shadowBlur = 30;
+                    ctxAudio.stroke();
+                }
+            }
+
+            // draw attractor points on physCanvas
+            function drawAttractor() {
+                ctxPhys.clearRect(0, 0, width, height);
+                ctxPhys.shadowBlur = 12;
+                
+                // draw points from ring buffer (older = dimmer)
+                for (let i = 0; i < MAX_POINTS; i++) {
+                    let idx = (bufferIndex + i) % MAX_POINTS;
+                    let p = points[idx];
+                    if (p.x === 0 && p.y === 0 && p.z === 0) continue;
+
+                    let proj = project(p.x, p.y, p.z);
+                    
+                    // age factor (0.2 .. 1)
+                    let age = i / MAX_POINTS; // 0 (newest) .. 1 (oldest)
+                    let brightness = 1.0 - age * 0.8;
+                    
+                    // color based on z and audio amp
+                    let hue = (p.z * 20 + time * 10 + audioAmplitude * 200) % 360;
+                    let sat = 80 + 20 * Math.sin(p.y * 2);
+                    
+                    ctxPhys.beginPath();
+                    ctxPhys.arc(proj.x, proj.y, 1.5 + 1.0 * (1 - age) + audioAmplitude * 6, 0, 2*Math.PI);
+                    ctxPhys.fillStyle = `hsla(${hue}, ${sat}%, 70%, ${brightness})`;
+                    ctxPhys.shadowColor = `hsl(${hue}, 90%, 70%)`;
+                    ctxPhys.fill();
+                }
+                pointCountSpan.innerText = (MAX_POINTS/1000).toFixed(0) + 'k';
+            }
+
+            // fps calculation
+            let lastFrame = 0;
+            let fps = 60;
+            let frameCount = 0;
+            let lastFpsUpdate = 0;
+
+            // main animation
+            function animate(now) {
+                // fps
+                frameCount++;
+                if (now - lastFpsUpdate > 300) {
+                    fps = Math.round((frameCount * 1000) / (now - lastFpsUpdate));
+                    fpsSpan.innerText = fps;
+                    frameCount = 0;
+                    lastFpsUpdate = now;
+                }
+
+                // delta time for smooth audio update
+                let delta = Math.min(50, now - lastFrame);
+                lastFrame = now;
+                time += delta / 1000;
+
+                // update audio amplitude and waveform
+                updateAudioAmplitude();
+
+                // run multiple physics steps per frame for density
+                for (let step = 0; step < 5; step++) {
+                    stepAttractor(audioAmplitude);
+                }
+
+                // draw waveform (bottom canvas)
+                drawWaveform();
+
+                // draw attractor points (top canvas)
+                drawAttractor();
+
+                requestAnimationFrame(animate);
+            }
+
+            requestAnimationFrame(animate);
+
+            // handle click to resume audio context (browser policy)
+            container.addEventListener('click', async () => {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

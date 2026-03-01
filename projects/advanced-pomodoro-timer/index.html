@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer - Advanced</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Ambient background -->
+    <div class="bg-mesh"></div>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <!-- Toast notifications -->
+    <div class="toast-stack" id="toastStack"></div>
+
+    <!-- Settings Panel (slide-in) -->
+    <aside class="settings-panel" id="settingsPanel">
+        <div class="panel-header">
+            <span class="panel-title">Settings</span>
+            <button class="close-panel" id="closeSettings">✕</button>
+        </div>
+        <form id="settingsForm">
+            <div class="setting-section">
+                <div class="section-label">Durations (minutes)</div>
+                <div class="setting-row">
+                    <label>Focus</label>
+                    <div class="number-input-wrap">
+                        <button type="button" class="num-btn" data-field="workDuration" data-delta="-1">−</button>
+                        <input type="number" name="workDuration" class="num-input" min="1" max="90" value="25">
+                        <button type="button" class="num-btn" data-field="workDuration" data-delta="1">+</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Short Break</label>
+                    <div class="number-input-wrap">
+                        <button type="button" class="num-btn" data-field="breakDuration" data-delta="-1">−</button>
+                        <input type="number" name="breakDuration" class="num-input" min="1" max="30" value="5">
+                        <button type="button" class="num-btn" data-field="breakDuration" data-delta="1">+</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Long Break</label>
+                    <div class="number-input-wrap">
+                        <button type="button" class="num-btn" data-field="longBreakDuration" data-delta="-1">−</button>
+                        <input type="number" name="longBreakDuration" class="num-input" min="1" max="60" value="15">
+                        <button type="button" class="num-btn" data-field="longBreakDuration" data-delta="1">+</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Long Break Every</label>
+                    <div class="number-input-wrap">
+                        <button type="button" class="num-btn" data-field="longBreakInterval" data-delta="-1">−</button>
+                        <input type="number" name="longBreakInterval" class="num-input" min="2" max="10" value="4">
+                        <button type="button" class="num-btn" data-field="longBreakInterval" data-delta="1">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="setting-section">
+                <div class="section-label">Automation</div>
+                <label class="toggle-row">
+                    <span>Auto-start Breaks</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="autoStartBreaks">
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </div>
+                </label>
+                <label class="toggle-row">
+                    <span>Auto-start Focus</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="autoStartPomodoros">
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </div>
+                </label>
+                <label class="toggle-row">
+                    <span>Notifications</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="notifications" checked>
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </div>
+                </label>
+                <label class="toggle-row">
+                    <span>Sound Effects</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="soundEnabled" checked>
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </div>
+                </label>
+            </div>
+            <button type="submit" class="save-btn">Save Settings</button>
+        </form>
+    </aside>
+    <div class="panel-overlay" id="panelOverlay"></div>
+
+    <!-- Dashboard Modal -->
+    <div class="modal-backdrop" id="dashboardBackdrop">
+        <div class="dashboard-modal" id="dashboardModal">
+            <div class="modal-topbar">
+                <span class="modal-heading">Dashboard</span>
+                <button class="close-modal" id="closeDashboard">✕</button>
+            </div>
+            <div class="dash-stats" id="dashStats"></div>
+            <div class="dash-section-title">Focus Heatmap — Last 7 Days</div>
+            <div class="heatmap-wrap" id="heatmapWrap"></div>
+            <div class="dash-section-title">Task Performance</div>
+            <div class="perf-list" id="perfList"></div>
+            <div class="dash-section-title">Recent Sessions</div>
+            <div class="sessions-list" id="sessionsList"></div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-dot"></div>
+                <span class="brand-name">Pomodoro Timer</span>
+            </div>
+            <nav class="topbar-actions">
+                <button class="tb-btn" id="dashboardBtn" title="Dashboard">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+                    </svg>
+                </button>
+                <button class="tb-btn" id="settingsBtn" title="Settings">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 15.5A3.5 3.5 0 018.5 12 3.5 3.5 0 0112 8.5a3.5 3.5 0 013.5 3.5 3.5 3.5 0 01-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.06-.74-1.69-.99l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.63.25-1.17.59-1.69.99l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.63-.25 1.17-.58 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z" />
+                    </svg>
+                </button>
+            </nav>
+        </header>
+
+        <!-- Main layout -->
+        <main class="main-grid">
+
+            <!-- LEFT: Timer Column -->
+            <section class="timer-col">
+
+                <!-- Mode tabs -->
+                <div class="mode-tabs">
+                    <button class="mode-tab active" data-type="work">Focus</button>
+                    <button class="mode-tab" data-type="short-break">Short Break</button>
+                    <button class="mode-tab" data-type="long-break">Long Break</button>
+                </div>
+
+                <!-- SVG Ring Timer -->
+                <div class="ring-wrap">
+                    <svg class="ring-svg" viewBox="0 0 240 240">
+                        <circle class="ring-track" cx="120" cy="120" r="108" />
+                        <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="108" />
+                    </svg>
+                    <div class="ring-inner">
+                        <div class="timer-time" id="timerDisplay">25:00</div>
+                        <div class="timer-mode-label" id="modeLabel">Focus Time</div>
+                        <div class="session-dots" id="sessionDots"></div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="timer-controls">
+                    <button class="ctrl-btn ctrl-reset" id="resetBtn" title="Reset">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+                        </svg>
+                    </button>
+                    <button class="ctrl-btn ctrl-main" id="toggleBtn">
+                        <svg class="icon-play" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        <svg class="icon-pause" viewBox="0 0 24 24" style="display:none">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg>
+                    </button>
+                    <button class="ctrl-btn ctrl-skip" id="skipBtn" title="Skip">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Active task -->
+                <div class="active-task-wrap">
+                    <div class="active-task-label">Working on</div>
+                    <select class="task-select" id="taskSelect">
+                        <option value="">— Select a task —</option>
+                    </select>
+                </div>
+
+                <!-- Streak bar -->
+                <div class="streak-section">
+                    <div class="streak-label">
+                        <span>Daily Streak</span>
+                        <span class="streak-count" id="streakCount">0 sessions</span>
+                    </div>
+                    <div class="streak-bar-track">
+                        <div class="streak-bar-fill" id="streakFill" style="width:0%"></div>
+                    </div>
+                    <div class="streak-ticks">
+                        <span>0</span><span>4</span><span>8</span><span>12</span>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- RIGHT: Tasks Column -->
+            <section class="tasks-col">
+
+                <div class="tasks-header">
+                    <h2 class="tasks-heading">Tasks</h2>
+                    <span class="tasks-count" id="tasksCount">0</span>
+                </div>
+
+                <!-- Add task form -->
+                <form class="add-task-form" id="addTaskForm">
+                    <div class="add-task-inputs">
+                        <input type="text" name="name" class="task-input" placeholder="Task name..." required
+                            autocomplete="off">
+                        <input type="text" name="description" class="task-input" placeholder="Note (optional)"
+                            autocomplete="off">
+                    </div>
+                    <button type="submit" class="add-btn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                        </svg>
+                        Add
+                    </button>
+                </form>
+
+                <!-- Filter tabs -->
+                <div class="task-filters">
+                    <button class="tf-btn active" data-filter="all">All</button>
+                    <button class="tf-btn" data-filter="active">Active</button>
+                    <button class="tf-btn" data-filter="done">Done</button>
+                </div>
+
+                <!-- Task list -->
+                <div class="task-list-wrap" id="taskList"></div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+
+</html>

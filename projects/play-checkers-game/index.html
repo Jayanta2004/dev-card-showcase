@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>light checkers · classic strategy</title>
+  <!-- soft, paper-like checkers – pure light theme -->
+  <style>
+    /* ---------- LIGHT, AIRY, TACTILE ---------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f6f9fc 0%, #ecf2f7 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.8rem;
+      color: #1f3a4e;
+    }
+
+    .checkers-container {
+      max-width: 760px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(4px);
+      border-radius: 56px;
+      padding: 2rem 2rem 2.2rem;
+      box-shadow: 0 18px 32px -12px rgba(0,32,48,0.04), 
+                  inset 0 1px 2px white,
+                  0 0 0 1px rgba(255,255,255,0.6);
+    }
+
+    /* ----- HEADER: light & airy ----- */
+    .game-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.8rem;
+      padding: 0 0.4rem;
+    }
+
+    .title-section {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+    }
+
+    .title-section h1 {
+      font-size: 2rem;
+      font-weight: 480;
+      letter-spacing: -0.02em;
+      color: #1f3a4e;
+    }
+
+    .badge {
+      background: #e5edf5;
+      border-radius: 60px;
+      padding: 0.2rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 550;
+      color: #3f5f73;
+      border: 1px solid white;
+      box-shadow: inset 0 1px 2px white;
+    }
+
+    .turn-indicator {
+      background: #ffffffd9;
+      border-radius: 40px;
+      padding: 0.5rem 1.3rem;
+      font-size: 1rem;
+      font-weight: 480;
+      box-shadow: 0 6px 12px -6px rgba(0,0,0,0.02), inset 0 0 0 1px white;
+      color: #26506b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #d0dee9;
+    }
+
+    .piece-indicator {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 14px;
+      margin-left: 6px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    /* ----- BOARD: LIGHT CEDAR / OFF-WHITE ----- */
+    .board-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.2rem;
+    }
+
+    .checkers-board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      width: 100%;
+      max-width: 560px;
+      aspect-ratio: 1 / 1;
+      border-radius: 24px;
+      box-shadow: 0 12px 28px -10px rgba(40,70,90,0.08), 
+                  inset 0 0 0 1px rgba(255,255,255,0.7);
+      background: #f3f3f3; /* neutral base for border */
+      padding: 6px;
+      background: #f0f4fa;
+    }
+
+    /* squares – light pastel palette */
+    .square {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 1 / 1;
+      cursor: pointer;
+      transition: all 0.06s;
+    }
+
+    .square.light {
+      background-color: #fdfdfe; /* almost white, warm white */
+    }
+
+    .square.dark {
+      background-color: #d8e2ec; /* very soft grey-blue – playable square */
+    }
+
+    /* playable dark squares only */
+    .square.dark.valid-move {
+      background-color: #cbdae6; /* slightly deeper on hover */
+    }
+
+    /* piece styling — clean, light, dimensional */
+    .piece {
+      width: 78%;
+      height: 78%;
+      border-radius: 50%;
+      box-shadow: 0 6px 10px -4px rgba(0,0,0,0.04), 
+                  inset 0 -1px 2px rgba(0,0,0,0.02),
+                  inset 0 0 0 1px rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: 0.08s ease;
+      color: rgba(255,255,255,0.9);
+      font-weight: 300;
+    }
+
+    .piece.red {
+      background: radial-gradient(circle at 35% 35%, #fcebea, #f0c6c2);
+      background: linear-gradient(145deg, #f5d2cd, #e6bcb6);
+      box-shadow: 0 4px 8px -4px rgba(170, 110, 100, 0.2), 
+                  inset 0 1px 2px white,
+                  inset 0 -1px 2px rgba(0,0,0,0.02);
+      border: 1px solid rgba(255,255,255,0.5);
+      color: #82443a;
+    }
+
+    .piece.red.king {
+      background: radial-gradient(circle at 30% 30%, #ffe7d4, #ecb893);
+      border: 2px solid #ffeac7;
+    }
+
+    .piece.white {
+      background: radial-gradient(circle at 35% 35%, #f4f8fc, #dde5ec);
+      background: linear-gradient(145deg, #f0f4fc, #dae1ea);
+      box-shadow: 0 4px 8px -4px rgba(80,100,120,0.15), 
+                  inset 0 1px 3px white;
+      border: 1px solid rgba(255,255,255,0.8);
+      color: #3f5563;
+    }
+
+    .piece.white.king {
+      background: radial-gradient(circle at 30% 30%, #fffde7, #f9efc9);
+      border: 2px solid #fffde4;
+    }
+
+    /* selected highlight – very subtle linen */
+    .square.dark.selected {
+      background-color: #d4e1ed;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.8), inset 0 0 0 4px #bed2e1;
+    }
+
+    /* possible move hint */
+    .square.dark.possible-move {
+      background-color: #e4eef7;
+      box-shadow: inset 0 0 0 2px #b1ccdb, inset 0 0 0 4px rgba(255,255,255,0.3);
+    }
+
+    .square.dark.possible-capture {
+      background-color: #eedfe6;
+      box-shadow: inset 0 0 0 2px #eab9c9, inset 0 0 0 4px rgba(255,255,255,0.2);
+    }
+
+    /* ----- status & controls (light) ----- */
+    .game-footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1.8rem;
+      padding: 0.2rem 0.4rem;
+    }
+
+    .status-message {
+      background: #edf3f8;
+      border-radius: 40px;
+      padding: 0.7rem 1.6rem;
+      font-size: 1rem;
+      color: #1e4c62;
+      border: 1px solid white;
+      box-shadow: inset 0 1px 3px white;
+      font-weight: 450;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    .btn {
+      background: white;
+      border: 1px solid #cddee9;
+      border-radius: 40px;
+      padding: 0.6rem 1.4rem;
+      font-size: 0.9rem;
+      font-weight: 480;
+      color: #26506b;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+      transition: all 0.1s;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border-bottom: 2px solid #c0d2df;
+    }
+
+    .btn:hover {
+      background: #f8fcff;
+      border-color: #b2cfdf;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 14px -8px rgba(0,60,100,0.08);
+    }
+
+    /* piece king star */
+    .king-star {
+      font-size: 1.3rem;
+      line-height: 1;
+    }
+
+    /* small screen */
+    @media (max-width: 550px) {
+      .checkers-container { padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="checkers-container">
+    <!-- header: light checkers -->
+    <div class="game-header">
+      <div class="title-section">
+        <h1>checkers</h1>
+        <span class="badge">light</span>
+      </div>
+      <div class="turn-indicator" id="turnIndicator">
+        <span id="turnText">white's turn</span>
+        <span class="piece-indicator" id="turnDot" style="background: #dae1ea; border: 1px solid white;"></span>
+      </div>
+    </div>
+
+    <!-- THE BOARD – dynamic injected via JS, but static structure as container -->
+    <div class="board-wrapper">
+      <div id="checkersBoard" class="checkers-board"></div>
+    </div>
+
+    <!-- status and reset -->
+    <div class="game-footer">
+      <div class="status-message" id="statusMessage">
+        ✦ select a piece
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="resetBtn">↻ new game</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- LIGHT CHECKERS · PURE JS ----------
+    (function(){
+      "use strict";
+
+      // ----- GAME STATE -----
+      let board = Array(8).fill().map(() => Array(8).fill(null));
+      let currentPlayer = 'white'; // white moves first
+      let selectedRow = -1, selectedCol = -1;
+      let mandatoryCaptures = [];   // list of {row, col} for current player with capture
+      let currentCaptureChain = null; // if a capture is in progress, store piece pos
+
+      // DOM elements
+      const boardEl = document.getElementById('checkersBoard');
+      const turnText = document.getElementById('turnText');
+      const turnDot = document.getElementById('turnDot');
+      const statusEl = document.getElementById('statusMessage');
+
+      // ----- INITIAL BOARD (standard checkers) -----
+      function initBoard() {
+        // clear board
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            board[r][c] = null;
+          }
+        }
+
+        // place white pieces (top of board: rows 0,1,2)
+        for (let r = 0; r < 3; r++) {
+          for (let c = 0; c < 8; c++) {
+            if ((r + c) % 2 !== 0) { // dark squares only
+              board[r][c] = { color: 'white', king: false };
+            }
+          }
+        }
+
+        // place red pieces (bottom: rows 5,6,7)
+        for (let r = 5; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            if ((r + c) % 2 !== 0) {
+              board[r][c] = { color: 'red', king: false };
+            }
+          }
+        }
+      }
+
+      // ----- RENDER BOARD with current state -----
+      function renderBoard() {
+        boardEl.innerHTML = '';
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            const square = document.createElement('div');
+            square.className = 'square';
+            // light / dark pattern
+            if ((r + c) % 2 === 0) {
+              square.classList.add('light');
+            } else {
+              square.classList.add('dark');
+            }
+
+            square.dataset.row = r;
+            square.dataset.col = c;
+
+            // piece rendering
+            const piece = board[r][c];
+            if (piece) {
+              const pieceDiv = document.createElement('div');
+              pieceDiv.className = `piece ${piece.color}`;
+              if (piece.king) {
+                pieceDiv.classList.add('king');
+                pieceDiv.innerHTML = '<span class="king-star">✦</span>'; // king symbol
+              } else {
+                pieceDiv.innerHTML = ''; // no symbol, just clean
+              }
+              square.appendChild(pieceDiv);
+            }
+
+            // visual hints: selected, possible moves (cached later)
+            if (selectedRow === r && selectedCol === c) {
+              square.classList.add('selected');
+            }
+
+            // add possible move hint from function (called later)
+            boardEl.appendChild(square);
+          }
+        }
+
+        // after building, apply move hints and capture highlights (separate)
+        highlightPossibleMoves();
+        updateTurnDisplay();
+      }
+
+      // ----- TURN & STATUS UI -----
+      function updateTurnDisplay() {
+        if (currentPlayer === 'white') {
+          turnText.innerText = 'white’s turn';
+          turnDot.style.background = '#dae1ea'; // soft white
+        } else {
+          turnText.innerText = 'red’s turn';
+          turnDot.style.background = '#e6bcb6'; // soft red
+        }
+
+        // detect win condition
+        const whiteCount = countPieces('white');
+        const redCount = countPieces('red');
+        if (whiteCount === 0) {
+          statusEl.innerText = '✦ red wins!';
+        } else if (redCount === 0) {
+          statusEl.innerText = '✦ white wins!';
+        } else {
+          statusEl.innerText = `✦ ${currentPlayer}'s turn`;
+        }
+      }
+
+      function countPieces(color) {
+        let cnt = 0;
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            if (board[r][c] && board[r][c].color === color) cnt++;
+          }
+        }
+        return cnt;
+      }
+
+      // ----- CAPTURE / MOVE LOGIC (standard checkers) -----
+      function getValidMoves(row, col) {
+        const piece = board[row][col];
+        if (!piece || piece.color !== currentPlayer) return { moves: [], captures: [] };
+
+        const moves = [];
+        const captures = [];
+        const dirs = piece.king ? [-1, 1] : (piece.color === 'white' ? [1] : [-1]); // white moves down (+1), red up (-1)
+
+        // single step moves (non-capture)
+        for (let dRow of dirs) {
+          for (let dCol of [-1, 1]) {
+            const newRow = row + dRow;
+            const newCol = col + dCol;
+            if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8 && !board[newRow][newCol]) {
+              moves.push({ row: newRow, col: newCol, capture: null });
+            }
+          }
+        }
+
+        // captures (jumps)
+        for (let dRow of dirs) {
+          for (let dCol of [-1, 1]) {
+            const jumpRow = row + dRow * 2;
+            const jumpCol = col + dCol * 2;
+            const midRow = row + dRow;
+            const midCol = col + dCol;
+            if (jumpRow >= 0 && jumpRow < 8 && jumpCol >= 0 && jumpCol < 8) {
+              const midPiece = board[midRow][midCol];
+              if (midPiece && midPiece.color !== piece.color && !board[jumpRow][jumpCol]) {
+                captures.push({ row: jumpRow, col: jumpCol, capture: { row: midRow, col: midCol } });
+              }
+            }
+          }
+        }
+        return { moves, captures };
+      }
+
+      // determine if current player has any capture anywhere
+      function hasAnyCapture(color) {
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            const p = board[r][c];
+            if (p && p.color === color) {
+              const { captures } = getValidMoves(r, c);
+              if (captures.length > 0) return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      // highlight moves for selected piece + possible capture hints
+      function highlightPossibleMoves() {
+        // first remove all possible-move, possible-capture classes
+        document.querySelectorAll('.square.dark').forEach(sq => {
+          sq.classList.remove('possible-move', 'possible-capture', 'selected');
+        });
+
+        // re-add selected class
+        if (selectedRow !== -1) {
+          const selectedSq = document.querySelector(`.square[data-row="${selectedRow}"][data-col="${selectedCol}"]`);
+          if (selectedSq) selectedSq.classList.add('selected');
+        }
+
+        if (selectedRow === -1 || selectedCol === -1) return;
+
+        const piece = board[selectedRow][selectedCol];
+        if (!piece || piece.color !== currentPlayer) return;
+
+        const { moves, captures } = getValidMoves(selectedRow, selectedCol);
+        const forcedCapture = hasAnyCapture(currentPlayer);
+
+        // if forced capture exists and this piece has captures -> show only captures; else if forced but no capture -> no moves
+        if (forcedCapture) {
+          if (captures.length > 0) {
+            captures.forEach(m => {
+              const sq = document.querySelector(`.square[data-row="${m.row}"][data-col="${m.col}"]`);
+              if (sq) sq.classList.add('possible-capture');
+            });
+          }
+        } else {
+          // normal moves (non-capture) and also captures are allowed but not forced
+          moves.forEach(m => {
+            const sq = document.querySelector(`.square[data-row="${m.row}"][data-col="${m.col}"]`);
+            if (sq) sq.classList.add('possible-move');
+          });
+          captures.forEach(m => {
+            const sq = document.querySelector(`.square[data-row="${m.row}"][data-col="${m.col}"]`);
+            if (sq) sq.classList.add('possible-capture');
+          });
+        }
+      }
+
+      // ----- MOVE EXECUTION -----
+      function tryMove(fromRow, fromCol, toRow, toCol) {
+        const piece = board[fromRow][fromCol];
+        if (!piece || piece.color !== currentPlayer) return false;
+
+        const { moves, captures } = getValidMoves(fromRow, fromCol);
+        const forcedCapture = hasAnyCapture(currentPlayer);
+
+        // check if move is among captures
+        const captureMove = captures.find(m => m.row === toRow && m.col === toCol);
+        if (captureMove) {
+          // execute jump
+          const mid = captureMove.capture;
+          board[toRow][toCol] = { ...piece };
+          board[fromRow][fromCol] = null;
+          board[mid.row][mid.col] = null; // remove captured piece
+
+          // king me?
+          if (!piece.king) {
+            if ((piece.color === 'white' && toRow === 7) || (piece.color === 'red' && toRow === 0)) {
+              board[toRow][toCol].king = true;
+            }
+          }
+
+          // after capture: check for further captures from new position (multi-jump)
+          const newMoves = getValidMoves(toRow, toCol);
+          if (newMoves.captures.length > 0) {
+            // stay in capture chain, keep same player, select this piece
+            selectedRow = toRow;
+            selectedCol = toCol;
+            renderBoard();
+            return true;
+          }
+
+          // else end turn
+          finishTurn();
+          return true;
+        }
+
+        // non-capture move (only if no forced capture)
+        const normalMove = moves.find(m => m.row === toRow && m.col === toCol);
+        if (normalMove && !forcedCapture) {
+          board[toRow][toCol] = { ...piece };
+          board[fromRow][fromCol] = null;
+
+          if (!piece.king) {
+            if ((piece.color === 'white' && toRow === 7) || (piece.color === 'red' && toRow === 0)) {
+              board[toRow][toCol].king = true;
+            }
+          }
+          finishTurn();
+          return true;
+        }
+        return false;
+      }
+
+      function finishTurn() {
+        // switch player
+        currentPlayer = currentPlayer === 'white' ? 'red' : 'white';
+        selectedRow = -1; selectedCol = -1;
+        renderBoard();
+        // check win condition after switch
+        updateTurnDisplay();
+      }
+
+      // ----- EVENT LISTENERS (click handling) -----
+      function handleSquareClick(e) {
+        const square = e.currentTarget;
+        const row = parseInt(square.dataset.row, 10);
+        const col = parseInt(square.dataset.col, 10);
+
+        // game over if zero pieces
+        if (countPieces('white') === 0 || countPieces('red') === 0) return;
+
+        // if clicked square has a piece of current player -> select/deselect
+        const piece = board[row][col];
+        if (piece && piece.color === currentPlayer) {
+          // reselect
+          if (selectedRow === row && selectedCol === col) {
+            selectedRow = -1; selectedCol = -1;
+          } else {
+            selectedRow = row;
+            selectedCol = col;
+          }
+          renderBoard();
+          return;
+        }
+
+        // attempt move if we have a selected piece
+        if (selectedRow !== -1 && selectedCol !== -1) {
+          const success = tryMove(selectedRow, selectedCol, row, col);
+          if (!success) {
+            // invalid move: deselect? keep selection
+            // but we can just rerender with selection
+          }
+          renderBoard(); // ensure updated
+        }
+      }
+
+      // ----- RESET GAME -----
+      function resetGame() {
+        initBoard();
+        currentPlayer = 'white';
+        selectedRow = -1;
+        selectedCol = -1;
+        renderBoard();
+      }
+
+      // ----- ATTACH CLICK LISTENERS -----
+      function attachListeners() {
+        document.querySelectorAll('.square').forEach(sq => {
+          sq.removeEventListener('click', handleSquareClick);
+          sq.addEventListener('click', handleSquareClick);
+        });
+      }
+
+      // Override renderBoard to re-attach listeners
+      const originalRender = renderBoard;
+      renderBoard = function() {
+        originalRender.call(this);
+        attachListeners();
+      };
+
+      // ----- INITIALISE -----
+      initBoard();
+      renderBoard();
+
+      // reset button
+      document.getElementById('resetBtn').addEventListener('click', function() {
+        resetGame();
+      });
+
+    })();
+  </script>
+  <!-- extra rule: no moves if winner -->
+  <style>
+    /* subtle winner state, keep clean */
+  </style>
+</body>
+</html>

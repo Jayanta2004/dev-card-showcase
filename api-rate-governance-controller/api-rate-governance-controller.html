@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Rate Governance Controller</title>
+    <link rel="stylesheet" href="api-rate-governance-controller.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>API Rate Governance Controller</h1>
+            <p>Manage and monitor API rate limits with real-time governance and analytics</p>
+        </header>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h2>Rate Limit Configuration</h2>
+                    <div class="config-group">
+                        <label for="requestsPerSecond">Requests per Second:</label>
+                        <input type="number" id="requestsPerSecond" value="10" min="1" max="1000">
+                    </div>
+                    <div class="config-group">
+                        <label for="requestsPerMinute">Requests per Minute:</label>
+                        <input type="number" id="requestsPerMinute" value="100" min="1" max="10000">
+                    </div>
+                    <div class="config-group">
+                        <label for="requestsPerHour">Requests per Hour:</label>
+                        <input type="number" id="requestsPerHour" value="1000" min="1" max="100000">
+                    </div>
+                    <div class="config-group">
+                        <label for="burstLimit">Burst Limit:</label>
+                        <input type="number" id="burstLimit" value="50" min="1" max="1000">
+                    </div>
+                    <div class="config-group">
+                        <label for="cooldownPeriod">Cooldown Period (ms):</label>
+                        <input type="number" id="cooldownPeriod" value="1000" min="100" max="10000">
+                    </div>
+                    <button id="applyConfig" class="btn-primary">Apply Configuration</button>
+                </div>
+
+                <div class="panel-section">
+                    <h2>API Simulation</h2>
+                    <div class="config-group">
+                        <label for="apiEndpoint">API Endpoint:</label>
+                        <input type="text" id="apiEndpoint" value="https://jsonplaceholder.typicode.com/posts" placeholder="Enter API endpoint">
+                    </div>
+                    <div class="config-group">
+                        <label for="requestMethod">Request Method:</label>
+                        <select id="requestMethod">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label for="concurrentRequests">Concurrent Requests:</label>
+                        <input type="number" id="concurrentRequests" value="5" min="1" max="50">
+                    </div>
+                    <div class="config-group">
+                        <label for="totalRequests">Total Requests to Send:</label>
+                        <input type="number" id="totalRequests" value="100" min="1" max="1000">
+                    </div>
+                    <button id="startSimulation" class="btn-success">Start Simulation</button>
+                    <button id="stopSimulation" class="btn-danger">Stop Simulation</button>
+                    <button id="resetStats" class="btn-secondary">Reset Statistics</button>
+                </div>
+            </div>
+
+            <div class="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Requests</h3>
+                        <div class="stat-value" id="totalRequestsStat">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Successful Requests</h3>
+                        <div class="stat-value" id="successfulRequestsStat">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Failed Requests</h3>
+                        <div class="stat-value" id="failedRequestsStat">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Rate Limited</h3>
+                        <div class="stat-value" id="rateLimitedStat">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Average Response Time</h3>
+                        <div class="stat-value" id="avgResponseTimeStat">0ms</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Current RPS</h3>
+                        <div class="stat-value" id="currentRPSStat">0</div>
+                    </div>
+                </div>
+
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <h3>Request Rate Over Time</h3>
+                        <canvas id="rateChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Response Time Distribution</h3>
+                        <canvas id="responseTimeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="logs-section">
+                    <h3>Request Logs</h3>
+                    <div class="logs-container">
+                        <table id="logsTable">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Method</th>
+                                    <th>Endpoint</th>
+                                    <th>Status</th>
+                                    <th>Response Time</th>
+                                    <th>Rate Limited</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="configModal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Advanced Configuration</h2>
+                <div class="config-group">
+                    <label for="backoffStrategy">Backoff Strategy:</label>
+                    <select id="backoffStrategy">
+                        <option value="linear">Linear</option>
+                        <option value="exponential">Exponential</option>
+                        <option value="fibonacci">Fibonacci</option>
+                    </select>
+                </div>
+                <div class="config-group">
+                    <label for="retryAttempts">Max Retry Attempts:</label>
+                    <input type="number" id="retryAttempts" value="3" min="0" max="10">
+                </div>
+                <div class="config-group">
+                    <label for="timeout">Request Timeout (ms):</label>
+                    <input type="number" id="timeout" value="5000" min="1000" max="30000">
+                </div>
+                <button id="saveAdvancedConfig" class="btn-primary">Save Configuration</button>
+            </div>
+        </div>
+
+        <button id="openConfigModal" class="btn-secondary floating-btn">⚙️</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="api-rate-governance-controller.js"></script>
+</body>
+</html>

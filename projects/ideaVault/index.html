@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IdeaVault · save & organize ideas</title>
+    <!-- Font Awesome 6 (free) for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #f3f0e9;  /* warm paper tone */
+            background-image: radial-gradient(circle at 10% 30%, rgba(230, 215, 195, 0.3) 0%, transparent 30%),
+                              radial-gradient(circle at 90% 70%, rgba(200, 180, 150, 0.2) 0%, transparent 35%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .vault-card {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255, 250, 240, 0.8);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 3rem 3rem 2.5rem 2.5rem;
+            box-shadow: 0 30px 50px -20px #7f5e4b, 0 8px 18px rgba(80, 50, 30, 0.1);
+            border: 2px solid rgba(255, 245, 225, 0.7);
+            padding: 2rem 2rem 2rem 2rem;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem 0.5rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #4f3b28;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header h1 i {
+            background: #a37b5c;
+            background: linear-gradient(145deg, #8b694a, #b48b68);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.4rem;
+            filter: drop-shadow(2px 2px 4px #e7cfb5);
+        }
+        .vault-badge {
+            background: #eadbc8;
+            border-radius: 60px;
+            padding: 0.5rem 1.8rem;
+            border: 2px solid #fff8e7;
+            box-shadow: inset 0 1px 4px #fff6e3, 0 6px 12px #d8c0a8;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .badge-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #4f3b28;
+            font-weight: 500;
+        }
+        .badge-item i {
+            color: #967258;
+            font-size: 1.2rem;
+        }
+        .badge-count {
+            background: white;
+            padding: 0.2rem 0.9rem;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #3b2c1d;
+            box-shadow: 0 2px 6px #bba68f;
+        }
+
+        .input-panel {
+            background: #fffcf5;
+            border-radius: 3rem;
+            padding: 0.3rem 0.3rem 0.3rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2.5rem;
+            border: 2px solid #ffeede;
+            box-shadow: 0 16px 28px -14px #bba68f;
+        }
+        .input-panel i.fa-lightbulb {
+            color: #eab354;
+            font-size: 1.5rem;
+            filter: drop-shadow(0 2px 4px #f0d5a0);
+        }
+        .input-panel input {
+            flex: 2 1 220px;
+            border: none;
+            padding: 1rem 0.2rem 1rem 0;
+            font-size: 1.1rem;
+            background: transparent;
+            outline: none;
+            color: #362b1f;
+            font-weight: 450;
+        }
+        .input-panel input::placeholder {
+            color: #b1987c;
+            font-style: italic;
+            font-weight: 300;
+        }
+        .category-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #f0e4d4;
+            padding: 0.2rem 0.6rem 0.2rem 1.2rem;
+            border-radius: 60px;
+        }
+        .category-selector label {
+            font-weight: 600;
+            color: #735f4a;
+            font-size: 0.9rem;
+        }
+        .category-selector select {
+            background: white;
+            border: 1px solid #ddcbb8;
+            border-radius: 30px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            color: #3e2f20;
+            outline: none;
+            cursor: pointer;
+        }
+        .add-btn {
+            background: #8b694a;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.9rem 2rem;
+            border-radius: 40px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 10px 16px -10px #644c34;
+            border: 2px solid #faead7;
+            letter-spacing: 0.4px;
+        }
+        .add-btn:hover {
+            background: #76573b;
+            transform: scale(1.02);
+            box-shadow: 0 14px 22px -12px #4f3b28;
+        }
+
+        /* filter bar */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: #f2e5d6;
+            padding: 0.5rem 1.5rem;
+            border-radius: 60px;
+            border: 2px solid #fff2e0;
+        }
+        .filter-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #4f3b28;
+            font-weight: 500;
+        }
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .filter-btn {
+            background: transparent;
+            border: 2px solid #cdbba9;
+            padding: 0.4rem 1.4rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #5f4a36;
+            cursor: pointer;
+            transition: 0.1s ease;
+        }
+        .filter-btn.active {
+            background: #8b694a;
+            border-color: #8b694a;
+            color: white;
+            box-shadow: 0 4px 10px #ad8e71;
+        }
+        .filter-btn:hover {
+            background: #dac9b7;
+        }
+        .clear-filter {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: #886e53;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: underline dotted;
+            font-weight: 500;
+        }
+
+        /* grid of ideas */
+        .ideas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.3rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0.6rem 0.4rem 0.8rem 0.4rem;
+        }
+        .ideas-grid::-webkit-scrollbar {
+            width: 10px;
+        }
+        .ideas-grid::-webkit-scrollbar-track {
+            background: #e8d9c9;
+            border-radius: 12px;
+        }
+        .ideas-grid::-webkit-scrollbar-thumb {
+            background: #a58364;
+            border-radius: 12px;
+            border: 2px solid #f2e4d3;
+        }
+
+        .idea-card {
+            background: #fffcf5;
+            border-radius: 2rem 2rem 2rem 2rem;
+            padding: 1.4rem 1.2rem 1.2rem 1.5rem;
+            border: 2px solid #fff6e3;
+            box-shadow: 0 12px 24px -12px #bb9f87;
+            transition: transform 0.15s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            word-break: break-word;
+        }
+        .idea-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 22px 32px -16px #9f846b;
+            border-color: #fae1c6;
+        }
+
+        .idea-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .category-tag {
+            background: #e5d9cb;
+            padding: 0.2rem 1rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #4e3c2c;
+            border: 1px solid white;
+        }
+        .idea-actions {
+            display: flex;
+            gap: 0.2rem;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            padding: 0.4rem;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #8f755c;
+            transition: 0.1s;
+            width: 2.4rem;
+            height: 2.4rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-btn:hover {
+            background: #eddccb;
+            color: #553f2c;
+        }
+        .icon-btn.delete-btn:hover {
+            background: #fadcd2;
+            color: #b64516;
+        }
+
+        .idea-content {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #2f2319;
+            padding: 0.2rem 0;
+            line-height: 1.5;
+        }
+        .idea-meta {
+            font-size: 0.75rem;
+            color: #ab8f76;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.3rem;
+            border-top: 1px dashed #e4cfbb;
+            padding-top: 0.7rem;
+        }
+        .idea-meta i {
+            margin-right: 3px;
+        }
+
+        .empty-vault {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem 1rem;
+            background: #f5ecde;
+            border-radius: 5rem;
+            color: #7d6652;
+            font-size: 1.2rem;
+            border: 3px dashed #dcc7b2;
+        }
+        .empty-vault i {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.6;
+        }
+
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: #836e58;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+        hr {
+            border: 2px solid #eadbc3;
+            margin: 1rem 0 0.2rem 0;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="vault-card">
+        <div class="header">
+            <h1>
+                <i class="fas fa-draw-polygon"></i> 
+                IdeaVault
+            </h1>
+            <div class="vault-badge" id="statsBadge">
+                <span class="badge-item"><i class="fa-regular fa-note-sticky"></i> total <span id="totalIdeas" class="badge-count">0</span></span>
+                <span class="badge-item"><i class="fa-regular fa-compass"></i> categories <span id="categoryCount" class="badge-count">0</span></span>
+            </div>
+        </div>
+
+        <!-- input area -->
+        <div class="input-panel">
+            <i class="fa-regular fa-lightbulb"></i>
+            <input type="text" id="ideaInput" placeholder="What's your idea? (e.g., app for local artists...)" maxlength="120">
+            <div class="category-selector">
+                <label for="categorySelect"><i class="fa-regular fa-folder"></i></label>
+                <select id="categorySelect">
+                    <option value="Work">💼 Work</option>
+                    <option value="Personal" selected>🏡 Personal</option>
+                    <option value="Creative">🎨 Creative</option>
+                    <option value="Tech">⚙️ Tech</option>
+                    <option value="Health">🧘 Health</option>
+                </select>
+            </div>
+            <button class="add-btn" id="addIdeaBtn"><i class="fa-regular fa-plus"></i> Store idea</button>
+        </div>
+
+        <!-- filter strip -->
+        <div class="filter-bar">
+            <span class="filter-label"><i class="fa-regular fa-filter"></i> Filter:</span>
+            <div class="filter-buttons" id="filterContainer">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <!-- dynamic category filters will be injected here via js -->
+            </div>
+            <button class="clear-filter" id="clearFilterBtn" title="reset filter"><i class="fa-regular fa-rotate-right"></i> reset</button>
+        </div>
+
+        <!-- ideas grid -->
+        <div id="ideasGrid" class="ideas-grid">
+            <!-- filled by js -->
+        </div>
+
+        <hr>
+        <footer>
+            <i class="fa-regular fa-pen-to-square"></i> every idea matters — stored locally in your vault
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // ----- data model -----
+            let ideas = [];               // { id, text, category, timestamp }
+            let activeFilter = 'all';      // 'all' or category name
+
+            // ----- DOM elements -----
+            const ideaInput = document.getElementById('ideaInput');
+            const categorySelect = document.getElementById('categorySelect');
+            const addBtn = document.getElementById('addIdeaBtn');
+            const ideasGrid = document.getElementById('ideasGrid');
+            const totalSpan = document.getElementById('totalIdeas');
+            const categoryCountSpan = document.getElementById('categoryCount');
+            const filterContainer = document.getElementById('filterContainer');
+            const clearFilterBtn = document.getElementById('clearFilterBtn');
+
+            // ----- storage key -----
+            const STORAGE_KEY = 'ideavault_data';
+
+            // ----- helper functions -----
+            function loadFromStorage() {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        if (Array.isArray(parsed)) {
+                            ideas = parsed.map(idea => ({
+                                id: idea.id || self.crypto.randomUUID ? crypto.randomUUID() : 'idea_' + Date.now() + '_' + Math.random(),
+                                text: idea.text || 'untitled',
+                                category: idea.category || 'Personal',
+                                timestamp: idea.timestamp || Date.now()
+                            }));
+                        }
+                    } catch (e) {}
+                }
+                if (!ideas.length) {
+                    // seed some nice ideas
+                    const now = Date.now();
+                    ideas = [
+                        { id: 'i1', text: 'Write a short story set in a library at night', category: 'Creative', timestamp: now - 86400000 },
+                        { id: 'i2', text: 'Morning stretching routine for desk workers', category: 'Health', timestamp: now - 172800000 },
+                        { id: 'i3', text: 'Self-watering plant pot using recycled bottles', category: 'Personal', timestamp: now - 3000000 },
+                        { id: 'i4', text: 'Local artist collaboration platform', category: 'Work', timestamp: now - 90000000 },
+                        { id: 'i5', text: 'Browser extension to reduce social media distraction', category: 'Tech', timestamp: now - 5000000 },
+                        { id: 'i6', text: 'Paint a mural in the community garden', category: 'Creative', timestamp: now - 2000000 },
+                    ];
+                }
+            }
+
+            function saveToStorage() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
+            }
+
+            // get unique categories (excluding 'all')
+            function getUniqueCategories() {
+                const cats = ideas.map(idea => idea.category);
+                return [...new Set(cats)].sort();
+            }
+
+            // update filter buttons (dynamic categories)
+            function renderFilterButtons() {
+                const categories = getUniqueCategories();
+                let html = `<button class="filter-btn ${activeFilter === 'all' ? 'active' : ''}" data-filter="all">All</button>`;
+                categories.forEach(cat => {
+                    html += `<button class="filter-btn ${activeFilter === cat ? 'active' : ''}" data-filter="${cat}">${cat}</button>`;
+                });
+                filterContainer.innerHTML = html;
+
+                // attach event listeners to filter buttons
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const filterVal = btn.dataset.filter;
+                        activeFilter = filterVal || 'all';
+                        renderFilterButtons();   // refresh active style
+                        renderIdeasGrid();
+                    });
+                });
+            }
+
+            // escape for safe HTML
+            function escapeHtml(unsafe) {
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            // format timestamp
+            function formatDate(ts) {
+                const date = new Date(ts);
+                return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' + 
+                       date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            // render main grid and stats
+            function renderIdeasGrid() {
+                // filter ideas based on activeFilter
+                let filteredIdeas = ideas;
+                if (activeFilter !== 'all') {
+                    filteredIdeas = ideas.filter(idea => idea.category === activeFilter);
+                }
+
+                // update stats
+                totalSpan.textContent = ideas.length;
+                const uniqueCats = getUniqueCategories().length;
+                categoryCountSpan.textContent = uniqueCats;
+
+                if (filteredIdeas.length === 0) {
+                    ideasGrid.innerHTML = `<div class="empty-vault"><i class="fa-regular fa-folder-open"></i><br>No ideas in this filter. Time to brainstorm ✨</div>`;
+                    return;
+                }
+
+                // sort by newest first
+                const sorted = [...filteredIdeas].sort((a, b) => b.timestamp - a.timestamp);
+
+                let gridHtml = '';
+                sorted.forEach(idea => {
+                    const safeText = escapeHtml(idea.text);
+                    const cat = escapeHtml(idea.category);
+                    const timeStr = formatDate(idea.timestamp);
+                    gridHtml += `
+                        <div class="idea-card" data-id="${idea.id}">
+                            <div class="idea-header">
+                                <span class="category-tag"><i class="fa-regular fa-tag"></i> ${cat}</span>
+                                <div class="idea-actions">
+                                    <button class="icon-btn delete-btn" title="delete idea"><i class="fa-regular fa-trash-can"></i></button>
+                                </div>
+                            </div>
+                            <div class="idea-content">${safeText}</div>
+                            <div class="idea-meta">
+                                <span><i class="fa-regular fa-clock"></i> ${timeStr}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                ideasGrid.innerHTML = gridHtml;
+
+                // attach delete events to each card
+                document.querySelectorAll('.idea-card').forEach(card => {
+                    const id = card.dataset.id;
+                    const delBtn = card.querySelector('.delete-btn');
+                    if (delBtn) {
+                        delBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            deleteIdea(id);
+                        });
+                    }
+                });
+            }
+
+            // delete idea by id
+            function deleteIdea(id) {
+                ideas = ideas.filter(idea => idea.id !== id);
+                // if active filter no longer has any items, maybe reset to 'all'? we keep same filter, but refresh buttons
+                const categoriesLeft = getUniqueCategories();
+                if (activeFilter !== 'all' && !categoriesLeft.includes(activeFilter)) {
+                    activeFilter = 'all';
+                }
+                saveToStorage();
+                renderFilterButtons();   // refresh category filter list
+                renderIdeasGrid();
+            }
+
+            // add new idea
+            function addIdea() {
+                const rawText = ideaInput.value.trim();
+                if (rawText === '') {
+                    alert('Please describe your idea.');
+                    return;
+                }
+                const category = categorySelect.value;
+                const newIdea = {
+                    id: crypto.randomUUID ? crypto.randomUUID() : 'idea_' + Date.now() + '_' + Math.random().toString(36),
+                    text: rawText,
+                    category: category,
+                    timestamp: Date.now()
+                };
+                ideas.push(newIdea);
+                saveToStorage();
+
+                // reset filter to 'all' to show the new idea (optional, but friendly)
+                activeFilter = 'all';
+                renderFilterButtons();
+                renderIdeasGrid();
+
+                // clear input
+                ideaInput.value = '';
+                ideaInput.focus();
+            }
+
+            // reset filter to all
+            function resetFilter() {
+                activeFilter = 'all';
+                renderFilterButtons();
+                renderIdeasGrid();
+            }
+
+            // ----- event listeners -----
+            addBtn.addEventListener('click', addIdea);
+            ideaInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addIdea();
+                }
+            });
+            clearFilterBtn.addEventListener('click', resetFilter);
+
+            // initial load
+            loadFromStorage();
+            renderFilterButtons();
+            renderIdeasGrid();
+        })();
+    </script>
+</body>
+</html>

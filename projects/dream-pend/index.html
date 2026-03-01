@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dream pendulum · chaotic harmonics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0c0a1a;
+            overflow: hidden;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        }
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        #info {
+            position: absolute;
+            bottom: 32px;
+            left: 32px;
+            z-index: 20;
+            background: rgba(10, 8, 26, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(210, 180, 255, 0.4);
+            border-radius: 60px;
+            padding: 14px 32px;
+            color: #e0d0ff;
+            font-weight: 300;
+            font-size: 1rem;
+            letter-spacing: 0.4px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        #info .symbol {
+            color: #d0b5ff;
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 12px #a07dff);
+        }
+        #pendulum-stats {
+            position: absolute;
+            bottom: 32px;
+            right: 32px;
+            z-index: 20;
+            background: rgba(12, 10, 28, 0.65);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(190, 160, 255, 0.5);
+            border-radius: 50px;
+            padding: 12px 28px;
+            color: #d4c0ff;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.7);
+            pointer-events: none;
+        }
+        .chaos-badge {
+            background: rgba(90, 50, 150, 0.5);
+            color: #d0b5ff;
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 1px solid rgba(160, 120, 255, 0.8);
+        }
+        .controls {
+            position: absolute;
+            top: 32px;
+            right: 32px;
+            z-index: 30;
+            display: flex;
+            gap: 14px;
+        }
+        button {
+            background: rgba(20, 12, 40, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(170, 130, 255, 0.6);
+            color: #d4bcff;
+            padding: 12px 26px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.4px;
+        }
+        button:hover {
+            background: rgba(70, 30, 140, 0.6);
+            border-color: #b694ff;
+            color: #f0e0ff;
+            box-shadow: 0 0 28px #9a6aff66;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div id="info">
+        <span class="symbol">⚲</span> dream pendulum · 12 arms · chaotic traces
+    </div>
+    
+    <div id="pendulum-stats">
+        <span>🌀 entropy</span>
+        <span class="chaos-badge" id="entropy-val">0.73</span>
+    </div>
+    
+    <div class="controls">
+        <button id="swing">⚡ swing</button>
+        <button id="reset-trails">⟲ clear trails</button>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  DREAM PENDULUM
+        //  concept: a multi-pendulum system where each arm is connected to the
+        //  previous, creating chaotic motion. each bob leaves a glowing trail,
+        //  building up intricate patterns over time. inspired by harmonic
+        //  motion and double pendulums, extended to 12 arms.
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- setup scene ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x08041a);
+        scene.fog = new THREE.FogExp2(0x08041a, 0.008);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(25, 15, 30);
+        camera.lookAt(0, 5, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.3;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.2;
+        controls.enableZoom = true;
+        controls.maxPolarAngle = Math.PI / 2.2;
+        controls.target.set(0, 5, 0);
+
+        // --- lighting ---
+        const ambient = new THREE.AmbientLight(0x40406b);
+        scene.add(ambient);
+
+        const light1 = new THREE.PointLight(0x9f7aff, 1.4, 70);
+        light1.position.set(15, 20, 15);
+        scene.add(light1);
+
+        const light2 = new THREE.PointLight(0xff9f7a, 1.0, 70);
+        light2.position.set(-15, 10, 20);
+        scene.add(light2);
+
+        // stars
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 2000;
+        const starPos = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            const r = 150 + Math.random() * 150;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            starPos[i*3] = Math.sin(phi) * Math.cos(theta) * r;
+            starPos[i*3+1] = Math.sin(phi) * Math.sin(theta) * r;
+            starPos[i*3+2] = Math.cos(phi) * r;
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xaa99ee, size: 0.22, transparent: true, blending: THREE.AdditiveBlending });
+        const stars = new THREE.Points(starGeo, starMat);
+        scene.add(stars);
+
+        // --- pendulum parameters ---
+        const armCount = 12;
+        const segmentLength = 2.0;
+        const trailLength = 200;
+        
+        // state: angles and angular velocities
+        const theta = new Float32Array(armCount);
+        const omega = new Float32Array(armCount);
+        
+        // initialize with small random angles
+        for (let i = 0; i < armCount; i++) {
+            theta[i] = (Math.random() - 0.5) * 0.5;
+            omega[i] = (Math.random() - 0.5) * 0.1;
+        }
+
+        // trail positions for each bob
+        const trails = [];
+        const trailMeshes = [];
+        
+        // create bobs (spheres) and arms (lines)
+        const pendulumGroup = new THREE.Group();
+        const bobs = [];
+        const armLines = [];
+        
+        // colors for each segment
+        const colors = [];
+        for (let i = 0; i < armCount; i++) {
+            colors.push(new THREE.Color().setHSL(i / armCount, 0.9, 0.6));
+        }
+
+        // create arm segments (lines) and bobs
+        for (let i = 0; i < armCount; i++) {
+            // bob
+            const geo = new THREE.SphereGeometry(0.3, 16, 16);
+            const mat = new THREE.MeshStandardMaterial({
+                color: colors[i],
+                emissive: new THREE.Color().setHSL(i / armCount, 0.8, 0.1),
+                roughness: 0.2
+            });
+            const sphere = new THREE.Mesh(geo, mat);
+            sphere.userData.index = i;
+            pendulumGroup.add(sphere);
+            bobs.push(sphere);
+            
+            // trail for this bob
+            const trailPositions = new Float32Array(trailLength * 3);
+            const trailGeo = new THREE.BufferGeometry();
+            trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+            const trailMat = new THREE.PointsMaterial({
+                color: colors[i],
+                size: 0.15,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            const trail = new THREE.Points(trailGeo, trailMat);
+            scene.add(trail);
+            trails.push({
+                positions: trailPositions,
+                mesh: trail,
+                index: 0
+            });
+            
+            // arm line (from previous bob to this bob)
+            if (i > 0) {
+                const lineGeo = new THREE.BufferGeometry();
+                const lineMat = new THREE.LineBasicMaterial({ color: colors[i], transparent: true, opacity: 0.4 });
+                const line = new THREE.Line(lineGeo, lineMat);
+                pendulumGroup.add(line);
+                armLines.push(line);
+            }
+        }
+        
+        scene.add(pendulumGroup);
+
+        // compute positions of all bobs given current angles
+        function updatePositions() {
+            const positions = [];
+            let x = 0, y = 0;
+            
+            for (let i = 0; i < armCount; i++) {
+                // forward kinematics
+                const angle = theta[i];
+                x += Math.sin(angle) * segmentLength;
+                y -= Math.cos(angle) * segmentLength; // downward
+                
+                positions.push(new THREE.Vector3(x, y, 0));
+                
+                // update bob
+                bobs[i].position.set(x, y, 0);
+            }
+            
+            // update arm lines
+            for (let i = 0; i < armLines.length; i++) {
+                const line = armLines[i];
+                const points = [positions[i].clone(), positions[i+1].clone()];
+                line.geometry.dispose();
+                line.geometry = new THREE.BufferGeometry().setFromPoints(points);
+            }
+            
+            return positions;
+        }
+
+        // update trails with current bob positions
+        function updateTrails(positions) {
+            for (let i = 0; i < armCount; i++) {
+                const trail = trails[i];
+                const pos = positions[i];
+                
+                // shift all points back
+                for (let t = trailLength - 1; t > 0; t--) {
+                    const idx = t * 3;
+                    const prevIdx = (t-1) * 3;
+                    trail.positions[idx] = trail.positions[prevIdx];
+                    trail.positions[idx+1] = trail.positions[prevIdx+1];
+                    trail.positions[idx+2] = trail.positions[prevIdx+2];
+                }
+                
+                // add new position at beginning
+                trail.positions[0] = pos.x;
+                trail.positions[1] = pos.y;
+                trail.positions[2] = pos.z;
+                
+                trail.mesh.geometry.attributes.position.needsUpdate = true;
+            }
+        }
+
+        // physics update (simplified double pendulum dynamics extended)
+        function updatePendulum(delta) {
+            const dt = delta * 2;
+            const g = 0.5; // gravity
+            
+            // very simplified physics: each angle is influenced by previous
+            // (not physically accurate but creates chaotic beauty)
+            for (let i = 0; i < armCount; i++) {
+                // torque depends on angle and coupling from neighbors
+                let torque = -g * Math.sin(theta[i]) * 0.5;
+                
+                if (i > 0) {
+                    torque += (theta[i-1] - theta[i]) * 0.1;
+                }
+                if (i < armCount - 1) {
+                    torque += (theta[i+1] - theta[i]) * 0.1;
+                }
+                
+                omega[i] += torque * dt;
+                omega[i] *= 0.998; // damping
+                theta[i] += omega[i] * dt;
+            }
+        }
+
+        // initialize trails
+        let positions = updatePositions();
+        for (let i = 0; i < armCount; i++) {
+            const trail = trails[i];
+            for (let t = 0; t < trailLength; t++) {
+                trail.positions[t*3] = positions[i].x;
+                trail.positions[t*3+1] = positions[i].y;
+                trail.positions[t*3+2] = positions[i].z;
+            }
+            trail.mesh.geometry.attributes.position.needsUpdate = true;
+        }
+
+        // UI
+        document.getElementById('swing').addEventListener('click', () => {
+            // add random impulse
+            for (let i = 0; i < armCount; i++) {
+                omega[i] += (Math.random() - 0.5) * 0.5;
+            }
+        });
+        
+        document.getElementById('reset-trails').addEventListener('click', () => {
+            // clear trails by resetting to current positions
+            const pos = updatePositions();
+            for (let i = 0; i < armCount; i++) {
+                const trail = trails[i];
+                for (let t = 0; t < trailLength; t++) {
+                    trail.positions[t*3] = pos[i].x;
+                    trail.positions[t*3+1] = pos[i].y;
+                    trail.positions[t*3+2] = pos[i].z;
+                }
+                trail.mesh.geometry.attributes.position.needsUpdate = true;
+            }
+        });
+
+        // entropy display
+        const entropyEl = document.getElementById('entropy-val');
+
+        // animation loop
+        const clock = new THREE.Clock();
+
+        function animate() {
+            const delta = clock.getDelta();
+            
+            updatePendulum(delta * 2);
+            const positions = updatePositions();
+            updateTrails(positions);
+            
+            // compute "entropy" (angular velocity magnitude)
+            let entropy = 0;
+            for (let i = 0; i < armCount; i++) {
+                entropy += Math.abs(omega[i]);
+            }
+            entropy = (entropy / armCount * 3).toFixed(2);
+            entropyEl.textContent = entropy;
+
+            // rotate stars
+            stars.rotation.y += 0.0002;
+
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // light shifts
+        setInterval(() => {
+            const t = performance.now() / 2000;
+            light1.color.setHSL(0.68 + Math.sin(t)*0.06, 0.8, 0.6);
+            light2.color.setHSL(0.92 + Math.cos(t*1.2)*0.05, 0.9, 0.6);
+        }, 200);
+    </script>
+</body>
+</html>

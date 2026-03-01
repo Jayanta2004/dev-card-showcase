@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Platformer Runner Game</title>
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(#141e30,#243b55);
+  font-family:Arial;
+  color:white;
+}
+
+#game{
+  width:800px;
+  height:400px;
+  background:#111;
+  border:3px solid cyan;
+  border-radius:15px;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 0 20px cyan;
+}
+
+#player{
+  width:40px;
+  height:40px;
+  background:yellow;
+  position:absolute;
+  bottom:100px;
+  left:100px;
+  border-radius:10px;
+  box-shadow:0 0 15px yellow;
+}
+
+.platform{
+  width:120px;
+  height:15px;
+  background:#00ffff;
+  position:absolute;
+  border-radius:10px;
+}
+
+.obstacle{
+  width:30px;
+  height:30px;
+  background:red;
+  position:absolute;
+  border-radius:50%;
+}
+
+#hud{
+  position:absolute;
+  top:10px;
+  left:10px;
+  font-size:18px;
+}
+
+#gameOver{
+  position:absolute;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.9);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  font-size:30px;
+}
+
+button{
+  padding:10px 20px;
+  border:none;
+  border-radius:10px;
+  background:cyan;
+  font-size:18px;
+  cursor:pointer;
+  margin-top:15px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+  <div id="hud">Score: <span id="score">0</span></div>
+
+  <div id="player"></div>
+
+  <div class="platform" style="left:0px; bottom:60px;"></div>
+  <div class="platform" style="left:200px; bottom:150px;"></div>
+  <div class="platform" style="left:400px; bottom:100px;"></div>
+  <div class="platform" style="left:600px; bottom:180px;"></div>
+
+  <div class="obstacle" style="left:350px; bottom:115px;"></div>
+
+  <div id="gameOver">
+    <div id="overText">Game Over</div>
+    <button onclick="restartGame()">Restart</button>
+  </div>
+
+</div>
+
+<script>
+const player = document.getElementById("player");
+const platforms = document.querySelectorAll(".platform");
+const obstacles = document.querySelectorAll(".obstacle");
+const scoreEl = document.getElementById("score");
+const gameOverScreen = document.getElementById("gameOver");
+
+let playerX = 100;
+let playerY = 200;
+let velocityY = 0;
+let gravity = 1;
+let jumpPower = 15;
+let isJumping = false;
+let score = 0;
+let gameRunning = true;
+
+/* KEYBOARD CONTROL */
+document.addEventListener("keydown", movePlayer);
+
+function movePlayer(e){
+  if(!gameRunning) return;
+
+  if(e.key === "ArrowRight"){
+    playerX += 10;
+  }
+  if(e.key === "ArrowLeft"){
+    playerX -= 10;
+  }
+  if(e.code === "Space" && !isJumping){
+    velocityY = jumpPower;
+    isJumping = true;
+  }
+
+  if(playerX < 0) playerX = 0;
+  if(playerX > 760) playerX = 760;
+}
+
+/* GAME LOOP */
+function gameLoop(){
+  if(!gameRunning) return;
+
+  // Gravity
+  velocityY -= gravity;
+  playerY += velocityY;
+
+  if(playerY <= 60){
+    playerY = 60;
+    velocityY = 0;
+    isJumping = false;
+  }
+
+  // Platform collision
+  platforms.forEach(p=>{
+    let pRect = p.getBoundingClientRect();
+    let playerRect = player.getBoundingClientRect();
+
+    if(
+      playerRect.bottom >= pRect.top &&
+      playerRect.bottom <= pRect.top + 10 &&
+      playerRect.left < pRect.right &&
+      playerRect.right > pRect.left
+    ){
+      playerY = parseInt(p.style.bottom) + 15;
+      velocityY = 0;
+      isJumping = false;
+    }
+  });
+
+  // Obstacle collision
+  obstacles.forEach(o=>{
+    let oRect = o.getBoundingClientRect();
+    let pRect = player.getBoundingClientRect();
+
+    if(
+      pRect.left < oRect.right &&
+      pRect.right > oRect.left &&
+      pRect.top < oRect.bottom &&
+      pRect.bottom > oRect.top
+    ){
+      endGame();
+    }
+  });
+
+  // Update player
+  player.style.left = playerX + "px";
+  player.style.bottom = playerY + "px";
+
+  score++;
+  scoreEl.innerText = score;
+
+  requestAnimationFrame(gameLoop);
+}
+
+/* GAME OVER */
+function endGame(){
+  gameRunning = false;
+  gameOverScreen.style.display = "flex";
+  document.getElementById("overText").innerText =
+    "💀 Game Over\nScore: " + score;
+}
+
+/* RESTART */
+function restartGame(){
+  playerX = 100;
+  playerY = 200;
+  velocityY = 0;
+  score = 0;
+  scoreEl.innerText = score;
+
+  gameOverScreen.style.display = "none";
+  gameRunning = true;
+  gameLoop();
+}
+
+/* START */
+gameLoop();
+</script>
+
+</body>
+</html>

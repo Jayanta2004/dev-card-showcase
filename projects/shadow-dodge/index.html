@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shadow Dodge Game</title>
+
+<style>
+/* ================= BODY ================= */
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:radial-gradient(circle,#000,#111,#000);
+  font-family:Arial;
+  color:white;
+}
+
+/* ================= GAME AREA ================= */
+#game{
+  width:500px;
+  height:600px;
+  background:#050505;
+  border:3px solid #00ffff;
+  border-radius:15px;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 0 25px cyan;
+}
+
+/* ================= HUD ================= */
+#hud{
+  position:absolute;
+  top:10px;
+  left:10px;
+  font-size:18px;
+}
+
+/* ================= PLAYER ================= */
+#player{
+  width:40px;
+  height:40px;
+  background:#00ffff;
+  position:absolute;
+  bottom:20px;
+  left:230px;
+  border-radius:8px;
+  box-shadow:0 0 20px cyan;
+}
+
+/* ================= SHADOW ================= */
+.shadow{
+  width:40px;
+  height:40px;
+  background:#222;
+  position:absolute;
+  top:-40px;
+  border-radius:50%;
+  box-shadow:0 0 15px red;
+}
+
+/* ================= GAME OVER ================= */
+#gameOver{
+  position:absolute;
+  width:100%;
+  height:100%;
+  top:0;
+  left:0;
+  background:rgba(0,0,0,0.9);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  font-size:28px;
+}
+
+button{
+  margin-top:15px;
+  padding:10px 25px;
+  border:none;
+  border-radius:10px;
+  background:#00ffff;
+  font-size:18px;
+  cursor:pointer;
+}
+
+/* ================= ANIMATION ================= */
+@keyframes pulse{
+  from{box-shadow:0 0 10px cyan;}
+  to{box-shadow:0 0 30px cyan;}
+}
+
+#player{
+  animation:pulse 1s infinite alternate;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+  <div id="hud">
+    Score: <span id="score">0</span>
+  </div>
+
+  <div id="player"></div>
+
+  <div id="gameOver">
+    <div id="overText">Game Over</div>
+    <button onclick="restartGame()">Restart</button>
+  </div>
+
+</div>
+
+<script>
+/* ================= VARIABLES ================= */
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const scoreEl = document.getElementById("score");
+const gameOverScreen = document.getElementById("gameOver");
+
+let playerX = 230;
+let score = 0;
+let shadows = [];
+let speed = 3;
+let gameRunning = true;
+
+/* ================= KEYBOARD CONTROL ================= */
+document.addEventListener("keydown", movePlayer);
+
+function movePlayer(e){
+  if(!gameRunning) return;
+
+  if(e.key === "ArrowLeft"){
+    playerX -= 20;
+  }
+  if(e.key === "ArrowRight"){
+    playerX += 20;
+  }
+
+  if(playerX < 0) playerX = 0;
+  if(playerX > 460) playerX = 460;
+
+  player.style.left = playerX + "px";
+}
+
+/* ================= CREATE SHADOW ================= */
+function createShadow(){
+  if(!gameRunning) return;
+
+  const shadow = document.createElement("div");
+  shadow.classList.add("shadow");
+
+  let x = Math.random() * 460;
+  shadow.style.left = x + "px";
+
+  game.appendChild(shadow);
+
+  shadows.push({
+    element: shadow,
+    x: x,
+    y: -40
+  });
+}
+
+/* ================= UPDATE SHADOWS ================= */
+function updateShadows(){
+  if(!gameRunning) return;
+
+  shadows.forEach((s,index)=>{
+    s.y += speed;
+    s.element.style.top = s.y + "px";
+
+    let playerRect = player.getBoundingClientRect();
+    let shadowRect = s.element.getBoundingClientRect();
+
+    // Collision
+    if(
+      playerRect.left < shadowRect.right &&
+      playerRect.right > shadowRect.left &&
+      playerRect.top < shadowRect.bottom &&
+      playerRect.bottom > shadowRect.top
+    ){
+      endGame();
+    }
+
+    // Remove shadow if out
+    if(s.y > 600){
+      game.removeChild(s.element);
+      shadows.splice(index,1);
+    }
+  });
+}
+
+/* ================= GAME LOOP ================= */
+function gameLoop(){
+  if(!gameRunning) return;
+
+  updateShadows();
+  score++;
+  scoreEl.innerText = score;
+
+  // Increase difficulty
+  if(score % 200 === 0){
+    speed += 1;
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+/* ================= END GAME ================= */
+function endGame(){
+  gameRunning = false;
+  gameOverScreen.style.display = "flex";
+  document.getElementById("overText").innerText =
+    "💀 Game Over\nScore: " + score;
+}
+
+/* ================= RESTART ================= */
+function restartGame(){
+  score = 0;
+  speed = 3;
+  playerX = 230;
+  player.style.left = playerX + "px";
+
+  shadows.forEach(s => game.removeChild(s.element));
+  shadows = [];
+
+  scoreEl.innerText = score;
+  gameOverScreen.style.display = "none";
+  gameRunning = true;
+
+  gameLoop();
+}
+
+/* ================= START GAME ================= */
+setInterval(createShadow,800);
+gameLoop();
+</script>
+
+</body>
+</html>

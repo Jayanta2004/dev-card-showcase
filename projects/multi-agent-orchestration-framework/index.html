@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Orchestration Framework</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-network-wired"></i>
+                <h1>Multi-Agent Orchestration Framework</h1>
+            </div>
+            <div class="header-controls">
+                <div class="system-status">
+                    <span class="status-indicator active"></span>
+                    <span class="status-text">System Online</span>
+                </div>
+                <div class="current-user">
+                    <span id="currentUser">Not logged in</span>
+                    <button id="loginBtn" class="btn btn-small">Login</button>
+                    <button id="logoutBtn" class="btn btn-small btn-danger" style="display: none;">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="navigation">
+        <div class="nav-tabs">
+            <button class="nav-link active" data-section="dashboard">Dashboard</button>
+            <button class="nav-link" data-section="agents">Agents</button>
+            <button class="nav-link" data-section="workflows">Workflows</button>
+            <button class="nav-link" data-section="tasks">Tasks</button>
+            <button class="nav-link" data-section="communication">Communication</button>
+            <button class="nav-link" data-section="monitoring">Monitoring</button>
+            <button class="nav-link" data-section="analytics">Analytics</button>
+            <button class="nav-link" data-section="settings">Settings</button>
+        </div>
+        <div class="nav-actions">
+            <button id="createAgentBtn" class="btn btn-primary">Create Agent</button>
+            <button id="createWorkflowBtn" class="btn btn-secondary">New Workflow</button>
+            <button id="deploySystemBtn" class="btn btn-success">Deploy System</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboardSection" class="content-section active">
+            <div class="dashboard-grid">
+                <!-- System Overview -->
+                <div class="dashboard-card system-overview">
+                    <h3>System Overview</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalAgents">0</div>
+                            <div class="stat-label">Active Agents</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="runningWorkflows">0</div>
+                            <div class="stat-label">Running Workflows</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="pendingTasks">0</div>
+                            <div class="stat-label">Pending Tasks</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="systemLoad">0%</div>
+                            <div class="stat-label">System Load</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent Status -->
+                <div class="dashboard-card agent-status">
+                    <h3>Agent Status</h3>
+                    <div class="agent-status-list" id="agentStatusList">
+                        <!-- Agent status items will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Workflow Performance -->
+                <div class="dashboard-card workflow-performance">
+                    <h3>Workflow Performance</h3>
+                    <canvas id="workflowPerformanceChart"></canvas>
+                </div>
+
+                <!-- Communication Network -->
+                <div class="dashboard-card communication-network">
+                    <h3>Communication Network</h3>
+                    <div class="network-visualization" id="networkVisualization">
+                        <!-- Network visualization will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="dashboard-card recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div class="activity-feed" id="recentActivity">
+                        <!-- Activity items will be populated here -->
+                    </div>
+                </div>
+
+                <!-- System Health -->
+                <div class="dashboard-card system-health">
+                    <h3>System Health</h3>
+                    <div class="health-metrics">
+                        <div class="health-item">
+                            <span class="health-label">CPU Usage</span>
+                            <div class="health-bar">
+                                <div class="health-fill" id="cpuUsage" style="width: 0%"></div>
+                            </div>
+                            <span class="health-value" id="cpuUsageValue">0%</span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-label">Memory Usage</span>
+                            <div class="health-bar">
+                                <div class="health-fill" id="memoryUsage" style="width: 0%"></div>
+                            </div>
+                            <span class="health-value" id="memoryUsageValue">0%</span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-label">Network I/O</span>
+                            <div class="health-bar">
+                                <div class="health-fill" id="networkUsage" style="width: 0%"></div>
+                            </div>
+                            <span class="health-value" id="networkUsageValue">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Agents Section -->
+        <section id="agentsSection" class="content-section">
+            <div class="section-header">
+                <h2>Agent Management</h2>
+                <div class="section-controls">
+                    <input type="text" id="agentSearch" placeholder="Search agents...">
+                    <select id="agentTypeFilter">
+                        <option value="all">All Types</option>
+                        <option value="worker">Worker</option>
+                        <option value="coordinator">Coordinator</option>
+                        <option value="specialist">Specialist</option>
+                        <option value="monitor">Monitor</option>
+                    </select>
+                    <select id="agentStatusFilter">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="idle">Idle</option>
+                        <option value="error">Error</option>
+                        <option value="maintenance">Maintenance</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="agents-grid" id="agentsGrid">
+                <!-- Agent cards will be populated here -->
+            </div>
+
+            <div class="agent-details-panel" id="agentDetailsPanel">
+                <div class="panel-header">
+                    <h3 id="agentDetailsTitle">Agent Details</h3>
+                    <button class="close-panel" onclick="orchestrator.closeAgentDetails()">&times;</button>
+                </div>
+                <div class="panel-content" id="agentDetailsContent">
+                    <!-- Agent details will be populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Workflows Section -->
+        <section id="workflowsSection" class="content-section">
+            <div class="section-header">
+                <h2>Workflow Management</h2>
+                <div class="section-controls">
+                    <input type="text" id="workflowSearch" placeholder="Search workflows...">
+                    <select id="workflowStatusFilter">
+                        <option value="all">All Status</option>
+                        <option value="running">Running</option>
+                        <option value="completed">Completed</option>
+                        <option value="failed">Failed</option>
+                        <option value="paused">Paused</option>
+                    </select>
+                    <button id="importWorkflowBtn" class="btn btn-secondary">Import Workflow</button>
+                    <button id="exportWorkflowsBtn" class="btn btn-secondary">Export Workflows</button>
+                </div>
+            </div>
+
+            <div class="workflows-container">
+                <div class="workflows-list" id="workflowsList">
+                    <!-- Workflow items will be populated here -->
+                </div>
+
+                <div class="workflow-canvas" id="workflowCanvas">
+                    <div class="canvas-toolbar">
+                        <button id="addTaskNodeBtn" class="btn btn-small">Add Task</button>
+                        <button id="addDecisionNodeBtn" class="btn btn-small">Add Decision</button>
+                        <button id="addAgentNodeBtn" class="btn btn-small">Add Agent</button>
+                        <button id="clearCanvasBtn" class="btn btn-small btn-danger">Clear</button>
+                        <button id="saveWorkflowBtn" class="btn btn-small btn-success">Save</button>
+                    </div>
+                    <div class="canvas-content" id="canvasContent">
+                        <!-- Workflow canvas will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tasks Section -->
+        <section id="tasksSection" class="content-section">
+            <div class="section-header">
+                <h2>Task Management</h2>
+                <div class="section-controls">
+                    <input type="text" id="taskSearch" placeholder="Search tasks...">
+                    <select id="taskStatusFilter">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="running">Running</option>
+                        <option value="completed">Completed</option>
+                        <option value="failed">Failed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <select id="taskPriorityFilter">
+                        <option value="all">All Priorities</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                    <button id="createTaskBtn" class="btn btn-primary">Create Task</button>
+                    <button id="bulkTaskActionBtn" class="btn btn-secondary">Bulk Actions</button>
+                </div>
+            </div>
+
+            <div class="tasks-container">
+                <div class="tasks-list" id="tasksList">
+                    <!-- Task items will be populated here -->
+                </div>
+
+                <div class="task-details-panel" id="taskDetailsPanel">
+                    <div class="panel-header">
+                        <h3 id="taskDetailsTitle">Task Details</h3>
+                        <button class="close-panel" onclick="orchestrator.closeTaskDetails()">&times;</button>
+                    </div>
+                    <div class="panel-content" id="taskDetailsContent">
+                        <!-- Task details will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Communication Section -->
+        <section id="communicationSection" class="content-section">
+            <div class="section-header">
+                <h2>Inter-Agent Communication</h2>
+                <div class="section-controls">
+                    <select id="messageTypeFilter">
+                        <option value="all">All Messages</option>
+                        <option value="task">Task Messages</option>
+                        <option value="status">Status Updates</option>
+                        <option value="error">Error Messages</option>
+                        <option value="coordination">Coordination</option>
+                    </select>
+                    <button id="clearMessagesBtn" class="btn btn-secondary">Clear Messages</button>
+                    <button id="exportMessagesBtn" class="btn btn-secondary">Export Messages</button>
+                </div>
+            </div>
+
+            <div class="communication-container">
+                <div class="message-log" id="messageLog">
+                    <!-- Messages will be populated here -->
+                </div>
+
+                <div class="communication-stats">
+                    <div class="stat-card">
+                        <h4>Message Throughput</h4>
+                        <canvas id="messageThroughputChart"></canvas>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Communication Patterns</h4>
+                        <canvas id="communicationPatternsChart"></canvas>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Agent Interactions</h4>
+                        <div class="interaction-matrix" id="interactionMatrix">
+                            <!-- Interaction matrix will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Monitoring Section -->
+        <section id="monitoringSection" class="content-section">
+            <div class="section-header">
+                <h2>System Monitoring</h2>
+                <div class="section-controls">
+                    <select id="timeRange">
+                        <option value="1h">Last Hour</option>
+                        <option value="6h">Last 6 Hours</option>
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                    </select>
+                    <button id="refreshMonitoringBtn" class="btn btn-secondary">Refresh</button>
+                    <button id="exportMetricsBtn" class="btn btn-secondary">Export Metrics</button>
+                </div>
+            </div>
+
+            <div class="monitoring-grid">
+                <div class="monitoring-card">
+                    <h3>Agent Performance</h3>
+                    <canvas id="agentPerformanceChart"></canvas>
+                </div>
+                <div class="monitoring-card">
+                    <h3>Task Completion Rate</h3>
+                    <canvas id="taskCompletionChart"></canvas>
+                </div>
+                <div class="monitoring-card">
+                    <h3>Error Rate</h3>
+                    <canvas id="errorRateChart"></canvas>
+                </div>
+                <div class="monitoring-card">
+                    <h3>Resource Usage</h3>
+                    <canvas id="resourceUsageChart"></canvas>
+                </div>
+                <div class="monitoring-card">
+                    <h3>Workflow Efficiency</h3>
+                    <canvas id="workflowEfficiencyChart"></canvas>
+                </div>
+                <div class="monitoring-card">
+                    <h3>System Alerts</h3>
+                    <div class="alerts-list" id="systemAlerts">
+                        <!-- Alerts will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analyticsSection" class="content-section">
+            <div class="section-header">
+                <h2>Analytics & Insights</h2>
+                <div class="section-controls">
+                    <select id="analyticsTimeRange">
+                        <option value="1d">Last Day</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                        <option value="90d">Last 90 Days</option>
+                    </select>
+                    <button id="generateReportBtn" class="btn btn-primary">Generate Report</button>
+                    <button id="exportAnalyticsBtn" class="btn btn-secondary">Export Data</button>
+                </div>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h3>Agent Productivity</h3>
+                    <canvas id="agentProductivityChart"></canvas>
+                </div>
+                <div class="analytics-card">
+                    <h3>Workflow Success Rate</h3>
+                    <canvas id="workflowSuccessChart"></canvas>
+                </div>
+                <div class="analytics-card">
+                    <h3>Task Distribution</h3>
+                    <canvas id="taskDistributionChart"></canvas>
+                </div>
+                <div class="analytics-card">
+                    <h3>Communication Efficiency</h3>
+                    <canvas id="communicationEfficiencyChart"></canvas>
+                </div>
+                <div class="analytics-card">
+                    <h3>Performance Trends</h3>
+                    <canvas id="performanceTrendsChart"></canvas>
+                </div>
+                <div class="analytics-card">
+                    <h3>Key Insights</h3>
+                    <div class="insights-list" id="keyInsights">
+                        <!-- Insights will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settingsSection" class="content-section">
+            <div class="section-header">
+                <h2>System Settings</h2>
+            </div>
+
+            <div class="settings-container">
+                <div class="settings-group">
+                    <h3>General Settings</h3>
+                    <div class="setting-item">
+                        <label for="maxAgents">Maximum Agents:</label>
+                        <input type="number" id="maxAgents" min="1" max="1000" value="100">
+                    </div>
+                    <div class="setting-item">
+                        <label for="maxWorkflows">Maximum Concurrent Workflows:</label>
+                        <input type="number" id="maxWorkflows" min="1" max="500" value="50">
+                    </div>
+                    <div class="setting-item">
+                        <label for="taskTimeout">Default Task Timeout (minutes):</label>
+                        <input type="number" id="taskTimeout" min="1" max="1440" value="60">
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Communication Settings</h3>
+                    <div class="setting-item">
+                        <label for="messageQueueSize">Message Queue Size:</label>
+                        <input type="number" id="messageQueueSize" min="100" max="10000" value="1000">
+                    </div>
+                    <div class="setting-item">
+                        <label for="communicationProtocol">Communication Protocol:</label>
+                        <select id="communicationProtocol">
+                            <option value="websocket">WebSocket</option>
+                            <option value="mqtt">MQTT</option>
+                            <option value="http">HTTP</option>
+                            <option value="tcp">TCP</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="enableEncryption"> Enable Message Encryption
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Monitoring Settings</h3>
+                    <div class="setting-item">
+                        <label for="monitoringInterval">Monitoring Interval (seconds):</label>
+                        <input type="number" id="monitoringInterval" min="1" max="300" value="30">
+                    </div>
+                    <div class="setting-item">
+                        <label for="alertThreshold">Alert Threshold (%):</label>
+                        <input type="number" id="alertThreshold" min="1" max="100" value="80">
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="enableDetailedLogging"> Enable Detailed Logging
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Advanced Settings</h3>
+                    <div class="setting-item">
+                        <label for="loadBalancingStrategy">Load Balancing Strategy:</label>
+                        <select id="loadBalancingStrategy">
+                            <option value="round-robin">Round Robin</option>
+                            <option value="least-loaded">Least Loaded</option>
+                            <option value="weighted">Weighted</option>
+                            <option value="random">Random</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="faultToleranceLevel">Fault Tolerance Level:</label>
+                        <select id="faultToleranceLevel">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="enableAutoScaling"> Enable Auto Scaling
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-actions">
+                    <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+                    <button id="resetSettingsBtn" class="btn btn-secondary">Reset to Defaults</button>
+                    <button id="exportSettingsBtn" class="btn btn-secondary">Export Settings</button>
+                    <button id="importSettingsBtn" class="btn btn-secondary">Import Settings</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Agent Modal -->
+    <div id="agentModal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3 id="agentModalTitle">Create Agent</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="agentForm">
+                    <div class="form-group">
+                        <label for="agentName">Agent Name:</label>
+                        <input type="text" id="agentName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="agentType">Agent Type:</label>
+                        <select id="agentType" required>
+                            <option value="worker">Worker Agent</option>
+                            <option value="coordinator">Coordinator Agent</option>
+                            <option value="specialist">Specialist Agent</option>
+                            <option value="monitor">Monitor Agent</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="agentDescription">Description:</label>
+                        <textarea id="agentDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="agentCapabilities">Capabilities:</label>
+                        <div class="capabilities-selection" id="agentCapabilities">
+                            <!-- Capabilities checkboxes will be populated here -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="agentConfig">Configuration:</label>
+                        <textarea id="agentConfig" rows="5" placeholder="JSON configuration..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveAgentBtn" class="btn btn-primary">Save Agent</button>
+                <button id="cancelAgentBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Modal -->
+    <div id="workflowModal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3 id="workflowModalTitle">Create Workflow</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="workflowForm">
+                    <div class="form-group">
+                        <label for="workflowName">Workflow Name:</label>
+                        <input type="text" id="workflowName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="workflowDescription">Description:</label>
+                        <textarea id="workflowDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="workflowType">Workflow Type:</label>
+                        <select id="workflowType" required>
+                            <option value="sequential">Sequential</option>
+                            <option value="parallel">Parallel</option>
+                            <option value="conditional">Conditional</option>
+                            <option value="event-driven">Event-Driven</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="workflowPriority">Priority:</label>
+                        <select id="workflowPriority">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="workflowTimeout">Timeout (minutes):</label>
+                        <input type="number" id="workflowTimeout" min="1" value="60">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveWorkflowBtn" class="btn btn-primary">Save Workflow</button>
+                <button id="cancelWorkflowBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3 id="taskModalTitle">Create Task</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskName">Task Name:</label>
+                        <input type="text" id="taskName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescription">Description:</label>
+                        <textarea id="taskDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskType">Task Type:</label>
+                        <select id="taskType" required>
+                            <option value="computation">Computation</option>
+                            <option value="data-processing">Data Processing</option>
+                            <option value="communication">Communication</option>
+                            <option value="monitoring">Monitoring</option>
+                            <option value="coordination">Coordination</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskPriority">Priority:</label>
+                        <select id="taskPriority">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="assignedAgent">Assigned Agent:</label>
+                        <select id="assignedAgent">
+                            <option value="">Auto-assign</option>
+                            <!-- Agent options will be populated here -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskParameters">Parameters:</label>
+                        <textarea id="taskParameters" rows="5" placeholder="JSON parameters..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDeadline">Deadline:</label>
+                        <input type="datetime-local" id="taskDeadline">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveTaskBtn" class="btn btn-primary">Save Task</button>
+                <button id="cancelTaskBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Input for Import -->
+    <input type="file" id="fileInput" style="display: none;" accept=".json,.xml,.yaml">
+
+    <script src="script.js"></script>
+</body>
+</html>

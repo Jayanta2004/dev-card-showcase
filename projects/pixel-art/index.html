@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🟦 pixel art creator · canvas 16x16</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #1f2c3a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 1.5rem;
+        }
+
+        .pixel-container {
+            background: #2c3f4f;
+            border-radius: 3rem;
+            padding: 2rem 2rem 2.2rem;
+            box-shadow: 0 30px 35px -10px #0c151f, 0 0 0 1px #628bb0 inset;
+            max-width: 700px;
+            width: fit-content;
+            margin: 0 auto;
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 15px;
+            color: #e9f2fa;
+        }
+
+        .app-header h1 {
+            font-size: 2.2rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-header h1 span {
+            background: #3d5e7a;
+            padding: 0.3rem 1rem;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #bedcff;
+        }
+
+        .tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px 30px;
+            background: #1e3347;
+            padding: 1.2rem 2rem;
+            border-radius: 60px;
+            margin-bottom: 2rem;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #4f7da5;
+        }
+
+        .tool-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tool-label {
+            color: #b9d9fc;
+            font-weight: 400;
+            font-size: 1.1rem;
+        }
+
+        .color-picker-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #102433;
+            padding: 0.3rem 0.8rem;
+            border-radius: 40px;
+            border: 1px solid #4b7aa8;
+        }
+
+        #colorPicker {
+            width: 48px;
+            height: 38px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+
+        #colorPicker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        #colorPicker::-webkit-color-swatch {
+            border: 2px solid #6f9fd1;
+            border-radius: 12px;
+        }
+
+        .current-color-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 12px;
+            border: 2px solid white;
+            background: #000;
+        }
+
+        button {
+            background: #2d4b69;
+            border: none;
+            color: white;
+            padding: 0.6rem 1.6rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #79b0e0;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 0 #0b1f2f;
+        }
+
+        button:hover {
+            background: #3d6082;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #0b1f2f;
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #0b1f2f;
+        }
+
+        .grid-size-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #1e3347;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            border: 1px solid #50799e;
+        }
+
+        .grid-size-control span {
+            color: #cae2ff;
+            font-weight: 500;
+        }
+
+        #gridSize {
+            width: 70px;
+            background: #0f263a;
+            border: 1px solid #3e6b92;
+            color: white;
+            padding: 0.4rem 0.6rem;
+            border-radius: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* pixel grid */
+        .pixel-grid {
+            display: grid;
+            gap: 2px;
+            background: #264a64;
+            border: 4px solid #3a607d;
+            border-radius: 24px;
+            padding: 12px;
+            box-shadow: 0 18px 25px -8px #0a1a27;
+            margin: 1.5rem 0 1.2rem;
+            justify-content: center;
+        }
+
+        .pixel {
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            min-width: 20px;
+            transition: 0.03s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 1px solid #597a99;
+            cursor: pointer;
+        }
+
+        .pixel:hover {
+            filter: brightness(0.9);
+            transform: scale(1.02);
+        }
+
+        /* action bar */
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin: 1.5rem 0 0.8rem;
+        }
+
+        .footer-info {
+            text-align: center;
+            color: #8eb3d2;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+<div class="pixel-container">
+    <div class="app-header">
+        <h1>🟦 pixel forge <span>16x16</span></h1>
+        <div class="current-color-box" id="currentColorBox" style="background: #000;"></div>
+    </div>
+
+    <!-- tool bar -->
+    <div class="tools">
+        <div class="tool-group">
+            <span class="tool-label">🎨 color</span>
+            <div class="color-picker-wrap">
+                <input type="color" id="colorPicker" value="#3366cc">
+            </div>
+        </div>
+        <div class="tool-group">
+            <button id="fillBtn">🪣 fill all</button>
+            <button id="clearBtn">⌧ clear grid</button>
+        </div>
+        <div class="grid-size-control">
+            <span>⚙️ size</span>
+            <input type="number" id="gridSize" min="4" max="32" value="16">
+            <button id="resizeBtn">↻ resize</button>
+        </div>
+    </div>
+
+    <!-- dynamic pixel grid -->
+    <div id="pixelGrid" class="pixel-grid" style="grid-template-columns: repeat(16, 1fr);"></div>
+
+    <!-- action buttons: save & load -->
+    <div class="action-bar">
+        <button id="saveBtn">💾 save as PNG</button>
+        <button id="exportJsonBtn">📋 export json</button>
+        <input type="file" id="importFile" accept=".json,application/json" style="display: none;">
+        <button id="importBtn">📂 import json</button>
+    </div>
+
+    <div class="footer-info">
+        click cells to draw · drag to paint quickly
+    </div>
+</div>
+
+<script>
+    (function() {
+        // state
+        let gridSize = 16;                 // current size (n x n)
+        let pixels = [];                   // flat array of colors (hex strings)
+        let isDrawing = false;              // for drag painting
+        let currentColor = '#3366cc';       
+
+        // DOM elements
+        const gridContainer = document.getElementById('pixelGrid');
+        const colorPicker = document.getElementById('colorPicker');
+        const currentColorBox = document.getElementById('currentColorBox');
+        const fillBtn = document.getElementById('fillBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resizeBtn = document.getElementById('resizeBtn');
+        const gridSizeInput = document.getElementById('gridSize');
+        const saveBtn = document.getElementById('saveBtn');
+        const exportJsonBtn = document.getElementById('exportJsonBtn');
+        const importBtn = document.getElementById('importBtn');
+        const fileInput = document.getElementById('importFile');
+
+        // ---- init helpers ----
+        function initPixelsArray(size, initialColor = '#f0f0f0') {
+            return new Array(size * size).fill(initialColor);
+        }
+
+        // render grid based on current pixels array and gridSize
+        function renderGrid() {
+            gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            gridContainer.innerHTML = ''; // clear
+
+            for (let i = 0; i < pixels.length; i++) {
+                const pixel = document.createElement('div');
+                pixel.className = 'pixel';
+                pixel.style.backgroundColor = pixels[i];
+                pixel.dataset.index = i;
+
+                // mouse events for drawing
+                pixel.addEventListener('mousedown', (e) => {
+                    e.preventDefault(); // prevent drag selection
+                    isDrawing = true;
+                    const idx = e.target.dataset.index;
+                    if (idx !== undefined) {
+                        pixels[idx] = currentColor;
+                        e.target.style.backgroundColor = currentColor;
+                    }
+                });
+
+                pixel.addEventListener('mouseenter', (e) => {
+                    if (!isDrawing) return;
+                    const idx = e.target.dataset.index;
+                    if (idx !== undefined) {
+                        pixels[idx] = currentColor;
+                        e.target.style.backgroundColor = currentColor;
+                    }
+                });
+
+                pixel.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    if (target && target.classList.contains('pixel')) {
+                        const idx = target.dataset.index;
+                        if (idx !== undefined) {
+                            pixels[idx] = currentColor;
+                            target.style.backgroundColor = currentColor;
+                        }
+                    }
+                    isDrawing = true;
+                }, { passive: false });
+
+                pixel.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (!isDrawing) return;
+                    const touch = e.touches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    if (target && target.classList.contains('pixel')) {
+                        const idx = target.dataset.index;
+                        if (idx !== undefined) {
+                            pixels[idx] = currentColor;
+                            target.style.backgroundColor = currentColor;
+                        }
+                    }
+                }, { passive: false });
+
+                gridContainer.appendChild(pixel);
+            }
+        }
+
+        // rebuild entire grid with new size & reset pixels to default
+        function resizeGrid(newSize) {
+            gridSize = newSize;
+            pixels = initPixelsArray(gridSize, '#f0f0f0'); // light grey default
+            renderGrid();
+        }
+
+        // ---- initialization (default 16x16) ----
+        pixels = initPixelsArray(16, '#f0f0f0');
+        renderGrid();
+
+        // ---- color management ----
+        colorPicker.addEventListener('input', (e) => {
+            currentColor = e.target.value;
+            currentColorBox.style.backgroundColor = currentColor;
+        });
+        // set initial color box
+        currentColorBox.style.backgroundColor = colorPicker.value;
+
+        // ---- fill all ----
+        fillBtn.addEventListener('click', () => {
+            const newColor = currentColor;
+            for (let i = 0; i < pixels.length; i++) {
+                pixels[i] = newColor;
+            }
+            // update all pixel divs
+            document.querySelectorAll('.pixel').forEach((pixel, idx) => {
+                pixel.style.backgroundColor = newColor;
+            });
+        });
+
+        // ---- clear grid (set to default off-white) ----
+        clearBtn.addEventListener('click', () => {
+            const defaultColor = '#f0f0f0';
+            for (let i = 0; i < pixels.length; i++) {
+                pixels[i] = defaultColor;
+            }
+            document.querySelectorAll('.pixel').forEach((pixel) => {
+                pixel.style.backgroundColor = defaultColor;
+            });
+        });
+
+        // ---- resize button ----
+        resizeBtn.addEventListener('click', () => {
+            let newSize = parseInt(gridSizeInput.value, 10);
+            if (isNaN(newSize) || newSize < 4) newSize = 4;
+            if (newSize > 32) newSize = 32;
+            gridSizeInput.value = newSize;  // correct if out of range
+            resizeGrid(newSize);
+        });
+
+        // ---- stop drawing when mouse up / leave window ----
+        window.addEventListener('mouseup', () => { isDrawing = false; });
+        window.addEventListener('touchend', (e) => { 
+            e.preventDefault(); 
+            isDrawing = false; 
+        }, { passive: false });
+        window.addEventListener('touchcancel', (e) => { isDrawing = false; });
+
+        // prevent dragging on grid container
+        gridContainer.addEventListener('dragstart', (e) => e.preventDefault());
+
+        // ---- SAVE AS PNG (using canvas) ----
+        function downloadPNG() {
+            const cellSize = 20; // each pixel block in output image
+            const canvas = document.createElement('canvas');
+            canvas.width = gridSize * cellSize;
+            canvas.height = gridSize * cellSize;
+            const ctx = canvas.getContext('2d');
+
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    const idx = row * gridSize + col;
+                    ctx.fillStyle = pixels[idx];
+                    ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                }
+            }
+
+            // download
+            const link = document.createElement('a');
+            link.download = `pixelart_${gridSize}x${gridSize}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        saveBtn.addEventListener('click', downloadPNG);
+
+        // ---- EXPORT AS JSON (only colors array + size) ----
+        function exportJSON() {
+            const data = {
+                size: gridSize,
+                pixels: pixels,  // full array of hex strings
+                version: 'pixel-forge-1'
+            };
+            const jsonStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `pixelart_${gridSize}x${gridSize}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        exportJsonBtn.addEventListener('click', exportJSON);
+
+        // ---- IMPORT JSON ----
+        importBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    if (json.size && json.pixels && Array.isArray(json.pixels) && json.pixels.length === json.size * json.size) {
+                        // valid
+                        gridSize = json.size;
+                        pixels = json.pixels.slice(); // copy
+                        gridSizeInput.value = gridSize;
+                        renderGrid();  // rebuild with imported colors
+                    } else {
+                        alert('Invalid file format: must contain "size" and "pixels" array of length size*size');
+                    }
+                } catch (err) {
+                    alert('Error parsing JSON: ' + err.message);
+                }
+                fileInput.value = ''; // allow re-upload same file
+            };
+            reader.readAsText(file);
+        });
+
+        // optional: stop drawing if mouse leaves grid container (avoid stuck drawing)
+        gridContainer.addEventListener('mouseleave', () => {
+            isDrawing = false;
+        });
+
+        // Additional touch fix: disable page scroll when touching grid
+        gridContainer.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+        gridContainer.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+    })();
+</script>
+</body>
+</html>

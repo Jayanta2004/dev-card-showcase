@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dependency Health Auditor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>🏥 Dependency Health Auditor</h1>
+                <p class="subtitle">Real-time Monitoring of Service Dependencies</p>
+            </div>
+            <div class="header-controls">
+                <button id="startAudit" class="btn btn-primary">Start Audit</button>
+                <button id="stopAudit" class="btn btn-secondary" disabled>Stop Audit</button>
+                <button id="clearData" class="btn btn-tertiary">Clear Data</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Summary Cards -->
+            <section class="summary-section">
+                <div class="summary-card">
+                    <div class="card-icon">📊</div>
+                    <div class="card-content">
+                        <h3>Total Dependencies</h3>
+                        <p class="card-value" id="totalDeps">0</p>
+                    </div>
+                </div>
+                <div class="summary-card health-good">
+                    <div class="card-icon">✅</div>
+                    <div class="card-content">
+                        <h3>Healthy</h3>
+                        <p class="card-value" id="healthyCount">0</p>
+                    </div>
+                </div>
+                <div class="summary-card health-warn">
+                    <div class="card-icon">⚠️</div>
+                    <div class="card-content">
+                        <h3>Warning</h3>
+                        <p class="card-value" id="warningCount">0</p>
+                    </div>
+                </div>
+                <div class="summary-card health-critical">
+                    <div class="card-icon">🚨</div>
+                    <div class="card-content">
+                        <h3>Critical</h3>
+                        <p class="card-value" id="criticalCount">0</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabs Navigation -->
+            <section class="tabs-section">
+                <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+                <button class="tab-button" data-tab="dependencies">Dependencies</button>
+                <button class="tab-button" data-tab="anomalies">Anomalies</button>
+                <button class="tab-button" data-tab="metrics">Metrics</button>
+            </section>
+
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <div class="section-title">System Health Overview</div>
+                <div class="overview-grid">
+                    <div class="metric-card">
+                        <h4>Average Response Time</h4>
+                        <p class="metric-value" id="avgResponseTime">--</p>
+                        <p class="metric-unit">ms</p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>System Uptime</h4>
+                        <p class="metric-value" id="systemUptime">--</p>
+                        <p class="metric-unit">%</p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Anomaly Score</h4>
+                        <p class="metric-value" id="globalAnomaly">--</p>
+                        <p class="metric-unit">(0-100)</p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Failed Probes</h4>
+                        <p class="metric-value" id="failedProbes">0</p>
+                        <p class="metric-unit">total</p>
+                    </div>
+                </div>
+
+                <div class="section-title">Health Timeline</div>
+                <div class="timeline-container">
+                    <canvas id="healthChart" class="timeline-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Dependencies Tab -->
+            <section id="dependencies" class="tab-content">
+                <div class="section-title">Dependency Status</div>
+                <div class="dependencies-list" id="dependenciesList">
+                    <div class="placeholder">No dependencies loaded yet. Start audit to load dependencies.</div>
+                </div>
+            </section>
+
+            <!-- Anomalies Tab -->
+            <section id="anomalies" class="tab-content">
+                <div class="section-title">Detected Anomalies</div>
+                <div class="anomalies-list" id="anomaliesList">
+                    <div class="placeholder">No anomalies detected yet.</div>
+                </div>
+            </section>
+
+            <!-- Metrics Tab -->
+            <section id="metrics" class="tab-content">
+                <div class="section-title">Performance Metrics</div>
+                <div class="metrics-container">
+                    <div class="metric-detail">
+                        <h4>Response Time Distribution</h4>
+                        <canvas id="responseTimeChart" class="metric-chart"></canvas>
+                    </div>
+                    <div class="metric-detail">
+                        <h4>Dependency Health Scores</h4>
+                        <canvas id="healthScoreChart" class="metric-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>Last updated: <span id="lastUpdate">--</span></p>
+            <p>Probe interval: <span id="probeInterval">30</span> seconds</p>
+        </footer>
+    </div>
+
+    <script src="auditor.js"></script>
+    <script>
+        // Initialize the auditor when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const auditor = new DependencyHealthAuditor();
+            
+            // Button controls
+            document.getElementById('startAudit').addEventListener('click', () => auditor.start());
+            document.getElementById('stopAudit').addEventListener('click', () => auditor.stop());
+            document.getElementById('clearData').addEventListener('click', () => auditor.clearData());
+            
+            // Tab controls
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const tabName = e.target.dataset.tab;
+                    
+                    // Update active button
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    // Update active content
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    document.getElementById(tabName).classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

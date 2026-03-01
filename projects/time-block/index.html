@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Blocking Planner</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+            padding: 25px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .app-container {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 20px;
+        }
+        
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+        }
+        
+        /* Left Panel - Task Management */
+        .task-panel {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            color: #3498db;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(52, 152, 219, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .task-input-area {
+            margin-bottom: 25px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .task-priority {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .priority-option {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .priority-option:hover {
+            transform: translateY(-2px);
+        }
+        
+        .priority-option.selected {
+            border-color: transparent;
+            color: white;
+        }
+        
+        .priority-low {
+            background-color: #2ecc71;
+        }
+        
+        .priority-medium {
+            background-color: #f39c12;
+        }
+        
+        .priority-high {
+            background-color: #e74c3c;
+        }
+        
+        .add-task-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .add-task-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
+        }
+        
+        .task-list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        
+        .task-list-title {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-list {
+            list-style-type: none;
+        }
+        
+        .task-item {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 5px solid #3498db;
+            cursor: move;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .task-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .task-item.priority-low {
+            border-left-color: #2ecc71;
+        }
+        
+        .task-item.priority-medium {
+            border-left-color: #f39c12;
+        }
+        
+        .task-item.priority-high {
+            border-left-color: #e74c3c;
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .task-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .task-category {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background-color: #e0e6ed;
+            color: #2c3e50;
+        }
+        
+        .task-duration {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .task-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .schedule-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .task-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Center Panel - Time Blocking Schedule */
+        .schedule-panel {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .date-navigation {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .nav-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background-color: #f8f9fa;
+            color: #3498db;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .current-date {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .schedule-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .clear-btn {
+            background-color: #f8f9fa;
+            color: #e74c3c;
+            border: 2px solid #e74c3c;
+        }
+        
+        .export-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .time-slots {
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 600px;
+            border-radius: 10px;
+            border: 2px solid #f0f3f7;
+        }
+        
+        .time-slot {
+            display: flex;
+            min-height: 70px;
+            border-bottom: 1px solid #f0f3f7;
+            transition: all 0.3s ease;
+        }
+        
+        .time-slot:last-child {
+            border-bottom: none;
+        }
+        
+        .time-slot:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .time-label {
+            width: 100px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #2c3e50;
+            border-right: 2px solid #f0f3f7;
+        }
+        
+        .time-block-area {
+            flex-grow: 1;
+            padding: 5px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+            position: relative;
+        }
+        
+        .time-block {
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            min-width: 150px;
+            position: relative;
+        }
+        
+        .time-block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .block-work {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .block-study {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+        
+        .block-exercise {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        
+        .block-meal {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        
+        .block-break {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        }
+        
+        .block-personal {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .block-duration {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+        
+        .block-remove {
+            background: rgba(0, 0, 0, 0.2);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        
+        .block-remove:hover {
+            background: rgba(0, 0, 0, 0.4);
+            transform: scale(1.1);
+        }
+        
+        .drop-hint {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border: 2px dashed #3498db;
+            border-radius: 8px;
+            background-color: rgba(52, 152, 219, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3498db;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .time-slot.drag-over .drop-hint {
+            opacity: 1;
+        }
+        
+        /* Right Panel - Stats & Productivity */
+        .stats-panel {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stats-container {
+            margin-bottom: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-box {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .productivity-chart {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .chart-bar {
+            width: 40px;
+            background: linear-gradient(to top, #3498db, #2ecc71);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            transition: height 1s ease;
+        }
+        
+        .chart-bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .focus-timer {
+            margin-top: 30px;
+        }
+        
+        .timer-display {
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            color: #2c3e50;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .timer-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .start-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .pause-btn {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .reset-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .timer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .productivity-tips {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f3f7;
+        }
+        
+        .tips-list {
+            list-style-type: none;
+            margin-top: 15px;
+        }
+        
+        .tip-item {
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .tip-icon {
+            color: #3498db;
+            font-size: 1.2rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        /* Modal for task details */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .schedule-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .timer-display {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-clock"></i> Time Blocking Planner</h1>
+            <p class="subtitle">Organize your day, maximize productivity, and track your progress with this interactive time blocking tool.</p>
+        </header>
+        
+        <div class="app-container">
+            <!-- Left Panel: Task Management -->
+            <div class="task-panel">
+                <h2 class="panel-title"><i class="fas fa-tasks"></i> Task Manager</h2>
+                
+                <div class="task-input-area">
+                    <div class="input-group">
+                        <label for="taskTitle">Task Name</label>
+                        <input type="text" id="taskTitle" placeholder="Enter task name...">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="taskCategory">Category</label>
+                        <select id="taskCategory">
+                            <option value="work">Work</option>
+                            <option value="study">Study</option>
+                            <option value="exercise">Exercise</option>
+                            <option value="meal">Meal</option>
+                            <option value="break">Break</option>
+                            <option value="personal">Personal</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="taskDuration">Duration (minutes)</label>
+                        <input type="number" id="taskDuration" min="15" max="240" step="15" value="60">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Priority</label>
+                        <div class="task-priority">
+                            <div class="priority-option priority-low" data-priority="low">Low</div>
+                            <div class="priority-option priority-medium selected" data-priority="medium">Medium</div>
+                            <div class="priority-option priority-high" data-priority="high">High</div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="taskNotes">Notes (Optional)</label>
+                        <textarea id="taskNotes" rows="3" placeholder="Add any additional notes..."></textarea>
+                    </div>
+                    
+                    <button class="add-task-btn" id="addTaskBtn">
+                        <i class="fas fa-plus-circle"></i> Add Task
+                    </button>
+                </div>
+                
+                <div class="task-list-container">
+                    <div class="task-list-title">
+                        <span>Task List</span>
+                        <span id="taskCount">0 tasks</span>
+                    </div>
+                    
+                    <ul class="task-list" id="taskList">
+                        <!-- Tasks will be added here dynamically -->
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Center Panel: Time Blocking Schedule -->
+            <div class="schedule-panel">
+                <div class="schedule-header">
+                    <div class="date-navigation">
+                        <button class="nav-btn" id="prevDayBtn">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="current-date" id="currentDate">Monday, June 12, 2025</div>
+                        <button class="nav-btn" id="nextDayBtn">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="schedule-actions">
+                        <button class="action-btn clear-btn" id="clearScheduleBtn">
+                            <i class="fas fa-trash-alt"></i> Clear Schedule
+                        </button>
+                        <button class="action-btn export-btn" id="exportScheduleBtn">
+                            <i class="fas fa-file-export"></i> Export
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="time-slots" id="timeSlots">
+                    <!-- Time slots will be generated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Right Panel: Stats & Productivity -->
+            <div class="stats-panel">
+                <div class="stats-container">
+                    <h2 class="panel-title"><i class="fas fa-chart-bar"></i> Productivity Stats</h2>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value" id="totalTasks">0</div>
+                            <div class="stat-label">Total Tasks</div>
+                        </div>
+                        
+                        <div class="stat-box">
+                            <div class="stat-value" id="scheduledHours">0</div>
+                            <div class="stat-label">Hours Scheduled</div>
+                        </div>
+                        
+                        <div class="stat-box">
+                            <div class="stat-value" id="completionRate">0%</div>
+                            <div class="stat-label">Completion Rate</div>
+                        </div>
+                        
+                        <div class="stat-box">
+                            <div class="stat-value" id="focusScore">0</div>
+                            <div class="stat-label">Focus Score</div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="panel-title" style="font-size: 1.2rem; margin-top: 25px;">
+                        <i class="fas fa-chart-line"></i> Weekly Productivity
+                    </h3>
+                    
+                    <div class="productivity-chart" id="productivityChart">
+                        <!-- Chart bars will be generated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="focus-timer">
+                    <h2 class="panel-title"><i class="fas fa-hourglass-half"></i> Focus Timer</h2>
+                    
+                    <div class="timer-display" id="timerDisplay">25:00</div>
+                    
+                    <div class="timer-controls">
+                        <button class="timer-btn start-btn" id="startTimerBtn">
+                            <i class="fas fa-play"></i> Start
+                        </button>
+                        <button class="timer-btn pause-btn" id="pauseTimerBtn" disabled>
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        <button class="timer-btn reset-btn" id="resetTimerBtn">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="productivity-tips">
+                    <h2 class="panel-title"><i class="fas fa-lightbulb"></i> Productivity Tips</h2>
+                    
+                    <ul class="tips-list" id="tipsList">
+                        <li class="tip-item">
+                            <i class="fas fa-clock tip-icon"></i>
+                            <div>Group similar tasks together to reduce context switching</div>
+                        </li>
+                        <li class="tip-item">
+                            <i class="fas fa-walking tip-icon"></i>
+                            <div>Schedule short breaks every 60-90 minutes to maintain focus</div>
+                        </li>
+                        <li class="tip-item">
+                            <i class="fas fa-calendar-check tip-icon"></i>
+                            <div>Review and plan your next day at the end of each workday</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Time Blocking Planner | Boost your productivity with effective time management | Made with <i class="fas fa-heart" style="color:#e74c3c"></i></p>
+        </footer>
+    </div>
+    
+    <!-- Modal for task details -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTaskTitle">Task Details</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div id="modalTaskDetails">
+                <!-- Task details will be inserted here -->
+            </div>
+            <div class="modal-actions">
+                <button class="action-btn export-btn" id="markCompleteBtn">
+                    <i class="fas fa-check-circle"></i> Mark Complete
+                </button>
+                <button class="action-btn clear-btn" id="editTaskBtn">
+                    <i class="fas fa-edit"></i> Edit Task
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Application State
+        const appState = {
+            tasks: [],
+            scheduledBlocks: {},
+            currentDate: new Date(),
+            timer: {
+                isRunning: false,
+                timeLeft: 25 * 60, // 25 minutes in seconds
+                totalTime: 25 * 60,
+                interval: null
+            },
+            productivity: {
+                weekly: [65, 72, 80, 78, 85, 82, 90],
+                completedTasks: 0,
+                totalScheduledHours: 0
+            }
+        };
+        
+        // Task categories with colors
+        const taskCategories = {
+            work: { name: "Work", class: "block-work", icon: "fas fa-briefcase" },
+            study: { name: "Study", class: "block-study", icon: "fas fa-graduation-cap" },
+            exercise: { name: "Exercise", class: "block-exercise", icon: "fas fa-running" },
+            meal: { name: "Meal", class: "block-meal", icon: "fas fa-utensils" },
+            break: { name: "Break", class: "block-break", icon: "fas fa-coffee" },
+            personal: { name: "Personal", class: "block-personal", icon: "fas fa-user" }
+        };
+        
+        // DOM Elements
+        const taskList = document.getElementById('taskList');
+        const timeSlots = document.getElementById('timeSlots');
+        const currentDateElement = document.getElementById('currentDate');
+        const taskCountElement = document.getElementById('taskCount');
+        
+        // Input elements
+        const taskTitleInput = document.getElementById('taskTitle');
+        const taskCategorySelect = document.getElementById('taskCategory');
+        const taskDurationInput = document.getElementById('taskDuration');
+        const taskNotesInput = document.getElementById('taskNotes');
+        const priorityOptions = document.querySelectorAll('.priority-option');
+        
+        // Button elements
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const prevDayBtn = document.getElementById('prevDayBtn');
+        const nextDayBtn = document.getElementById('nextDayBtn');
+        const clearScheduleBtn = document.getElementById('clearScheduleBtn');
+        const exportScheduleBtn = document.getElementById('exportScheduleBtn');
+        
+        // Timer elements
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startTimerBtn = document.getElementById('startTimerBtn');
+        const pauseTimerBtn = document.getElementById('pauseTimerBtn');
+        const resetTimerBtn = document.getElementById('resetTimerBtn');
+        
+        // Stats elements
+        const totalTasksElement = document.getElementById('totalTasks');
+        const scheduledHoursElement = document.getElementById('scheduledHours');
+        const completionRateElement = document.getElementById('completionRate');
+        const focusScoreElement = document.getElementById('focusScore');
+        const productivityChart = document.getElementById('productivityChart');
+        
+        // Modal elements
+        const taskModal = document.getElementById('taskModal');
+        const modalTaskTitle = document.getElementById('modalTaskTitle');
+        const modalTaskDetails = document.getElementById('modalTaskDetails');
+        const closeModalBtn = document.getElementById('closeModal');
+        
+        // Initialize the application
+        function initApp() {
+            // Load saved data from localStorage
+            loadSavedData();
+            
+            // Generate time slots
+            generateTimeSlots();
+            
+            // Update current date display
+            updateDateDisplay();
+            
+            // Render tasks
+            renderTaskList();
+            
+            // Render schedule for current date
+            renderSchedule();
+            
+            // Update stats
+            updateStats();
+            
+            // Initialize productivity chart
+            initProductivityChart();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Initialize drag and drop
+            initDragAndDrop();
+        }
+        
+        // Load saved data from localStorage
+        function loadSavedData() {
+            const savedTasks = localStorage.getItem('timeBlockingTasks');
+            const savedSchedule = localStorage.getItem('timeBlockingSchedule');
+            const savedDate = localStorage.getItem('timeBlockingCurrentDate');
+            
+            if (savedTasks) {
+                appState.tasks = JSON.parse(savedTasks);
+            }
+            
+            if (savedSchedule) {
+                appState.scheduledBlocks = JSON.parse(savedSchedule);
+            }
+            
+            if (savedDate) {
+                appState.currentDate = new Date(savedDate);
+            }
+        }
+        
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('timeBlockingTasks', JSON.stringify(appState.tasks));
+            localStorage.setItem('timeBlockingSchedule', JSON.stringify(appState.scheduledBlocks));
+            localStorage.setItem('timeBlockingCurrentDate', appState.currentDate.toISOString());
+        }
+        
+        // Generate time slots (from 6 AM to 10 PM)
+        function generateTimeSlots() {
+            timeSlots.innerHTML = '';
+            
+            for (let hour = 6; hour <= 22; hour++) {
+                const timeSlot = document.createElement('div');
+                timeSlot.className = 'time-slot';
+                timeSlot.dataset.hour = hour;
+                
+                // Format hour for display
+                const displayHour = hour > 12 ? hour - 12 : hour;
+                const amPm = hour >= 12 ? 'PM' : 'AM';
+                const hourLabel = hour === 12 ? '12 PM' : `${displayHour} ${amPm}`;
+                
+                timeSlot.innerHTML = `
+                    <div class="time-label">${hourLabel}</div>
+                    <div class="time-block-area">
+                        <div class="drop-hint">Drop task here</div>
+                    </div>
+                `;
+                
+                timeSlots.appendChild(timeSlot);
+            }
+        }
+        
+        // Update date display
+        function updateDateDisplay() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            currentDateElement.textContent = appState.currentDate.toLocaleDateString('en-US', options);
+        }
+        
+        // Render task list
+        function renderTaskList() {
+            taskList.innerHTML = '';
+            
+            if (appState.tasks.length === 0) {
+                const emptyMessage = document.createElement('li');
+                emptyMessage.innerHTML = `
+                    <div class="task-item" style="text-align: center; cursor: default; border-left-color: #95a5a6;">
+                        <div style="color: #7f8c8d; padding: 20px;">
+                            <i class="fas fa-tasks" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            <div>No tasks yet. Add a task to get started!</div>
+                        </div>
+                    </div>
+                `;
+                taskList.appendChild(emptyMessage);
+                taskCountElement.textContent = "0 tasks";
+                return;
+            }
+            
+            // Sort tasks by priority (high > medium > low)
+            const priorityOrder = { high: 3, medium: 2, low: 1 };
+            const sortedTasks = [...appState.tasks].sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+            
+            sortedTasks.forEach((task, index) => {
+                const taskItem = document.createElement('li');
+                taskItem.className = `task-item priority-${task.priority}`;
+                taskItem.dataset.taskId = task.id;
+                taskItem.draggable = true;
+                
+                const category = taskCategories[task.category];
+                
+                taskItem.innerHTML = `
+                    <div class="task-header">
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-category">${category.name}</div>
+                    </div>
+                    <div class="task-duration">
+                        <i class="fas fa-clock"></i> ${task.duration} minutes
+                    </div>
+                    <div class="task-actions">
+                        <button class="task-btn schedule-btn" data-task-id="${task.id}">
+                            <i class="fas fa-calendar-plus"></i> Schedule
+                        </button>
+                        <button class="task-btn delete-btn" data-task-id="${task.id}">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                `;
+                
+                taskList.appendChild(taskItem);
+            });
+            
+            taskCountElement.textContent = `${appState.tasks.length} task${appState.tasks.length !== 1 ? 's' : ''}`;
+        }
+        
+        // Render schedule for current date
+        function renderSchedule() {
+            const dateKey = formatDateKey(appState.currentDate);
+            const scheduledBlocks = appState.scheduledBlocks[dateKey] || [];
+            
+            // Clear all time blocks from schedule
+            document.querySelectorAll('.time-block').forEach(block => block.remove());
+            
+            // Add scheduled blocks
+            scheduledBlocks.forEach(block => {
+                const timeSlot = document.querySelector(`.time-slot[data-hour="${block.hour}"]`);
+                if (timeSlot) {
+                    const timeBlockArea = timeSlot.querySelector('.time-block-area');
+                    const task = appState.tasks.find(t => t.id === block.taskId);
+                    
+                    if (task) {
+                        const category = taskCategories[task.category];
+                        const timeBlock = document.createElement('div');
+                        timeBlock.className = `time-block ${category.class}`;
+                        timeBlock.dataset.taskId = task.id;
+                        timeBlock.dataset.scheduleId = block.id;
+                        timeBlock.draggable = true;
+                        
+                        timeBlock.innerHTML = `
+                            <div>
+                                <i class="${category.icon}"></i> ${task.title}
+                            </div>
+                            <div class="block-duration">${task.duration}m</div>
+                            <div class="block-remove">
+                                <i class="fas fa-times"></i>
+                            </div>
+                        `;
+                        
+                        timeBlockArea.appendChild(timeBlock);
+                        
+                        // Add event listener to remove button
+                        const removeBtn = timeBlock.querySelector('.block-remove');
+                        removeBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            removeScheduledBlock(block.id, dateKey);
+                        });
+                        
+                        // Add click event to view task details
+                        timeBlock.addEventListener('click', (e) => {
+                            if (!e.target.closest('.block-remove')) {
+                                showTaskModal(task);
+                            }
+                        });
+                    }
+                }
+            });
+            
+            updateStats();
+        }
+        
+        // Initialize drag and drop functionality
+        function initDragAndDrop() {
+            // Make task items draggable
+            taskList.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('task-item')) {
+                    const taskId = e.target.dataset.taskId;
+                    e.dataTransfer.setData('text/plain', `task:${taskId}`);
+                    e.target.classList.add('dragging');
+                }
+            });
+            
+            taskList.addEventListener('dragend', (e) => {
+                if (e.target.classList.contains('task-item')) {
+                    e.target.classList.remove('dragging');
+                }
+            });
+            
+            // Make time blocks draggable for rescheduling
+            timeSlots.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('time-block')) {
+                    const scheduleId = e.target.dataset.scheduleId;
+                    e.dataTransfer.setData('text/plain', `schedule:${scheduleId}`);
+                    e.target.classList.add('dragging');
+                }
+            });
+            
+            timeSlots.addEventListener('dragend', (e) => {
+                if (e.target.classList.contains('time-block')) {
+                    e.target.classList.remove('dragging');
+                }
+            });
+            
+            // Handle dragover on time slots
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    slot.classList.add('drag-over');
+                });
+                
+                slot.addEventListener('dragleave', () => {
+                    slot.classList.remove('drag-over');
+                });
+                
+                slot.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    slot.classList.remove('drag-over');
+                    
+                    const data = e.dataTransfer.getData('text/plain');
+                    const hour = parseInt(slot.dataset.hour);
+                    const dateKey = formatDateKey(appState.currentDate);
+                    
+                    if (data.startsWith('task:')) {
+                        // Dragging a task from the task list
+                        const taskId = data.split(':')[1];
+                        scheduleTask(taskId, hour, dateKey);
+                    } else if (data.startsWith('schedule:')) {
+                        // Dragging an existing scheduled block
+                        const scheduleId = data.split(':')[1];
+                        moveScheduledBlock(scheduleId, hour, dateKey);
+                    }
+                });
+            });
+        }
+        
+        // Schedule a task at a specific hour
+        function scheduleTask(taskId, hour, dateKey) {
+            const task = appState.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            // Check if task is already scheduled at this time
+            const scheduledBlocks = appState.scheduledBlocks[dateKey] || [];
+            const existingBlock = scheduledBlocks.find(block => block.taskId === taskId);
+            
+            if (existingBlock) {
+                // Update existing block
+                existingBlock.hour = hour;
+            } else {
+                // Create new scheduled block
+                const scheduleId = `schedule_${Date.now()}`;
+                scheduledBlocks.push({
+                    id: scheduleId,
+                    taskId: taskId,
+                    hour: hour,
+                    date: dateKey
+                });
+            }
+            
+            // Save to app state
+            appState.scheduledBlocks[dateKey] = scheduledBlocks;
+            
+            // Save to localStorage and re-render
+            saveData();
+            renderSchedule();
+        }
+        
+        // Move a scheduled block to a new hour
+        function moveScheduledBlock(scheduleId, newHour, dateKey) {
+            const scheduledBlocks = appState.scheduledBlocks[dateKey] || [];
+            const blockIndex = scheduledBlocks.findIndex(block => block.id === scheduleId);
+            
+            if (blockIndex !== -1) {
+                scheduledBlocks[blockIndex].hour = newHour;
+                appState.scheduledBlocks[dateKey] = scheduledBlocks;
+                
+                saveData();
+                renderSchedule();
+            }
+        }
+        
+        // Remove a scheduled block
+        function removeScheduledBlock(scheduleId, dateKey) {
+            const scheduledBlocks = appState.scheduledBlocks[dateKey] || [];
+            const updatedBlocks = scheduledBlocks.filter(block => block.id !== scheduleId);
+            
+            appState.scheduledBlocks[dateKey] = updatedBlocks;
+            
+            saveData();
+            renderSchedule();
+        }
+        
+        // Add a new task
+        function addTask() {
+            const title = taskTitleInput.value.trim();
+            const category = taskCategorySelect.value;
+            const duration = parseInt(taskDurationInput.value);
+            const notes = taskNotesInput.value.trim();
+            const priority = document.querySelector('.priority-option.selected').dataset.priority;
+            
+            if (!title) {
+                alert('Please enter a task title');
+                taskTitleInput.focus();
+                return;
+            }
+            
+            if (duration < 15 || duration > 240) {
+                alert('Duration must be between 15 and 240 minutes');
+                taskDurationInput.focus();
+                return;
+            }
+            
+            // Create task object
+            const task = {
+                id: `task_${Date.now()}`,
+                title: title,
+                category: category,
+                duration: duration,
+                priority: priority,
+                notes: notes,
+                createdAt: new Date().toISOString(),
+                completed: false
+            };
+            
+            // Add to app state
+            appState.tasks.push(task);
+            
+            // Clear form
+            taskTitleInput.value = '';
+            taskNotesInput.value = '';
+            taskDurationInput.value = '60';
+            
+            // Save and render
+            saveData();
+            renderTaskList();
+            updateStats();
+        }
+        
+        // Delete a task
+        function deleteTask(taskId) {
+            if (!confirm('Are you sure you want to delete this task?')) return;
+            
+            // Remove task from app state
+            appState.tasks = appState.tasks.filter(task => task.id !== taskId);
+            
+            // Remove any scheduled blocks for this task
+            Object.keys(appState.scheduledBlocks).forEach(dateKey => {
+                appState.scheduledBlocks[dateKey] = appState.scheduledBlocks[dateKey].filter(
+                    block => block.taskId !== taskId
+                );
+            });
+            
+            // Save and render
+            saveData();
+            renderTaskList();
+            renderSchedule();
+        }
+        
+        // Show task modal
+        function showTaskModal(task) {
+            const category = taskCategories[task.category];
+            
+            modalTaskTitle.textContent = task.title;
+            modalTaskDetails.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <div class="task-category">${category.name}</div>
+                        <div style="font-size: 0.9rem; color: #7f8c8d;">
+                            <i class="fas fa-clock"></i> ${task.duration} minutes
+                        </div>
+                        <div class="priority-option priority-${task.priority}" style="font-size: 0.8rem; padding: 3px 8px;">
+                            ${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
+                        </div>
+                    </div>
+                    
+                    ${task.notes ? `
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-weight: 600; margin-bottom: 5px; color: #2c3e50;">Notes:</div>
+                            <div style="color: #555;">${task.notes}</div>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="font-size: 0.9rem; color: #7f8c8d;">
+                        Created: ${new Date(task.createdAt).toLocaleDateString()}
+                    </div>
+                </div>
+            `;
+            
+            // Update modal buttons
+            const markCompleteBtn = document.getElementById('markCompleteBtn');
+            markCompleteBtn.onclick = () => {
+                task.completed = !task.completed;
+                saveData();
+                updateStats();
+                taskModal.style.display = 'none';
+                
+                // Show notification
+                alert(`Task marked as ${task.completed ? 'complete' : 'incomplete'}`);
+            };
+            
+            const editTaskBtn = document.getElementById('editTaskBtn');
+            editTaskBtn.onclick = () => {
+                // For simplicity, we'll just delete and let user recreate
+                // In a full implementation, you would populate the form with task data
+                deleteTask(task.id);
+                taskModal.style.display = 'none';
+            };
+            
+            taskModal.style.display = 'flex';
+        }
+        
+        // Update stats display
+        function updateStats() {
+            // Total tasks
+            totalTasksElement.textContent = appState.tasks.length;
+            
+            // Calculate scheduled hours
+            const dateKey = formatDateKey(appState.currentDate);
+            const scheduledBlocks = appState.scheduledBlocks[dateKey] || [];
+            const totalMinutes = scheduledBlocks.reduce((total, block) => {
+                const task = appState.tasks.find(t => t.id === block.taskId);
+                return total + (task ? task.duration : 0);
+            }, 0);
+            
+            const scheduledHours = (totalMinutes / 60).toFixed(1);
+            scheduledHoursElement.textContent = scheduledHours;
+            
+            // Calculate completion rate
+            const completedTasks = appState.tasks.filter(task => task.completed).length;
+            const completionRate = appState.tasks.length > 0 
+                ? Math.round((completedTasks / appState.tasks.length) * 100) 
+                : 0;
+            completionRateElement.textContent = `${completionRate}%`;
+            
+            // Calculate focus score (simplified)
+            const focusScore = Math.min(100, completionRate + parseInt(scheduledHours) * 10);
+            focusScoreElement.textContent = focusScore;
+        }
+        
+        // Initialize productivity chart
+        function initProductivityChart() {
+            productivityChart.innerHTML = '';
+            
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const maxValue = Math.max(...appState.productivity.weekly);
+            
+            days.forEach((day, index) => {
+                const value = appState.productivity.weekly[index];
+                const barHeight = (value / maxValue) * 100;
+                
+                const barContainer = document.createElement('div');
+                barContainer.className = 'chart-bar';
+                barContainer.style.height = `${barHeight}%`;
+                barContainer.innerHTML = `<div class="chart-bar-label">${day}</div>`;
+                
+                productivityChart.appendChild(barContainer);
+            });
+        }
+        
+        // Timer functions
+        function startTimer() {
+            if (appState.timer.isRunning) return;
+            
+            appState.timer.isRunning = true;
+            startTimerBtn.disabled = true;
+            pauseTimerBtn.disabled = false;
+            
+            appState.timer.interval = setInterval(() => {
+                appState.timer.timeLeft--;
+                
+                if (appState.timer.timeLeft <= 0) {
+                    clearInterval(appState.timer.interval);
+                    appState.timer.isRunning = false;
+                    startTimerBtn.disabled = false;
+                    pauseTimerBtn.disabled = true;
+                    
+                    // Play notification sound (simulated with alert)
+                    alert('Focus session complete! Time for a break.');
+                    
+                    // Reset timer to initial value
+                    appState.timer.timeLeft = appState.timer.totalTime;
+                    updateTimerDisplay();
+                }
+                
+                updateTimerDisplay();
+            }, 1000);
+        }
+        
+        function pauseTimer() {
+            if (!appState.timer.isRunning) return;
+            
+            clearInterval(appState.timer.interval);
+            appState.timer.isRunning = false;
+            startTimerBtn.disabled = false;
+            pauseTimerBtn.disabled = true;
+        }
+        
+        function resetTimer() {
+            clearInterval(appState.timer.interval);
+            appState.timer.isRunning = false;
+            appState.timer.timeLeft = appState.timer.totalTime;
+            startTimerBtn.disabled = false;
+            pauseTimerBtn.disabled = true;
+            updateTimerDisplay();
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(appState.timer.timeLeft / 60);
+            const seconds = appState.timer.timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Utility function to format date as YYYY-MM-DD
+        function formatDateKey(date) {
+            return date.toISOString().split('T')[0];
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Add task button
+            addTaskBtn.addEventListener('click', addTask);
+            
+            // Allow Enter key to add task
+            taskTitleInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTask();
+            });
+            
+            // Priority selection
+            priorityOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    priorityOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                });
+            });
+            
+            // Task list events (delegation)
+            taskList.addEventListener('click', (e) => {
+                const scheduleBtn = e.target.closest('.schedule-btn');
+                const deleteBtn = e.target.closest('.delete-btn');
+                
+                if (scheduleBtn) {
+                    const taskId = scheduleBtn.dataset.taskId;
+                    // For simplicity, schedule at current hour + 1
+                    const currentHour = new Date().getHours();
+                    const dateKey = formatDateKey(appState.currentDate);
+                    scheduleTask(taskId, currentHour + 1, dateKey);
+                }
+                
+                if (deleteBtn) {
+                    const taskId = deleteBtn.dataset.taskId;
+                    deleteTask(taskId);
+                }
+            });
+            
+            // Date navigation
+            prevDayBtn.addEventListener('click', () => {
+                appState.currentDate.setDate(appState.currentDate.getDate() - 1);
+                updateDateDisplay();
+                renderSchedule();
+                saveData();
+            });
+            
+            nextDayBtn.addEventListener('click', () => {
+                appState.currentDate.setDate(appState.currentDate.getDate() + 1);
+                updateDateDisplay();
+                renderSchedule();
+                saveData();
+            });
+            
+            // Clear schedule
+            clearScheduleBtn.addEventListener('click', () => {
+                if (confirm('Clear all scheduled blocks for today?')) {
+                    const dateKey = formatDateKey(appState.currentDate);
+                    appState.scheduledBlocks[dateKey] = [];
+                    saveData();
+                    renderSchedule();
+                }
+            });
+            
+            // Export schedule
+            exportScheduleBtn.addEventListener('click', () => {
+                exportSchedule();
+            });
+            
+            // Timer controls
+            startTimerBtn.addEventListener('click', startTimer);
+            pauseTimerBtn.addEventListener('click', pauseTimer);
+            resetTimerBtn.addEventListener('click', resetTimer);
+            
+            // Modal close button
+            closeModalBtn.addEventListener('click', () => {
+                taskModal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === taskModal) {
+                    taskModal.style.display = 'none';
+                }
+            });
+        }
+        
+        // Export schedule as text
+        function exportSchedule() {
+            const dateKey = formatDateKey(appState.currentDate);
+            const scheduledBlocks = appState.scheduledBlocks[dateKey] || [];
+            
+            if (scheduledBlocks.length === 0) {
+                alert('No scheduled tasks to export');
+                return;
+            }
+            
+            // Sort blocks by hour
+            scheduledBlocks.sort((a, b) => a.hour - b.hour);
+            
+            let exportText = `Time Blocking Schedule for ${currentDateElement.textContent}\n\n`;
+            
+            scheduledBlocks.forEach(block => {
+                const task = appState.tasks.find(t => t.id === block.taskId);
+                if (task) {
+                    const category = taskCategories[task.category];
+                    const hour = block.hour > 12 ? block.hour - 12 : block.hour;
+                    const amPm = block.hour >= 12 ? 'PM' : 'AM';
+                    
+                    exportText += `${hour} ${amPm}: ${task.title} (${category.name}, ${task.duration} minutes)\n`;
+                }
+            });
+            
+            // Create download link
+            const blob = new Blob([exportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `schedule_${dateKey}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('Schedule exported successfully!');
+        }
+        
+        // Initialize the app when page loads
+        window.addEventListener('load', initApp);
+    </script>
+</body>
+</html>

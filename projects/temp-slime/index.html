@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>temporal slime mold · memory plasmodium</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0f0e0a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .terrarium {
+            background: #1a1c15;
+            border-radius: 3rem;
+            padding: 1.8rem;
+            box-shadow: 0 35px 70px #000000, 0 0 0 1px #6f8a6b inset, 0 0 50px #2a4020;
+        }
+
+        canvas {
+            display: block;
+            width: 960px;
+            height: 540px;
+            border-radius: 2rem;
+            box-shadow: 0 0 0 1px #9bba8f, 0 25px 45px -5px black;
+            cursor: cell;
+            background: #1d261b;
+        }
+
+        .mycelium-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 0.5rem 0.5rem 0.5rem 2rem;
+            background: #282e20;
+            border-radius: 4rem;
+            box-shadow: inset 0 3px 10px #0a0c07, 0 15px 30px #000000cc;
+            color: #e2f0cf;
+        }
+
+        .spore-badge {
+            background: #3c4a32;
+            border-radius: 3rem;
+            padding: 0.5rem 1.8rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: 0.1em;
+            color: #d4f0b0;
+            box-shadow: inset 0 -1px 0 #8bb07a;
+        }
+
+        .chem-dials {
+            display: flex;
+            gap: 2.2rem;
+        }
+
+        .dial {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .dial span {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        input[type=range] {
+            width: 130px;
+            height: 4px;
+            background: #3f5237;
+            border-radius: 10px;
+            -webkit-appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #d5f0b0;
+            border-radius: 50%;
+            box-shadow: 0 0 18px #b5f087;
+            border: 1px solid white;
+            cursor: grab;
+        }
+
+        .action-cluster {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .mold-btn {
+            background: #3a4a31;
+            border: none;
+            color: #e2ffc4;
+            font-size: 1.6rem;
+            width: 3.2rem;
+            height: 3.2rem;
+            border-radius: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: inset 0 -2px 4px #141b0f, 0 6px 14px black;
+            transition: 0.07s;
+        }
+
+        .mold-btn:hover {
+            background: #557a45;
+            color: white;
+            transform: scale(1.02);
+            box-shadow: inset 0 -1px 5px #c2ff9e, 0 10px 20px black;
+        }
+
+        #memoryStatus {
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 120px;
+            text-align: right;
+            color: #c5f098;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="terrarium">
+    <canvas id="slimeCanvas" width="960" height="540"></canvas>
+
+    <div class="mycelium-panel">
+        <span class="spore-badge">🧬 TEMPORAL SLIME MOLD</span>
+        
+        <div class="chem-dials">
+            <div class="dial">
+                <span>🌫️ DEPOSIT</span>
+                <input type="range" id="depositRate" min="0.1" max="2.2" value="1.0" step="0.05">
+            </div>
+            <div class="dial">
+                <span>🧪 SENSE</span>
+                <input type="range" id="sensorRange" min="0.2" max="2.5" value="1.2" step="0.05">
+            </div>
+            <div class="dial">
+                <span>⏳ DECAY</span>
+                <input type="range" id="decayRate" min="0.2" max="1.8" value="0.8" step="0.02">
+            </div>
+        </div>
+
+        <div class="action-cluster">
+            <button class="mold-btn" id="spawnBtn" title="spawn new colony">🍄</button>
+            <button class="mold-btn" id="resetBtn" title="reset terrain">⟲</button>
+        </div>
+        <span id="memoryStatus">⏳ 0 trails</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ==========  TEMPORAL SLIME MOLD — UNIQUE HIGH-LEVEL ==========
+        // Physarum polycephalum inspired simulation with memory trail, chemotaxis,
+        // and evolving chemical field. Each particle leaves a trace that influences
+        // future movement and decays over time. Sliders control behavior.
+        
+        const canvas = document.getElementById('slimeCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+
+        // ==========  simulation parameters ==========
+        const AGENT_COUNT = 850;                      // slime particles
+        const TRAIL_RES = 2;                           // chemical grid resolution (pixels per cell) — 2px/cell → 480x270 grid
+        const CELL_SIZE = 2;
+        const GRID_COLS = Math.floor(W / CELL_SIZE);
+        const GRID_ROWS = Math.floor(H / CELL_SIZE);
+        const TOTAL_CELLS = GRID_COLS * GRID_ROWS;
+
+        // sliders
+        let depositAmount = 1.0;                       // deposit rate (0.1-2.2)
+        let sensorStrength = 1.2;                       // how strongly they follow gradient
+        let decaySpeed = 0.8;                            // trail evaporation (0.2-1.8)
+
+        // chemical trail grid (float)
+        let trailMap = new Float32Array(TOTAL_CELLS);
+        let trailMapNext = new Float32Array(TOTAL_CELLS); // for diffusion
+
+        // agents
+        let agents = [];
+
+        // ==========  initialize agents ==========
+        function spawnColony(count = AGENT_COUNT, x = W/2, y = H/2, radius = 120) {
+            agents = [];
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * 2 * Math.PI;
+                const dist = Math.random() * radius;
+                agents.push({
+                    x: x + Math.cos(angle) * dist,
+                    y: y + Math.sin(angle) * dist,
+                    angle: Math.random() * 2 * Math.PI,
+                    speed: 0.7 + Math.random() * 0.6,
+                    sensorAngle: 0.8,                    // sensor offset (radians)
+                    sensorDist: 8 + Math.random() * 4,
+                });
+            }
+        }
+
+        // reset chemical field
+        function resetTrails() {
+            trailMap.fill(0);
+            trailMapNext.fill(0);
+        }
+
+        // full reset
+        function fullReset() {
+            resetTrails();
+            spawnColony(AGENT_COUNT, W/2, H/2, 150);
+        }
+
+        // ==========  mouse interaction (deposit attractant/repellent) ==========
+        let mouseX = -1000, mouseY = -1000, mouseDown = false;
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            mouseX = (e.clientX - rect.left) * scaleX;
+            mouseY = (e.clientY - rect.top) * scaleY;
+            mouseDown = e.buttons === 1;
+        });
+        canvas.addEventListener('mouseleave', () => { mouseX = -1000; mouseDown = false; });
+        canvas.addEventListener('mousedown', (e) => { if (e.button === 0) mouseDown = true; });
+        canvas.addEventListener('mouseup', () => { mouseDown = false; });
+
+        // ==========  sliders ==========
+        document.getElementById('depositRate').addEventListener('input', (e) => depositAmount = parseFloat(e.target.value));
+        document.getElementById('sensorRange').addEventListener('input', (e) => sensorStrength = parseFloat(e.target.value));
+        document.getElementById('decayRate').addEventListener('input', (e) => decaySpeed = parseFloat(e.target.value));
+        document.getElementById('spawnBtn').addEventListener('click', () => {
+            spawnColony(200, mouseX > 0 ? mouseX : W/2, mouseY > 0 ? mouseY : H/2, 80);
+        });
+        document.getElementById('resetBtn').addEventListener('click', fullReset);
+
+        // ==========  helper: get trail value at (x,y) with bilinear (simplified) ==========
+        function getTrail(x, y) {
+            const cx = Math.floor(x / CELL_SIZE);
+            const cy = Math.floor(y / CELL_SIZE);
+            if (cx < 0 || cx >= GRID_COLS || cy < 0 || cy >= GRID_ROWS) return 0;
+            return trailMap[cy * GRID_COLS + cx];
+        }
+
+        // sample angle offset (returns trail value at sensor position)
+        function sampleSensor(agent, offsetAngle) {
+            const angle = agent.angle + offsetAngle;
+            const sx = agent.x + Math.cos(angle) * agent.sensorDist;
+            const sy = agent.y + Math.sin(angle) * agent.sensorDist;
+            return getTrail(sx, sy);
+        }
+
+        // ==========  agent update (chemotaxis) ==========
+        function updateAgents() {
+            for (let i = 0; i < agents.length; i++) {
+                const a = agents[i];
+                
+                // sample three directions: front, left, right
+                const front = sampleSensor(a, 0);
+                const left = sampleSensor(a, a.sensorAngle);
+                const right = sampleSensor(a, -a.sensorAngle);
+                
+                // decide turn direction
+                if (front > left && front > right) {
+                    // continue straight (small random)
+                    a.angle += (Math.random() - 0.5) * 0.1;
+                } else if (left > right) {
+                    a.angle += a.sensorAngle * 0.5 * sensorStrength;
+                } else if (right > left) {
+                    a.angle -= a.sensorAngle * 0.5 * sensorStrength;
+                } else {
+                    a.angle += (Math.random() - 0.5) * 0.4;
+                }
+                
+                // move
+                a.x += Math.cos(a.angle) * a.speed;
+                a.y += Math.sin(a.angle) * a.speed;
+                
+                // boundary handling (wrap or bounce? wrap gives interesting continuity)
+                if (a.x < 0) a.x = W;
+                if (a.x > W) a.x = 0;
+                if (a.y < 0) a.y = H;
+                if (a.y > H) a.y = 0;
+                
+                // deposit chemical at new position
+                const cx = Math.floor(a.x / CELL_SIZE);
+                const cy = Math.floor(a.y / CELL_SIZE);
+                if (cx >= 0 && cx < GRID_COLS && cy >= 0 && cy < GRID_ROWS) {
+                    const idx = cy * GRID_COLS + cx;
+                    // deposit amount (clamp 0-1 range)
+                    trailMap[idx] = Math.min(1.0, trailMap[idx] + depositAmount * 0.02);
+                }
+
+                // mouse influence: deposit extra if mouse down (attractant) or up (repellent)
+                if (mouseX > 0 && mouseY > 0 && mouseX < W && mouseY < H) {
+                    const dx = a.x - mouseX;
+                    const dy = a.y - mouseY;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist < 50) {
+                        // if mouse down -> attract (deposit attractant in front), else neutral
+                        if (mouseDown) {
+                            // add extra chemical towards mouse (attract)
+                            const angleToMouse = Math.atan2(mouseY - a.y, mouseX - a.x);
+                            a.angle += (angleToMouse - a.angle) * 0.02 * sensorStrength;
+                        } else {
+                            // slight random scatter (avoid)
+                            a.angle += (Math.random() - 0.5) * 0.2;
+                        }
+                    }
+                }
+            }
+        }
+
+        // ==========  diffuse and evaporate trail (blur + decay) ==========
+        function processTrails() {
+            const decay = 0.92 - (decaySpeed * 0.08);   // map 0.2→0.906, 1.8→0.786 (faster decay)
+            
+            // simple diffusion (3-point average)
+            for (let y = 1; y < GRID_ROWS - 1; y++) {
+                for (let x = 1; x < GRID_COLS - 1; x++) {
+                    const idx = y * GRID_COLS + x;
+                    const sum = 
+                        trailMap[idx] * 0.5 +
+                        trailMap[idx - 1] * 0.1 +
+                        trailMap[idx + 1] * 0.1 +
+                        trailMap[idx - GRID_COLS] * 0.1 +
+                        trailMap[idx + GRID_COLS] * 0.1 +
+                        trailMap[idx - GRID_COLS - 1] * 0.02 +
+                        trailMap[idx - GRID_COLS + 1] * 0.02 +
+                        trailMap[idx + GRID_COLS - 1] * 0.02 +
+                        trailMap[idx + GRID_COLS + 1] * 0.02;
+                    
+                    trailMapNext[idx] = sum * decay;
+                }
+            }
+            
+            // swap buffers
+            const tmp = trailMap;
+            trailMap = trailMapNext;
+            trailMapNext = tmp;
+            
+            // handle edges (zero)
+            for (let x = 0; x < GRID_COLS; x++) {
+                trailMap[x] = 0;
+                trailMap[(GRID_ROWS - 1) * GRID_COLS + x] = 0;
+            }
+            for (let y = 0; y < GRID_ROWS; y++) {
+                trailMap[y * GRID_COLS] = 0;
+                trailMap[y * GRID_COLS + GRID_COLS - 1] = 0;
+            }
+        }
+
+        // ==========  rendering ==========
+        function draw() {
+            // background (dark soil)
+            ctx.fillStyle = '#1e2a1b';
+            ctx.fillRect(0, 0, W, H);
+
+            // draw trail map (chemical field) as translucent blobs
+            const imageData = ctx.getImageData(0, 0, W, H);
+            const data = imageData.data;
+            
+            for (let y = 0; y < GRID_ROWS; y++) {
+                for (let x = 0; x < GRID_COLS; x++) {
+                    const idx = y * GRID_COLS + x;
+                    const val = trailMap[idx];
+                    if (val < 0.01) continue;
+                    
+                    // map to pixel region
+                    const px = x * CELL_SIZE;
+                    const py = y * CELL_SIZE;
+                    
+                    // intensity
+                    const int = Math.min(255, Math.floor(80 + val * 120));
+                    const alpha = Math.min(180, Math.floor(40 + val * 80));
+                    
+                    for (let dy = 0; dy < CELL_SIZE; dy++) {
+                        for (let dx = 0; dx < CELL_SIZE; dx++) {
+                            const pixelX = px + dx;
+                            const pixelY = py + dy;
+                            if (pixelX >= W || pixelY >= H) continue;
+                            const pixelIdx = (pixelY * W + pixelX) * 4;
+                            // bioluminescent green/yellow
+                            data[pixelIdx] = 160 + val * 60;     // R
+                            data[pixelIdx + 1] = 200 + val * 55; // G
+                            data[pixelIdx + 2] = 80;             // B
+                            data[pixelIdx + 3] = alpha;          // A
+                        }
+                    }
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+
+            // draw agents (slime particles)
+            ctx.shadowColor = '#c6ffa0';
+            ctx.shadowBlur = 18;
+            for (let a of agents) {
+                ctx.beginPath();
+                ctx.arc(a.x, a.y, 2.2, 0, 2 * Math.PI);
+                ctx.fillStyle = '#f7ffcf';
+                ctx.fill();
+                // head highlight
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(a.x + Math.cos(a.angle) * 1.5, a.y + Math.sin(a.angle) * 1.5, 1.2, 0, 2 * Math.PI);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+
+            // mouse aura
+            if (mouseX > 0 && mouseY > 0 && mouseX < W && mouseY < H) {
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 28, 0, 2 * Math.PI);
+                ctx.strokeStyle = mouseDown ? '#c0ff90' : '#80b080';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 10]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        // ==========  animation + stats ==========
+        let lastTime = performance.now();
+        let frames = 0;
+        let fps = 0;
+
+        function tick(now) {
+            // simulation steps
+            for (let step = 0; step < 2; step++) {
+                updateAgents();
+                processTrails();
+            }
+
+            draw();
+
+            // update status
+            frames++;
+            if (now - lastTime >= 400) {
+                fps = Math.round((frames * 1000) / (now - lastTime));
+                // count non‑zero trail cells (approx)
+                let trailCount = 0;
+                for (let i = 0; i < trailMap.length; i+=10) { // sample
+                    if (trailMap[i] > 0.02) trailCount++;
+                }
+                document.getElementById('memoryStatus').innerHTML = `⏳ ${trailCount} trails | ${fps} fps`;
+                frames = 0;
+                lastTime = now;
+            }
+
+            requestAnimationFrame(tick);
+        }
+
+        // bootstrap
+        fullReset();
+        tick(performance.now());
+    })();
+</script>
+</body>
+</html>

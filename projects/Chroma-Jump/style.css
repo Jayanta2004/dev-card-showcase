@@ -1,0 +1,497 @@
+/* ═══════════════════════════════════════════════════════════
+   Chroma-Jump · style.css
+   Retro Arcade / Neon theme
+   ═══════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────
+   1. CSS RESET
+   ──────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ────────────────────────────────────────────
+   2. CSS CUSTOM PROPERTIES (Design Tokens)
+   ──────────────────────────────────────────── */
+:root {
+  /* ── Background / Neutral ── */
+  --clr-bg:           #0a000f;          /* Very deep purple-black */
+  --clr-bg-2:         #110019;
+  --clr-surface:      rgba(255,255,255,0.04);
+  --clr-border:       rgba(255,255,255,0.10);
+
+  /* ── Three-color palette ── */
+  --clr-pink:         #ff2d78;
+  --clr-pink-glow:    rgba(255, 45, 120, 0.7);
+  --clr-pink-soft:    rgba(255, 45, 120, 0.18);
+
+  --clr-cyan:         #00e5ff;
+  --clr-cyan-glow:    rgba(0, 229, 255, 0.7);
+  --clr-cyan-soft:    rgba(0, 229, 255, 0.18);
+
+  --clr-yellow:       #ffe600;
+  --clr-yellow-glow:  rgba(255, 230, 0, 0.7);
+  --clr-yellow-soft:  rgba(255, 230, 0, 0.18);
+
+  /* ── Text ── */
+  --clr-text:         #e8eaf6;
+  --clr-muted:        rgba(232,234,246,0.45);
+
+  /* ── Glassmorphism ── */
+  --glass-bg:         rgba(255,255,255,0.035);
+  --glass-border:     rgba(255,255,255,0.10);
+  --glass-blur:       14px;
+
+  /* ── Typography ── */
+  --font-retro:       'Press Start 2P', 'Courier New', monospace;
+  --font-ui:          'Space Grotesk', system-ui, sans-serif;
+
+  /* ── Spacing ── */
+  --sp-xs: 0.25rem;
+  --sp-sm: 0.5rem;
+  --sp-md: 1rem;
+  --sp-lg: 1.75rem;
+  --sp-xl: 2.5rem;
+
+  /* ── Border radius ── */
+  --r-sm:   6px;
+  --r-md:   12px;
+  --r-lg:   20px;
+  --r-pill: 999px;
+
+  /* ── Transitions ── */
+  --t-fast: 120ms ease;
+  --t-pop:  300ms cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ────────────────────────────────────────────
+   3. BASE
+   ──────────────────────────────────────────── */
+body {
+  background: var(--clr-bg);
+  font-family: var(--font-ui);
+  color: var(--clr-text);
+}
+
+/* ── CRT Scanlines overlay ─────────────────── */
+#crt {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,0,0,0.18) 2px,
+    rgba(0,0,0,0.18) 4px
+  );
+  mix-blend-mode: multiply;
+}
+
+/* ── Canvas ────────────────────────────────── */
+#game-canvas {
+  display: block;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  z-index: 0;
+}
+
+/* ────────────────────────────────────────────
+   4. HUD
+   ──────────────────────────────────────────── */
+#hud {
+  position: fixed;
+  top: var(--sp-md);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  gap: var(--sp-lg);
+
+  padding: var(--sp-sm) var(--sp-xl);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-pill);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07),
+              0 4px 28px rgba(0,0,0,0.45);
+}
+
+.hud-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 52px;
+}
+
+.hud-label {
+  font-family: var(--font-retro);
+  font-size: 0.42rem;
+  letter-spacing: 0.15em;
+  color: var(--clr-muted);
+}
+
+.hud-value {
+  font-family: var(--font-retro);
+  font-size: 1rem;
+  color: var(--clr-cyan);
+  text-shadow: 0 0 10px var(--clr-cyan-glow),
+               0 0 30px rgba(0,229,255,0.25);
+  line-height: 1;
+}
+
+.hud-best {
+  color: var(--clr-yellow);
+  text-shadow: 0 0 10px var(--clr-yellow-glow),
+               0 0 30px rgba(255,230,0,0.25);
+}
+
+/* ── Color Indicator dots ──────────────────── */
+#color-indicator {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ci-dot {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  transition: transform var(--t-pop), box-shadow var(--t-fast);
+  opacity: 0.35;
+}
+
+#ci-pink   { background: var(--clr-pink);   }
+#ci-cyan   { background: var(--clr-cyan);   }
+#ci-yellow { background: var(--clr-yellow); }
+
+/* Active state — applied by JS */
+.ci-dot.active {
+  opacity: 1;
+  transform: scale(1.45);
+}
+
+#ci-pink.active   { box-shadow: 0 0 14px var(--clr-pink-glow);   }
+#ci-cyan.active   { box-shadow: 0 0 14px var(--clr-cyan-glow);   }
+#ci-yellow.active { box-shadow: 0 0 14px var(--clr-yellow-glow); }
+
+/* ────────────────────────────────────────────
+   5. KEY LEGEND
+   ──────────────────────────────────────────── */
+#key-legend {
+  position: fixed;
+  bottom: var(--sp-md);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  font-size: 0.7rem;
+  color: var(--clr-muted);
+
+  animation: fadeInUp 0.8s 1s both;
+}
+
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.leg-sep { opacity: 0.3; }
+
+kbd {
+  padding: 2px 6px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-sm);
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+.leg-pink   kbd { color: var(--clr-pink);   border-color: var(--clr-pink-soft);   }
+.leg-cyan   kbd { color: var(--clr-cyan);   border-color: var(--clr-cyan-soft);   }
+.leg-yellow kbd { color: var(--clr-yellow); border-color: var(--clr-yellow-soft); }
+
+/* ────────────────────────────────────────────
+   6. MOBILE TOUCH CONTROLS
+   ──────────────────────────────────────────── */
+#touch-controls {
+  display: none;     /* Shown only on mobile via media query */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 110px;
+  z-index: 15;
+}
+
+#touch-jump {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,229,255,0.04);
+  border-top: 1px solid var(--clr-cyan-soft);
+  border-right: 1px solid var(--glass-border);
+}
+
+.touch-label {
+  font-family: var(--font-retro);
+  font-size: 0.55rem;
+  color: rgba(0,229,255,0.5);
+  text-align: center;
+  line-height: 1.8;
+  letter-spacing: 0.1em;
+}
+
+#touch-colors {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.touch-color-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-retro);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  border-top: 1px solid var(--glass-border);
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+
+.touch-color-btn[data-color="pink"]   { color: var(--clr-pink);   }
+.touch-color-btn[data-color="cyan"]   { color: var(--clr-cyan);   }
+.touch-color-btn[data-color="yellow"] { color: var(--clr-yellow); }
+
+.touch-color-btn[data-color="pink"]:active   { background: var(--clr-pink-soft);   }
+.touch-color-btn[data-color="cyan"]:active   { background: var(--clr-cyan-soft);   }
+.touch-color-btn[data-color="yellow"]:active { background: var(--clr-yellow-soft); }
+
+/* ────────────────────────────────────────────
+   7. OVERLAY — Start / Game Over
+   ──────────────────────────────────────────── */
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(10, 0, 15, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fadeIn 350ms both;
+}
+
+#overlay.hidden { display: none; }
+
+.overlay-card {
+  width: min(440px, 92vw);
+  padding: var(--sp-xl) var(--sp-lg);
+
+  background: linear-gradient(
+    145deg,
+    rgba(255,255,255,0.055) 0%,
+    rgba(255,255,255,0.015) 100%
+  );
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    0 8px 60px rgba(0,0,0,0.65),
+    0 0 90px rgba(255,45,120,0.05);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-md);
+  text-align: center;
+
+  animation: cardPop 480ms 80ms cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+.overlay-pre {
+  font-family: var(--font-retro);
+  font-size: 0.55rem;
+  color: var(--clr-muted);
+  letter-spacing: 0.12em;
+  min-height: 1rem;    /* Prevents layout shift when empty */
+}
+
+.overlay-title {
+  font-family: var(--font-retro);
+  font-size: clamp(1.4rem, 6vw, 2rem);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+  background: linear-gradient(
+    135deg,
+    var(--clr-pink)   0%,
+    var(--clr-cyan)   50%,
+    var(--clr-yellow) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 18px rgba(0,229,255,0.45));
+}
+
+.overlay-msg {
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--clr-muted);
+  line-height: 1.75;
+  max-width: 32ch;
+}
+
+/* Three color blocks preview */
+.color-preview {
+  display: flex;
+  gap: 10px;
+  margin: var(--sp-xs) 0;
+}
+
+.cp-block {
+  width: 44px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.cp-pink   { background: var(--clr-pink);   box-shadow: 0 0 10px var(--clr-pink-glow);   }
+.cp-cyan   { background: var(--clr-cyan);   box-shadow: 0 0 10px var(--clr-cyan-glow);   }
+.cp-yellow { background: var(--clr-yellow); box-shadow: 0 0 10px var(--clr-yellow-glow); }
+
+/* CTA Button */
+.overlay-btn {
+  padding: 0.7rem 2.8rem;
+  font-family: var(--font-retro);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: var(--clr-bg);
+  background: linear-gradient(135deg, var(--clr-pink), var(--clr-cyan));
+  border: none;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 22px rgba(0,229,255,0.4), 0 4px 16px rgba(0,0,0,0.35);
+  transition: transform var(--t-pop), box-shadow var(--t-fast);
+}
+
+.overlay-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255,255,255,0.3) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  transition: transform 550ms ease;
+}
+
+.overlay-btn:hover { transform: translateY(-2px) scale(1.05); }
+.overlay-btn:hover::before { transform: translateX(100%); }
+.overlay-btn:active { transform: scale(0.97); }
+
+.overlay-credit {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.18);
+  letter-spacing: 0.05em;
+}
+
+/* ────────────────────────────────────────────
+   8. KEYFRAME ANIMATIONS
+   ──────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes cardPop {
+  from { opacity: 0; transform: scale(0.85) translateY(24px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0);   }
+}
+
+@keyframes scorePop {
+  0%  { transform: scale(1);    }
+  45% { transform: scale(1.55); }
+  100%{ transform: scale(1);    }
+}
+
+.score-pop {
+  animation: scorePop 320ms cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ────────────────────────────────────────────
+   9. RESPONSIVE
+   ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+  #hud {
+    top: var(--sp-sm);
+    padding: var(--sp-xs) var(--sp-md);
+    gap: var(--sp-md);
+  }
+
+  .hud-value { font-size: 0.75rem; }
+
+  #key-legend { display: none; }
+
+  #touch-controls { display: flex; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

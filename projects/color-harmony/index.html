@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎨 color harmony tester · interactive palette generator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #1e2b32 0%, #0f1a1f 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 2rem 1.5rem;
+    }
+
+    .harmony-card {
+      max-width: 1300px;
+      width: 100%;
+      background: rgba(18, 28, 32, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 215, 150, 0.15);
+      border-radius: 3rem;
+      padding: 2.5rem 2.2rem;
+      box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.08);
+    }
+
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 500;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #f6e7d0, #ffcf9a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    h1 span {
+      background: #2f424b;
+      font-size: 1.1rem;
+      font-weight: 500;
+      padding: 0.2rem 1.2rem;
+      border-radius: 40px;
+      color: #ffcf9a;
+      letter-spacing: 0.3px;
+      -webkit-text-fill-color: #ffcf9a;
+      background: #1f333d;
+      border: 1px solid #b38b5a60;
+    }
+
+    .subhead {
+      color: rgba(230, 215, 190, 0.7);
+      margin-bottom: 2.8rem;
+      font-size: 1.1rem;
+      border-left: 4px solid #e5a95b;
+      padding-left: 1.4rem;
+      font-weight: 300;
+    }
+
+    /* main control row */
+    .picker-section {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 3rem;
+      padding: 1.8rem 2rem;
+      margin-bottom: 2.8rem;
+      border: 1px solid #435a66;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    .base-color-area {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .base-color-area label {
+      color: #eadbbf;
+      font-weight: 500;
+      font-size: 1.2rem;
+      letter-spacing: 0.5px;
+    }
+
+    .color-picker-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #1d2f38;
+      padding: 0.4rem 1.2rem 0.4rem 0.8rem;
+      border-radius: 60px;
+      border: 1px solid #6a5238;
+    }
+
+    input[type="color"] {
+      width: 60px;
+      height: 50px;
+      border: 2px solid #ffd9a0;
+      border-radius: 40px;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 40px; }
+
+    #baseHex {
+      background: #172a32;
+      border: 1px solid #a28b60;
+      color: #ffdbb5;
+      padding: 0.5rem 1.2rem;
+      border-radius: 40px;
+      font-family: 'Fira Code', monospace;
+      font-size: 1.2rem;
+      width: 130px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .harmony-type {
+      display: flex;
+      gap: 0.5rem;
+      background: #0f232b;
+      padding: 0.4rem;
+      border-radius: 60px;
+      border: 1px solid #6e5e48;
+    }
+
+    .harmony-btn {
+      background: transparent;
+      border: none;
+      color: #d6c29d;
+      padding: 0.7rem 1.8rem;
+      border-radius: 40px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .harmony-btn.active {
+      background: #e5a95b;
+      color: #1d2b2b;
+      box-shadow: 0 4px 12px #b2721a80;
+    }
+
+    /* palette grid */
+    .palette-container {
+      margin-bottom: 3rem;
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1.2rem;
+    }
+
+    .color-card {
+      background: #1e2d34;
+      border-radius: 2rem;
+      overflow: hidden;
+      border: 1px solid #bfa06e60;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.6);
+    }
+    .color-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 25px -8px black;
+      border-color: #ffb86b;
+    }
+
+    .color-swatch {
+      height: 150px;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    .color-meta {
+      padding: 1rem 1rem 1.2rem;
+      background: #1a2c33;
+    }
+
+    .color-name {
+      font-weight: 600;
+      color: #ffdbbd;
+      margin-bottom: 0.4rem;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .color-hex {
+      font-family: 'Fira Code', monospace;
+      background: #0e2028;
+      padding: 0.4rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      color: #cfb387;
+      border: 1px solid #4e5f4c;
+      display: inline-block;
+    }
+
+    .color-desc {
+      font-size: 0.75rem;
+      color: #8f9e9c;
+      margin-top: 0.5rem;
+    }
+
+    /* theory & harmony explanation */
+    .theory-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      background: #11222b;
+      border-radius: 2rem;
+      padding: 1.8rem 2.2rem;
+      border: 1px solid #ad8b5a60;
+    }
+
+    .current-harmony-note {
+      flex: 2;
+    }
+
+    .current-harmony-note h3 {
+      color: #f5cd94;
+      font-weight: 400;
+      font-size: 1.2rem;
+      margin-bottom: 0.8rem;
+      letter-spacing: 0.2px;
+    }
+
+    .current-harmony-note p {
+      color: #c0bbaa;
+      line-height: 1.6;
+    }
+
+    .harmony-badge {
+      background: #2e4a4a;
+      padding: 0.4rem 1.5rem;
+      border-radius: 60px;
+      color: #ffdead;
+      font-weight: 500;
+      border: 1px solid #cf9f5b;
+    }
+
+    .lum-hint {
+      color: #ffcf8a;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    .reset-random {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .icon-btn {
+      background: #2e4545;
+      border: 1px solid #b59b6b;
+      color: #ffe1b3;
+      padding: 0.7rem 1.5rem;
+      border-radius: 40px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .icon-btn:hover {
+      background: #3d5b5b;
+      border-color: #e5b469;
+    }
+  </style>
+</head>
+<body>
+<div class="harmony-card">
+  <h1>
+    ✦ color harmony tester
+    <span>HSL / RGB</span>
+  </h1>
+  <div class="subhead">pick a base → complementary · analogous · triadic · split · tetradic</div>
+
+  <!-- base picker + harmony switch -->
+  <div class="picker-section">
+    <div class="base-color-area">
+      <label>base color</label>
+      <div class="color-picker-wrapper">
+        <input type="color" id="baseColorPicker" value="#e5a95b">
+        <input type="text" id="baseHex" value="#e5a95b" placeholder="#e5a95b" maxlength="7">
+      </div>
+    </div>
+
+    <div class="harmony-type" id="harmonySwitch">
+      <button class="harmony-btn active" data-harmony="complementary">comp</button>
+      <button class="harmony-btn" data-harmony="analogous">analogous</button>
+      <button class="harmony-btn" data-harmony="triadic">triadic</button>
+      <button class="harmony-btn" data-harmony="split">split</button>
+      <button class="harmony-btn" data-harmony="tetradic">tetradic</button>
+    </div>
+
+    <div class="reset-random">
+      <button class="icon-btn" id="randomColorBtn">🎲 random</button>
+    </div>
+  </div>
+
+  <!-- palette grid (5 cards) -->
+  <div class="palette-container">
+    <div class="palette-grid" id="paletteGrid">
+      <!-- dynamically filled from js -->
+    </div>
+  </div>
+
+  <!-- harmony description / footer -->
+  <div class="theory-panel">
+    <div class="current-harmony-note">
+      <h3 id="harmonyTitle">⚫ complementary · 180° apart</h3>
+      <p id="harmonyDescription">Creates maximum contrast and visual tension. The base and its opposite anchor the palette.</p>
+      <div class="lum-hint" id="extraHint"></div>
+    </div>
+    <div class="harmony-badge" id="harmonyTag">color theory</div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ----- DOM elements -----
+    const basePicker = document.getElementById('baseColorPicker');
+    const baseHexInput = document.getElementById('baseHex');
+    const harmonyBtns = document.querySelectorAll('.harmony-btn');
+    const paletteGrid = document.getElementById('paletteGrid');
+    const harmonyTitle = document.getElementById('harmonyTitle');
+    const harmonyDescription = document.getElementById('harmonyDescription');
+    const extraHint = document.getElementById('extraHint');
+    const harmonyTag = document.getElementById('harmonyTag');
+    const randomBtn = document.getElementById('randomColorBtn');
+
+    // current state
+    let currentHarmony = 'complementary';   // default
+    let baseColor = basePicker.value;       // hex string
+
+    // ----- helper: hex <-> hsl (via rgb) -----
+    function hexToRgb(hex) {
+      const r = parseInt(hex.slice(1,3), 16);
+      const g = parseInt(hex.slice(3,5), 16);
+      const b = parseInt(hex.slice(5,7), 16);
+      return [r, g, b];
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    }
+
+    function rgbToHsl(r, g, b) {
+      r /= 255, g /= 255, b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return [h * 360, s, l];
+    }
+
+    function hslToRgb(h, s, l) {
+      h /= 360; s = Math.min(1,Math.max(0,s)); l = Math.min(1,Math.max(0,l));
+      let r, g, b;
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1/6) return p + (q - p) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+      }
+      return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    }
+
+    function getHarmonyPalette(hex, type) {
+      const [r, g, b] = hexToRgb(hex);
+      let [h, s, l] = rgbToHsl(r, g, b);
+      // ensure s and l are sane for generation
+      s = Math.min(1, Math.max(0, s));
+      l = Math.min(1, Math.max(0, l));
+      const colors = [];
+
+      // we always return 5 colors: first = base, then harmony variants.
+      // base
+      colors.push({ name: 'base', hex: hex, desc: 'base color' });
+
+      if (type === 'complementary') {
+        let h2 = (h + 180) % 360;
+        let [r2,g2,b2] = hslToRgb(h2, s, l);
+        colors.push({ name: 'complement', hex: rgbToHex(r2,g2,b2), desc: '180° opposite' });
+        // add neutral tints: darker / lighter versions of base & complement
+        let [r1d, g1d, b1d] = hslToRgb(h, s, Math.max(0, l-0.2));
+        let [r1l, g1l, b1l] = hslToRgb(h, s, Math.min(1, l+0.2));
+        let [r2d, g2d, b2d] = hslToRgb(h2, s, Math.max(0, l-0.2));
+        colors.push({ name: 'base dark', hex: rgbToHex(r1d,g1d,b1d), desc: 'shade' });
+        colors.push({ name: 'base light', hex: rgbToHex(r1l,g1l,b1l), desc: 'tint' });
+        colors.push({ name: 'comp dark', hex: rgbToHex(r2d,g2d,b2d), desc: 'complement shade' });
+      }
+      else if (type === 'analogous') {
+        let h1 = (h - 30 + 360) % 360;
+        let h2 = (h + 30) % 360;
+        let h3 = (h - 15 + 360) % 360;  // extra nuance
+        let h4 = (h + 15) % 360;
+        let [r1,g1,b1] = hslToRgb(h1, s, l);
+        let [r2,g2,b2] = hslToRgb(h2, s, l);
+        let [r3,g3,b3] = hslToRgb(h3, s, Math.min(1, l+0.1));
+        let [r4,g4,b4] = hslToRgb(h4, s, Math.max(0, l-0.1));
+        colors.push({ name: '-30°', hex: rgbToHex(r1,g1,b1), desc: 'analogous' });
+        colors.push({ name: '+30°', hex: rgbToHex(r2,g2,b2), desc: 'analogous' });
+        colors.push({ name: '-15° light', hex: rgbToHex(r3,g3,b3), desc: 'tint' });
+        colors.push({ name: '+15° dark', hex: rgbToHex(r4,g4,b4), desc: 'shade' });
+      }
+      else if (type === 'triadic') {
+        let h2 = (h + 120) % 360;
+        let h3 = (h + 240) % 360;
+        let [r2,g2,b2] = hslToRgb(h2, s, l);
+        let [r3,g3,b3] = hslToRgb(h3, s, l);
+        // extra two variations (desaturated/lighter versions for depth)
+        let [r2l,g2l,b2l] = hslToRgb(h2, s*0.7, Math.min(1, l+0.15));
+        let [r3d,g3d,b3d] = hslToRgb(h3, s*0.8, Math.max(0, l-0.15));
+        colors.push({ name: 'triad 1', hex: rgbToHex(r2,g2,b2), desc: '120°' });
+        colors.push({ name: 'triad 2', hex: rgbToHex(r3,g3,b3), desc: '240°' });
+        colors.push({ name: 'triad 1 tint', hex: rgbToHex(r2l,g2l,b2l), desc: 'soft' });
+        colors.push({ name: 'triad 2 shade', hex: rgbToHex(r3d,g3d,b3d), desc: 'deep' });
+      }
+      else if (type === 'split') {
+        let hComp = (h + 180) % 360;
+        let hLeft = (hComp - 30 + 360) % 360;
+        let hRight = (hComp + 30) % 360;
+        let [rL,gL,bL] = hslToRgb(hLeft, s, l);
+        let [rR,gR,bR] = hslToRgb(hRight, s, l);
+        let [rLd, gLd, bLd] = hslToRgb(hLeft, s, Math.max(0, l-0.2));
+        let [rRd, gRd, bRd] = hslToRgb(hRight, s, Math.max(0, l-0.2));
+        colors.push({ name: 'split left', hex: rgbToHex(rL,gL,bL), desc: 'comp−30' });
+        colors.push({ name: 'split right', hex: rgbToHex(rR,gR,bR), desc: 'comp+30' });
+        colors.push({ name: 'left shade', hex: rgbToHex(rLd,gLd,bLd), desc: 'darker' });
+        colors.push({ name: 'right shade', hex: rgbToHex(rRd,gRd,bRd), desc: 'darker' });
+      }
+      else if (type === 'tetradic') {
+        // rectangle: h, h+90, h+180, h+270
+        let h2 = (h + 90) % 360;
+        let h3 = (h + 180) % 360;
+        let h4 = (h + 270) % 360;
+        let [r2,g2,b2] = hslToRgb(h2, s, l);
+        let [r3,g3,b3] = hslToRgb(h3, s, l);
+        let [r4,g4,b4] = hslToRgb(h4, s, l);
+        let [r1l,g1l,b1l] = hslToRgb(h, s, Math.min(1, l+0.15));
+        colors.push({ name: '90°', hex: rgbToHex(r2,g2,b2), desc: 'tetrad' });
+        colors.push({ name: '180°', hex: rgbToHex(r3,g3,b3), desc: 'tetrad' });
+        colors.push({ name: '270°', hex: rgbToHex(r4,g4,b4), desc: 'tetrad' });
+        colors.push({ name: 'base tint', hex: rgbToHex(r1l,g1l,b1l), desc: 'lighter' });
+      }
+
+      // ensure exactly 5 items (slice if longer, fill if shorter — but we always generate 5)
+      while (colors.length < 5) {
+        // fallback (should never happen)
+        colors.push({ name: 'neutral', hex: '#aaaaaa', desc: '' });
+      }
+      return colors.slice(0, 5);
+    }
+
+    // render palette
+    function render() {
+      const hex = baseColor;
+      const palette = getHarmonyPalette(hex, currentHarmony);
+
+      let htmlStr = '';
+      palette.forEach((item, idx) => {
+        let displayName = item.name;
+        if (idx === 0) displayName = 'base';
+        htmlStr += `
+          <div class="color-card">
+            <div class="color-swatch" style="background: ${item.hex};"></div>
+            <div class="color-meta">
+              <div class="color-name">${displayName}</div>
+              <div class="color-hex">${item.hex}</div>
+              <div class="color-desc">${item.desc || ' '}</div>
+            </div>
+          </div>
+        `;
+      });
+      paletteGrid.innerHTML = htmlStr;
+
+      // update description panel based on currentHarmony
+      let title = '', desc = '', tag = currentHarmony;
+      switch (currentHarmony) {
+        case 'complementary':
+          title = '🔶 complementary · 180° apart';
+          desc = 'High contrast, bold tension. Use one as dominant and the other for accents.';
+          break;
+        case 'analogous':
+          title = '🎨 analogous · 30° steps';
+          desc = 'Soft, harmonious, and serene. Works well for gradients or tranquil designs.';
+          break;
+        case 'triadic':
+          title = '🔺 triadic · 120° apart';
+          desc = 'Vibrant yet balanced. Three colors that offer richness while retaining harmony.';
+          break;
+        case 'split':
+          title = '✂️ split complementary';
+          desc = 'Base with two colors adjacent to its complement. High contrast but less tension.';
+          break;
+        case 'tetradic':
+          title = '🧩 tetradic (rectangle)';
+          desc = 'Four colors in two complementary pairs. Rich possibilities — pick one dominant.';
+          break;
+        default: title = 'color harmony';
+      }
+      harmonyTitle.innerText = title;
+      harmonyDescription.innerText = desc;
+      harmonyTag.innerText = currentHarmony + ' scheme';
+
+      // extra hint: mention lightness & saturation
+      extraHint.innerText = `base: ${hex} · adjustable saturation & luminance through variants.`;
+    }
+
+    // update from picker or hex input
+    function setBaseFromPicker(value) {
+      baseColor = value;
+      basePicker.value = value;
+      baseHexInput.value = value;
+      render();
+    }
+
+    // event listeners
+    basePicker.addEventListener('input', (e) => {
+      setBaseFromPicker(e.target.value);
+    });
+
+    baseHexInput.addEventListener('change', (e) => {
+      let val = e.target.value.trim();
+      if (!/^#[0-9A-F]{6}$/i.test(val)) {
+        // fallback to current base
+        baseHexInput.value = baseColor;
+        return;
+      }
+      setBaseFromPicker(val);
+    });
+
+    // harmony buttons
+    harmonyBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        harmonyBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentHarmony = btn.dataset.harmony;
+        render();
+      });
+    });
+
+    // random color
+    randomBtn.addEventListener('click', () => {
+      const randomHex = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0').toUpperCase();
+      setBaseFromPicker(randomHex);
+    });
+
+    // initial render
+    render();
+
+    // optional: sync hex input when base changes (already via setBase)
+  })();
+</script>
+</body>
+</html>

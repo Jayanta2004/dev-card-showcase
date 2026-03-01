@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Load Balancer</title>
+    <link rel="stylesheet" href="cognitive-load-balancer.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-brain"></i> Cognitive Load Balancer</h1>
+            <p>Monitor and optimize your cognitive workload for peak mental performance</p>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-button" data-tab="tasks">Tasks</button>
+            <button class="tab-button" data-tab="monitoring">Monitoring</button>
+            <button class="tab-button" data-tab="analytics">Analytics</button>
+            <button class="tab-button" data-tab="optimization">Optimization</button>
+        </nav>
+
+        <div id="dashboard-tab" class="tab-content active">
+            <div class="dashboard-overview">
+                <div class="metric-cards">
+                    <div class="metric-card">
+                        <h3>Current Load</h3>
+                        <div class="load-indicator">
+                            <div class="load-bar">
+                                <div class="load-fill" id="currentLoadFill"></div>
+                            </div>
+                            <span class="load-percentage" id="currentLoadPercent">0%</span>
+                        </div>
+                        <div class="load-status" id="currentLoadStatus">Optimal</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>Today's Tasks</h3>
+                        <div class="task-count">
+                            <span class="count-number" id="todayTasksCount">0</span>
+                            <span class="count-label">Active Tasks</span>
+                        </div>
+                        <div class="task-breakdown">
+                            <div class="task-type" data-type="high">High: <span id="highPriorityCount">0</span></div>
+                            <div class="task-type" data-type="medium">Medium: <span id="mediumPriorityCount">0</span></div>
+                            <div class="task-type" data-type="low">Low: <span id="lowPriorityCount">0</span></div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>Focus Time</h3>
+                        <div class="focus-timer">
+                            <div class="timer-display" id="focusTimerDisplay">00:00:00</div>
+                            <div class="timer-controls">
+                                <button id="startFocusTimer" class="btn-secondary">
+                                    <i class="fas fa-play"></i> Start
+                                </button>
+                                <button id="pauseFocusTimer" class="btn-secondary" disabled>
+                                    <i class="fas fa-pause"></i> Pause
+                                </button>
+                                <button id="resetFocusTimer" class="btn-secondary">
+                                    <i class="fas fa-redo"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>Break Status</h3>
+                        <div class="break-indicator">
+                            <div class="break-progress">
+                                <div class="break-fill" id="breakProgressFill"></div>
+                            </div>
+                            <div class="break-info">
+                                <span class="break-time" id="breakTimeRemaining">25:00</span>
+                                <span class="break-label">until next break</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>Cognitive Load Trend</h3>
+                        <canvas id="loadTrendChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Task Completion Rate</h3>
+                        <canvas id="taskCompletionChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        <button id="addTaskBtn" class="btn-primary">
+                            <i class="fas fa-plus"></i> Add Task
+                        </button>
+                        <button id="startBreakBtn" class="btn-secondary">
+                            <i class="fas fa-coffee"></i> Take Break
+                        </button>
+                        <button id="logFatigueBtn" class="btn-warning">
+                            <i class="fas fa-tired"></i> Log Fatigue
+                        </button>
+                        <button id="generateReportBtn" class="btn-info">
+                            <i class="fas fa-chart-bar"></i> Generate Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tasks-tab" class="tab-content">
+            <div class="tasks-controls">
+                <div class="task-filters">
+                    <select id="taskFilter">
+                        <option value="all">All Tasks</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="overdue">Overdue</option>
+                    </select>
+                    <select id="priorityFilter">
+                        <option value="all">All Priorities</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                    <input type="text" id="taskSearch" placeholder="Search tasks...">
+                </div>
+                <button id="newTaskBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i> New Task
+                </button>
+            </div>
+
+            <div class="tasks-list" id="tasksList">
+                <!-- Tasks will be dynamically added here -->
+            </div>
+
+            <div class="task-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total Tasks:</span>
+                    <span class="stat-value" id="totalTasksStat">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Completed:</span>
+                    <span class="stat-value" id="completedTasksStat">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Active:</span>
+                    <span class="stat-value" id="activeTasksStat">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Overdue:</span>
+                    <span class="stat-value" id="overdueTasksStat">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="monitoring-tab" class="tab-content">
+            <div class="monitoring-controls">
+                <div class="control-group">
+                    <label>Monitoring Mode</label>
+                    <select id="monitoringMode">
+                        <option value="automatic">Automatic</option>
+                        <option value="manual">Manual</option>
+                        <option value="scheduled">Scheduled</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Alert Threshold</label>
+                    <input type="range" id="alertThreshold" min="50" max="90" value="75">
+                    <span id="alertThresholdValue">75%</span>
+                </div>
+                <button id="startMonitoringBtn" class="btn-primary">
+                    <i class="fas fa-play-circle"></i> Start Monitoring
+                </button>
+                <button id="stopMonitoringBtn" class="btn-danger" disabled>
+                    <i class="fas fa-stop-circle"></i> Stop
+                </button>
+            </div>
+
+            <div class="monitoring-display">
+                <div class="real-time-metrics">
+                    <div class="metric-display">
+                        <h4>Cognitive Load</h4>
+                        <div class="metric-gauge">
+                            <canvas id="loadGauge"></canvas>
+                            <div class="gauge-value" id="loadGaugeValue">0%</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-display">
+                        <h4>Attention Level</h4>
+                        <div class="metric-gauge">
+                            <canvas id="attentionGauge"></canvas>
+                            <div class="gauge-value" id="attentionGaugeValue">0%</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-display">
+                        <h4>Fatigue Level</h4>
+                        <div class="metric-gauge">
+                            <canvas id="fatigueGauge"></canvas>
+                            <div class="gauge-value" id="fatigueGaugeValue">0%</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-display">
+                        <h4>Productivity Score</h4>
+                        <div class="metric-gauge">
+                            <canvas id="productivityGauge"></canvas>
+                            <div class="gauge-value" id="productivityGaugeValue">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="monitoring-timeline">
+                    <h3>Real-time Monitoring</h3>
+                    <div class="timeline-container">
+                        <canvas id="monitoringTimeline"></canvas>
+                        <div class="timeline-legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #2563eb;"></div>
+                                <span>Cognitive Load</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #10b981;"></div>
+                                <span>Attention</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #f59e0b;"></div>
+                                <span>Fatigue</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #ef4444;"></div>
+                                <span>Productivity</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alerts-panel">
+                    <h3>Alerts & Recommendations</h3>
+                    <div id="alertsList" class="alerts-list">
+                        <!-- Alerts will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="analytics-tab" class="tab-content">
+            <div class="analytics-controls">
+                <div class="control-group">
+                    <label>Time Range</label>
+                    <select id="analyticsTimeRange">
+                        <option value="day">Last 24 Hours</option>
+                        <option value="week">Last 7 Days</option>
+                        <option value="month">Last 30 Days</option>
+                        <option value="quarter">Last 3 Months</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Analysis Type</label>
+                    <select id="analyticsType">
+                        <option value="performance">Performance Analysis</option>
+                        <option value="patterns">Pattern Analysis</option>
+                        <option value="trends">Trend Analysis</option>
+                        <option value="correlations">Correlation Analysis</option>
+                    </select>
+                </div>
+                <button id="runAnalyticsBtn" class="btn-primary">
+                    <i class="fas fa-chart-line"></i> Run Analysis
+                </button>
+                <button id="exportAnalyticsBtn" class="btn-secondary">
+                    <i class="fas fa-download"></i> Export Data
+                </button>
+            </div>
+
+            <div class="analytics-results">
+                <div class="analytics-charts">
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="patternChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="correlationChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="analytics-insights">
+                    <h3>Key Insights</h3>
+                    <div id="insightsPanel" class="insights-panel">
+                        <!-- Insights will be dynamically added here -->
+                    </div>
+                </div>
+
+                <div class="performance-metrics">
+                    <h3>Performance Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">Average Load</span>
+                            <span class="metric-value" id="avgLoadMetric">0%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Peak Productivity</span>
+                            <span class="metric-value" id="peakProductivityMetric">0%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Task Completion Rate</span>
+                            <span class="metric-value" id="completionRateMetric">0%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Break Compliance</span>
+                            <span class="metric-value" id="breakComplianceMetric">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="optimization-tab" class="tab-content">
+            <div class="optimization-controls">
+                <div class="control-group">
+                    <label>Optimization Goal</label>
+                    <select id="optimizationGoal">
+                        <option value="productivity">Maximize Productivity</option>
+                        <option value="balance">Work-Life Balance</option>
+                        <option value="health">Mental Health</option>
+                        <option value="efficiency">Task Efficiency</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Work Schedule</label>
+                    <select id="workSchedule">
+                        <option value="standard">Standard (9-5)</option>
+                        <option value="flexible">Flexible Hours</option>
+                        <option value="async">Async Work</option>
+                        <option value="custom">Custom Schedule</option>
+                    </select>
+                </div>
+                <button id="generatePlanBtn" class="btn-primary">
+                    <i class="fas fa-magic"></i> Generate Plan
+                </button>
+                <button id="applyOptimizationsBtn" class="btn-secondary">
+                    <i class="fas fa-check"></i> Apply Changes
+                </button>
+            </div>
+
+            <div class="optimization-results">
+                <div class="recommended-schedule">
+                    <h3>Recommended Schedule</h3>
+                    <div id="scheduleVisualization" class="schedule-viz">
+                        <!-- Schedule will be visualized here -->
+                    </div>
+                </div>
+
+                <div class="optimization-recommendations">
+                    <h3>Optimization Recommendations</h3>
+                    <div id="recommendationsList" class="recommendations-list">
+                        <!-- Recommendations will be dynamically added here -->
+                    </div>
+                </div>
+
+                <div class="expected-improvements">
+                    <h3>Expected Improvements</h3>
+                    <div class="improvement-metrics">
+                        <div class="improvement-item">
+                            <span class="improvement-label">Productivity Increase</span>
+                            <span class="improvement-value" id="productivityIncrease">+15%</span>
+                        </div>
+                        <div class="improvement-item">
+                            <span class="improvement-label">Reduced Fatigue</span>
+                            <span class="improvement-value" id="fatigueReduction">-20%</span>
+                        </div>
+                        <div class="improvement-item">
+                            <span class="improvement-label">Better Focus</span>
+                            <span class="improvement-value" id="focusImprovement">+25%</span>
+                        </div>
+                        <div class="improvement-item">
+                            <span class="improvement-label">Task Completion</span>
+                            <span class="improvement-value" id="completionImprovement">+30%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div id="taskModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="taskModalTitle">Add New Task</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="taskForm">
+                        <div class="form-group">
+                            <label for="taskTitle">Task Title</label>
+                            <input type="text" id="taskTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="taskDescription">Description</label>
+                            <textarea id="taskDescription" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="taskPriority">Priority</label>
+                            <select id="taskPriority">
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="taskComplexity">Cognitive Complexity</label>
+                            <select id="taskComplexity">
+                                <option value="low">Low (Routine tasks)</option>
+                                <option value="medium">Medium (Problem-solving)</option>
+                                <option value="high">High (Complex analysis)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="taskDuration">Estimated Duration (minutes)</label>
+                            <input type="number" id="taskDuration" min="5" max="480" value="30">
+                        </div>
+                        <div class="form-group">
+                            <label for="taskDeadline">Deadline</label>
+                            <input type="datetime-local" id="taskDeadline">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveTaskBtn" class="btn-primary">Save Task</button>
+                    <button id="cancelTaskBtn" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="fatigueModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Log Fatigue Level</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="fatigue-scale">
+                        <label>How fatigued do you feel right now?</label>
+                        <div class="fatigue-options">
+                            <label class="fatigue-option">
+                                <input type="radio" name="fatigueLevel" value="1">
+                                <span>1 - Very Alert</span>
+                            </label>
+                            <label class="fatigue-option">
+                                <input type="radio" name="fatigueLevel" value="2">
+                                <span>2 - Alert</span>
+                            </label>
+                            <label class="fatigue-option">
+                                <input type="radio" name="fatigueLevel" value="3">
+                                <span>3 - Neither</span>
+                            </label>
+                            <label class="fatigue-option">
+                                <input type="radio" name="fatigueLevel" value="4">
+                                <span>4 - Fatigued</span>
+                            </label>
+                            <label class="fatigue-option">
+                                <input type="radio" name="fatigueLevel" value="5">
+                                <span>5 - Very Fatigued</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="fatigueNotes">Additional Notes</label>
+                        <textarea id="fatigueNotes" rows="2" placeholder="Any specific symptoms or observations..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveFatigueBtn" class="btn-primary">Save</button>
+                    <button class="close-modal btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="breakModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Take a Break</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="break-options">
+                        <div class="break-option">
+                            <input type="radio" name="breakType" value="short" checked>
+                            <div class="break-details">
+                                <h4>Short Break (5 minutes)</h4>
+                                <p>Quick stretch, deep breathing, or walk around</p>
+                            </div>
+                        </div>
+                        <div class="break-option">
+                            <input type="radio" name="breakType" value="medium">
+                            <div class="break-details">
+                                <h4>Medium Break (15 minutes)</h4>
+                                <p>Light exercise, meditation, or casual conversation</p>
+                            </div>
+                        </div>
+                        <div class="break-option">
+                            <input type="radio" name="breakType" value="long">
+                            <div class="break-details">
+                                <h4>Long Break (30 minutes)</h4>
+                                <p>Meal break, nature walk, or complete mental reset</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="startBreakBtn" class="btn-primary">Start Break</button>
+                    <button class="close-modal btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Action Button -->
+        <button id="fab" class="fab">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <script src="cognitive-load-balancer.js"></script>
+    </div>
+</body>
+</html>

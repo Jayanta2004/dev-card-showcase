@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural particle network · living graph</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #03050a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .cortex {
+            background: #0c1018;
+            border-radius: 2.8rem;
+            padding: 1.8rem;
+            box-shadow: 0 30px 50px #00000080, 0 0 0 1px #2f3747 inset, 0 0 30px #1d314050;
+        }
+
+        canvas {
+            display: block;
+            width: 960px;
+            height: 540px;
+            border-radius: 2rem;
+            box-shadow: 0 0 0 1px #3d4960, 0 20px 35px -5px black;
+            cursor: default;
+            background: #0b0f17;
+        }
+
+        .neural-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 0.3rem 0.3rem 0.3rem 1.8rem;
+            background: #131a26;
+            border-radius: 4rem;
+            box-shadow: inset 0 2px 6px #010101, 0 8px 16px #000000b0;
+            color: #cfdeff;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .node-badge {
+            background: #1f2b3b;
+            border-radius: 3rem;
+            padding: 0.45rem 1.4rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
+            color: #aaccff;
+            box-shadow: inset 0 -1px 0 #5378a0;
+        }
+
+        .knob-group {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        .knob {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .knob span {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            opacity: 0.7;
+            font-weight: 300;
+        }
+
+        input[type=range] {
+            width: 140px;
+            height: 4px;
+            background: #232f3f;
+            border-radius: 10px;
+            -webkit-appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #b0d3ff;
+            border-radius: 50%;
+            box-shadow: 0 0 12px #78aeff;
+            border: 1px solid white;
+            cursor: grab;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .glass-btn {
+            background: #1f2c3e;
+            border: none;
+            color: #ced6e8;
+            font-size: 1.6rem;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: inset 0 -2px 3px #04070c, 0 4px 10px black;
+            transition: 0.08s;
+        }
+
+        .glass-btn:hover {
+            background: #2d3f58;
+            color: white;
+            transform: scale(1.02);
+            box-shadow: inset 0 -1px 4px #7795c0, 0 8px 14px black;
+        }
+
+        #pulseDisplay {
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 80px;
+            text-align: right;
+            color: #9fc6ff;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+<div class="cortex">
+    <canvas id="networkCanvas" width="960" height="540"></canvas>
+
+    <div class="neural-panel">
+        <div class="status">
+            <span class="node-badge">⚡ NEURAL LINK v2</span>
+            <div class="knob-group">
+                <div class="knob">
+                    <span>🌐 CONNECT</span>
+                    <input type="range" id="connectivity" min="0.15" max="0.95" value="0.48" step="0.01">
+                </div>
+                <div class="knob">
+                    <span>⚡ PULSE</span>
+                    <input type="range" id="pulsePower" min="0.2" max="3.0" value="1.4" step="0.05">
+                </div>
+            </div>
+        </div>
+        <div class="button-group">
+            <button class="glass-btn" id="resetGraph" title="regenerate network">⟲</button>
+            <button class="glass-btn" id="impulse" title="send neural impulse">⌁</button>
+        </div>
+        <span id="pulseDisplay">🌙 IDLE</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ==========  HIGH‑LEVEL NEURAL PARTICLE NETWORK ==========
+        // Unique synthesis: particles = neurons, dynamic connections = synapses.
+        // Flowing electric impulses, Hebbian‑like adaptation, mouse influence.
+        
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+
+        // ==========  core parameters ==========
+        const NEURON_COUNT = 280;                    // enough for rich network
+        const MAX_EDGE_DIST = 140;                    // base connection radius
+        const HOP_ENERGY_DECAY = 0.91;                 // impulse energy loss
+        
+        let connectionThreshold = 0.48;                // from slider (connectivity)
+        let pulseAmplitude = 1.4;                       // from slider (pulse power)
+
+        // neuron pool
+        let nodes = [];
+        // connection matrix (sparse: list per node)
+        let adj = [];                                   // each entry: array of { target, weight, activeFlag? }
+
+        // impulse propagation
+        let nodePotential = new Float32Array(NEURON_COUNT);   // 0..1 activation
+        let nextPotential = new Float32Array(NEURON_COUNT);
+
+        // ==========  initialize neurons and random graph ==========
+        function generateNeurons() {
+            nodes = [];
+            for (let i = 0; i < NEURON_COUNT; i++) {
+                // place with some clustering tendency
+                let x, y;
+                if (i < 40) {  // seed some in interesting zones
+                    x = 150 + Math.random() * 200;
+                    y = 150 + Math.random() * 200;
+                } else if (i < 100) {
+                    x = 500 + Math.random() * 300;
+                    y = 120 + Math.random() * 250;
+                } else {
+                    x = 200 + Math.random() * 600;
+                    y = 200 + Math.random() * 250;
+                }
+                // add slight noise
+                x += (Math.random() - 0.5) * 70;
+                y += (Math.random() - 0.5) * 70;
+                x = Math.min(W - 20, Math.max(20, x));
+                y = Math.min(H - 20, Math.max(20, y));
+                
+                nodes.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 0.4,    // micro movements (synaptic drift)
+                    vy: (Math.random() - 0.5) * 0.4,
+                    baseFreq: 0.3 + Math.random() * 0.5,
+                });
+            }
+        }
+
+        // build adjacency based on distance + randomness + slider
+        function rebuildConnections() {
+            adj = Array.from({ length: NEURON_COUNT }, () => []);
+            const thr = connectionThreshold; // 0..1 mapping to probability
+
+            for (let i = 0; i < NEURON_COUNT; i++) {
+                for (let j = i + 1; j < NEURON_COUNT; j++) {
+                    const dx = nodes[i].x - nodes[j].x;
+                    const dy = nodes[i].y - nodes[j].y;
+                    const dist = Math.hypot(dx, dy);
+                    
+                    if (dist < MAX_EDGE_DIST) {
+                        // connection probability based on slider + distance falloff
+                        let prob = (1 - dist / MAX_EDGE_DIST) * 0.9 + 0.1;
+                        prob *= thr * 1.2;
+                        if (prob > 1) prob = 1;
+                        
+                        if (Math.random() < prob) {
+                            const weight = 0.3 + Math.random() * 0.7;
+                            // bidirectional
+                            adj[i].push({ target: j, weight, active: false });
+                            adj[j].push({ target: i, weight, active: false });
+                        }
+                    }
+                }
+            }
+            // ensure isolated nodes get at least one connection? not needed – natural.
+        }
+
+        // full reset
+        function resetNetwork() {
+            generateNeurons();
+            rebuildConnections();
+            // reset potentials
+            nodePotential.fill(0);
+            nextPotential.fill(0);
+            // random initial faint activity
+            for (let i = 0; i < 20; i++) {
+                nodePotential[Math.floor(Math.random() * NEURON_COUNT)] = 0.6 + Math.random() * 0.4;
+            }
+        }
+
+        // ==========  impulse / stimulation ==========
+        function triggerImpulse(centerX = W/2, centerY = H/2) {
+            // find closest neuron and send a strong pulse
+            let closestIdx = 0;
+            let minDist = Infinity;
+            for (let i = 0; i < NEURON_COUNT; i++) {
+                const d = Math.hypot(nodes[i].x - centerX, nodes[i].y - centerY);
+                if (d < minDist) {
+                    minDist = d;
+                    closestIdx = i;
+                }
+            }
+            // pulse energy
+            nodePotential[closestIdx] = Math.min(1.0, nodePotential[closestIdx] + 1.2 * pulseAmplitude);
+            if (nodePotential[closestIdx] > 1.0) nodePotential[closestIdx] = 1.0;
+
+            // also spread a bit to neighbours for immediate effect
+            for (let conn of adj[closestIdx] || []) {
+                nodePotential[conn.target] = Math.min(1.0, nodePotential[conn.target] + 0.45 * pulseAmplitude);
+            }
+
+            // visual feedback: set display
+            document.getElementById('pulseDisplay').innerText = '⚡ IMPULSE';
+            setTimeout(() => {
+                document.getElementById('pulseDisplay').innerText = '🌙 IDLE';
+            }, 200);
+        }
+
+        // ==========  mouse influence ==========
+        let mouseX = -1000, mouseY = -1000, mouseDown = false;
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const sx = canvas.width / rect.width;
+            const sy = canvas.height / rect.height;
+            mouseX = (e.clientX - rect.left) * sx;
+            mouseY = (e.clientY - rect.top) * sy;
+            mouseDown = e.buttons === 1;
+        });
+        canvas.addEventListener('mouseleave', () => { mouseDown = false; mouseX = -1000; });
+        canvas.addEventListener('mousedown', (e) => { if (e.button === 0) mouseDown = true; });
+        canvas.addEventListener('mouseup', () => { mouseDown = false; });
+
+        // ==========  sliders ==========
+        document.getElementById('connectivity').addEventListener('input', (e) => {
+            connectionThreshold = parseFloat(e.target.value);
+            rebuildConnections();  // dynamic rewiring (unique)
+        });
+        document.getElementById('pulsePower').addEventListener('input', (e) => {
+            pulseAmplitude = parseFloat(e.target.value);
+        });
+        document.getElementById('resetGraph').addEventListener('click', () => {
+            resetNetwork();
+        });
+        document.getElementById('impulse').addEventListener('click', () => {
+            triggerImpulse(mouseX > 0 && mouseX < W ? mouseX : W/2, mouseY > 0 && mouseY < H ? mouseY : H/2);
+        });
+
+        // ==========  propagation update (neural like) ==========
+        function propagateActivations() {
+            // copy potentials
+            nextPotential.set(nodePotential);
+            
+            for (let i = 0; i < NEURON_COUNT; i++) {
+                if (nodePotential[i] > 0.02) {   // firing threshold
+                    const energy = nodePotential[i];
+                    for (let conn of adj[i]) {
+                        // signal * weight * pulse amplitude
+                        const signal = energy * conn.weight * pulseAmplitude * 0.6;
+                        nextPotential[conn.target] = Math.min(1.0, nextPotential[conn.target] + signal);
+                        // mark connection as active for rendering (short lived)
+                        conn.active = true;
+                    }
+                    // decay original (refractory)
+                    nextPotential[i] *= 0.5;    // inhibitory reset
+                }
+                // passive decay
+                nextPotential[i] *= HOP_ENERGY_DECAY;
+            }
+            
+            // swap
+            const tmp = nodePotential;
+            nodePotential = nextPotential;
+            nextPotential = tmp;
+            
+            // also gradually fade active edges
+            for (let i = 0; i < adj.length; i++) {
+                for (let conn of adj[i]) {
+                    if (conn.active) {
+                        // active flag decays over frames
+                        if (Math.random() < 0.3) conn.active = false; // probabilistic fade
+                    }
+                }
+            }
+        }
+
+        // ==========  drift / micro motion of neurons ==========
+        function driftNodes() {
+            for (let i = 0; i < NEURON_COUNT; i++) {
+                const n = nodes[i];
+                // random walk
+                n.vx += (Math.random() - 0.5) * 0.12;
+                n.vy += (Math.random() - 0.5) * 0.12;
+                // mouse influence (repel)
+                if (mouseX > 0 && mouseY > 0 && mouseX < W && mouseY < H) {
+                    const dx = n.x - mouseX;
+                    const dy = n.y - mouseY;
+                    const dist = Math.hypot(dx, dy) + 1;
+                    if (dist < 100) {
+                        const force = (mouseDown ? -0.02 : 0.015) * (1 - dist/110);
+                        n.vx += (dx / dist) * force * 4;
+                        n.vy += (dy / dist) * force * 4;
+                    }
+                }
+                // bounds
+                if (n.x < 15) { n.x = 15; n.vx *= -0.4; }
+                if (n.x > W - 15) { n.x = W - 15; n.vx *= -0.4; }
+                if (n.y < 15) { n.y = 15; n.vy *= -0.4; }
+                if (n.y > H - 15) { n.y = H - 15; n.vy *= -0.4; }
+                
+                n.x += n.vx;
+                n.y += n.vy;
+                n.vx *= 0.97;
+                n.vy *= 0.97;
+            }
+        }
+
+        // ==========  rendering ==========
+        function drawNetwork() {
+            ctx.clearRect(0, 0, W, H);
+            
+            // dark deep gradient
+            const grad = ctx.createLinearGradient(0, 0, 0, H);
+            grad.addColorStop(0, '#0a101f');
+            grad.addColorStop(1, '#121b2c');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+
+            // draw connections (synapses) with glow if active
+            ctx.lineWidth = 1.2;
+            for (let i = 0; i < NEURON_COUNT; i++) {
+                const from = nodes[i];
+                for (let conn of adj[i]) {
+                    if (conn.target <= i) continue; // avoid double drawing
+                    const to = nodes[conn.target];
+                    const active = conn.active || (nodePotential[i] > 0.2 && nodePotential[conn.target] > 0.1);
+                    
+                    // color based on activation / weight
+                    const baseAlpha = 0.15 + conn.weight * 0.2;
+                    let r = 100, g = 160, b = 255;
+                    if (active) {
+                        r = 220; g = 220; b = 100;
+                        ctx.shadowColor = '#fdffb8';
+                        ctx.shadowBlur = 14;
+                    } else {
+                        ctx.shadowBlur = 5;
+                        ctx.shadowColor = '#4570b0';
+                    }
+                    ctx.beginPath();
+                    ctx.moveTo(from.x, from.y);
+                    ctx.lineTo(to.x, to.y);
+                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${baseAlpha + (active ? 0.25 : 0)})`;
+                    ctx.stroke();
+                }
+            }
+            ctx.shadowBlur = 0;
+
+            // draw neurons (particles) with potential glow
+            for (let i = 0; i < NEURON_COUNT; i++) {
+                const n = nodes[i];
+                const pot = nodePotential[i];
+                
+                // size based on potential
+                const rad = 4 + pot * 8;
+                const glow = pot * 20;
+                
+                // core color
+                const r = 100 + 155 * pot;
+                const g = 140 + 80 * pot;
+                const b = 220 + 35 * pot;
+                
+                ctx.shadowColor = `rgba(180, 220, 255, ${0.5 + pot * 0.5})`;
+                ctx.shadowBlur = 20 + glow;
+                
+                // outer aura
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, rad * 1.3, 0, 2*Math.PI);
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.15)`;
+                ctx.fill();
+                
+                // inner bright core
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, rad * 0.9, 0, 2*Math.PI);
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                ctx.fill();
+                
+                // tiny highlight
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(n.x-2, n.y-2, rad*0.25, 0, 2*Math.PI);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+            
+            // small FX: pulse indicator if mouse
+            if (mouseX > 0 && mouseY > 0 && mouseX < W && mouseY < H) {
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 14, 0, 2*Math.PI);
+                ctx.strokeStyle = mouseDown ? '#ffb56b' : '#9bc5ff';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 8]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        // ==========  animation loop ==========
+        let lastTimestamp = 0;
+        let frameCount = 0;
+        let fpsDisplay = 0;
+        const fpsSpan = document.getElementById('pulseDisplay'); // repurpose for fps occasionally (but we already have impulse feedback, we can combine)
+        
+        function animate(now) {
+            // update simulation
+            driftNodes();
+            propagateActivations();
+
+            // optional dynamic rewiring (tiny mutations)
+            if (Math.random() < 0.003) {  // rarely, add random edge
+                const i = Math.floor(Math.random() * NEURON_COUNT);
+                const j = (i + 25 + Math.floor(Math.random() * 50)) % NEURON_COUNT;
+                if (i !== j) {
+                    const exists = adj[i].some(c => c.target === j);
+                    if (!exists && Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y) < MAX_EDGE_DIST) {
+                        const w = 0.3 + Math.random() * 0.7;
+                        adj[i].push({ target: j, weight: w, active: false });
+                        adj[j].push({ target: i, weight: w, active: false });
+                    }
+                }
+            }
+
+            drawNetwork();
+
+            // FPS calculation and display (soft)
+            frameCount++;
+            if (now - lastTimestamp > 300) {
+                fpsDisplay = Math.round((frameCount * 1000) / (now - lastTimestamp));
+                document.getElementById('pulseDisplay').innerText = `⚡ ${fpsDisplay} fps`; // show FPS when idle (we also show impulse but overwritten)
+                frameCount = 0;
+                lastTimestamp = now;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // initial seed
+        resetNetwork();
+        // preheat some activity
+        for (let k = 0; k < 10; k++) {
+            nodePotential[Math.floor(Math.random() * NEURON_COUNT)] = 0.7;
+        }
+        // start
+        lastTimestamp = performance.now();
+        animate(lastTimestamp);
+    })();
+</script>
+</body>
+</html>

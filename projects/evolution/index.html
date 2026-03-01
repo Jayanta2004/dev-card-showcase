@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolution Simulator - Digital Life</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0a192f, #112240);
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .simulation-area {
+            flex: 3;
+            position: relative;
+            background: #0a0f1e;
+            overflow: hidden;
+        }
+
+        #simulationCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .stats-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 25, 47, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            min-width: 250px;
+        }
+
+        .stats-overlay h3 {
+            color: #64ffda;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            color: #8892b0;
+        }
+
+        .stat-value {
+            color: #64ffda;
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .generation-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(100, 255, 218, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .gen-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #64ffda;
+            line-height: 1;
+        }
+
+        .controls-panel {
+            flex: 1;
+            min-width: 350px;
+            background: rgba(10, 25, 47, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(100, 255, 218, 0.3);
+            padding: 30px;
+            overflow-y: auto;
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #64ffda, #48bfe3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #8892b0;
+            font-size: 0.9rem;
+        }
+
+        .control-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        .control-section h3 {
+            color: #64ffda;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .slider-group {
+            margin-bottom: 20px;
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            color: #a8b2d1;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(100, 255, 218, 0.2);
+            border-radius: 3px;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #64ffda;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px #64ffda;
+            transition: transform 0.2s;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .value-badge {
+            background: rgba(100, 255, 218, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            color: #64ffda;
+        }
+
+        .trait-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .trait-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .trait-card:hover {
+            border-color: #64ffda;
+            transform: translateY(-2px);
+        }
+
+        .trait-icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .trait-name {
+            color: #64ffda;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .trait-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .evo-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #64ffda, #48bfe3);
+            color: #0a192f;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        .evo-btn.secondary {
+            background: transparent;
+            border: 1px solid #64ffda;
+            color: #64ffda;
+        }
+
+        .evo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(100, 255, 218, 0.3);
+        }
+
+        .evo-btn:active {
+            transform: translateY(0);
+        }
+
+        .species-chart {
+            margin-top: 20px;
+        }
+
+        .species-bar {
+            display: flex;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .species-segment {
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #0a192f;
+            font-weight: bold;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .fossil-record {
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .fossil-entry {
+            padding: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #8892b0;
+        }
+
+        .fossil-entry .highlight {
+            color: #64ffda;
+            font-weight: bold;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .alert-message {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: rgba(100, 255, 218, 0.2);
+            border: 1px solid #64ffda;
+            border-radius: 10px;
+            color: #64ffda;
+            animation: pulse 2s infinite;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="simulation-area">
+            <canvas id="simulationCanvas"></canvas>
+            
+            <div class="stats-overlay">
+                <h3>🌍 Ecosystem Stats</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Population:</span>
+                    <span class="stat-value" id="populationCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Species:</span>
+                    <span class="stat-value" id="speciesCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Avg. Lifespan:</span>
+                    <span class="stat-value" id="avgLifespan">0s</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Top Speed:</span>
+                    <span class="stat-value" id="topSpeed">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Food Sources:</span>
+                    <span class="stat-value" id="foodCount">0</span>
+                </div>
+                
+                <div class="generation-info">
+                    <div style="font-size: 0.8rem; color: #8892b0;">GENERATION</div>
+                    <div class="gen-number" id="generation">1</div>
+                </div>
+            </div>
+
+            <div class="alert-message" id="alertMessage">
+                🧬 New Species Emerged!
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="header">
+                <h1>🧬 EVOLUTION SIMULATOR</h1>
+                <p>Witness natural selection in real-time</p>
+            </div>
+
+            <div class="control-section">
+                <h3>⏯️ SIMULATION CONTROLS</h3>
+                <div class="button-group">
+                    <button class="evo-btn" onclick="toggleSimulation()" id="playPauseBtn">⏸️ PAUSE</button>
+                    <button class="evo-btn secondary" onclick="resetSimulation()">🔄 RESET</button>
+                    <button class="evo-btn secondary" onclick="addRandomCreature()">➕ ADD LIFE</button>
+                    <button class="evo-btn secondary" onclick="speedBoost()">⚡ BOOST</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>🧪 EVOLUTION PARAMETERS</h3>
+                
+                <div class="slider-group">
+                    <label>
+                        Mutation Rate
+                        <span class="value-badge" id="mutationRateVal">0.1</span>
+                    </label>
+                    <input type="range" class="slider" id="mutationRate" min="0" max="0.5" step="0.01" value="0.1">
+                </div>
+
+                <div class="slider-group">
+                    <label>
+                        Selection Pressure
+                        <span class="value-badge" id="selectionPressureVal">0.5</span>
+                    </label>
+                    <input type="range" class="slider" id="selectionPressure" min="0" max="1" step="0.1" value="0.5">
+                </div>
+
+                <div class="slider-group">
+                    <label>
+                        Reproduction Rate
+                        <span class="value-badge" id="reproductionRateVal">0.02</span>
+                    </label>
+                    <input type="range" class="slider" id="reproductionRate" min="0" max="0.1" step="0.01" value="0.02">
+                </div>
+
+                <div class="slider-group">
+                    <label>
+                        Food Spawn Rate
+                        <span class="value-badge" id="foodSpawnRateVal">0.1</span>
+                    </label>
+                    <input type="range" class="slider" id="foodSpawnRate" min="0" max="0.5" step="0.05" value="0.1">
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>📊 DOMINANT TRAITS</h3>
+                <div class="trait-grid" id="dominantTraits">
+                    <div class="trait-card">
+                        <div class="trait-icon">⚡</div>
+                        <div class="trait-name">SPEED</div>
+                        <div class="trait-value" id="avgSpeed">0.5</div>
+                    </div>
+                    <div class="trait-card">
+                        <div class="trait-icon">🛡️</div>
+                        <div class="trait-name">SIZE</div>
+                        <div class="trait-value" id="avgSize">5</div>
+                    </div>
+                    <div class="trait-card">
+                        <div class="trait-icon">👁️</div>
+                        <div class="trait-name">SENSORY</div>
+                        <div class="trait-value" id="avgSensory">0.5</div>
+                    </div>
+                    <div class="trait-card">
+                        <div class="trait-icon">💪</div>
+                        <div class="trait-name">STRENGTH</div>
+                        <div class="trait-value" id="avgStrength">0.5</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>📈 SPECIES DIVERSITY</h3>
+                <div class="species-chart">
+                    <div class="species-bar" id="speciesBar"></div>
+                    <div class="legend" id="speciesLegend"></div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>🦴 FOSSIL RECORD</h3>
+                <div class="fossil-record" id="fossilRecord">
+                    <div class="fossil-entry">Gen 1: First life appears</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Creature {
+            constructor(x, y, dna = null) {
+                this.x = x;
+                this.y = y;
+                this.age = 0;
+                this.energy = 100;
+                this.maxEnergy = 100;
+                
+                // DNA: [speed, size, sensoryRange, strength, metabolism, color]
+                if (dna) {
+                    this.dna = [...dna];
+                } else {
+                    this.dna = [
+                        Math.random(), // speed (0-1)
+                        Math.random() * 0.5 + 0.5, // size (0.5-1.5)
+                        Math.random() * 100 + 50, // sensory range (50-150)
+                        Math.random(), // strength (0-1)
+                        Math.random() * 0.02 + 0.01, // metabolism (0.01-0.03)
+                        Math.random() * 360 // hue
+                    ];
+                }
+                
+                this.vx = (Math.random() - 0.5) * this.dna[0] * 2;
+                this.vy = (Math.random() - 0.5) * this.dna[0] * 2;
+                
+                this.species = this.getSpeciesId();
+                this.generation = 1;
+                this.lifespan = 0;
+            }
+
+            getSpeciesId() {
+                // Species determined by rough DNA clustering
+                return Math.floor(this.dna[0] * 5) * 100 + 
+                       Math.floor(this.dna[1] * 5) * 10 + 
+                       Math.floor(this.dna[2] / 50);
+            }
+
+            update(foods, creatures) {
+                this.age++;
+                this.lifespan++;
+                
+                // Metabolism costs energy
+                this.energy -= this.dna[4];
+                
+                // Look for food
+                let nearestFood = null;
+                let nearestDist = this.dna[2];
+                
+                for (let food of foods) {
+                    const dx = food.x - this.x;
+                    const dy = food.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < nearestDist) {
+                        nearestDist = dist;
+                        nearestFood = food;
+                    }
+                }
+                
+                // Move towards food if found
+                if (nearestFood) {
+                    const dx = nearestFood.x - this.x;
+                    const dy = nearestFood.y - this.y;
+                    const angle = Math.atan2(dy, dx);
+                    
+                    this.vx += Math.cos(angle) * this.dna[3] * 0.1;
+                    this.vy += Math.sin(angle) * this.dna[3] * 0.1;
+                } else {
+                    // Random movement
+                    this.vx += (Math.random() - 0.5) * 0.1;
+                    this.vy += (Math.random() - 0.5) * 0.1;
+                }
+                
+                // Apply speed limit
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                const maxSpeed = this.dna[0] * 2;
+                if (speed > maxSpeed) {
+                    this.vx = (this.vx / speed) * maxSpeed;
+                    this.vy = (this.vy / speed) * maxSpeed;
+                }
+                
+                // Apply friction
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                
+                // Update position
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Wrap around edges
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+                
+                return this.energy <= 0; // Dead if no energy
+            }
+
+            eat(food) {
+                this.energy = Math.min(this.energy + food.energy, this.maxEnergy);
+            }
+
+            reproduce(partner, mutationRate) {
+                if (Math.random() > 0.1) return null; // Reproduction chance
+                
+                // Crossover DNA
+                const childDNA = [];
+                for (let i = 0; i < this.dna.length; i++) {
+                    // Mix parents' DNA
+                    let gene = Math.random() < 0.5 ? this.dna[i] : partner.dna[i];
+                    
+                    // Mutation
+                    if (Math.random() < mutationRate) {
+                        gene += (Math.random() - 0.5) * 0.2;
+                        gene = Math.max(0, Math.min(1, gene));
+                    }
+                    
+                    childDNA.push(gene);
+                }
+                
+                const child = new Creature(
+                    (this.x + partner.x) / 2 + (Math.random() - 0.5) * 20,
+                    (this.y + partner.y) / 2 + (Math.random() - 0.5) * 20,
+                    childDNA
+                );
+                
+                child.generation = Math.max(this.generation, partner.generation) + 1;
+                child.energy = 50; // Start with half energy
+                
+                // Cost of reproduction
+                this.energy -= 30;
+                partner.energy -= 30;
+                
+                return child;
+            }
+
+            draw(ctx) {
+                const size = this.dna[1] * 10;
+                const hue = this.dna[5];
+                
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(Math.atan2(this.vy, this.vx));
+                
+                // Draw body
+                ctx.beginPath();
+                ctx.moveTo(size, 0);
+                ctx.lineTo(-size/2, -size/2);
+                ctx.lineTo(-size/2, size/2);
+                ctx.closePath();
+                
+                // Color based on energy and species
+                const energyPercent = this.energy / this.maxEnergy;
+                ctx.fillStyle = `hsla(${hue}, 80%, ${50 + energyPercent * 30}%, ${energyPercent})`;
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Draw eye (indicates direction)
+                ctx.beginPath();
+                ctx.arc(size * 0.3, 0, size * 0.2, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        class Food {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.energy = 50;
+                this.age = 0;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Pulsing effect
+                const pulse = Math.sin(this.age * 0.1) * 0.2 + 0.8;
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, 5 * pulse, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(100, 255, 218, ${0.5 * pulse})`;
+                ctx.fill();
+                
+                // Inner core
+                ctx.beginPath();
+                ctx.arc(0, 0, 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#64ffda';
+                ctx.fill();
+                
+                ctx.restore();
+                
+                this.age++;
+            }
+        }
+
+        class EvolutionSimulator {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.width = canvas.width = window.innerWidth * 0.75;
+                this.height = canvas.height = window.innerHeight;
+                
+                this.creatures = [];
+                this.foods = [];
+                this.generation = 1;
+                this.speciesCount = new Map();
+                this.fossilRecord = ['Gen 1: First life appears'];
+                
+                this.simulationSpeed = 1;
+                this.paused = false;
+                this.boost = false;
+                
+                // Parameters
+                this.mutationRate = 0.1;
+                this.selectionPressure = 0.5;
+                this.reproductionRate = 0.02;
+                this.foodSpawnRate = 0.1;
+                
+                this.init();
+                this.animate();
+                this.setupResize();
+            }
+
+            init() {
+                // Create initial creatures
+                for (let i = 0; i < 20; i++) {
+                    this.creatures.push(new Creature(
+                        Math.random() * this.width,
+                        Math.random() * this.height
+                    ));
+                }
+                
+                // Create initial food
+                for (let i = 0; i < 30; i++) {
+                    this.foods.push(new Food(
+                        Math.random() * this.width,
+                        Math.random() * this.height
+                    ));
+                }
+            }
+
+            update() {
+                if (this.paused) return;
+                
+                const speed = this.boost ? 3 : this.simulationSpeed;
+                
+                for (let s = 0; s < speed; s++) {
+                    // Update creatures
+                    const deadCreatures = [];
+                    
+                    for (let i = this.creatures.length - 1; i >= 0; i--) {
+                        const creature = this.creatures[i];
+                        
+                        // Check if creature dies
+                        if (creature.update(this.foods, this.creatures)) {
+                            deadCreatures.push(creature);
+                            this.creatures.splice(i, 1);
+                            continue;
+                        }
+                        
+                        // Check for food collision
+                        for (let j = this.foods.length - 1; j >= 0; j--) {
+                            const food = this.foods[j];
+                            const dx = creature.x - food.x;
+                            const dy = creature.y - food.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (dist < creature.dna[1] * 10) {
+                                creature.eat(food);
+                                this.foods.splice(j, 1);
+                            }
+                        }
+                        
+                        // Reproduction
+                        if (Math.random() < this.reproductionRate) {
+                            // Find nearby mate
+                            for (let j = i + 1; j < this.creatures.length; j++) {
+                                const mate = this.creatures[j];
+                                const dx = creature.x - mate.x;
+                                const dy = creature.y - mate.y;
+                                const dist = Math.sqrt(dx * dx + dy * dy);
+                                
+                                if (dist < 50 && creature.energy > 50 && mate.energy > 50) {
+                                    const child = creature.reproduce(mate, this.mutationRate);
+                                    if (child) {
+                                        this.creatures.push(child);
+                                        
+                                        // New species event
+                                        if (!this.speciesCount.has(child.species)) {
+                                            this.showAlert('🧬 New Species Emerged!');
+                                            this.fossilRecord.unshift(`Gen ${this.generation}: New species #${child.species} appears`);
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Spawn food
+                    if (Math.random() < this.foodSpawnRate) {
+                        this.foods.push(new Food(
+                            Math.random() * this.width,
+                            Math.random() * this.height
+                        ));
+                    }
+                    
+                    // Natural selection: remove low energy creatures
+                    if (Math.random() < this.selectionPressure) {
+                        this.creatures = this.creatures.filter(c => c.energy > 30);
+                    }
+                    
+                    // Update generation counter every ~100 frames
+                    if (Math.random() < 0.01) {
+                        this.generation++;
+                        
+                        // Record major events
+                        if (this.creatures.length > 0) {
+                            const avgLifespan = this.creatures.reduce((sum, c) => sum + c.lifespan, 0) / this.creatures.length;
+                            this.fossilRecord.unshift(`Gen ${this.generation}: Avg lifespan ${Math.round(avgLifespan)}`);
+                            
+                            if (this.fossilRecord.length > 5) {
+                                this.fossilRecord.pop();
+                            }
+                        }
+                    }
+                    
+                    // Update species count
+                    this.speciesCount.clear();
+                    this.creatures.forEach(c => {
+                        this.speciesCount.set(c.species, (this.speciesCount.get(c.species) || 0) + 1);
+                    });
+                }
+                
+                this.updateStats();
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                
+                // Draw background grid
+                this.ctx.strokeStyle = 'rgba(100, 255, 218, 0.1)';
+                this.ctx.lineWidth = 1;
+                
+                for (let i = 0; i < this.width; i += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(i, 0);
+                    this.ctx.lineTo(i, this.height);
+                    this.ctx.stroke();
+                }
+                
+                for (let i = 0; i < this.height; i += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, i);
+                    this.ctx.lineTo(this.width, i);
+                    this.ctx.stroke();
+                }
+                
+                // Draw food
+                this.foods.forEach(food => food.draw(this.ctx));
+                
+                // Draw creatures
+                this.creatures.forEach(creature => creature.draw(this.ctx));
+                
+                // Draw connections between nearby creatures (mating potential)
+                this.ctx.strokeStyle = 'rgba(100, 255, 218, 0.1)';
+                this.ctx.lineWidth = 1;
+                
+                for (let i = 0; i < this.creatures.length; i++) {
+                    for (let j = i + 1; j < this.creatures.length; j++) {
+                        const c1 = this.creatures[i];
+                        const c2 = this.creatures[j];
+                        const dx = c1.x - c2.x;
+                        const dy = c1.y - c2.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < 50) {
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(c1.x, c1.y);
+                            this.ctx.lineTo(c2.x, c2.y);
+                            this.ctx.strokeStyle = `rgba(100, 255, 218, ${0.2 * (1 - dist/50)})`;
+                            this.ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            animate() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.animate());
+            }
+
+            updateStats() {
+                // Update population stats
+                document.getElementById('populationCount').textContent = this.creatures.length;
+                document.getElementById('speciesCount').textContent = this.speciesCount.size;
+                document.getElementById('foodCount').textContent = this.foods.length;
+                document.getElementById('generation').textContent = this.generation;
+                
+                if (this.creatures.length > 0) {
+                    const avgLifespan = this.creatures.reduce((sum, c) => sum + c.lifespan, 0) / this.creatures.length;
+                    document.getElementById('avgLifespan').textContent = Math.round(avgLifespan);
+                    
+                    const topSpeed = Math.max(...this.creatures.map(c => c.dna[0]));
+                    document.getElementById('topSpeed').textContent = topSpeed.toFixed(2);
+                    
+                    // Average traits
+                    const avgSpeed = this.creatures.reduce((sum, c) => sum + c.dna[0], 0) / this.creatures.length;
+                    const avgSize = this.creatures.reduce((sum, c) => sum + c.dna[1], 0) / this.creatures.length;
+                    const avgSensory = this.creatures.reduce((sum, c) => sum + c.dna[2], 0) / this.creatures.length;
+                    const avgStrength = this.creatures.reduce((sum, c) => sum + c.dna[3], 0) / this.creatures.length;
+                    
+                    document.getElementById('avgSpeed').textContent = avgSpeed.toFixed(2);
+                    document.getElementById('avgSize').textContent = avgSize.toFixed(2);
+                    document.getElementById('avgSensory').textContent = avgSensory.toFixed(2);
+                    document.getElementById('avgStrength').textContent = avgStrength.toFixed(2);
+                }
+                
+                // Update species bar chart
+                const speciesBar = document.getElementById('speciesBar');
+                const legend = document.getElementById('speciesLegend');
+                
+                if (this.speciesCount.size > 0) {
+                    const total = this.creatures.length;
+                    const colors = ['#64ffda', '#48bfe3', '#5390d9', '#5e60ce', '#7400b8'];
+                    
+                    speciesBar.innerHTML = '';
+                    legend.innerHTML = '';
+                    
+                    let i = 0;
+                    for (let [species, count] of this.speciesCount) {
+                        const percent = (count / total) * 100;
+                        
+                        const segment = document.createElement('div');
+                        segment.className = 'species-segment';
+                        segment.style.width = percent + '%';
+                        segment.style.background = colors[i % colors.length];
+                        segment.textContent = Math.round(percent) + '%';
+                        speciesBar.appendChild(segment);
+                        
+                        const legendItem = document.createElement('div');
+                        legendItem.className = 'legend-item';
+                        legendItem.innerHTML = `
+                            <div class="legend-color" style="background: ${colors[i % colors.length]}"></div>
+                            <span>Species ${species}</span>
+                        `;
+                        legend.appendChild(legendItem);
+                        
+                        i++;
+                    }
+                }
+                
+                // Update fossil record
+                const fossilEl = document.getElementById('fossilRecord');
+                fossilEl.innerHTML = this.fossilRecord.map(entry => 
+                    `<div class="fossil-entry">${entry}</div>`
+                ).join('');
+            }
+
+            showAlert(message) {
+                const alert = document.getElementById('alertMessage');
+                alert.style.display = 'block';
+                alert.textContent = message;
+                
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 2000);
+            }
+
+            setupResize() {
+                window.addEventListener('resize', () => {
+                    this.width = this.canvas.width = window.innerWidth * 0.75;
+                    this.height = this.canvas.height = window.innerHeight;
+                });
+            }
+
+            addRandomCreature() {
+                this.creatures.push(new Creature(
+                    Math.random() * this.width,
+                    Math.random() * this.height
+                ));
+            }
+
+            reset() {
+                this.creatures = [];
+                this.foods = [];
+                this.generation = 1;
+                this.speciesCount.clear();
+                this.fossilRecord = ['Gen 1: First life appears'];
+                this.init();
+            }
+        }
+
+        // Initialize simulator
+        const canvas = document.getElementById('simulationCanvas');
+        const simulator = new EvolutionSimulator(canvas);
+
+        // Control functions
+        function toggleSimulation() {
+            simulator.paused = !simulator.paused;
+            document.getElementById('playPauseBtn').textContent = simulator.paused ? '▶️ PLAY' : '⏸️ PAUSE';
+        }
+
+        function resetSimulation() {
+            simulator.reset();
+        }
+
+        function addRandomCreature() {
+            simulator.addRandomCreature();
+        }
+
+        function speedBoost() {
+            simulator.boost = !simulator.boost;
+        }
+
+        // Parameter controls
+        document.getElementById('mutationRate').addEventListener('input', function(e) {
+            simulator.mutationRate = parseFloat(e.target.value);
+            document.getElementById('mutationRateVal').textContent = simulator.mutationRate.toFixed(2);
+        });
+
+        document.getElementById('selectionPressure').addEventListener('input', function(e) {
+            simulator.selectionPressure = parseFloat(e.target.value);
+            document.getElementById('selectionPressureVal').textContent = simulator.selectionPressure.toFixed(1);
+        });
+
+        document.getElementById('reproductionRate').addEventListener('input', function(e) {
+            simulator.reproductionRate = parseFloat(e.target.value);
+            document.getElementById('reproductionRateVal').textContent = simulator.reproductionRate.toFixed(2);
+        });
+
+        document.getElementById('foodSpawnRate').addEventListener('input', function(e) {
+            simulator.foodSpawnRate = parseFloat(e.target.value);
+            document.getElementById('foodSpawnRateVal').textContent = simulator.foodSpawnRate.toFixed(2);
+        });
+
+        // Initialize
+        simulator.updateStats();
+    </script>
+</body>
+</html>

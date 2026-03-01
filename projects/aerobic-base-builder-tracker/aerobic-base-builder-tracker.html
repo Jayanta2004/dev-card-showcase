@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aerobic Base Builder Tracker</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="icon" type="image/png" href="../../Hall of Fame (1).png" />
+    <link rel="icon" href="../../assets/favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/favicon/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="../../assets/favicon/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="aerobic-base-builder-tracker.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <div class="aerobic-container">
+        <h1>🏃 Aerobic Base Builder Tracker</h1>
+        <p>Track your Zone 2 aerobic training volume to build a strong endurance foundation. Zone 2 training (60-70% max heart rate) is crucial for improving aerobic capacity and fat metabolism.</p>
+
+        <div class="session-section">
+            <h2>Log Aerobic Session</h2>
+            <div class="input-group">
+                <label for="activityType">Activity Type:</label>
+                <select id="activityType">
+                    <option value="running">Running/Jogging</option>
+                    <option value="cycling">Cycling</option>
+                    <option value="swimming">Swimming</option>
+                    <option value="rowing">Rowing</option>
+                    <option value="walking">Brisk Walking</option>
+                    <option value="hiking">Hiking</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="sessionDuration">Duration (minutes):</label>
+                <input type="number" id="sessionDuration" min="1" placeholder="45">
+            </div>
+            <div class="input-group">
+                <label for="avgHeartRate">Average Heart Rate (bpm):</label>
+                <input type="number" id="avgHeartRate" min="60" max="200" placeholder="140">
+                <small>Zone 2: 60-70% of max HR (roughly 114-133 bpm for 190 bpm max)</small>
+            </div>
+            <div class="input-group">
+                <label for="perceivedEffort">Perceived Effort (1-10):</label>
+                <input type="range" id="perceivedEffort" min="1" max="10" value="6">
+                <span id="effortValue">6</span>
+                <small>Zone 2 should feel "comfortably hard" (5-7)</small>
+            </div>
+            <div class="input-group">
+                <label for="sessionNotes">Notes:</label>
+                <textarea id="sessionNotes" placeholder="How did it feel? Any observations about pace, breathing, or effort..."></textarea>
+            </div>
+            <button class="log-btn" onclick="logAerobicSession()">Log Session</button>
+        </div>
+
+        <div class="stats-section">
+            <h2>Aerobic Training Statistics</h2>
+            <div class="stat-cards">
+                <div class="stat-card">
+                    <h3>Total Sessions</h3>
+                    <div class="stat-value" id="totalSessions">0</div>
+                    <p class="stat-desc">Aerobic sessions logged</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Weekly Volume</h3>
+                    <div class="stat-value" id="weeklyVolume">0 min</div>
+                    <p class="stat-desc">This week's total minutes</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Monthly Volume</h3>
+                    <div class="stat-value" id="monthlyVolume">0 min</div>
+                    <p class="stat-desc">This month's total minutes</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Avg Session</h3>
+                    <div class="stat-value" id="avgSessionLength">0 min</div>
+                    <p class="stat-desc">Average session duration</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <h2>Weekly Progress</h2>
+            <div class="progress-info">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="weeklyProgressFill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="weeklyProgressText">0 / 150 minutes</span>
+                    <small>Recommended: 150+ minutes/week for aerobic base building</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <h2>Training Volume Trends</h2>
+            <div class="chart-controls">
+                <select id="chartTimeRange">
+                    <option value="4">Last 4 weeks</option>
+                    <option value="8">Last 8 weeks</option>
+                    <option value="12">Last 12 weeks</option>
+                </select>
+            </div>
+            <canvas id="volumeChart"></canvas>
+        </div>
+
+        <div class="insights-section">
+            <h2>Training Insights</h2>
+            <div id="insightsContainer">
+                <div class="insight-card">
+                    <h3>🎯 Zone 2 Compliance</h3>
+                    <div id="zoneCompliance">No data available</div>
+                </div>
+                <div class="insight-card">
+                    <h3>📈 Consistency Score</h3>
+                    <div id="consistencyScore">No data available</div>
+                </div>
+                <div class="insight-card">
+                    <h3>🏆 Best Week</h3>
+                    <div id="bestWeek">No data available</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <h2>Session History</h2>
+            <div class="history-filters">
+                <button class="filter-btn active" data-filter="all" onclick="filterHistory('all')">All</button>
+                <button class="filter-btn" data-filter="this-week" onclick="filterHistory('this-week')">This Week</button>
+                <button class="filter-btn" data-filter="this-month" onclick="filterHistory('this-month')">This Month</button>
+            </div>
+            <div id="sessionHistory"></div>
+        </div>
+    </div>
+
+    <div id="footer"></div>
+
+    <script src="aerobic-base-builder-tracker.js"></script>
+    <script src="../../js/include.js"></script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TitanFlesh — Dark Matter Boss</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PRIMARY CANVAS: All soft-body rendering happens here
+  ═══════════════════════════════════════════════════════ -->
+  <canvas id="titanCanvas"></canvas>
+
+  <!-- ═══════════════════════════════════════════════════════
+       HUD OVERLAY CONTAINER
+  ═══════════════════════════════════════════════════════ -->
+  <div id="hud">
+
+    <!-- Title Banner -->
+    <div id="titleBanner">
+      <span class="titleGlyph">⬡</span>
+      <span class="titleText">TITANFLESH</span>
+      <span class="titleGlyph">⬡</span>
+      <div class="titleSub">DARK MATTER ENTITY — UNSTABLE MASS</div>
+    </div>
+
+    <!-- Performance Monitor Panel -->
+    <div id="perfMonitor" class="panel">
+      <div class="panelHeader">SYSTEM MONITOR</div>
+      <div class="perfRow"><span class="perfLabel">FPS</span><span id="fpsStat" class="perfVal">—</span></div>
+      <div class="perfRow"><span class="perfLabel">FRAME</span><span id="frameStat" class="perfVal">—</span></div>
+      <div class="perfRow"><span class="perfLabel">PARTICLES</span><span id="particleStat" class="perfVal">—</span></div>
+      <div class="perfRow"><span class="perfLabel">SPRINGS</span><span id="springStat" class="perfVal">—</span></div>
+      <div class="perfRow"><span class="perfLabel">TRIANGLES</span><span id="triStat" class="perfVal">—</span></div>
+      <div class="perfRow"><span class="perfLabel">TEARS</span><span id="tearStat" class="perfVal">—</span></div>
+      <div class="perfRow"><span class="perfLabel">PRESSURE</span><span id="pressureStat" class="perfVal">—</span></div>
+      <div class="perfRow"><span class="perfLabel">AREA RATIO</span><span id="areaStat" class="perfVal">—</span></div>
+    </div>
+
+    <!-- Control Panel -->
+    <div id="controlPanel" class="panel">
+      <div class="panelHeader">CONTROLS</div>
+
+      <div class="controlGroup">
+        <button id="btnPressure" class="ctrlBtn active" data-tip="Toggle pressure heatmap">
+          <span class="btnIcon">◈</span> PRESSURE MAP
+        </button>
+      </div>
+
+      <div class="controlGroup">
+        <button id="btnMesh" class="ctrlBtn" data-tip="Toggle wireframe overlay">
+          <span class="btnIcon">⬡</span> MESH DEBUG
+        </button>
+      </div>
+
+      <div class="controlGroup">
+        <button id="btnTearing" class="ctrlBtn active" data-tip="Enable dynamic tearing">
+          <span class="btnIcon">⚡</span> TEARING
+        </button>
+      </div>
+
+      <div class="controlGroup">
+        <button id="btnRipple" class="ctrlBtn active" data-tip="Enable ripple propagation">
+          <span class="btnIcon">◉</span> RIPPLES
+        </button>
+      </div>
+
+      <div class="controlGroup">
+        <button id="btnReset" class="ctrlBtn reset" data-tip="Regenerate entity">
+          <span class="btnIcon">↺</span> REGENERATE
+        </button>
+      </div>
+
+      <div class="sliderGroup">
+        <label class="sliderLabel">STRIKE FORCE</label>
+        <input type="range" id="strikeForce" min="1" max="10" value="5" step="0.1" class="darkSlider" />
+        <span id="strikeForceVal" class="sliderVal">5.0</span>
+      </div>
+
+      <div class="sliderGroup">
+        <label class="sliderLabel">VISCOSITY</label>
+        <input type="range" id="viscosity" min="0.90" max="0.999" value="0.97" step="0.001" class="darkSlider" />
+        <span id="viscosityVal" class="sliderVal">0.970</span>
+      </div>
+
+      <div class="sliderGroup">
+        <label class="sliderLabel">PRESSURE</label>
+        <input type="range" id="pressureStrength" min="0.1" max="5.0" value="1.5" step="0.1" class="darkSlider" />
+        <span id="pressureStrengthVal" class="sliderVal">1.5</span>
+      </div>
+    </div>
+
+    <!-- Strike Feedback Overlay -->
+    <div id="strikeInfo" class="panel hidden">
+      <div class="panelHeader">LAST IMPACT</div>
+      <div class="perfRow"><span class="perfLabel">MAGNITUDE</span><span id="strikeForceDisplay" class="perfVal perfWarn">—</span></div>
+      <div class="perfRow"><span class="perfLabel">TEARINGS</span><span id="strikeTearDisplay" class="perfVal perfWarn">—</span></div>
+      <div class="perfRow"><span class="perfLabel">RIPPLES</span><span id="strikeRippleDisplay" class="perfVal perfWarn">—</span></div>
+    </div>
+
+    <!-- Crosshair Aim Indicator -->
+    <div id="crosshair"></div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="hidden"></div>
+
+    <!-- Instructions -->
+    <div id="instructions">
+      <span class="instrKey">CLICK</span> Strike &nbsp;
+      <span class="instrKey">DRAG</span> Tear &nbsp;
+      <span class="instrKey">SCROLL</span> Force scale
+    </div>
+
+  </div><!-- end #hud -->
+
+  <!-- ═══════════════════════════════════════════════════════
+       JAVASCRIPT MODULES (load order matters)
+  ═══════════════════════════════════════════════════════ -->
+  <script src="js/config.js"></script>
+  <script src="js/config/Constants.js"></script>
+  <script src="js/config/PhysicsConfig.js"></script>
+  <script src="js/config/RenderConfig.js"></script>
+  <script src="js/utils/Random.js"></script>
+  <script src="js/utils/Geometry.js"></script>
+  <script src="js/utils/Easing.js"></script>
+  <script src="js/utils/ColorUtils.js"></script>
+  <script src="js/physics/CollisionDetector.js"></script>
+  <script src="js/physics/ForceGenerator.js"></script>
+  <script src="js/physics/SpatialGrid.js"></script>
+  <script src="js/rendering/GlowRenderer.js"></script>
+  <script src="js/rendering/PostProcessor.js"></script>
+  <script src="js/rendering/ColorThemes.js"></script>
+  <script src="js/entity/EntityManager.js"></script>
+  <script src="js/entity/FleshSettings.js"></script>
+  <script src="js/ui/UIComponents.js"></script>
+  <script src="js/ui/TooltipManager.js"></script>
+  <script src="js/utils/Vec2.js"></script>
+  <script src="js/utils/MathUtils.js"></script>
+  <script src="js/core/Particle.js"></script>
+  <script src="js/core/Spring.js"></script>
+  <script src="js/core/Triangle.js"></script>
+  <script src="js/triangulation/DelaunayTriangulator.js"></script>
+  <script src="js/physics/VerletIntegrator.js"></script>
+  <script src="js/physics/ConstraintSolver.js"></script>
+  <script src="js/physics/PressureSystem.js"></script>
+  <script src="js/physics/RippleSystem.js"></script>
+  <script src="js/physics/SpringMassLattice.js"></script>
+  <script src="js/tearing/TearDetector.js"></script>
+  <script src="js/tearing/MeshRebuilder.js"></script>
+  <script src="js/rendering/BackgroundRenderer.js"></script>
+  <script src="js/rendering/MeshRenderer.js"></script>
+  <script src="js/rendering/PressureRenderer.js"></script>
+  <script src="js/rendering/DebugRenderer.js"></script>
+  <script src="js/rendering/Renderer.js"></script>
+  <script src="js/ui/PerformanceMonitor.js"></script>
+  <script src="js/ui/UIManager.js"></script>
+  <script src="js/input/InputHandler.js"></script>
+  <script src="js/entity/FleshBody.js"></script>
+  <script src="js/entity/MutationSystem.js"></script>
+  <script src="js/entity/TitanFlesh.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+</html>

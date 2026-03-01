@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Data Vault API</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Secure Data Vault API</h1>
+            <p>Enterprise-grade secure data storage and API management system with advanced encryption, access controls, and compliance monitoring.</p>
+        </header>
+
+        <div class="auth-status">
+            <div class="auth-info">
+                <span id="userStatus">Not Authenticated</span>
+                <span id="securityLevel">Security Level: None</span>
+            </div>
+            <div class="auth-controls">
+                <button id="loginBtn" class="btn btn-primary">Login</button>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+                <button id="changePasswordBtn" class="btn btn-info">Change Password</button>
+            </div>
+        </div>
+
+        <div class="main-dashboard">
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Navigation</h3>
+                    <nav class="nav-menu">
+                        <a href="#vault" class="nav-link active" data-section="vault">Data Vault</a>
+                        <a href="#api" class="nav-link" data-section="api">API Management</a>
+                        <a href="#security" class="nav-link" data-section="security">Security</a>
+                        <a href="#audit" class="nav-link" data-section="audit">Audit Logs</a>
+                        <a href="#backup" class="nav-link" data-section="backup">Backup & Recovery</a>
+                        <a href="#compliance" class="nav-link" data-section="compliance">Compliance</a>
+                        <a href="#monitoring" class="nav-link" data-section="monitoring">Monitoring</a>
+                        <a href="#docs" class="nav-link" data-section="docs">API Docs</a>
+                    </nav>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Quick Actions</h3>
+                    <div class="quick-actions">
+                        <button id="createVaultBtn" class="btn btn-success btn-small">Create Vault</button>
+                        <button id="importDataBtn" class="btn btn-info btn-small">Import Data</button>
+                        <button id="exportDataBtn" class="btn btn-secondary btn-small">Export Data</button>
+                        <button id="emergencyLockBtn" class="btn btn-danger btn-small">Emergency Lock</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>System Status</h3>
+                    <div class="status-indicators">
+                        <div class="status-item">
+                            <span class="status-label">Encryption:</span>
+                            <span class="status-value" id="encryptionStatus">Active</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Storage:</span>
+                            <span class="status-value" id="storageStatus">85% Used</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">API Rate:</span>
+                            <span class="status-value" id="apiRateStatus">Normal</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Security:</span>
+                            <span class="status-value" id="securityStatus">High</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <!-- Data Vault Section -->
+                <section id="vaultSection" class="content-section active">
+                    <div class="section-header">
+                        <h2>Data Vault Management</h2>
+                        <div class="section-controls">
+                            <input type="text" id="vaultSearch" placeholder="Search vaults...">
+                            <select id="vaultFilter">
+                                <option value="all">All Vaults</option>
+                                <option value="active">Active</option>
+                                <option value="archived">Archived</option>
+                                <option value="locked">Locked</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="vault-grid" id="vaultGrid">
+                        <!-- Vaults will be dynamically added here -->
+                    </div>
+
+                    <div class="vault-details" id="vaultDetails">
+                        <div class="vault-info">
+                            <h3 id="vaultName">Select a vault</h3>
+                            <div class="vault-stats">
+                                <div class="stat">
+                                    <span class="stat-label">Items:</span>
+                                    <span class="stat-value" id="vaultItemCount">0</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Size:</span>
+                                    <span class="stat-value" id="vaultSize">0 MB</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Last Modified:</span>
+                                    <span class="stat-value" id="vaultLastModified">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="vault-actions">
+                            <button id="addItemBtn" class="btn btn-primary">Add Item</button>
+                            <button id="editVaultBtn" class="btn btn-secondary">Edit Vault</button>
+                            <button id="deleteVaultBtn" class="btn btn-danger">Delete Vault</button>
+                            <button id="shareVaultBtn" class="btn btn-info">Share Vault</button>
+                        </div>
+
+                        <div class="vault-content" id="vaultContent">
+                            <!-- Vault items will be displayed here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- API Management Section -->
+                <section id="apiSection" class="content-section">
+                    <div class="section-header">
+                        <h2>API Endpoint Management</h2>
+                        <div class="section-controls">
+                            <button id="createEndpointBtn" class="btn btn-primary">Create Endpoint</button>
+                            <button id="testApiBtn" class="btn btn-info">Test API</button>
+                        </div>
+                    </div>
+
+                    <div class="api-endpoints" id="apiEndpoints">
+                        <!-- API endpoints will be listed here -->
+                    </div>
+
+                    <div class="api-details" id="apiDetails">
+                        <div class="endpoint-config">
+                            <h3>Endpoint Configuration</h3>
+                            <form id="endpointForm">
+                                <div class="form-group">
+                                    <label for="endpointMethod">Method:</label>
+                                    <select id="endpointMethod">
+                                        <option value="GET">GET</option>
+                                        <option value="POST">POST</option>
+                                        <option value="PUT">PUT</option>
+                                        <option value="DELETE">DELETE</option>
+                                        <option value="PATCH">PATCH</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="endpointPath">Path:</label>
+                                    <input type="text" id="endpointPath" placeholder="/api/v1/data">
+                                </div>
+                                <div class="form-group">
+                                    <label for="endpointAuth">Authentication:</label>
+                                    <select id="endpointAuth">
+                                        <option value="none">None</option>
+                                        <option value="basic">Basic Auth</option>
+                                        <option value="bearer">Bearer Token</option>
+                                        <option value="api-key">API Key</option>
+                                        <option value="oauth">OAuth 2.0</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="endpointRateLimit">Rate Limit:</label>
+                                    <input type="number" id="endpointRateLimit" placeholder="1000" min="1">
+                                    <span>requests/hour</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="endpointCors">CORS Policy:</label>
+                                    <select id="endpointCors">
+                                        <option value="none">None</option>
+                                        <option value="allow-all">Allow All</option>
+                                        <option value="restrict">Restricted</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Endpoint</button>
+                            </form>
+                        </div>
+
+                        <div class="api-testing">
+                            <h3>API Testing</h3>
+                            <div class="test-controls">
+                                <select id="testMethod">
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                </select>
+                                <input type="text" id="testUrl" placeholder="Enter API URL">
+                                <button id="sendTestBtn" class="btn btn-success">Send Request</button>
+                            </div>
+                            <div class="test-request">
+                                <h4>Request</h4>
+                                <pre id="requestData"></pre>
+                            </div>
+                            <div class="test-response">
+                                <h4>Response</h4>
+                                <pre id="responseData"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Security Section -->
+                <section id="securitySection" class="content-section">
+                    <div class="section-header">
+                        <h2>Security Configuration</h2>
+                    </div>
+
+                    <div class="security-panels">
+                        <div class="security-panel">
+                            <h3>Encryption Settings</h3>
+                            <div class="encryption-config">
+                                <div class="config-item">
+                                    <label for="encryptionAlgorithm">Algorithm:</label>
+                                    <select id="encryptionAlgorithm">
+                                        <option value="AES-256">AES-256</option>
+                                        <option value="AES-128">AES-128</option>
+                                        <option value="ChaCha20">ChaCha20</option>
+                                        <option value="TripleDES">Triple DES</option>
+                                    </select>
+                                </div>
+                                <div class="config-item">
+                                    <label for="keyRotation">Key Rotation:</label>
+                                    <select id="keyRotation">
+                                        <option value="never">Never</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="quarterly">Quarterly</option>
+                                        <option value="yearly">Yearly</option>
+                                    </select>
+                                </div>
+                                <div class="config-item">
+                                    <label for="hsmEnabled">Hardware Security Module:</label>
+                                    <input type="checkbox" id="hsmEnabled">
+                                </div>
+                                <button id="updateEncryptionBtn" class="btn btn-primary">Update Encryption</button>
+                            </div>
+                        </div>
+
+                        <div class="security-panel">
+                            <h3>Access Control</h3>
+                            <div class="access-control">
+                                <div class="user-roles" id="userRoles">
+                                    <!-- User roles will be listed here -->
+                                </div>
+                                <div class="role-permissions">
+                                    <h4>Role Permissions</h4>
+                                    <div class="permissions-grid">
+                                        <label><input type="checkbox" id="permRead"> Read</label>
+                                        <label><input type="checkbox" id="permWrite"> Write</label>
+                                        <label><input type="checkbox" id="permDelete"> Delete</label>
+                                        <label><input type="checkbox" id="permAdmin"> Admin</label>
+                                        <label><input type="checkbox" id="permShare"> Share</label>
+                                        <label><input type="checkbox" id="permAudit"> Audit</label>
+                                    </div>
+                                </div>
+                                <button id="addUserBtn" class="btn btn-success">Add User</button>
+                                <button id="updatePermissionsBtn" class="btn btn-primary">Update Permissions</button>
+                            </div>
+                        </div>
+
+                        <div class="security-panel">
+                            <h3>Security Policies</h3>
+                            <div class="security-policies">
+                                <div class="policy-item">
+                                    <label for="passwordPolicy">Password Policy:</label>
+                                    <select id="passwordPolicy">
+                                        <option value="basic">Basic (8+ chars)</option>
+                                        <option value="strong">Strong (12+ chars, mixed)</option>
+                                        <option value="complex">Complex (16+ chars, special)</option>
+                                    </select>
+                                </div>
+                                <div class="policy-item">
+                                    <label for="sessionTimeout">Session Timeout:</label>
+                                    <input type="number" id="sessionTimeout" value="30" min="5" max="480">
+                                    <span>minutes</span>
+                                </div>
+                                <div class="policy-item">
+                                    <label for="maxLoginAttempts">Max Login Attempts:</label>
+                                    <input type="number" id="maxLoginAttempts" value="5" min="3" max="10">
+                                </div>
+                                <div class="policy-item">
+                                    <label><input type="checkbox" id="twoFactorEnabled"> Two-Factor Authentication</label>
+                                </div>
+                                <div class="policy-item">
+                                    <label><input type="checkbox" id="ipWhitelistEnabled"> IP Whitelist</label>
+                                </div>
+                                <button id="updatePoliciesBtn" class="btn btn-primary">Update Policies</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Audit Logs Section -->
+                <section id="auditSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Audit Logs</h2>
+                        <div class="section-controls">
+                            <input type="date" id="auditStartDate">
+                            <input type="date" id="auditEndDate">
+                            <select id="auditFilter">
+                                <option value="all">All Events</option>
+                                <option value="login">Login Events</option>
+                                <option value="data-access">Data Access</option>
+                                <option value="api-calls">API Calls</option>
+                                <option value="security">Security Events</option>
+                            </select>
+                            <button id="exportAuditBtn" class="btn btn-info">Export Logs</button>
+                        </div>
+                    </div>
+
+                    <div class="audit-logs" id="auditLogs">
+                        <!-- Audit log entries will be displayed here -->
+                    </div>
+                </section>
+
+                <!-- Backup & Recovery Section -->
+                <section id="backupSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Backup & Recovery</h2>
+                        <div class="section-controls">
+                            <button id="createBackupBtn" class="btn btn-primary">Create Backup</button>
+                            <button id="scheduleBackupBtn" class="btn btn-info">Schedule Backup</button>
+                        </div>
+                    </div>
+
+                    <div class="backup-management">
+                        <div class="backup-list" id="backupList">
+                            <!-- Backup entries will be listed here -->
+                        </div>
+
+                        <div class="recovery-options">
+                            <h3>Recovery Options</h3>
+                            <div class="recovery-controls">
+                                <select id="recoveryPoint">
+                                    <option value="">Select Recovery Point</option>
+                                </select>
+                                <button id="restoreBackupBtn" class="btn btn-warning">Restore Backup</button>
+                                <button id="downloadBackupBtn" class="btn btn-secondary">Download Backup</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Compliance Section -->
+                <section id="complianceSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Compliance Dashboard</h2>
+                    </div>
+
+                    <div class="compliance-overview">
+                        <div class="compliance-metrics">
+                            <div class="metric-card">
+                                <h4>GDPR Compliance</h4>
+                                <div class="metric-score" id="gdprScore">95%</div>
+                                <div class="metric-status">Compliant</div>
+                            </div>
+                            <div class="metric-card">
+                                <h4>HIPAA Compliance</h4>
+                                <div class="metric-score" id="hipaaScore">92%</div>
+                                <div class="metric-status">Compliant</div>
+                            </div>
+                            <div class="metric-card">
+                                <h4>SOX Compliance</h4>
+                                <div class="metric-score" id="soxScore">88%</div>
+                                <div class="metric-status">Review Needed</div>
+                            </div>
+                            <div class="metric-card">
+                                <h4>PCI DSS</h4>
+                                <div class="metric-score" id="pciScore">96%</div>
+                                <div class="metric-status">Compliant</div>
+                            </div>
+                        </div>
+
+                        <div class="compliance-reports">
+                            <h3>Compliance Reports</h3>
+                            <div class="report-list" id="complianceReports">
+                                <!-- Compliance reports will be listed here -->
+                            </div>
+                            <button id="generateReportBtn" class="btn btn-primary">Generate Report</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Monitoring Section -->
+                <section id="monitoringSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Real-Time Monitoring</h2>
+                        <div class="section-controls">
+                            <button id="refreshMetricsBtn" class="btn btn-info">Refresh</button>
+                            <button id="configureAlertsBtn" class="btn btn-secondary">Configure Alerts</button>
+                        </div>
+                    </div>
+
+                    <div class="monitoring-dashboard">
+                        <div class="metrics-grid">
+                            <div class="metric-chart">
+                                <h4>API Requests</h4>
+                                <canvas id="apiRequestsChart"></canvas>
+                            </div>
+                            <div class="metric-chart">
+                                <h4>Response Times</h4>
+                                <canvas id="responseTimeChart"></canvas>
+                            </div>
+                            <div class="metric-chart">
+                                <h4>Error Rate</h4>
+                                <canvas id="errorRateChart"></canvas>
+                            </div>
+                            <div class="metric-chart">
+                                <h4>Storage Usage</h4>
+                                <canvas id="storageUsageChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="alerts-panel">
+                            <h3>Active Alerts</h3>
+                            <div class="alerts-list" id="alertsList">
+                                <!-- Active alerts will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- API Documentation Section -->
+                <section id="docsSection" class="content-section">
+                    <div class="section-header">
+                        <h2>API Documentation</h2>
+                        <div class="section-controls">
+                            <button id="generateDocsBtn" class="btn btn-primary">Generate Docs</button>
+                            <button id="exportDocsBtn" class="btn btn-info">Export OpenAPI</button>
+                        </div>
+                    </div>
+
+                    <div class="api-documentation">
+                        <div class="docs-navigation">
+                            <h3>Endpoints</h3>
+                            <div class="endpoint-list" id="endpointList">
+                                <!-- API endpoints will be listed here -->
+                            </div>
+                        </div>
+
+                        <div class="docs-content">
+                            <div class="endpoint-details" id="endpointDetails">
+                                <!-- Endpoint documentation will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Secure Data Vault API. Enterprise-grade secure data management and API platform.</p>
+        </footer>
+    </div>
+
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Authentication</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="authForm">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <div class="form-group" id="twoFactorGroup" style="display: none;">
+                        <label for="twoFactorCode">2FA Code:</label>
+                        <input type="text" id="twoFactorCode" placeholder="Enter 6-digit code">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vault Modal -->
+    <div id="vaultModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create/Edit Vault</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="vaultForm">
+                    <div class="form-group">
+                        <label for="vaultNameInput">Vault Name:</label>
+                        <input type="text" id="vaultNameInput" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vaultDescription">Description:</label>
+                        <textarea id="vaultDescription"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="vaultEncryption">Encryption Level:</label>
+                        <select id="vaultEncryption">
+                            <option value="standard">Standard</option>
+                            <option value="high">High Security</option>
+                            <option value="military">Military Grade</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="vaultAccess">Access Level:</label>
+                        <select id="vaultAccess">
+                            <option value="private">Private</option>
+                            <option value="shared">Shared</option>
+                            <option value="public">Public</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Vault</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Item Modal -->
+    <div id="itemModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Add/Edit Item</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="itemForm">
+                    <div class="form-group">
+                        <label for="itemKey">Key:</label>
+                        <input type="text" id="itemKey" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemType">Data Type:</label>
+                        <select id="itemType">
+                            <option value="text">Text</option>
+                            <option value="json">JSON</option>
+                            <option value="file">File</option>
+                            <option value="encrypted">Encrypted Data</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemValue">Value:</label>
+                        <textarea id="itemValue" rows="10"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemTags">Tags (comma-separated):</label>
+                        <input type="text" id="itemTags" placeholder="tag1, tag2, tag3">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemExpiration">Expiration Date:</label>
+                        <input type="datetime-local" id="itemExpiration">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Item</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Security Alert</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="alert-content" id="alertContent">
+                    <!-- Alert details will be displayed here -->
+                </div>
+                <button id="acknowledgeAlertBtn" class="btn btn-primary">Acknowledge</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

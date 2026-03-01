@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>feedback lens · survey analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #eceff8 0%, #d9e3f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.8rem;
+        }
+
+        .analyzer-container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 3rem;
+            box-shadow: 0 30px 50px -25px #2c4058, inset 0 1px 3px #ffffff;
+            border: 1px solid rgba(255,255,255,0.6);
+            padding: 2.2rem 2.2rem 2.5rem;
+        }
+
+        .header-slim {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2.2rem;
+            border-bottom: 2px dashed #a2bbd5;
+            padding-bottom: 1rem;
+        }
+
+        .header-slim h1 {
+            font-size: 2.3rem;
+            font-weight: 550;
+            letter-spacing: -1px;
+            color: #1b3a55;
+        }
+
+        .header-slim span {
+            background: #295e83;
+            color: white;
+            padding: 0.2rem 1.2rem;
+            border-radius: 60px;
+            font-size: 1.1rem;
+        }
+
+        .badge-counter {
+            margin-left: auto;
+            background: #ceddec;
+            padding: 0.4rem 1.4rem;
+            border-radius: 60px;
+            color: #103959;
+            font-weight: 500;
+            border: 1px solid #95b9db;
+        }
+
+        /* survey + response area: 2 columns */
+        .split-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2.2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 2rem;
+            padding: 1.6rem 1.8rem 2rem;
+            box-shadow: 0 20px 35px -20px #1e364b;
+            border: 1px solid white;
+        }
+
+        .card h2 {
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: #1e405e;
+            margin-bottom: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .survey-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.6rem;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .field label {
+            font-weight: 600;
+            color: #234f72;
+            font-size: 1rem;
+            letter-spacing: 0.3px;
+        }
+
+        .field input, .field select {
+            background: white;
+            border: none;
+            padding: 0.9rem 1.2rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            border: 1px solid #bfd9f0;
+            box-shadow: inset 0 3px 8px #d6e3f0;
+            transition: 0.1s;
+        }
+
+        .field input:focus, .field select:focus {
+            outline: 2px solid #679ac2;
+            border-color: transparent;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            background: #eaf1fa;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 400;
+            color: #1a3c58;
+        }
+
+        .btn-primary {
+            background: #2f6190;
+            border: none;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 12px 18px -10px #113753;
+            transition: 0.1s;
+            border: 1px solid #86b3dd;
+            margin-top: 0.5rem;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+            background: #1e4a73;
+        }
+
+        .responses-list {
+            max-height: 340px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .response-item {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1rem;
+            border-left: 8px solid #557fa8;
+            box-shadow: 0 6px 12px #b7cee6;
+        }
+
+        .response-item p {
+            margin: 0.3rem 0;
+            color: #102e44;
+        }
+
+        .response-item .name {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .badge-satisfaction {
+            background: #d1e3fc;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            display: inline-block;
+            margin-top: 0.3rem;
+        }
+
+        /* analysis panel */
+        .analysis-panel {
+            background: #dde9f5;
+            border-radius: 2rem;
+            padding: 1.8rem 2rem;
+            border: 1px solid #f0f8ff;
+            box-shadow: inset 0 1px 5px #b6d3ef;
+        }
+
+        .stats-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            background: #ffffffc9;
+            padding: 1rem 2rem;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            border: 1px solid #aac6e3;
+        }
+
+        .stat-item strong {
+            color: #113753;
+            font-size: 1.6rem;
+            margin-right: 0.6rem;
+        }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .chart-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .chart-label {
+            width: 130px;
+            font-weight: 600;
+            color: #1c4465;
+        }
+
+        .bar-bg {
+            flex: 2;
+            height: 26px;
+            background: #c1d6ec;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px #8faaca;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2f77b0, #154e7c);
+            width: 0%;
+            border-radius: 30px;
+            transition: width 0.2s;
+        }
+
+        .chart-percent {
+            min-width: 60px;
+            font-weight: 600;
+            color: #00335c;
+        }
+
+        .footnote {
+            margin-top: 2rem;
+            color: #336185;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="analyzer-container">
+        <div class="header-slim">
+            <h1>📋 feedback lens</h1>
+            <span>survey + analyzer</span>
+            <div class="badge-counter" id="responseCountDisplay">0 responses</div>
+        </div>
+
+        <!-- two-column: form (left) / live responses (right) -->
+        <div class="split-panel">
+            <!-- left: survey form -->
+            <div class="card">
+                <h2>✏️  quick survey</h2>
+                <div class="survey-form" id="surveyForm">
+                    <div class="field">
+                        <label>full name</label>
+                        <input type="text" id="nameInput" placeholder="e.g. Alex Rivera" autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label>how satisfied are you?</label>
+                        <div class="radio-group" id="satisfactionGroup">
+                            <label><input type="radio" name="satisfaction" value="very happy" checked> 😊 very happy</label>
+                            <label><input type="radio" name="satisfaction" value="neutral"> 😐 neutral</label>
+                            <label><input type="radio" name="satisfaction" value="unhappy"> ☹️ unhappy</label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>which feature matters most?</label>
+                        <select id="featureSelect">
+                            <option value="ease of use">ease of use</option>
+                            <option value="design">design</option>
+                            <option value="performance">performance</option>
+                            <option value="support">support</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" id="submitBtn">+ add response</button>
+                </div>
+            </div>
+
+            <!-- right: recent responses -->
+            <div class="card">
+                <h2>📬  latest entries</h2>
+                <div id="responsesContainer" class="responses-list">
+                    <!-- dynamic responses appear here -->
+                    <div class="response-item">
+                        <p class="name">🌿 no data yet</p>
+                        <p>submit a response to see live analysis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- analysis dashboard -->
+        <div class="analysis-panel" id="analysisPanel">
+            <h2 style="margin-bottom: 1.2rem;">📊  real‑time analyzer</h2>
+            <div class="stats-grid">
+                <div class="stat-item"><strong id="totalResp">0</strong> total</div>
+                <div class="stat-item"><strong id="happyPercent">0%</strong> very happy</div>
+                <div class="stat-item"><strong id="topFeature">—</strong> top feature</div>
+            </div>
+
+            <!-- satisfaction bars -->
+            <div class="chart-container">
+                <div class="chart-row">
+                    <span class="chart-label">😊 very happy</span>
+                    <div class="bar-bg"><div class="bar-fill" id="barVeryHappy" style="width:0%"></div></div>
+                    <span class="chart-percent" id="percentVeryHappy">0%</span>
+                </div>
+                <div class="chart-row">
+                    <span class="chart-label">😐 neutral</span>
+                    <div class="bar-bg"><div class="bar-fill" id="barNeutral" style="width:0%"></div></div>
+                    <span class="chart-percent" id="percentNeutral">0%</span>
+                </div>
+                <div class="chart-row">
+                    <span class="chart-label">☹️ unhappy</span>
+                    <div class="bar-bg"><div class="bar-fill" id="barUnhappy" style="width:0%"></div></div>
+                    <span class="chart-percent" id="percentUnhappy">0%</span>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; color: #1a4b73; font-size: 1rem;" id="insightMessage">
+                ↻ add responses to see patterns
+            </div>
+        </div>
+        <div class="footnote">
+            ⚡ each entry updates distribution & top feature · analyzer works with live data
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- In-memory response storage ----------
+            let responses = [];  // each object: { name, satisfaction, feature }
+
+            // DOM elements
+            const nameInput = document.getElementById('nameInput');
+            const satisfactionRadios = document.querySelectorAll('input[name="satisfaction"]');
+            const featureSelect = document.getElementById('featureSelect');
+            const submitBtn = document.getElementById('submitBtn');
+            const responsesContainer = document.getElementById('responsesContainer');
+            const totalRespSpan = document.getElementById('totalResp');
+            const happyPercentSpan = document.getElementById('happyPercent');
+            const topFeatureSpan = document.getElementById('topFeature');
+            const barVeryHappy = document.getElementById('barVeryHappy');
+            const barNeutral = document.getElementById('barNeutral');
+            const barUnhappy = document.getElementById('barUnhappy');
+            const percentVeryHappy = document.getElementById('percentVeryHappy');
+            const percentNeutral = document.getElementById('percentNeutral');
+            const percentUnhappy = document.getElementById('percentUnhappy');
+            const insightMessage = document.getElementById('insightMessage');
+            const responseCountDisplay = document.getElementById('responseCountDisplay');
+
+            // helper: get selected satisfaction value
+            function getSelectedSatisfaction() {
+                for (let radio of satisfactionRadios) {
+                    if (radio.checked) return radio.value;
+                }
+                return 'very happy'; // fallback
+            }
+
+            // helper: refresh response list UI
+            function renderResponseList() {
+                if (responses.length === 0) {
+                    responsesContainer.innerHTML = `<div class="response-item"><p class="name">🌿 no data yet</p><p>submit a response to see live analysis</p></div>`;
+                    return;
+                }
+
+                // show last 5 (newest first) – but we stored in order, so reverse for latest
+                const latest = [...responses].reverse().slice(0, 5);
+                let htmlStr = '';
+                latest.forEach(r => {
+                    let satisfactionEmoji = r.satisfaction === 'very happy' ? '😊' : (r.satisfaction === 'neutral' ? '😐' : '☹️');
+                    htmlStr += `
+                        <div class="response-item">
+                            <p class="name">👤 ${r.name || 'anonymous'}</p>
+                            <p>${satisfactionEmoji} satisfaction: ${r.satisfaction} </p>
+                            <p class="badge-satisfaction">⭐ ${r.feature}</p>
+                        </div>
+                    `;
+                });
+                responsesContainer.innerHTML = htmlStr;
+            }
+
+            // core: update all charts and stats
+            function updateAnalysis() {
+                const total = responses.length;
+                totalRespSpan.textContent = total;
+                responseCountDisplay.textContent = total + (total === 1 ? ' response' : ' responses');
+
+                if (total === 0) {
+                    // reset bars
+                    barVeryHappy.style.width = '0%';
+                    barNeutral.style.width = '0%';
+                    barUnhappy.style.width = '0%';
+                    percentVeryHappy.textContent = '0%';
+                    percentNeutral.textContent = '0%';
+                    percentUnhappy.textContent = '0%';
+                    happyPercentSpan.textContent = '0%';
+                    topFeatureSpan.textContent = '—';
+                    insightMessage.textContent = '↻ add responses to see patterns';
+                    return;
+                }
+
+                // satisfaction counts
+                let happyCount = 0, neutralCount = 0, unhappyCount = 0;
+                const featureCount = {};
+
+                responses.forEach(r => {
+                    if (r.satisfaction === 'very happy') happyCount++;
+                    else if (r.satisfaction === 'neutral') neutralCount++;
+                    else if (r.satisfaction === 'unhappy') unhappyCount++;
+
+                    const feat = r.feature;
+                    featureCount[feat] = (featureCount[feat] || 0) + 1;
+                });
+
+                const happyPercent = (happyCount / total * 100).toFixed(1);
+                const neutralPercent = (neutralCount / total * 100).toFixed(1);
+                const unhappyPercent = (unhappyCount / total * 100).toFixed(1);
+
+                // update bars
+                barVeryHappy.style.width = happyPercent + '%';
+                barNeutral.style.width = neutralPercent + '%';
+                barUnhappy.style.width = unhappyPercent + '%';
+
+                percentVeryHappy.textContent = happyPercent + '%';
+                percentNeutral.textContent = neutralPercent + '%';
+                percentUnhappy.textContent = unhappyPercent + '%';
+                happyPercentSpan.textContent = happyPercent + '%';
+
+                // top feature
+                let topFeature = '—';
+                let maxCount = 0;
+                for (let [feat, cnt] of Object.entries(featureCount)) {
+                    if (cnt > maxCount) {
+                        maxCount = cnt;
+                        topFeature = feat;
+                    } else if (cnt === maxCount && maxCount > 0) {
+                        // tie: keep first or show combined? we'll keep first, but add ' + ' if needed? we just show first.
+                    }
+                }
+                if (total > 0 && maxCount > 0) {
+                    topFeatureSpan.textContent = topFeature + (maxCount > 1 ? ` (${maxCount})` : '');
+                } else {
+                    topFeatureSpan.textContent = '—';
+                }
+
+                // insight message update
+                if (happyCount > neutralCount && happyCount > unhappyCount) {
+                    insightMessage.textContent = '😊 most respondents are very happy — keep up the good work!';
+                } else if (unhappyCount > happyCount && unhappyCount > neutralCount) {
+                    insightMessage.textContent = '☹️ unhappy responses dominate — consider reviewing feedback.';
+                } else if (neutralCount >= happyCount && neutralCount >= unhappyCount) {
+                    insightMessage.textContent = '😐 neutral majority — maybe they need more engagement.';
+                } else {
+                    insightMessage.textContent = 'mixed feedback — look for patterns.';
+                }
+            }
+
+            // add new response from form
+            function addResponse() {
+                const name = nameInput.value.trim() || 'anonymous';
+                const satisfaction = getSelectedSatisfaction();
+                const feature = featureSelect.value;
+
+                responses.push({ name, satisfaction, feature });
+
+                // clear name field optional but keep (you may want quick add)
+                nameInput.value = '';  // empty for convenience
+
+                // update UI
+                renderResponseList();
+                updateAnalysis();
+            }
+
+            // event listener
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();   // prevent any form-like behaviour
+                addResponse();
+            });
+
+            // optional: allow enter in name field to submit quickly
+            nameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addResponse();
+                }
+            });
+
+            // initial update (empty state)
+            renderResponseList();
+            updateAnalysis();
+
+            // dummy initial data for demonstration? we keep empty for user to fill.
+            // but to show analyzer, let's add two sample responses (optional) — commented out for clean start.
+            // if you want demo data uncomment next lines:
+            /*
+            responses.push({ name: 'Jordan', satisfaction: 'very happy', feature: 'ease of use' });
+            responses.push({ name: 'Taylor', satisfaction: 'neutral', feature: 'performance' });
+            responses.push({ name: 'Sam', satisfaction: 'very happy', feature: 'design' });
+            responses.push({ name: 'Alex', satisfaction: 'unhappy', feature: 'support' });
+            renderResponseList();
+            updateAnalysis();
+            */
+        })();
+    </script>
+</body>
+</html>
