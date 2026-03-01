@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌀 Fractal Forge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0a1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .forge {
+            width: 1000px;
+            background: #141428;
+            border-radius: 80px;
+            padding: 30px;
+            box-shadow: 0 0 100px #66339966, inset 0 0 50px #330066;
+            border: 2px solid #9966ff;
+        }
+        
+        .fractal-canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: #080814;
+            border-radius: 60px;
+            padding: 20px;
+            border: 2px solid #6633cc;
+        }
+        
+        #fractalCanvas {
+            width: 600px;
+            height: 600px;
+            border-radius: 40px;
+            box-shadow: 0 0 60px #9966ff;
+        }
+        
+        .controls-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .control-knob {
+            background: #1f1f3a;
+            border-radius: 40px;
+            padding: 20px;
+            border: 2px solid #7d4fff;
+            text-align: center;
+            color: #bfaaff;
+        }
+        
+        .knob-label {
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .knob-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff99ff;
+            text-shadow: 0 0 20px magenta;
+        }
+        
+        input[type=range] {
+            width: 100%;
+            margin: 10px 0;
+            background: #2a1a4a;
+            height: 6px;
+            border-radius: 10px;
+            -webkit-appearance: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #bf7fff;
+            border-radius: 50%;
+            box-shadow: 0 0 20px violet;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        .pattern-selector {
+            grid-column: span 4;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .pattern-btn {
+            background: transparent;
+            border: 2px solid #7d4fff;
+            color: #bfaaff;
+            font-size: 18px;
+            padding: 15px 30px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Quicksand', sans-serif;
+            letter-spacing: 2px;
+        }
+        .pattern-btn:hover {
+            background: #7d4fff;
+            color: white;
+            box-shadow: 0 0 40px #bf7fff;
+        }
+        
+        .mandala-info {
+            text-align: center;
+            color: #ccaaff;
+            margin-top: 20px;
+            font-size: 18px;
+            border-top: 2px dashed #9966ff;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="forge">
+        <div class="fractal-canvas-container">
+            <canvas id="fractalCanvas" width="600" height="600"></canvas>
+        </div>
+        
+        <div class="controls-panel">
+            <div class="control-knob">
+                <div class="knob-label">🌀 DEPTH</div>
+                <div class="knob-value" id="depthVal">6</div>
+                <input type="range" id="depth" min="2" max="10" value="6" step="1">
+            </div>
+            <div class="control-knob">
+                <div class="knob-label">🌈 HUE</div>
+                <div class="knob-value" id="hueVal">180</div>
+                <input type="range" id="hueShift" min="0" max="360" value="180">
+            </div>
+            <div class="control-knob">
+                <div class="knob-label">⭐ SPIN</div>
+                <div class="knob-value" id="spinVal">30</div>
+                <input type="range" id="spin" min="0" max="180" value="30">
+            </div>
+            <div class="control-knob">
+                <div class="knob-label">✨ SCALE</div>
+                <div class="knob-value" id="scaleVal">0.7</div>
+                <input type="range" id="scale" min="0.3" max="1.2" value="0.7" step="0.01">
+            </div>
+            
+            <div class="pattern-selector">
+                <button class="pattern-btn" data-pattern="mandala">🌸 MANDALA</button>
+                <button class="pattern-btn" data-pattern="tree">🌳 TREE</button>
+                <button class="pattern-btn" data-pattern="snowflake">❄️ SNOWFLAKE</button>
+                <button class="pattern-btn" data-pattern="spiral">🌀 SPIRAL</button>
+            </div>
+        </div>
+        
+        <div class="mandala-info" id="infoText">
+            ⍟ infinite patterns at your fingertips ⍟
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('fractalCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Controls
+        const depthSlider = document.getElementById('depth');
+        const hueSlider = document.getElementById('hueShift');
+        const spinSlider = document.getElementById('spin');
+        const scaleSlider = document.getElementById('scale');
+        
+        const depthVal = document.getElementById('depthVal');
+        const hueVal = document.getElementById('hueVal');
+        const spinVal = document.getElementById('spinVal');
+        const scaleVal = document.getElementById('scaleVal');
+        
+        const infoText = document.getElementById('infoText');
+        
+        let currentPattern = 'mandala';
+        
+        function updateDisplayValues() {
+            depthVal.textContent = depthSlider.value;
+            hueVal.textContent = hueSlider.value;
+            spinVal.textContent = spinSlider.value;
+            scaleVal.textContent = parseFloat(scaleSlider.value).toFixed(2);
+        }
+        
+        function drawFractal() {
+            ctx.clearRect(0, 0, 600, 600);
+            ctx.fillStyle = '#080814';
+            ctx.fillRect(0, 0, 600, 600);
+            
+            const centerX = 300;
+            const centerY = 300;
+            const depth = parseInt(depthSlider.value);
+            const hueShift = parseInt(hueSlider.value);
+            const spin = parseInt(spinSlider.value);
+            const scale = parseFloat(scaleSlider.value);
+            
+            ctx.translate(centerX, centerY);
+            
+            if (currentPattern === 'mandala') {
+                drawMandala(0, 0, 250, depth, 0);
+            } else if (currentPattern === 'tree') {
+                drawTree(0, 150, 100, depth, -Math.PI/2);
+            } else if (currentPattern === 'snowflake') {
+                drawSnowflake(0, 0, 200, depth);
+            } else if (currentPattern === 'spiral') {
+                drawSpiral(0, 0, 50, depth, 0);
+            }
+            
+            ctx.translate(-centerX, -centerY);
+            
+            infoText.textContent = `⍟ ${currentPattern.toUpperCase()} · DEPTH: ${depth} · HUE: ${hueShift}° ⍟`;
+        }
+        
+        function drawMandala(x, y, radius, depth, angle) {
+            if (depth === 0) return;
+            
+            const hue = (hueSlider.value + depth * 30) % 360;
+            ctx.strokeStyle = `hsl(${hue}, 90%, 70%)`;
+            ctx.lineWidth = depth * 1.5;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            const count = 6 + depth;
+            for (let i = 0; i < count; i++) {
+                const newAngle = (i / count) * Math.PI * 2 + angle + spinSlider.value * 0.01;
+                const newX = x + Math.cos(newAngle) * radius * 0.7;
+                const newY = y + Math.sin(newAngle) * radius * 0.7;
+                
+                drawMandala(newX, newY, radius * scaleSlider.value, depth - 1, newAngle);
+            }
+        }
+        
+        function drawTree(x, y, length, depth, angle) {
+            if (depth === 0) return;
+            
+            const hue = (hueSlider.value + depth * 40) % 360;
+            ctx.strokeStyle = `hsl(${hue}, 90%, 60%)`;
+            ctx.lineWidth = depth * 2;
+            
+            const endX = x + Math.cos(angle) * length;
+            const endY = y + Math.sin(angle) * length;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            
+            const newLength = length * scaleSlider.value;
+            const angleSpread = spinSlider.value * 0.02;
+            
+            drawTree(endX, endY, newLength, depth - 1, angle - angleSpread);
+            drawTree(endX, endY, newLength, depth - 1, angle + angleSpread);
+        }
+        
+        function drawSnowflake(x, y, radius, depth) {
+            if (depth === 0) return;
+            
+            const hue = (hueSlider.value + depth * 20) % 360;
+            ctx.strokeStyle = `hsl(${hue}, 90%, 70%)`;
+            ctx.lineWidth = depth;
+            
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2;
+                const endX = x + Math.cos(angle) * radius;
+                const endY = y + Math.sin(angle) * radius;
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                
+                // Branch
+                const branchAngle = angle + spinSlider.value * 0.01;
+                const branchX = x + Math.cos(angle) * radius * 0.6;
+                const branchY = y + Math.sin(angle) * radius * 0.6;
+                const branchEndX = branchX + Math.cos(branchAngle) * radius * 0.4;
+                const branchEndY = branchY + Math.sin(branchAngle) * radius * 0.4;
+                
+                ctx.beginPath();
+                ctx.moveTo(branchX, branchY);
+                ctx.lineTo(branchEndX, branchEndY);
+                ctx.stroke();
+            }
+            
+            drawSnowflake(x, y, radius * scaleSlider.value, depth - 1);
+        }
+        
+        function drawSpiral(x, y, size, depth, angle) {
+            if (depth === 0) return;
+            
+            const hue = (hueSlider.value + depth * 15) % 360;
+            ctx.fillStyle = `hsla(${hue}, 90%, 70%, 0.3)`;
+            ctx.strokeStyle = `hsl(${hue}, 90%, 70%)`;
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            const newAngle = angle + spinSlider.value * 0.05;
+            const newX = x + Math.cos(newAngle) * size * 1.5;
+            const newY = y + Math.sin(newAngle) * size * 1.5;
+            
+            drawSpiral(newX, newY, size * scaleSlider.value, depth - 1, newAngle);
+        }
+        
+        // Event listeners
+        depthSlider.addEventListener('input', () => {
+            updateDisplayValues();
+            drawFractal();
+        });
+        hueSlider.addEventListener('input', () => {
+            updateDisplayValues();
+            drawFractal();
+        });
+        spinSlider.addEventListener('input', () => {
+            updateDisplayValues();
+            drawFractal();
+        });
+        scaleSlider.addEventListener('input', () => {
+            updateDisplayValues();
+            drawFractal();
+        });
+        
+        document.querySelectorAll('.pattern-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentPattern = btn.dataset.pattern;
+                drawFractal();
+            });
+        });
+        
+        // Initialize
+        updateDisplayValues();
+        drawFractal();
+        
+        // Animation loop for subtle changes
+        setInterval(() => {
+            // Uncomment for auto-animation
+            // hueSlider.value = (parseInt(hueSlider.value) + 1) % 360;
+            // updateDisplayValues();
+            // drawFractal();
+        }, 100);
+    </script>
+</body>
+</html>

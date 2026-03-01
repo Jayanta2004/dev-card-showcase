@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fireworks Creator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0a2a 0%, #1a1a40 100%);
+            color: #f0f0f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff0080, #ff8c00, #40e0d0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            flex: 1;
+        }
+        
+        .controls-panel {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(20, 20, 50, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .fireworks-display {
+            flex: 2;
+            min-width: 500px;
+            background: rgba(10, 10, 30, 0.8);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        #fireworksCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: transparent;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        .control-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #40e0d0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-title i {
+            font-size: 1.2rem;
+        }
+        
+        .color-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 3px solid transparent;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+        
+        .color-option.active {
+            border-color: white;
+            box-shadow: 0 0 15px currentColor;
+        }
+        
+        .slider-container {
+            margin-bottom: 20px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .slider-label span:last-child {
+            color: #ff8c00;
+            font-weight: bold;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 10px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ff8c00;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #ff0080, #ff8c00);
+            color: white;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .btn-secondary {
+            background: rgba(64, 224, 208, 0.2);
+            color: #40e0d0;
+            border: 1px solid #40e0d0;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #ff0080, #ff8c00);
+            box-shadow: 0 7px 15px rgba(255, 140, 0, 0.4);
+        }
+        
+        .firework-types {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .firework-type {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .firework-type:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-3px);
+        }
+        
+        .firework-type.active {
+            background: rgba(64, 224, 208, 0.1);
+            border-color: #40e0d0;
+            box-shadow: 0 0 15px rgba(64, 224, 208, 0.3);
+        }
+        
+        .firework-type i {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            display: block;
+            color: #ff8c00;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .instructions h3 {
+            color: #ff8c00;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .firework-counter {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .firework-counter span {
+            color: #ff8c00;
+            font-weight: bold;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 1100px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .controls-panel, .fireworks-display {
+                min-width: 100%;
+            }
+            
+            .fireworks-display {
+                min-height: 500px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .firework-types {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-fire"></i> Fireworks Creator</h1>
+            <p class="subtitle">Design and launch your own custom fireworks display with interactive controls</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3 class="control-title"><i class="fas fa-palette"></i> Firework Color</h3>
+                    <div class="color-picker">
+                        <div class="color-option active" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                        <div class="color-option" style="background-color: #ff8c00;" data-color="#ff8c00"></div>
+                        <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
+                        <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
+                        <div class="color-option" style="background-color: #00ffff;" data-color="#00ffff"></div>
+                        <div class="color-option" style="background-color: #0080ff;" data-color="#0080ff"></div>
+                        <div class="color-option" style="background-color: #8000ff;" data-color="#8000ff"></div>
+                        <div class="color-option" style="background-color: #ff0080;" data-color="#ff0080"></div>
+                        <div class="color-option" style="background-color: #ffffff;" data-color="#ffffff"></div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3 class="control-title"><i class="fas fa-expand-alt"></i> Firework Size</h3>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Explosion Size:</span>
+                            <span id="sizeValue">Medium</span>
+                        </div>
+                        <input type="range" min="1" max="100" value="50" class="slider" id="sizeSlider">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Particle Count:</span>
+                            <span id="particleValue">80</span>
+                        </div>
+                        <input type="range" min="10" max="200" value="80" class="slider" id="particleSlider">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3 class="control-title"><i class="fas fa-magic"></i> Firework Type</h3>
+                    <div class="firework-types">
+                        <div class="firework-type active" data-type="circle">
+                            <i class="fas fa-circle"></i>
+                            <div>Circle</div>
+                        </div>
+                        <div class="firework-type" data-type="heart">
+                            <i class="fas fa-heart"></i>
+                            <div>Heart</div>
+                        </div>
+                        <div class="firework-type" data-type="star">
+                            <i class="fas fa-star"></i>
+                            <div>Star</div>
+                        </div>
+                        <div class="firework-type" data-type="spiral">
+                            <i class="fas fa-sync-alt"></i>
+                            <div>Spiral</div>
+                        </div>
+                        <div class="firework-type" data-type="random">
+                            <i class="fas fa-random"></i>
+                            <div>Random</div>
+                        </div>
+                        <div class="firework-type" data-type="fountain">
+                            <i class="fas fa-fountain"></i>
+                            <div>Fountain</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3 class="control-title"><i class="fas fa-rocket"></i> Launch Controls</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="launchBtn">
+                            <i class="fas fa-rocket"></i> Launch Firework
+                        </button>
+                        <button class="btn btn-secondary" id="autoLaunchBtn">
+                            <i class="fas fa-play"></i> Auto Launch
+                        </button>
+                        <button class="btn btn-secondary" id="clearBtn">
+                            <i class="fas fa-trash-alt"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <h3>How to Use:</h3>
+                    <ul>
+                        <li>Select a color for your firework from the palette</li>
+                        <li>Adjust the size and particle count with the sliders</li>
+                        <li>Choose a firework explosion pattern</li>
+                        <li>Click "Launch Firework" or click anywhere on the display area</li>
+                        <li>Use "Auto Launch" for an automatic fireworks show</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="fireworks-display">
+                <div class="canvas-container">
+                    <canvas id="fireworksCanvas"></canvas>
+                    <div class="firework-counter">
+                        Fireworks Launched: <span id="fireworkCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Fireworks Creator &copy; 2026 | Created with HTML, CSS, and JavaScript</p>
+            <p>Click anywhere on the display area to launch a firework at that position</p>
+        </footer>
+    </div>
+
+    <script src="script.js">
+
+    </script>
+</body>
+</html>

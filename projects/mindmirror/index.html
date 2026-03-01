@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindMirror · daily journal</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f2f5 0%, #e6e9f0 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            margin: 0;
+        }
+
+        /* main card – soft frosted mirror */
+        .journal-app {
+            max-width: 780px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(14px) saturate(180%);
+            -webkit-backdrop-filter: blur(14px) saturate(180%);
+            border-radius: 2.5rem;
+            box-shadow: 
+                0 30px 55px -20px rgba(0, 20, 30, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.8),
+                0 8px 20px rgba(0, 10, 20, 0.1);
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 2.2rem 2rem;
+            transition: all 0.2s ease;
+        }
+
+        /* header – today's date & mirror icon */
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 1.9rem;
+        }
+        .mirror-icon {
+            font-size: 2.4rem;
+            line-height: 1;
+            filter: drop-shadow(2px 4px 6px rgba(0,20,30,0.1));
+        }
+        .date-box {
+            background: rgba(255,255,255,0.5);
+            border-radius: 60px;
+            padding: 0.55rem 1.5rem 0.55rem 1.8rem;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.02);
+            font-weight: 500;
+            font-size: 1.2rem;
+            letter-spacing: 0.3px;
+            color: #1f2a41;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            backdrop-filter: blur(4px);
+        }
+        .date-box span {
+            font-weight: 400;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        /* prompt area — soft light */
+        .prompt-card {
+            background: rgba(240, 245, 255, 0.6);
+            border-radius: 2rem;
+            padding: 1.4rem 1.8rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 6px 14px rgba(0, 20, 30, 0.06);
+            backdrop-filter: blur(4px);
+        }
+        .today-label {
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1.2px;
+            color: #3f4d6b;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+        .prompt-text {
+            font-size: 1.5rem;
+            font-weight: 450;
+            line-height: 1.4;
+            color: #1d2b3f;
+            word-break: break-word;
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+        }
+        .prompt-text .quote-mark {
+            font-size: 2.4rem;
+            font-family: serif;
+            color: #8395b9;
+            opacity: 0.6;
+            line-height: 1;
+        }
+
+        /* editor section – clean & spacious */
+        .entry-area {
+            margin: 2rem 0 1.8rem;
+        }
+        .reflect-label {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 500;
+            color: #2c3a5b;
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+        .reflect-label i {
+            font-size: 1.3rem;
+            opacity: 0.7;
+        }
+        .journal-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1.5px solid rgba(210, 220, 240, 0.9);
+            border-radius: 1.8rem;
+            padding: 1.3rem 1.8rem;
+            font-family: 'Inter', inherit;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #1a263b;
+            resize: vertical;
+            outline: none;
+            transition: all 0.2s;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+            backdrop-filter: blur(4px);
+        }
+        .journal-input:focus {
+            border-color: #9aaec9;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 0 4px rgba(148, 176, 214, 0.2), inset 0 2px 4px #fff;
+        }
+        .journal-input::placeholder {
+            color: #8896b5;
+            font-weight: 300;
+            font-size: 1rem;
+        }
+
+        /* action buttons */
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem 1rem;
+            margin: 1.8rem 0 1.2rem;
+            align-items: center;
+        }
+        .btn {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255,255,255,0.9);
+            padding: 0.7rem 1.6rem;
+            border-radius: 50px;
+            font-weight: 520;
+            font-size: 0.95rem;
+            color: #1d314b;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 10px rgba(0, 15, 30, 0.05), 0 1px 2px rgba(0,0,0,0.05);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: 0.15s;
+            letter-spacing: 0.2px;
+            flex: 0 1 auto;
+        }
+        .btn-primary {
+            background: #ffffffde;
+            border: 1px solid #cddefa;
+            color: #1d3a5c;
+            box-shadow: 0 8px 16px -6px rgba(60, 90, 140, 0.2);
+            font-weight: 550;
+        }
+        .btn-primary:hover {
+            background: white;
+            border-color: #abc0df;
+            box-shadow: 0 12px 18px -8px rgba(50, 80, 130, 0.25);
+            transform: scale(1.02);
+        }
+        .btn-outline {
+            background: rgba(245, 248, 255, 0.5);
+            border: 1px solid rgba(255,255,255,0.9);
+        }
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: #b7c6e1;
+        }
+        .btn:active {
+            transform: scale(0.98);
+            background: rgba(235, 240, 250, 0.9);
+        }
+
+        /* history panel – minimal reflection list */
+        .history-section {
+            background: rgba(230, 238, 255, 0.3);
+            border-radius: 1.8rem;
+            padding: 1.6rem 1.6rem 1.2rem;
+            margin-top: 2rem;
+            border: 1px solid rgba(255,255,255,0.7);
+            backdrop-filter: blur(4px);
+        }
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.2rem;
+            font-size: 0.95rem;
+            color: #324767;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        .history-item {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 1.5rem;
+            padding: 0.8rem 1.4rem;
+            border-left: 6px solid #b1c6e8;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            transition: 0.1s;
+            font-size: 0.95rem;
+            color: #1e2d48;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+            border-left-color: #8099c7;
+        }
+        .history-item .entry-preview {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 260px;
+            font-style: italic;
+            opacity: 0.9;
+        }
+        .history-item .entry-date {
+            font-size: 0.75rem;
+            background: rgba(210, 225, 250, 0.7);
+            padding: 0.25rem 0.8rem;
+            border-radius: 40px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            color: #1e3b5a;
+        }
+        .empty-history {
+            text-align: center;
+            color: #5b6f91;
+            padding: 1.2rem 0;
+            font-style: italic;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3rem;
+            font-size: 0.95rem;
+        }
+        .clear-history-btn {
+            background: transparent;
+            border: 1px solid rgba(120, 140, 180, 0.3);
+            font-size: 0.75rem;
+            padding: 0.25rem 1rem;
+            border-radius: 30px;
+            color: #4d607e;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .clear-history-btn:hover {
+            background: rgba(255,255,255,0.5);
+            border-color: #889ec0;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 1.6rem;
+            font-size: 0.8rem;
+            color: #607394;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="journal-app" id="mindMirrorApp">
+        <!-- header with live date -->
+        <div class="app-header">
+            <div class="mirror-icon">🪞</div>
+            <div class="date-box" id="dateDisplay">
+                <span id="weekday"></span> <span id="fullDate"></span>
+            </div>
+        </div>
+
+        <!-- daily prompt (changes each day but stays consistent per session) -->
+        <div class="prompt-card">
+            <div class="today-label">MIRROR PROMPT</div>
+            <div class="prompt-text">
+                <span class="quote-mark">“</span>
+                <span id="dailyPrompt">loading reflection...</span>
+                <span class="quote-mark">”</span>
+            </div>
+        </div>
+
+        <!-- journal entry area -->
+        <div class="entry-area">
+            <label class="reflect-label">
+                <i>✍️</i> what's on your mind today?
+            </label>
+            <textarea id="journalInput" class="journal-input" rows="4" placeholder="Write freely — this is your mirror..."></textarea>
+        </div>
+
+        <!-- action buttons row -->
+        <div class="action-row">
+            <button class="btn btn-primary" id="saveEntryBtn">💾 Save reflection</button>
+            <button class="btn btn-outline" id="regeneratePromptBtn">🔄 new prompt</button>
+        </div>
+
+        <!-- history / past entries -->
+        <div class="history-section">
+            <div class="history-header">
+                <span>📓 previous reflections</span>
+                <button class="clear-history-btn" id="clearHistoryBtn" title="clear all entries">clear</button>
+            </div>
+            <div id="historyList" class="history-list">
+                <!-- dynamic entries appear here -->
+                <div class="empty-history">Your mirror will show past entries ✨</div>
+            </div>
+        </div>
+        <footer>— MindMirror · gentle self‑reflection —</footer>
+    </div>
+
+    <script>
+        (function() {
+            // ----------------------------------- data & state ------------------------------------
+            const STORAGE_KEY = 'mindmirror_journal_entries';
+
+            // today's date (fixed for the session, but updates if day changes)
+            const today = new Date();
+            const todayISO = today.toISOString().split('T')[0];  // YYYY-MM-DD
+            const todayDisplay = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const weekdayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+
+            // UI elements
+            const weekdaySpan = document.getElementById('weekday');
+            const fullDateSpan = document.getElementById('fullDate');
+            const promptSpan = document.getElementById('dailyPrompt');
+            const journalInput = document.getElementById('journalInput');
+            const saveBtn = document.getElementById('saveEntryBtn');
+            const regenerateBtn = document.getElementById('regeneratePromptBtn');
+            const historyContainer = document.getElementById('historyList');
+            const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+            // ---------- prompts pool (reflection starters) ----------
+            const promptPool = [
+                "What emotion stayed with you the longest today?",
+                "One small thing I appreciated today...",
+                "What could I let go of right now?",
+                "Today I showed myself kindness by...",
+                "A moment I want to remember from today.",
+                "What did I learn about myself?",
+                "If my mind were a mirror, what would it reflect?",
+                "A conversation that touched me today.",
+                "What tension can I soften within me?",
+                "Today I'm proud of...",
+                "Something I need to forgive myself for.",
+                "What energy do I want to invite tomorrow?",
+                "I felt most alive when...",
+                "A word that sums up today:",
+                "The quietest thought I had today...",
+                "What surprised me today?"
+            ];
+
+            // get random prompt (consistent within session unless regenerated)
+            function getRandomPrompt() {
+                return promptPool[Math.floor(Math.random() * promptPool.length)];
+            }
+
+            // initial prompt (or restore from session storage?)
+            let currentPrompt = getRandomPrompt();
+            promptSpan.textContent = currentPrompt;
+
+            // regenerate prompt (user clicks)
+            regenerateBtn.addEventListener('click', () => {
+                currentPrompt = getRandomPrompt();
+                promptSpan.textContent = currentPrompt;
+            });
+
+            // ---------- display today's date ----------
+            weekdaySpan.textContent = weekdayName;
+            fullDateSpan.textContent = todayDisplay;
+
+            // ---------- load entries from localStorage ----------
+            let entries = [];   // array of { dateISO, displayDate, prompt, text }
+
+            function loadEntries() {
+                try {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    if (stored) {
+                        entries = JSON.parse(stored);
+                        // basic validation: ensure it's an array
+                        if (!Array.isArray(entries)) entries = [];
+                    } else {
+                        entries = [];
+                    }
+                } catch (e) {
+                    console.warn("failed to load entries");
+                    entries = [];
+                }
+                // always sort: newest first (by dateISO then time added? we keep as stored but we can sort)
+                entries.sort((a, b) => (a.dateISO < b.dateISO ? 1 : -1));
+            }
+
+            function saveEntries() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+            }
+
+            // render history panel
+            function renderHistory() {
+                if (!historyContainer) return;
+
+                if (entries.length === 0) {
+                    historyContainer.innerHTML = `<div class="empty-history">Your mirror will show past entries ✨</div>`;
+                    return;
+                }
+
+                // show latest 6 entries (newest first)
+                const latest = entries.slice(0, 6);
+                let htmlStr = '';
+                latest.forEach(entry => {
+                    const preview = entry.text.length > 40 ? entry.text.substring(0, 40) + '…' : entry.text;
+                    // display friendly date: if today, show "Today", else show short date
+                    let displayDate = entry.displayDate || entry.dateISO;
+                    if (entry.dateISO === todayISO) displayDate = 'Today';
+                    else {
+                        // try to format compact
+                        const d = new Date(entry.dateISO + 'T12:00:00'); // avoid timezone issues
+                        displayDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }
+
+                    htmlStr += `
+                        <div class="history-item">
+                            <span class="entry-preview" title="${entry.text.replace(/"/g, '&quot;')}">${preview}</span>
+                            <span class="entry-date">${displayDate}</span>
+                        </div>
+                    `;
+                });
+                historyContainer.innerHTML = htmlStr;
+            }
+
+            // initial load
+            loadEntries();
+            renderHistory();
+
+            // ---------- check if today's entry already exists (to prefill?) ----------
+            const todaysEntry = entries.find(e => e.dateISO === todayISO);
+            if (todaysEntry) {
+                journalInput.value = todaysEntry.text;
+                journalInput.placeholder = 'Reflection saved (you can update)';
+            } else {
+                journalInput.value = '';
+                journalInput.placeholder = 'Write freely — this is your mirror...';
+            }
+
+            // ---------- save (create or update today's entry) ----------
+            saveBtn.addEventListener('click', () => {
+                const text = journalInput.value.trim();
+                if (text === '') {
+                    // optional gentle alert – but we allow empty? better to remind softly
+                    if (!confirm('Your reflection is empty. Save anyway?')) {
+                        return;
+                    }
+                }
+
+                const newText = journalInput.value;  // keep as entered (even spaces if user wants)
+                const todayEntryIndex = entries.findIndex(e => e.dateISO === todayISO);
+
+                const entryObject = {
+                    dateISO: todayISO,
+                    displayDate: todayDisplay, // full date string
+                    prompt: currentPrompt,
+                    text: newText,
+                };
+
+                if (todayEntryIndex >= 0) {
+                    // update existing entry
+                    entries[todayEntryIndex] = entryObject;
+                } else {
+                    // add new
+                    entries.push(entryObject);
+                }
+
+                // sort and save
+                entries.sort((a, b) => (a.dateISO < b.dateISO ? 1 : -1));
+                saveEntries();
+                renderHistory();
+                journalInput.placeholder = 'Reflection saved ✓';
+                // subtle feedback
+                saveBtn.style.background = '#e5f0e8';
+                setTimeout(() => saveBtn.style.background = '', 180);
+            });
+
+            // ---------- clear all history (with confirmation) ----------
+            clearHistoryBtn.addEventListener('click', () => {
+                if (entries.length === 0) return;
+                const ok = confirm('Remove all past reflections? This cannot be undone.');
+                if (ok) {
+                    entries = [];
+                    saveEntries();
+                    renderHistory();
+                    // if today's entry was present, clear field only if user wants? We respect blank state.
+                    journalInput.value = '';
+                    journalInput.placeholder = 'Write freely — this is your mirror...';
+                }
+            });
+
+            // ---------- auto-save / optional? we don't auto-save, only manual.
+            // but we could sync if user closes? not needed. keep manual.
+
+            // ---------- if user wants to start fresh with today's entry, they can just type.
+            // no extra.
+
+            // Optional: update history if another tab changes localStorage? we can ignore.
+
+            // extra: listen for localStorage changes (if same tab updates, already fine)
+            window.addEventListener('storage', (e) => {
+                if (e.key === STORAGE_KEY) {
+                    // another tab changed storage — reload and rerender
+                    loadEntries();
+                    renderHistory();
+                    // also check today's entry again to update textarea if needed
+                    const updatedToday = entries.find(e => e.dateISO === todayISO);
+                    if (updatedToday) {
+                        journalInput.value = updatedToday.text;
+                    } else {
+                        // if cleared, maybe clear if empty but keep user input? we choose not to clear unsaved.
+                        if (!journalInput.value) journalInput.value = '';
+                    }
+                }
+            });
+
+            // optional: set min height for text
+        })();
+    </script>
+</body>
+</html>

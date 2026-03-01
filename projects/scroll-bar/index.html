@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎨 custom scrollbar designer · live preview</title>
+  <style>
+    /* minimalist reset & base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #1e272e 0%, #2c3a42 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      padding: 1.5rem;
+    }
+
+    /* main card – frosted glass effect */
+    .designer-card {
+      max-width: 1300px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 2.5rem;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 25px 50px -8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 500;
+      letter-spacing: -0.5px;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    h1 span {
+      background: #ffb347;
+      color: #1e272e;
+      font-size: 1.3rem;
+      font-weight: 600;
+      padding: 0.2rem 1rem;
+      border-radius: 60px;
+      letter-spacing: 0.3px;
+    }
+
+    .subhead {
+      color: rgba(255, 255, 255, 0.55);
+      margin-bottom: 2.5rem;
+      font-size: 1.1rem;
+      border-left: 4px solid #ffb347;
+      padding-left: 1.2rem;
+    }
+
+    /* two-column layout */
+    .workspace {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 2rem;
+    }
+
+    /* ---------- control panel (left) ---------- */
+    .control-panel {
+      background: rgba(12, 20, 25, 0.7);
+      border-radius: 2rem;
+      padding: 1.8rem 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      box-shadow: inset 0 2px 3px rgba(0,0,0,0.5), 0 5px 15px rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      height: fit-content;
+    }
+
+    .control-group {
+      margin-bottom: 2.2rem;
+    }
+
+    .control-group h3 {
+      color: #ffb347;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-size: 0.8rem;
+      margin-bottom: 1.2rem;
+      border-bottom: 1px dashed rgba(255, 180, 70, 0.3);
+      padding-bottom: 0.4rem;
+    }
+
+    .slider-item, .color-item {
+      margin-bottom: 1.2rem;
+    }
+
+    .slider-item label, .color-item label {
+      display: flex;
+      justify-content: space-between;
+      color: rgba(255,255,255,0.75);
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .slider-item input[type=range] {
+      width: 100%;
+      height: 6px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 20px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .slider-item input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #ffb347;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px black;
+      transition: 0.07s;
+    }
+
+    .slider-item input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); background: #ffa01e; }
+
+    .color-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .color-item label {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .color-item input[type=color] {
+      width: 60px;
+      height: 40px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .color-item input[type=color]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    .color-item input[type=color]::-webkit-color-swatch {
+      border: none;
+      border-radius: 8px;
+    }
+
+    /* numeric value display */
+    .value-badge {
+      background: #2a363f;
+      padding: 0.2rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #ffb347;
+      border: 1px solid #3e4d59;
+    }
+
+    /* preview box (right) */
+    .preview-container {
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 2rem;
+      border: 1px solid rgba(255, 180, 70, 0.15);
+      box-shadow: 0 15px 30px -10px black;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(4px);
+      height: 500px; /* fixed to demonstrate scrolling */
+    }
+
+    .preview-header {
+      background: rgba(0,0,0,0.3);
+      padding: 1rem 1.8rem;
+      border-bottom: 1px solid #3a4a55;
+      color: #ffd9a3;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preview-header code {
+      background: #1f2d35;
+      padding: 0.3rem 1rem;
+      border-radius: 40px;
+      color: #bdd3de;
+      font-size: 0.9rem;
+      border: 1px solid #3d525c;
+    }
+
+    .scroll-area {
+      flex: 1;
+      overflow-y: scroll;
+      padding: 1.8rem 2rem;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(255,180,70,0.05) 0%, transparent 30%),
+        rgba(25, 35, 40, 0.7);
+      scroll-behavior: smooth;
+    }
+
+    /* dynamic style injection via custom properties (applied to .scroll-area) */
+    .scroll-area.with-custom-scroll {
+      scrollbar-width: var(--sb-width, thin);          /* fallback for firefox */
+      scrollbar-color: var(--sb-thumb) var(--sb-track);
+    }
+
+    /* webkit scrollbar styling — dynamic via style tag rewrite, but we attach to a common class */
+    .scroll-area.with-custom-scroll::-webkit-scrollbar {
+      width: var(--sb-size, 16px);
+      height: var(--sb-size, 16px);
+    }
+    .scroll-area.with-custom-scroll::-webkit-scrollbar-track {
+      background: var(--sb-track, #d4d4d4);
+      border-radius: var(--sb-track-radius, 8px);
+    }
+    .scroll-area.with-custom-scroll::-webkit-scrollbar-thumb {
+      background: var(--sb-thumb, #a0a0a0);
+      border-radius: var(--sb-thumb-radius, 8px);
+      border: 2px solid transparent;            /* optical breathing room */
+      background-clip: padding-box;
+    }
+    /* optional hover effect (keep smooth) */
+    .scroll-area.with-custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: var(--sb-thumb-hover, #b0b0b0);
+      background-clip: padding-box;
+    }
+
+    /* firefox fallback (already set by scrollbar-color) but we keep radii? firefox ignores border-radius on scrollbar, but we show a note */
+    .firefox-note {
+      font-size: 0.7rem;
+      color: #ffb34790;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    /* sample content – fancy items */
+    .content-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .content-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 1.8rem;
+      padding: 1.5rem 2rem;
+      border: 1px solid rgba(255, 180, 70, 0.2);
+      backdrop-filter: blur(5px);
+      color: #e6eef5;
+      box-shadow: 0 10px 18px -10px #00000080;
+      transition: all 0.2s;
+    }
+
+    .content-card:hover {
+      border-color: #ffb34780;
+      background: rgba(255, 180, 70, 0.08);
+    }
+
+    .content-card h4 {
+      font-size: 1.3rem;
+      font-weight: 400;
+      color: #ffd9a3;
+      margin-bottom: 0.5rem;
+    }
+
+    .content-card p {
+      color: #b6ccda;
+      line-height: 1.6;
+    }
+
+    .chip {
+      display: inline-block;
+      background: #2b404b;
+      padding: 0.3rem 1.2rem;
+      border-radius: 60px;
+      font-size: 0.8rem;
+      color: #ffb87c;
+      margin-top: 0.5rem;
+      border: 1px solid #4a6572;
+    }
+
+    hr {
+      border: 1px solid #3a4f5a;
+      margin: 1rem 0;
+    }
+
+    /* copy section */
+    .copy-section {
+      margin-top: 2rem;
+      background: #1d2b33;
+      border-radius: 1.5rem;
+      padding: 1.2rem;
+      border: 1px solid #ffb34730;
+    }
+
+    .copy-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ffd7a5;
+      margin-bottom: 0.6rem;
+    }
+
+    .copy-header button {
+      background: #ffb347;
+      border: none;
+      color: #1e272e;
+      font-weight: 600;
+      padding: 0.3rem 1.2rem;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: 0.15s;
+      border: 1px solid #ffcf8a;
+    }
+
+    .copy-header button:hover {
+      background: #ffa11e;
+      transform: scale(1.02);
+    }
+
+    pre {
+      background: #0c151c;
+      padding: 1rem;
+      border-radius: 1rem;
+      color: #c9e0ec;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #3d525c;
+    }
+
+    .value-row {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+<div class="designer-card">
+  <h1>
+    🖌️ scrollbar designer 
+    <span>live CSS</span>
+  </h1>
+  <div class="subhead">adjust knobs → real preview · webkit + Firefox (limited radius)</div>
+
+  <div class="workspace">
+    <!-- left panel controls -->
+    <div class="control-panel">
+      <div class="control-group">
+        <h3>📏 DIMENSIONS</h3>
+        <div class="slider-item">
+          <label>scrollbar width <span id="sizeVal" class="value-badge">16px</span></label>
+          <input type="range" id="sizeSlider" min="6" max="30" value="16" step="1">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>🎨 COLORS</h3>
+        <div class="color-item">
+          <label>thumb</label>
+          <input type="color" id="thumbColor" value="#ffb347">
+        </div>
+        <div class="color-item">
+          <label>track</label>
+          <input type="color" id="trackColor" value="#2c3e4c">
+        </div>
+        <div class="color-item">
+          <label>hover thumb</label>
+          <input type="color" id="thumbHoverColor" value="#ffa01e">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>⚫ RADIUS (border)</h3>
+        <div class="slider-item">
+          <label>thumb radius <span id="thumbRadiusVal" class="value-badge">8px</span></label>
+          <input type="range" id="thumbRadius" min="0" max="20" value="8" step="1">
+        </div>
+        <div class="slider-item">
+          <label>track radius <span id="trackRadiusVal" class="value-badge">8px</span></label>
+          <input type="range" id="trackRadius" min="0" max="20" value="8" step="1">
+        </div>
+        <div class="firefox-note">⚠️ firefox respects only color, not radius</div>
+      </div>
+
+      <!-- tiny preset -->
+      <div style="display: flex; gap: 0.5rem; margin-top: 2rem;">
+        <button id="presetWarm" style="background:#ffb347; border:none; border-radius:3rem; padding:0.5rem 1.2rem; font-weight:600; color:#1e2a32; flex:1; cursor:pointer;">🌞 warm glow</button>
+        <button id="presetCool" style="background:#47b5ff; border:none; border-radius:3rem; padding:0.5rem 1.2rem; font-weight:600; color:#1e2a32; flex:1; cursor:pointer;">❄️ arctic</button>
+      </div>
+    </div>
+
+    <!-- preview column -->
+    <div>
+      <div class="preview-container">
+        <div class="preview-header">
+          <span>📄 scrollable content · <span id="liveSizeLabel">16px</span> wide</span>
+          <code>::-webkit-scrollbar</code>
+        </div>
+        <!-- scrollable area with dynamic class -->
+        <div class="scroll-area with-custom-scroll" id="scrollPreview">
+          <div class="content-grid">
+            <div class="content-card">
+              <h4>🌋 etna magma</h4>
+              <p>Scrollbar thumb glows with your chosen color. Adjust radius and width →</p>
+              <span class="chip">active control</span>
+            </div>
+            <div class="content-card">
+              <h4>🏔️ misty fjord</h4>
+              <p>Track color defines the background runway. Current track: <span id="trackName" style="font-family:monospace;">#2c3e4c</span></p>
+            </div>
+            <div class="content-card">
+              <h4>✨ northern lights</h4>
+              <p>Hover effect changes thumb to a lighter variant. Hover over scroll thumb to see.</p>
+            </div>
+            <div class="content-card">
+              <h4>⚡ dynamic preview</h4>
+              <p>Every slider updates CSS custom properties in real time. Webkit browsers show radius, Firefox uses solid colors.</p>
+            </div>
+            <div class="content-card">
+              <h4>🧪 extra content</h4>
+              <p>Still scrolling? fill, fill, fill…</p>
+            </div>
+            <div class="content-card">
+              <h4>📦 box 6</h4>
+              <p>Lorum impsum but we keep going to make that scrollbar appear.</p>
+            </div>
+            <div class="content-card">
+              <h4>🌀 almost there</h4>
+              <p>Last item – scroll back up to see changes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- generated css card -->
+      <div class="copy-section">
+        <div class="copy-header">
+          <span>📋 generated custom scrollbar CSS</span>
+          <button id="copyBtn">copy to clipboard</button>
+        </div>
+        <pre id="cssOutput">/* webkit scrollbar */
+::-webkit-scrollbar {
+  width: 16px;
+}
+::-webkit-scrollbar-track {
+  background: #2c3e4c;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #ffb347;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ffa01e;
+  background-clip: padding-box;
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // DOM elements
+    const scrollArea = document.getElementById('scrollPreview');
+    const sizeSlider = document.getElementById('sizeSlider');
+    const sizeVal = document.getElementById('sizeVal');
+    const liveSizeLabel = document.getElementById('liveSizeLabel');
+
+    const thumbColor = document.getElementById('thumbColor');
+    const trackColor = document.getElementById('trackColor');
+    const thumbHoverColor = document.getElementById('thumbHoverColor');
+
+    const thumbRadius = document.getElementById('thumbRadius');
+    const trackRadius = document.getElementById('trackRadius');
+    const thumbRadiusVal = document.getElementById('thumbRadiusVal');
+    const trackRadiusVal = document.getElementById('trackRadiusVal');
+
+    const cssOutput = document.getElementById('cssOutput');
+    const copyBtn = document.getElementById('copyBtn');
+    const trackName = document.getElementById('trackName'); // optional span
+
+    // preset buttons
+    const warmBtn = document.getElementById('presetWarm');
+    const coolBtn = document.getElementById('presetCool');
+
+    // We'll use CSS custom properties on scrollArea (they cascade to pseudo-elements)
+    // Also set Firefox scrollbar-color via style property (scrollbar-color, scrollbar-width)
+    function updateScrollbarStyle() {
+      // read values
+      const size = sizeSlider.value + 'px';
+      const tColor = thumbColor.value;
+      const trColor = trackColor.value;
+      const thHover = thumbHoverColor.value;
+      const thumbR = thumbRadius.value + 'px';
+      const trackR = trackRadius.value + 'px';
+
+      // update labels
+      sizeVal.innerText = size;
+      liveSizeLabel.innerText = size;
+      thumbRadiusVal.innerText = thumbR;
+      trackRadiusVal.innerText = trackR;
+      if (trackName) trackName.innerText = trColor;
+
+      // set custom properties on scrollArea (affect webkit pseudos)
+      scrollArea.style.setProperty('--sb-size', size);
+      scrollArea.style.setProperty('--sb-thumb', tColor);
+      scrollArea.style.setProperty('--sb-track', trColor);
+      scrollArea.style.setProperty('--sb-thumb-hover', thHover);
+      scrollArea.style.setProperty('--sb-thumb-radius', thumbR);
+      scrollArea.style.setProperty('--sb-track-radius', trackR);
+
+      // firefox support: scrollbar-width (accepts auto, thin, none, or a length? Actually only keywords. Use <length>? Not widely. We'll set width via 'thin' or 'auto' but we can approximate using 'thin' for small, but we want exact. better use custom width via standard property? Not supported. fallback: we set width as 'auto' and rely on color. For better FF, we can set scrollbar-width to 'auto' or 'thin' but we cannot set px. We'll keep 'auto' and use scrollbar-color.
+      // But we can try to set scrollbar-width to 'thin' if size < 10? Actually not exact. we ignore for simplicity and set color.
+      scrollArea.style.scrollbarColor = `${tColor} ${trColor}`;
+      // optional scrollbarWidth: 'auto' by default, we can set 'thin' if size <= 8? but users want exact size, but FF ignores. We'll set as 'auto' and note.
+      // for better attempt, set via style
+      if (parseInt(sizeSlider.value) <= 8) {
+        scrollArea.style.scrollbarWidth = 'thin';
+      } else {
+        scrollArea.style.scrollbarWidth = 'auto';
+      }
+
+      // update code block
+      const code = `/* webkit scrollbar (chrome, edge, safari) */
+::-webkit-scrollbar {
+  width: ${size};
+}
+::-webkit-scrollbar-track {
+  background: ${trColor};
+  border-radius: ${trackR};
+}
+::-webkit-scrollbar-thumb {
+  background: ${tColor};
+  border-radius: ${thumbR};
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: ${thHover};
+  background-clip: padding-box;
+}
+
+/* firefox */
+* {
+  scrollbar-width: ${parseInt(sizeSlider.value) <= 8 ? 'thin' : 'auto'};
+  scrollbar-color: ${tColor} ${trColor};
+}`;
+      cssOutput.innerText = code;
+    }
+
+    // attach events
+    [sizeSlider, thumbColor, trackColor, thumbHoverColor, thumbRadius, trackRadius].forEach(el => {
+      el.addEventListener('input', updateScrollbarStyle);
+    });
+
+    // preset: warm (already matches defaults, but we set explicit)
+    warmBtn.addEventListener('click', () => {
+      thumbColor.value = '#ffb347';
+      trackColor.value = '#2c3e4c';
+      thumbHoverColor.value = '#ffa01e';
+      thumbRadius.value = 8;
+      trackRadius.value = 8;
+      sizeSlider.value = 16;
+      updateScrollbarStyle();
+    });
+
+    coolBtn.addEventListener('click', () => {
+      thumbColor.value = '#47b5ff';
+      trackColor.value = '#16313d';
+      thumbHoverColor.value = '#8ad0ff';
+      thumbRadius.value = 12;
+      trackRadius.value = 4;
+      sizeSlider.value = 14;
+      updateScrollbarStyle();
+    });
+
+    // copy to clipboard
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(cssOutput.innerText).then(() => {
+        const original = copyBtn.innerText;
+        copyBtn.innerText = 'copied!';
+        setTimeout(() => copyBtn.innerText = original, 1500);
+      }).catch(() => alert('failed to copy'));
+    });
+
+    // initialize
+    updateScrollbarStyle();
+
+    // extra: update track name and hover preview already inside update function
+  })();
+</script>
+<!-- small note for Firefox users (radius limitation) -->
+</body>
+</html>

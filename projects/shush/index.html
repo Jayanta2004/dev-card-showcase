@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Shush - A noise-reactive reading experience">
+    <title>Shush - Read in Silence</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/reading.css">
+    <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <!-- Permission Modal -->
+    <div id="permission-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <svg viewBox="0 0 24 24" width="64" height="64">
+                    <path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path fill="currentColor" d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                </svg>
+            </div>
+            <h2>Experience Shush</h2>
+            <p>Shush creates a serene reading environment that responds to ambient noise. To begin, we need access to your microphone.</p>
+            <p class="modal-note">Your audio is processed locally and never recorded or transmitted.</p>
+            <div class="modal-actions">
+                <button id="grant-permission" class="btn btn-primary">Enable Microphone</button>
+                <button id="deny-permission" class="btn btn-secondary">Continue Without Audio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-icon error">
+                <svg viewBox="0 0 24 24" width="64" height="64">
+                    <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+            </div>
+            <h2>Audio Access Error</h2>
+            <p id="error-message">Unable to access microphone. Please check your browser permissions.</p>
+            <div class="modal-actions">
+                <button id="retry-permission" class="btn btn-primary">Try Again</button>
+                <button id="close-error" class="btn btn-secondary">Continue Anyway</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div id="app" class="app-container">
+        <!-- Header -->
+        <header class="site-header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>Shush</h1>
+                    <span class="tagline">Read in Perfect Silence</span>
+                </div>
+                <div class="header-status">
+                    <div id="status-indicator" class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Initializing...</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Control Panel -->
+        <aside id="control-panel" class="control-panel">
+            <div class="control-header">
+                <h3>Controls</h3>
+                <button id="toggle-controls" class="toggle-btn" aria-label="Toggle controls">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor" d="M7 14l5-5 5 5z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="control-content">
+                <!-- Sensitivity Control -->
+                <div class="control-group">
+                    <label for="sensitivity-slider">
+                        <span>Noise Sensitivity</span>
+                        <span id="sensitivity-value" class="control-value">50</span>
+                    </label>
+                    <input 
+                        type="range" 
+                        id="sensitivity-slider" 
+                        min="0" 
+                        max="100" 
+                        value="50"
+                        class="slider"
+                    >
+                    <div class="slider-labels">
+                        <span>Tolerant</span>
+                        <span>Strict</span>
+                    </div>
+                </div>
+
+                <!-- Fade Speed Control -->
+                <div class="control-group">
+                    <label for="fade-speed-slider">
+                        <span>Transition Speed</span>
+                        <span id="fade-speed-value" class="control-value">500ms</span>
+                    </label>
+                    <input 
+                        type="range" 
+                        id="fade-speed-slider" 
+                        min="100" 
+                        max="2000" 
+                        value="500"
+                        step="100"
+                        class="slider"
+                    >
+                    <div class="slider-labels">
+                        <span>Fast</span>
+                        <span>Slow</span>
+                    </div>
+                </div>
+
+                <!-- Effect Type -->
+                <div class="control-group">
+                    <label>
+                        <span>Noise Effect</span>
+                    </label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="effect" value="fade" checked>
+                            <span>Fade</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="effect" value="blur">
+                            <span>Blur</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="effect" value="blackout">
+                            <span>Blackout</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Audio Toggle -->
+                <div class="control-group">
+                    <button id="toggle-audio" class="btn btn-block">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                        </svg>
+                        <span id="audio-toggle-text">Pause Monitoring</span>
+                    </button>
+                </div>
+
+                <!-- Visual Indicators Toggle -->
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="show-visualizer" checked>
+                        <span>Show Audio Visualizer</span>
+                    </label>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Audio Visualizer -->
+        <div id="audio-visualizer" class="audio-visualizer">
+            <div class="visualizer-content">
+                <!-- Noise Meter -->
+                <div class="noise-meter">
+                    <div class="meter-label">Ambient Noise</div>
+                    <div class="meter-bar">
+                        <div id="noise-level-bar" class="meter-fill"></div>
+                        <div id="threshold-indicator" class="threshold-line"></div>
+                    </div>
+                    <div class="meter-value">
+                        <span id="noise-percentage">0</span>%
+                    </div>
+                </div>
+
+                <!-- Waveform Canvas -->
+                <div class="waveform-container">
+                    <canvas id="waveform-canvas"></canvas>
+                </div>
+
+                <!-- Frequency Bars -->
+                <div class="frequency-bars">
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                    <div class="freq-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="main-content">
+            <article class="reading-content">
+                <header class="article-header">
+                    <h1 class="article-title">The Art of Deep Focus</h1>
+                    <div class="article-meta">
+                        <time datetime="2026-01-30">January 30, 2026</time>
+                        <span class="separator">•</span>
+                        <span class="reading-time">8 min read</span>
+                    </div>
+                </header>
+
+                <div class="article-body">
+                    <p class="lead">
+                        In our increasingly noisy world, finding moments of true silence has become a luxury. 
+                        This reading experience adapts to your environment, gently reminding you when the 
+                        ambient noise disrupts your focus.
+                    </p>
+
+                    <h2>The Science of Silence</h2>
+                    <p>
+                        Neuroscience research has consistently demonstrated that our brains process information 
+                        more effectively in quiet environments. When exposed to constant background noise, our 
+                        cognitive resources are divided between filtering out distractions and focusing on the 
+                        task at hand.
+                    </p>
+
+                    <blockquote>
+                        "Silence is not the absence of something but the presence of everything."
+                        <cite>— Gordon Hempton, Acoustic Ecologist</cite>
+                    </blockquote>
+
+                    <h2>Creating Your Sanctuary</h2>
+                    <p>
+                        The concept behind Shush is simple yet profound: create a digital reading space that 
+                        respects the importance of silence. By monitoring ambient noise levels in real-time, 
+                        the interface provides immediate visual feedback when your environment becomes too loud.
+                    </p>
+
+                    <h3>Customizing Your Experience</h3>
+                    <p>
+                        Every environment is different, and every reader has unique preferences. Use the 
+                        sensitivity slider to adjust how reactive the interface is to noise. The transition 
+                        speed control lets you choose how quickly the content responds to noise changes.
+                    </p>
+
+                    <h2>The Psychology of Focus</h2>
+                    <p>
+                        Deep work—the ability to focus without distraction on cognitively demanding tasks—has 
+                        become increasingly rare in modern life. Creating the right environment is the first 
+                        step toward achieving this state.
+                    </p>
+
+                    <blockquote>
+                        "The best moments usually occur if a person's body or mind is stretched to its limits 
+                        in a voluntary effort to accomplish something difficult and worthwhile."
+                        <cite>— Mihaly Csikszentmihalyi</cite>
+                    </blockquote>
+
+                    <h2>Digital Minimalism</h2>
+                    <p>
+                        This project embodies principles of digital minimalism—using technology intentionally 
+                        to support our values rather than distract from them. The visual design prioritizes 
+                        readability and calm, with generous whitespace and carefully chosen typography.
+                    </p>
+
+                    <h3>The Power of Constraints</h3>
+                    <p>
+                        Adding the constraint of silence can enhance rather than diminish the reading experience. 
+                        When we know that noise will interrupt our flow, we become more intentional about creating 
+                        and protecting quiet moments. This mirrors the broader principle that constraints often 
+                        lead to creativity and better outcomes.
+                    </p>
+
+                    <h2>Practical Applications</h2>
+                    <p>
+                        While designed primarily for reading, the principles behind Shush can apply to any focused 
+                        work. Writers, researchers, students, and anyone seeking undistracted time can benefit from 
+                        environment-aware tools that promote concentration.
+                    </p>
+
+                    <p>
+                        Consider using this during your most important reading sessions. Turn off notifications, 
+                        close unnecessary tabs, adjust the sensitivity to match your space, and allow yourself 
+                        to be fully present with the text.
+                    </p>
+
+                    <h3>Building Better Habits</h3>
+                    <p>
+                        Over time, using tools like Shush can help build awareness of your environmental preferences 
+                        and needs. You might discover that you read best in the early morning when the world is 
+                        naturally quieter, or that certain spaces consistently provide better conditions for focus.
+                    </p>
+
+                    <h2>Conclusion</h2>
+                    <p>
+                        In a world that constantly demands our attention, creating space for silence is an 
+                        act of resistance. It's a declaration that some things—deep thought, careful reading, 
+                        meaningful reflection—require protection from the noise of modern life.
+                    </p>
+
+                    <p>
+                        Shush is more than a reading interface; it's an invitation to reclaim your attention 
+                        and rediscover the pleasure of complete immersion in ideas. May you find in these 
+                        quiet moments the clarity and insight that only silence can provide.
+                    </p>
+
+                    <div class="article-footer">
+                        <p class="footer-note">
+                            Adjust the controls to customize your experience. When you're ready, find a 
+                            quiet space and begin reading. Notice how the interface responds to your 
+                            environment, gently guiding you back to silence when needed.
+                        </p>
+                    </div>
+                </div>
+            </article>
+        </main>
+
+        <!-- Noise Overlay -->
+        <div id="noise-overlay" class="noise-overlay"></div>
+
+        <!-- Footer -->
+        <footer class="site-footer">
+            <div class="footer-content">
+                <p>&copy; 2026 Shush. Crafted for focused reading.</p>
+                <p class="footer-links">
+                    <a href="#about">About</a>
+                    <span class="separator">•</span>
+                    <a href="#privacy">Privacy</a>
+                    <span class="separator">•</span>
+                    <a href="#help">Help</a>
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="js/utils.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

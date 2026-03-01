@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federated Insight Aggregation Network</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/font/lucide.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i data-lucide="network" class="logo-icon"></i>
+                    <h1>Federated Insight Aggregation Network</h1>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot active"></div>
+                    <span>Network Active</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Network Overview -->
+            <div class="card network-overview">
+                <div class="card-header">
+                    <h2><i data-lucide="globe" class="card-icon"></i>Network Overview</h2>
+                    <div class="card-controls">
+                        <button id="refreshNetwork" class="btn-secondary">
+                            <i data-lucide="refresh-cw" class="btn-icon"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="network-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="activeNodes">24</div>
+                            <div class="stat-label">Active Nodes</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="dataSources">18</div>
+                            <div class="stat-label">Data Sources</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="insightsGenerated">1,247</div>
+                            <div class="stat-label">Insights Generated</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="networkLatency">45ms</div>
+                            <div class="stat-label">Avg Latency</div>
+                        </div>
+                    </div>
+                    <div class="network-visualization">
+                        <canvas id="networkChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Sources Panel -->
+            <div class="card data-sources">
+                <div class="card-header">
+                    <h2><i data-lucide="database" class="card-icon"></i>Data Sources</h2>
+                    <div class="card-controls">
+                        <button id="addSource" class="btn-primary">
+                            <i data-lucide="plus" class="btn-icon"></i>Add Source
+                        </button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="sources-list" id="sourcesList">
+                        <!-- Sources will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insight Aggregation -->
+            <div class="card insight-aggregation">
+                <div class="card-header">
+                    <h2><i data-lucide="brain" class="card-icon"></i>Insight Aggregation</h2>
+                    <div class="card-controls">
+                        <select id="aggregationMode" class="select-control">
+                            <option value="real-time">Real-time</option>
+                            <option value="batch">Batch Processing</option>
+                            <option value="hybrid">Hybrid</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="aggregation-controls">
+                        <div class="control-group">
+                            <label for="correlationThreshold">Correlation Threshold:</label>
+                            <input type="range" id="correlationThreshold" min="0" max="1" step="0.1" value="0.7">
+                            <span id="correlationValue">0.7</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="insightPriority">Priority Filter:</label>
+                            <select id="insightPriority" class="select-control">
+                                <option value="all">All Priorities</option>
+                                <option value="critical">Critical</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="insights-feed" id="insightsFeed">
+                        <!-- Insights will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Correlation Matrix -->
+            <div class="card correlation-matrix">
+                <div class="card-header">
+                    <h2><i data-lucide="git-branch" class="card-icon"></i>Correlation Matrix</h2>
+                    <div class="card-controls">
+                        <button id="recalculateCorrelations" class="btn-secondary">
+                            <i data-lucide="calculator" class="btn-icon"></i>Recalculate
+                        </button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="correlation-heatmap">
+                        <canvas id="correlationChart"></canvas>
+                    </div>
+                    <div class="correlation-legend">
+                        <div class="legend-item">
+                            <div class="legend-color high"></div>
+                            <span>Strong Correlation (0.8-1.0)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color medium"></div>
+                            <span>Moderate Correlation (0.5-0.8)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color low"></div>
+                            <span>Weak Correlation (0.2-0.5)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color none"></div>
+                            <span>No Correlation (0-0.2)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Insights Stream -->
+            <div class="card insights-stream">
+                <div class="card-header">
+                    <h2><i data-lucide="zap" class="card-icon"></i>Real-time Insights Stream</h2>
+                    <div class="card-controls">
+                        <button id="clearStream" class="btn-secondary">
+                            <i data-lucide="trash-2" class="btn-icon"></i>Clear
+                        </button>
+                        <button id="pauseStream" class="btn-secondary">
+                            <i data-lucide="pause" class="btn-icon"></i>Pause
+                        </button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="stream-container" id="insightsStream">
+                        <!-- Real-time insights will be added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Health Monitor -->
+            <div class="card network-health">
+                <div class="card-header">
+                    <h2><i data-lucide="activity" class="card-icon"></i>Network Health</h2>
+                    <div class="card-controls">
+                        <button id="runDiagnostics" class="btn-primary">
+                            <i data-lucide="stethoscope" class="btn-icon"></i>Run Diagnostics
+                        </button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="health-metrics">
+                        <div class="metric-item">
+                            <div class="metric-label">Uptime</div>
+                            <div class="metric-value" id="uptimeMetric">99.7%</div>
+                            <div class="metric-bar">
+                                <div class="metric-fill uptime-fill" style="width: 99.7%"></div>
+                            </div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Data Integrity</div>
+                            <div class="metric-value" id="integrityMetric">98.4%</div>
+                            <div class="metric-bar">
+                                <div class="metric-fill integrity-fill" style="width: 98.4%"></div>
+                            </div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Response Time</div>
+                            <div class="metric-value" id="responseMetric">45ms</div>
+                            <div class="metric-bar">
+                                <div class="metric-fill response-fill" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Throughput</div>
+                            <div class="metric-value" id="throughputMetric">2.4K/s</div>
+                            <div class="metric-bar">
+                                <div class="metric-fill throughput-fill" style="width: 92%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="health-chart">
+                        <canvas id="healthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Action Button for Quick Actions -->
+        <div class="fab-container">
+            <button id="fabButton" class="fab">
+                <i data-lucide="settings" class="fab-icon"></i>
+            </button>
+            <div id="fabMenu" class="fab-menu">
+                <button class="fab-item" data-action="export-data">
+                    <i data-lucide="download" class="fab-item-icon"></i>
+                    <span>Export Data</span>
+                </button>
+                <button class="fab-item" data-action="generate-report">
+                    <i data-lucide="file-text" class="fab-item-icon"></i>
+                    <span>Generate Report</span>
+                </button>
+                <button class="fab-item" data-action="network-config">
+                    <i data-lucide="settings" class="fab-item-icon"></i>
+                    <span>Network Config</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding new data sources -->
+    <div id="sourceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Data Source</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="sourceForm">
+                    <div class="form-group">
+                        <label for="sourceName">Source Name:</label>
+                        <input type="text" id="sourceName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sourceType">Source Type:</label>
+                        <select id="sourceType" required>
+                            <option value="api">API Endpoint</option>
+                            <option value="database">Database</option>
+                            <option value="sensor">IoT Sensor</option>
+                            <option value="log">Log Stream</option>
+                            <option value="social">Social Media</option>
+                            <option value="market">Market Data</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sourceUrl">URL/Endpoint:</label>
+                        <input type="url" id="sourceUrl" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateFrequency">Update Frequency:</label>
+                        <select id="updateFrequency">
+                            <option value="realtime">Real-time</option>
+                            <option value="1min">Every 1 minute</option>
+                            <option value="5min">Every 5 minutes</option>
+                            <option value="15min">Every 15 minutes</option>
+                            <option value="1hour">Every hour</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Add Source</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

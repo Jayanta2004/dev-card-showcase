@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L-System Generator - Fractal Plant Evolution</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, #1a3f2c, #2a5a3a);
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+        }
+
+        #canvas-container {
+            flex: 2;
+            position: relative;
+            background: #0a1f12;
+            overflow: hidden;
+        }
+
+        #lsystem-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .plant-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 40, 20, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(100, 255, 150, 0.3);
+            color: #a8ffb8;
+            z-index: 10;
+        }
+
+        .plant-info h2 {
+            color: #6fff8e;
+            margin-bottom: 10px;
+        }
+
+        .axiom-display {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: #b8ffc8;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        #control-panel {
+            flex: 1;
+            min-width: 400px;
+            background: rgba(20, 40, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(100, 255, 150, 0.3);
+            padding: 30px;
+            overflow-y: auto;
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #6fff8e, #b8ffc8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #a8ffb8;
+            font-size: 0.9rem;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .preset-btn {
+            padding: 12px;
+            background: rgba(100, 255, 150, 0.1);
+            border: 1px solid rgba(100, 255, 150, 0.3);
+            border-radius: 8px;
+            color: #a8ffb8;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            background: rgba(100, 255, 150, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .preset-btn.active {
+            background: #6fff8e;
+            color: #1a3f2c;
+            border-color: #6fff8e;
+        }
+
+        .rule-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .rule-section h3 {
+            color: #6fff8e;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+
+        .rule-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(100, 255, 150, 0.3);
+            border-radius: 8px;
+            color: #a8ffb8;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+
+        .rule-input:focus {
+            outline: none;
+            border-color: #6fff8e;
+        }
+
+        .slider-group {
+            margin-bottom: 20px;
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            color: #a8ffb8;
+            margin-bottom: 8px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 4px;
+            background: rgba(100, 255, 150, 0.2);
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #6fff8e;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px #6fff8e;
+        }
+
+        .value-badge {
+            background: rgba(100, 255, 150, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            color: #6fff8e;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .lsys-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #6fff8e, #4fcf6f);
+            color: #1a3f2c;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .lsys-btn.secondary {
+            background: transparent;
+            border: 1px solid #6fff8e;
+            color: #6fff8e;
+        }
+
+        .lsys-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(111, 255, 142, 0.3);
+        }
+
+        .stats-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            color: #a8ffb8;
+        }
+
+        .stat-value {
+            color: #6fff8e;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .generation-info {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .gen-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #6fff8e;
+        }
+
+        .branch-count {
+            display: inline-block;
+            margin-left: 10px;
+            color: #a8ffb8;
+        }
+
+        .color-picker {
+            width: 100%;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(100, 255, 150, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        @keyframes grow {
+            0% { transform: scaleY(0); }
+            100% { transform: scaleY(1); }
+        }
+
+        .growing {
+            animation: grow 2s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-container">
+            <canvas id="lsystem-canvas"></canvas>
+            
+            <div class="plant-info">
+                <h2 id="plant-name">🌿 Fractal Tree</h2>
+                <div class="axiom-display" id="current-axiom">Axiom: X</div>
+                <div class="axiom-display" id="current-string">Generation 5: X→F→...</div>
+            </div>
+        </div>
+
+        <div id="control-panel">
+            <div class="header">
+                <h1>🌳 L-System Generator</h1>
+                <p>Evolutionary fractal plants • Lindenmayer systems</p>
+            </div>
+
+            <div class="preset-grid">
+                <div class="preset-btn active" onclick="loadPreset('tree')">🌲 Tree</div>
+                <div class="preset-btn" onclick="loadPreset('fern')">🌿 Fern</div>
+                <div class="preset-btn" onclick="loadPreset('bush')">🌳 Bush</div>
+                <div class="preset-btn" onclick="loadPreset('flower')">🌸 Flower</div>
+                <div class="preset-btn" onclick="loadPreset('dragon')">🐉 Dragon</div>
+                <div class="preset-btn" onclick="loadPreset('sierpinski')">🔺 Sierpinski</div>
+            </div>
+
+            <div class="rule-section">
+                <h3>📜 Production Rules</h3>
+                <input type="text" class="rule-input" id="axiom" value="X" placeholder="Axiom">
+                <input type="text" class="rule-input" id="rule-f" value="F=FF" placeholder="F rule">
+                <input type="text" class="rule-input" id="rule-x" value="X=F[+X][-X]FX" placeholder="X rule">
+                <input type="text" class="rule-input" id="rule-y" value="Y=F[+Y]FY" placeholder="Y rule">
+            </div>
+
+            <div class="slider-group">
+                <label>
+                    Generations
+                    <span class="value-badge" id="gen-val">5</span>
+                </label>
+                <input type="range" class="slider" id="generations" min="1" max="8" value="5" step="1">
+            </div>
+
+            <div class="slider-group">
+                <label>
+                    Angle (degrees)
+                    <span class="value-badge" id="angle-val">25</span>
+                </label>
+                <input type="range" class="slider" id="angle" min="0" max="90" value="25" step="1">
+            </div>
+
+            <div class="slider-group">
+                <label>
+                    Branch Length
+                    <span class="value-badge" id="length-val">10</span>
+                </label>
+                <input type="range" class="slider" id="length" min="2" max="30" value="10" step="1">
+            </div>
+
+            <div class="slider-group">
+                <label>
+                    Branch Thickness
+                    <span class="value-badge" id="thickness-val">2</span>
+                </label>
+                <input type="range" class="slider" id="thickness" min="1" max="10" value="2" step="1">
+            </div>
+
+            <div class="slider-group">
+                <label>
+                    Random Variation
+                    <span class="value-badge" id="random-val">0</span>
+                </label>
+                <input type="range" class="slider" id="random" min="0" max="50" value="0" step="1">
+            </div>
+
+            <div class="color-picker" style="background: linear-gradient(90deg, #8b4513, #228b22, #32cd32)" id="color-gradient"></div>
+
+            <div class="button-group">
+                <button class="lsys-btn" onclick="generatePlant()">🌱 Generate</button>
+                <button class="lsys-btn secondary" onclick="evolvePlant()">🧬 Evolve</button>
+                <button class="lsys-btn secondary" onclick="randomizePlant()">🎲 Randomize</button>
+                <button class="lsys-btn secondary" onclick="savePlant()">💾 Save</button>
+            </div>
+
+            <div class="stats-panel">
+                <div class="stat-row">
+                    <span class="stat-label">String Length:</span>
+                    <span class="stat-value" id="string-length">1245</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Branch Count:</span>
+                    <span class="stat-value" id="branch-count">342</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Depth:</span>
+                    <span class="stat-value" id="depth">8</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Fractal Dimension:</span>
+                    <span class="stat-value" id="fractal-dim">1.62</span>
+                </div>
+
+                <div class="generation-info">
+                    <div style="color: #a8ffb8;">Current Generation</div>
+                    <div class="gen-number" id="current-gen">5</div>
+                    <div class="branch-count" id="complexity">Complexity: Medium</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LSystem {
+            constructor() {
+                this.canvas = document.getElementById('lsystem-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.resizeCanvas();
+                
+                // L-system parameters
+                this.axiom = 'X';
+                this.rules = {
+                    'F': 'FF',
+                    'X': 'F[+X][-X]FX',
+                    'Y': 'F[+Y]FY'
+                };
+                
+                this.generations = 5;
+                this.angle = 25 * Math.PI / 180;
+                this.length = 10;
+                this.thickness = 2;
+                this.randomness = 0;
+                
+                this.currentString = '';
+                this.generation = 0;
+                
+                this.generate();
+                window.addEventListener('resize', () => this.resizeCanvas());
+            }
+
+            resizeCanvas() {
+                this.canvas.width = window.innerWidth * 0.66;
+                this.canvas.height = window.innerHeight;
+                this.draw();
+            }
+
+            generate() {
+                let current = this.axiom;
+                
+                for (let i = 0; i < this.generations; i++) {
+                    let next = '';
+                    for (let char of current) {
+                        if (this.rules[char]) {
+                            next += this.rules[char];
+                        } else {
+                            next += char;
+                        }
+                    }
+                    current = next;
+                }
+                
+                this.currentString = current;
+                this.generation = this.generations;
+                
+                this.updateStats();
+                this.draw();
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Start from bottom center
+                const startX = this.canvas.width / 2;
+                const startY = this.canvas.height - 50;
+                
+                this.ctx.save();
+                this.ctx.translate(startX, startY);
+                this.ctx.rotate(-Math.PI / 2); // Point upward
+                
+                const stack = [];
+                let branchCount = 0;
+                
+                for (let char of this.currentString) {
+                    switch(char) {
+                        case 'F':
+                        case 'X':
+                        case 'Y':
+                            // Draw forward
+                            const currentLength = this.length * (1 + (Math.random() - 0.5) * this.randomness / 50);
+                            
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(0, 0);
+                            this.ctx.lineTo(0, -currentLength);
+                            
+                            // Color based on depth and randomness
+                            const greenValue = 100 + Math.floor(Math.random() * 100);
+                            const brownValue = 50 + Math.floor(Math.random() * 50);
+                            
+                            if (stack.length > 3) {
+                                this.ctx.strokeStyle = `rgb(50, ${greenValue}, 50)`;
+                            } else {
+                                this.ctx.strokeStyle = `rgb(${brownValue}, ${brownValue/2}, 20)`;
+                            }
+                            
+                            this.ctx.lineWidth = Math.max(1, this.thickness * (1 - stack.length * 0.1));
+                            this.ctx.stroke();
+                            
+                            this.ctx.translate(0, -currentLength);
+                            branchCount++;
+                            break;
+                            
+                        case '+':
+                            // Turn right
+                            let angleRight = this.angle * (1 + (Math.random() - 0.5) * this.randomness / 50);
+                            this.ctx.rotate(angleRight);
+                            break;
+                            
+                        case '-':
+                            // Turn left
+                            let angleLeft = -this.angle * (1 + (Math.random() - 0.5) * this.randomness / 50);
+                            this.ctx.rotate(angleLeft);
+                            break;
+                            
+                        case '[':
+                            // Push state
+                            stack.push({
+                                x: this.ctx.getTransform().e,
+                                y: this.ctx.getTransform().f,
+                                rotation: this.ctx.getTransform().a,
+                                thickness: this.thickness
+                            });
+                            break;
+                            
+                        case ']':
+                            // Pop state
+                            const state = stack.pop();
+                            if (state) {
+                                this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+                                this.ctx.translate(state.x, state.y);
+                                this.ctx.rotate(Math.atan2(state.rotation, 1));
+                            }
+                            break;
+                    }
+                }
+                
+                this.ctx.restore();
+                
+                // Update branch count
+                document.getElementById('branch-count').textContent = branchCount;
+                
+                // Update display
+                document.getElementById('current-string').textContent = 
+                    `Generation ${this.generation}: ${this.currentString.substring(0, 50)}...`;
+            }
+
+            updateStats() {
+                document.getElementById('string-length').textContent = this.currentString.length;
+                document.getElementById('current-gen').textContent = this.generation;
+                document.getElementById('depth').textContent = this.generations;
+                
+                // Calculate approximate fractal dimension
+                const dim = 1.5 + Math.random() * 0.3; // Simplified
+                document.getElementById('fractal-dim').textContent = dim.toFixed(2);
+                
+                // Determine complexity
+                const complexity = this.currentString.length > 5000 ? 'High' :
+                                  this.currentString.length > 1000 ? 'Medium' : 'Low';
+                document.getElementById('complexity').textContent = `Complexity: ${complexity}`;
+            }
+
+            setRules(axiom, rules) {
+                this.axiom = axiom;
+                this.rules = rules;
+                this.generate();
+            }
+
+            setGenerations(gen) {
+                this.generations = gen;
+                document.getElementById('gen-val').textContent = gen;
+                this.generate();
+            }
+
+            setAngle(angle) {
+                this.angle = angle * Math.PI / 180;
+                document.getElementById('angle-val').textContent = angle;
+                this.draw();
+            }
+
+            setLength(length) {
+                this.length = length;
+                document.getElementById('length-val').textContent = length;
+                this.draw();
+            }
+
+            setThickness(thickness) {
+                this.thickness = thickness;
+                document.getElementById('thickness-val').textContent = thickness;
+                this.draw();
+            }
+
+            setRandomness(random) {
+                this.randomness = random;
+                document.getElementById('random-val').textContent = random;
+                this.draw();
+            }
+
+            evolve() {
+                // Slight mutations to rules
+                const mutations = ['F', 'X', 'Y', '+', '-', '[', ']'];
+                
+                for (let key in this.rules) {
+                    let rule = this.rules[key];
+                    if (Math.random() < 0.3) {
+                        // Add a random mutation
+                        const pos = Math.floor(Math.random() * rule.length);
+                        const mutation = mutations[Math.floor(Math.random() * mutations.length)];
+                        rule = rule.substring(0, pos) + mutation + rule.substring(pos);
+                    }
+                    if (Math.random() < 0.2 && rule.length > 1) {
+                        // Delete a character
+                        const pos = Math.floor(Math.random() * rule.length);
+                        rule = rule.substring(0, pos) + rule.substring(pos + 1);
+                    }
+                    this.rules[key] = rule;
+                }
+                
+                // Update input fields
+                document.getElementById('rule-f').value = this.rules['F'] || '';
+                document.getElementById('rule-x').value = this.rules['X'] || '';
+                document.getElementById('rule-y').value = this.rules['Y'] || '';
+                
+                this.generate();
+            }
+
+            randomize() {
+                // Randomize all parameters
+                this.generations = Math.floor(Math.random() * 5) + 3;
+                this.angle = (Math.random() * 60 + 15) * Math.PI / 180;
+                this.length = Math.random() * 20 + 5;
+                this.thickness = Math.random() * 5 + 1;
+                this.randomness = Math.random() * 30;
+                
+                // Random rules
+                const symbols = ['F', 'X', 'Y', '+', '-', '[', ']'];
+                const ruleLength = Math.floor(Math.random() * 8) + 3;
+                
+                for (let key in this.rules) {
+                    let rule = '';
+                    for (let i = 0; i < ruleLength; i++) {
+                        rule += symbols[Math.floor(Math.random() * symbols.length)];
+                    }
+                    this.rules[key] = rule;
+                }
+                
+                // Update UI
+                document.getElementById('generations').value = this.generations;
+                document.getElementById('angle').value = Math.round(this.angle * 180 / Math.PI);
+                document.getElementById('length').value = Math.round(this.length);
+                document.getElementById('thickness').value = Math.round(this.thickness);
+                document.getElementById('random').value = Math.round(this.randomness);
+                
+                document.getElementById('rule-f').value = this.rules['F'];
+                document.getElementById('rule-x').value = this.rules['X'];
+                document.getElementById('rule-y').value = this.rules['Y'];
+                
+                this.generate();
+            }
+
+            loadPreset(type) {
+                const presets = {
+                    tree: {
+                        axiom: 'X',
+                        rules: { 'F': 'FF', 'X': 'F[+X][-X]FX' },
+                        angle: 25,
+                        generations: 5,
+                        length: 10,
+                        thickness: 2
+                    },
+                    fern: {
+                        axiom: 'X',
+                        rules: { 'F': 'FF', 'X': 'F[+X][-X]FX', 'Y': 'F[+Y]FY' },
+                        angle: 20,
+                        generations: 6,
+                        length: 8,
+                        thickness: 1
+                    },
+                    bush: {
+                        axiom: 'F',
+                        rules: { 'F': 'F[+F][-F]F' },
+                        angle: 30,
+                        generations: 4,
+                        length: 12,
+                        thickness: 3
+                    },
+                    flower: {
+                        axiom: 'X',
+                        rules: { 'F': 'FF', 'X': 'F[+X][-X][*X]' },
+                        angle: 36,
+                        generations: 4,
+                        length: 15,
+                        thickness: 2
+                    },
+                    dragon: {
+                        axiom: 'FX',
+                        rules: { 'X': 'X+YF+', 'Y': '-FX-Y' },
+                        angle: 90,
+                        generations: 8,
+                        length: 8,
+                        thickness: 1
+                    },
+                    sierpinski: {
+                        axiom: 'A',
+                        rules: { 'A': 'B-A-B', 'B': 'A+B+A' },
+                        angle: 60,
+                        generations: 6,
+                        length: 10,
+                        thickness: 1
+                    }
+                };
+                
+                const preset = presets[type];
+                if (preset) {
+                    this.axiom = preset.axiom;
+                    this.rules = preset.rules;
+                    this.angle = preset.angle * Math.PI / 180;
+                    this.length = preset.length;
+                    this.thickness = preset.thickness;
+                    this.generations = preset.generations;
+                    
+                    // Update UI
+                    document.getElementById('axiom').value = this.axiom;
+                    document.getElementById('rule-f').value = this.rules['F'] || '';
+                    document.getElementById('rule-x').value = this.rules['X'] || '';
+                    document.getElementById('rule-y').value = this.rules['Y'] || '';
+                    document.getElementById('generations').value = this.generations;
+                    document.getElementById('angle').value = preset.angle;
+                    document.getElementById('length').value = this.length;
+                    document.getElementById('thickness').value = this.thickness;
+                    
+                    document.getElementById('plant-name').textContent = 
+                        type.charAt(0).toUpperCase() + type.slice(1);
+                    
+                    this.generate();
+                }
+                
+                // Update active button
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+            }
+
+            save() {
+                // Save current plant as PNG
+                const dataURL = this.canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `lsystem-${Date.now()}.png`;
+                link.href = dataURL;
+                link.click();
+            }
+        }
+
+        // Initialize L-system
+        const lsys = new LSystem();
+
+        // Global control functions
+        function generatePlant() {
+            // Update rules from input
+            lsys.axiom = document.getElementById('axiom').value;
+            lsys.rules = {
+                'F': document.getElementById('rule-f').value,
+                'X': document.getElementById('rule-x').value,
+                'Y': document.getElementById('rule-y').value
+            };
+            lsys.generate();
+        }
+
+        function evolvePlant() {
+            lsys.evolve();
+        }
+
+        function randomizePlant() {
+            lsys.randomize();
+        }
+
+        function savePlant() {
+            lsys.save();
+        }
+
+        function loadPreset(type) {
+            lsys.loadPreset(type);
+        }
+
+        // Slider controls
+        document.getElementById('generations').addEventListener('input', (e) => {
+            lsys.setGenerations(parseInt(e.target.value));
+        });
+
+        document.getElementById('angle').addEventListener('input', (e) => {
+            lsys.setAngle(parseInt(e.target.value));
+        });
+
+        document.getElementById('length').addEventListener('input', (e) => {
+            lsys.setLength(parseInt(e.target.value));
+        });
+
+        document.getElementById('thickness').addEventListener('input', (e) => {
+            lsys.setThickness(parseInt(e.target.value));
+        });
+
+        document.getElementById('random').addEventListener('input', (e) => {
+            lsys.setRandomness(parseInt(e.target.value));
+        });
+
+        // Initialize with tree preset
+        lsys.loadPreset('tree');
+    </script>
+</body>
+</html>

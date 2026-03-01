@@ -119,21 +119,63 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
-        const hamburger = document.getElementById("hamburger");
-        const navLinks = document.getElementById("navLinks");
+        // const hamburger = document.getElementById("hamburger");
+        // const navLinks = document.getElementById("navLinks");
 
-        hamburger.addEventListener("click", () => {
-            navLinks.classList.toggle("active");
-        });
+        // hamburger.addEventListener("click", () => {
+        //     navLinks.classList.toggle("active");
+        // });
         /* ---------- ENHANCED SEARCH & FILTER SCRIPT ---------- */
         let currentFilter = 'all';
         let currentSearch = '';
         let selectedSkills = new Set();
+        let debounceTimer;
 
         function filterCards() {
-            currentSearch = document.getElementById("searchInput").value.toLowerCase();
-            applyFilters();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                currentSearch = document.getElementById("searchInput").value.toLowerCase();
+                updateClearButton();
+                applyFilters();
+            }, 300);
         }
+
+        function updateClearButton() {
+            const clearBtn = document.getElementById('clearSearch');
+            const searchInput = document.getElementById('searchInput');
+            if (clearBtn && searchInput) {
+                clearBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
+            }
+        }
+
+        function clearSearch() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                currentSearch = '';
+                updateClearButton();
+                applyFilters();
+                searchInput.focus();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const clearBtn = document.getElementById('clearSearch');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', clearSearch);
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+            });
+        });
 
         function filterByRole(role) {
     currentFilter = role;
@@ -155,11 +197,13 @@ document.addEventListener("DOMContentLoaded", () => {
         function applyFilters() {
             const cards = document.querySelectorAll(".card");
             const noResults = document.getElementById("noResults");
+            const resultCount = document.getElementById("searchResultCount");
             let visibleCount = 0;
 
             cards.forEach(card => {
                 const nameElement = card.querySelector("h2");
                 const roleElement = card.querySelector(".role");
+                const bioElement = card.querySelector("p");
                 
                 // Skip if elements don't exist
                 if (!nameElement || !roleElement) {
@@ -169,9 +213,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 const name = nameElement.innerText.toLowerCase();
                 const role = roleElement.innerText.toLowerCase();
+                const bio = bioElement ? bioElement.innerText.toLowerCase() : '';
                 const cardSkills = card.dataset.skills ? card.dataset.skills.split(',') : [];
 
-                const matchesSearch = name.includes(currentSearch);
+                const matchesSearch = currentSearch === '' || 
+                    name.includes(currentSearch) ||
+                    role.includes(currentSearch) ||
+                    bio.includes(currentSearch);
                 const matchesFilter = currentFilter === 'all' ||
                     role.includes(currentFilter);
                 
@@ -187,6 +235,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
+            // Update search result count
+            if (resultCount && currentSearch !== '') {
+                resultCount.textContent = `Found ${visibleCount} contributor${visibleCount !== 1 ? 's' : ''}`;
+            } else if (resultCount) {
+                resultCount.textContent = '';
+            }
+
             // Show/hide no results message
             if (noResults) {
                 if (visibleCount === 0) {
@@ -197,6 +252,55 @@ document.addEventListener("DOMContentLoaded", () => {
                     noResults.classList.remove('show');
                 }
             }
+
+            // Apply highlighting to search terms
+            highlightSearchTerms();
+        }
+
+        function highlightSearchTerms() {
+            const cards = document.querySelectorAll(".card");
+            cards.forEach(card => {
+                const nameElement = card.querySelector("h2");
+                const roleElement = card.querySelector(".role");
+                const bioElement = card.querySelector("p");
+                
+                // Reset original text content first
+                if (nameElement) {
+                    nameElement.innerHTML = nameElement.textContent;
+                }
+                if (roleElement) {
+                    roleElement.innerHTML = roleElement.textContent;
+                }
+                if (bioElement) {
+                    bioElement.innerHTML = bioElement.textContent;
+                }
+
+                // Apply highlighting if there's a search term
+                if (currentSearch && currentSearch.length > 0) {
+                    if (nameElement) {
+                        nameElement.innerHTML = nameElement.textContent.replace(
+                            new RegExp(`(${escapeRegExp(currentSearch)})`, 'gi'),
+                            '<span class="search-highlight">$1</span>'
+                        );
+                    }
+                    if (roleElement) {
+                        roleElement.innerHTML = roleElement.textContent.replace(
+                            new RegExp(`(${escapeRegExp(currentSearch)})`, 'gi'),
+                            '<span class="search-highlight">$1</span>'
+                        );
+                    }
+                    if (bioElement) {
+                        bioElement.innerHTML = bioElement.textContent.replace(
+                            new RegExp(`(${escapeRegExp(currentSearch)})`, 'gi'),
+                            '<span class="search-highlight">$1</span>'
+                        );
+                    }
+                }
+            });
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         // Skill filter functions
@@ -840,3 +944,105 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log('Should refresh?', shouldRefreshSpotlight());
         };
     });
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadProjects();
+});
+
+// Keyboard Shortcuts Overlay Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const shortcutsOverlay = document.getElementById('keyboardShortcutsOverlay');
+    const closeShortcutsBtn = document.getElementById('closeShortcuts');
+    
+    // Function to show shortcuts overlay
+    function showShortcutsOverlay() {
+        shortcutsOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+    
+    // Function to hide shortcuts overlay
+    function hideShortcutsOverlay() {
+        shortcutsOverlay.classList.remove('show');
+        document.body.style.overflow = 'auto'; // Restore scrolling
+    }
+    
+    // Show overlay when "?" key is pressed
+    document.addEventListener('keydown', function(e) {
+        // Only trigger if not typing in an input/textarea
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        if (e.key === '?' || e.key === '¿') {
+            e.preventDefault();
+            showShortcutsOverlay();
+        }
+        
+        // Also hide overlay with Escape key
+        if (e.key === 'Escape' && shortcutsOverlay.classList.contains('show')) {
+            hideShortcutsOverlay();
+        }
+    });
+    
+    // Close overlay when close button is clicked
+    if (closeShortcutsBtn) {
+        closeShortcutsBtn.addEventListener('click', hideShortcutsOverlay);
+    }
+    
+    // Close overlay when clicking outside the modal
+    shortcutsOverlay.addEventListener('click', function(e) {
+        if (e.target === shortcutsOverlay) {
+            hideShortcutsOverlay();
+        }
+    });
+
+    /* ===============================
+       NAVBAR DROPDOWN (More / Resources)
+       =============================== */
+    document.addEventListener("DOMContentLoaded", () => {
+        const dropdownButtons = document.querySelectorAll(".drop-btn");
+
+        dropdownButtons.forEach(btn => {
+            btn.addEventListener("click", e => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const menu = btn.nextElementSibling;
+
+                // Close other dropdowns
+                document.querySelectorAll(".dropdown-menu").forEach(m => {
+                    if (m !== menu) m.style.display = "none";
+                });
+
+                // Toggle current dropdown
+                menu.style.display =
+                    menu.style.display === "block" ? "none" : "block";
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", () => {
+            document.querySelectorAll(".dropdown-menu").forEach(menu => {
+                menu.style.display = "none";
+            });
+        });
+
+        // Load images and add loaded class
+        const images = document.querySelectorAll('.card-img');
+        images.forEach(img => {
+            if (img.complete) {
+                // Image is already loaded from cache
+                img.classList.add('loaded');
+            } else {
+                // Image is loading, wait for load event
+                img.addEventListener('load', function() {
+                    this.classList.add('loaded');
+                });
+                img.addEventListener('error', function() {
+                    // Even on error, make it visible
+                    this.classList.add('loaded');
+                });
+            }
+        });
+    });
+});

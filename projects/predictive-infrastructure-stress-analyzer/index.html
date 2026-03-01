@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Infrastructure Stress Analyzer</title>
+    <link rel="stylesheet" href="predictive-infrastructure-stress-analyzer.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1/build/global/luxon.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-chart-line"></i> Predictive Infrastructure Stress Analyzer</h1>
+            <p>Forecast infrastructure stress using time-series modeling and anomaly detection</p>
+        </header>
+
+        <div class="dashboard-overview">
+            <div class="metric-card">
+                <h3>Current Stress Level</h3>
+                <div class="stress-indicator" id="currentStress">Low</div>
+                <div class="stress-value" id="stressValue">35%</div>
+            </div>
+            <div class="metric-card">
+                <h3>Predicted Peak</h3>
+                <div class="predicted-peak" id="predictedPeak">78%</div>
+                <div class="peak-time" id="peakTime">14:30</div>
+            </div>
+            <div class="metric-card">
+                <h3>Risk Assessment</h3>
+                <div class="risk-level" id="riskAssessment">Medium</div>
+                <div class="confidence" id="confidenceLevel">92%</div>
+            </div>
+            <div class="metric-card">
+                <h3>Recommended Action</h3>
+                <div class="action" id="recommendedAction">Monitor</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="settings-panel">
+                    <h2><i class="fas fa-cogs"></i> Analysis Controls</h2>
+                    <div class="control-group">
+                        <label for="predictionHorizon">Prediction Horizon (hours)</label>
+                        <select id="predictionHorizon">
+                            <option value="1">1 hour</option>
+                            <option value="6">6 hours</option>
+                            <option value="12">12 hours</option>
+                            <option value="24" selected>24 hours</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="predictionModel">Prediction Model</label>
+                        <select id="predictionModel">
+                            <option value="arima">ARIMA</option>
+                            <option value="prophet">Prophet</option>
+                            <option value="lstm">LSTM</option>
+                            <option value="ensemble" selected>Ensemble</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="anomalyAlgorithm">Anomaly Detection</label>
+                        <select id="anomalyAlgorithm">
+                            <option value="isolation-forest" selected>Isolation Forest</option>
+                            <option value="one-class-svm">One-Class SVM</option>
+                            <option value="autoencoder">Autoencoder</option>
+                            <option value="prophet">Prophet</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="sensitivity">Sensitivity: <span id="sensitivityValue">0.70</span></label>
+                        <input type="range" id="sensitivity" min="0.1" max="1.0" step="0.1" value="0.7">
+                    </div>
+                    <div class="button-group">
+                        <button onclick="toggleRealTime()" class="btn-primary">
+                            <i class="fas fa-play"></i> Start Monitoring
+                        </button>
+                        <button onclick="openConfiguration()" class="btn-secondary">
+                            <i class="fas fa-sliders-h"></i> Configuration
+                        </button>
+                        <button onclick="exportData()" class="btn-secondary">
+                            <i class="fas fa-download"></i> Export Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="real-time-metrics">
+                    <h2><i class="fas fa-tachometer-alt"></i> Real-Time Metrics</h2>
+                    <div class="metric-item">
+                        <div class="metric-label">CPU Usage</div>
+                        <div class="metric-value" id="cpuUsage">45%</div>
+                        <div class="metric-bar">
+                            <div class="bar-fill" id="cpuBar" style="width: 45%"></div>
+                        </div>
+                        <div class="metric-trend" id="cpuTrend"><i class="fas fa-minus"></i> Stable</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Memory Usage</div>
+                        <div class="metric-value" id="memoryUsage">62%</div>
+                        <div class="metric-bar">
+                            <div class="bar-fill" id="memoryBar" style="width: 62%"></div>
+                        </div>
+                        <div class="metric-trend" id="memoryTrend"><i class="fas fa-arrow-up"></i> +2.1</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Network I/O</div>
+                        <div class="metric-value" id="networkUsage">28%</div>
+                        <div class="metric-bar">
+                            <div class="bar-fill" id="networkBar" style="width: 28%"></div>
+                        </div>
+                        <div class="metric-trend" id="networkTrend"><i class="fas fa-arrow-down"></i> -1.5</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Disk I/O</div>
+                        <div class="metric-value" id="diskUsage">34%</div>
+                        <div class="metric-bar">
+                            <div class="bar-fill" id="diskBar" style="width: 34%"></div>
+                        </div>
+                        <div class="metric-trend" id="diskTrend"><i class="fas fa-minus"></i> Stable</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Response Time</div>
+                        <div class="metric-value" id="responseTime">245ms</div>
+                        <div class="metric-trend" id="responseTrend"><i class="fas fa-arrow-up"></i> +15ms</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Error Rate</div>
+                        <div class="metric-value" id="errorRate">0.02%</div>
+                        <div class="metric-trend" id="errorTrend"><i class="fas fa-arrow-down"></i> -0.005</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="prediction-section">
+                    <h2><i class="fas fa-brain"></i> Stress Prediction</h2>
+                    <canvas id="predictionChart"></canvas>
+                    <div class="prediction-insights">
+                        <div class="insight-item">
+                            <span class="insight-label">Peak Load Time:</span>
+                            <span class="insight-value" id="peakTime">14:30</span>
+                        </div>
+                        <div class="insight-item">
+                            <span class="insight-label">Confidence:</span>
+                            <span class="insight-value" id="confidenceLevel">92%</span>
+                        </div>
+                        <div class="insight-item">
+                            <span class="insight-label">Risk Level:</span>
+                            <span class="insight-value risk-medium" id="riskAssessment">Medium</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="anomaly-section">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Anomaly Detection</h2>
+                    <div class="anomaly-score">
+                        <div class="score-display">
+                            <span class="score-label">Anomaly Score</span>
+                            <span class="score-value" id="anomalyScore">0.45</span>
+                        </div>
+                        <div class="anomaly-status normal" id="anomalyStatus">Normal</div>
+                    </div>
+                    <canvas id="anomalyChart"></canvas>
+                    <div class="anomaly-list" id="anomalyList">
+                        <div class="no-anomalies">No anomalies detected in the last 24 hours</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="scaling-recommendations">
+            <h2><i class="fas fa-balance-scale"></i> Auto-Scaling Recommendations</h2>
+            <div class="recommendation-grid">
+                <div class="recommendation-card">
+                    <h3>CPU Scaling</h3>
+                    <div class="priority" id="cpuPriority">Low</div>
+                    <p id="cpuRecommendation">CPU usage is stable. No scaling required.</p>
+                    <button onclick="applyScaling('CPU')" class="btn-apply">Apply Scaling</button>
+                    <button onclick="dismissRecommendation('CPU')" class="btn-dismiss">Dismiss</button>
+                </div>
+                <div class="recommendation-card">
+                    <h3>Memory Scaling</h3>
+                    <div class="priority" id="memoryPriority">Low</div>
+                    <p id="memoryRecommendation">Memory usage is stable. No scaling required.</p>
+                    <button onclick="applyScaling('Memory')" class="btn-apply">Apply Scaling</button>
+                    <button onclick="dismissRecommendation('Memory')" class="btn-dismiss">Dismiss</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="alerts-section">
+            <h2><i class="fas fa-bell"></i> System Alerts</h2>
+            <div class="alerts-container" id="alertsContainer">
+                <div class="no-alerts">No active alerts</div>
+            </div>
+        </div>
+
+        <div class="scaling-history">
+            <h2><i class="fas fa-history"></i> Scaling History</h2>
+            <div class="history-log" id="scalingLog">
+                <div class="log-entry">
+                    <span class="log-time">10:30</span>
+                    <span class="log-action">Auto-scaled CPU up by 20%</span>
+                    <span class="log-result success">Success</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Modal -->
+    <div id="configurationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Configuration Settings</h2>
+                <span class="close" onclick="closeConfiguration()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="config-group">
+                    <h3>Prediction Settings</h3>
+                    <div class="config-item">
+                        <label for="seasonalPeriod">Seasonal Period (hours)</label>
+                        <input type="number" id="seasonalPeriod" value="24" min="1" max="168">
+                    </div>
+                    <div class="config-item">
+                        <label for="trainingWindow">Training Window (days)</label>
+                        <input type="number" id="trainingWindow" value="7" min="1" max="30">
+                    </div>
+                    <div class="config-item">
+                        <label for="confidenceInterval">Confidence Interval: <span id="confidenceValue">95%</span></label>
+                        <input type="range" id="confidenceInterval" min="0.8" max="0.99" step="0.01" value="0.95">
+                    </div>
+                </div>
+                <div class="config-group">
+                    <h3>Threshold Settings</h3>
+                    <div class="config-item">
+                        <label for="cpuThreshold">CPU Threshold (%)</label>
+                        <input type="number" id="cpuThreshold" value="80" min="1" max="100">
+                    </div>
+                    <div class="config-item">
+                        <label for="memoryThreshold">Memory Threshold (%)</label>
+                        <input type="number" id="memoryThreshold" value="85" min="1" max="100">
+                    </div>
+                    <div class="config-item">
+                        <label for="responseTimeThreshold">Response Time Threshold (ms)</label>
+                        <input type="number" id="responseTimeThreshold" value="1000" min="1" max="10000">
+                    </div>
+                </div>
+                <div class="config-group">
+                    <h3>Auto-Scaling Settings</h3>
+                    <div class="config-item">
+                        <label for="scaleUpThreshold">Scale Up Threshold (%)</label>
+                        <input type="number" id="scaleUpThreshold" value="70" min="1" max="100">
+                    </div>
+                    <div class="config-item">
+                        <label for="scaleDownThreshold">Scale Down Threshold (%)</label>
+                        <input type="number" id="scaleDownThreshold" value="30" min="1" max="100">
+                    </div>
+                    <div class="config-item">
+                        <label for="cooldownPeriod">Cooldown Period (seconds)</label>
+                        <input type="number" id="cooldownPeriod" value="300" min="60" max="3600">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="resetToDefaults()" class="btn-secondary">Reset to Defaults</button>
+                <button onclick="saveConfiguration()" class="btn-primary">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="predictive-infrastructure-stress-analyzer.js"></script>
+</body>
+</html>

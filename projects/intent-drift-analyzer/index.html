@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contextual Intent Drift Analyzer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>📊 Intent Drift Analyzer</h1>
+                <p class="subtitle">Detects gradual shifts in user intent during extended interactions</p>
+            </div>
+            <div class="header-controls">
+                <button id="startSession" class="btn btn-primary">Start Session</button>
+                <button id="analyzeSession" class="btn btn-secondary">Analyze</button>
+                <button id="exportData" class="btn btn-tertiary">Export</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Session Overview -->
+            <section class="session-overview">
+                <div class="overview-card drift">
+                    <div class="card-icon">📈</div>
+                    <div class="card-info">
+                        <h3>Current Drift</h3>
+                        <p class="card-value" id="currentDrift">0%</p>
+                    </div>
+                </div>
+                <div class="overview-card alignment">
+                    <div class="card-icon">🎯</div>
+                    <div class="card-info">
+                        <h3>Intent Alignment</h3>
+                        <p class="card-value" id="alignment">100%</p>
+                    </div>
+                </div>
+                <div class="overview-card interactions">
+                    <div class="card-icon">💬</div>
+                    <div class="card-info">
+                        <h3>Interactions</h3>
+                        <p class="card-value" id="interactionCount">0</p>
+                    </div>
+                </div>
+                <div class="overview-card threshold">
+                    <div class="card-icon">⚠️</div>
+                    <div class="card-info">
+                        <h3>Threshold Status</h3>
+                        <p class="card-value" id="thresholdStatus">OK</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabs Navigation -->
+            <section class="tabs-section">
+                <button class="tab-button active" data-tab="timeline">Timeline</button>
+                <button class="tab-button" data-tab="semantic">Semantic Analysis</button>
+                <button class="tab-button" data-tab="interaction">Interaction History</button>
+                <button class="tab-button" data-tab="drift-map">Drift Map</button>
+                <button class="tab-button" data-tab="alerts">Drift Alerts</button>
+            </section>
+
+            <!-- Timeline Tab -->
+            <section id="timeline" class="tab-content active">
+                <div class="section-title">Interaction Timeline</div>
+                <canvas id="driftChart" class="chart-canvas"></canvas>
+                <div class="timeline-controls">
+                    <label for="timelineGranularity">Granularity:</label>
+                    <select id="timelineGranularity">
+                        <option value="interaction">Per Interaction</option>
+                        <option value="window">Rolling Window</option>
+                        <option value="phase">By Phase</option>
+                    </select>
+                </div>
+                <div class="timeline-events" id="timelineEvents">
+                    <div class="placeholder">No interactions recorded</div>
+                </div>
+            </section>
+
+            <!-- Semantic Analysis Tab -->
+            <section id="semantic" class="tab-content">
+                <div class="section-title">Semantic Comparison</div>
+                <div class="semantic-grid">
+                    <div class="semantic-panel">
+                        <h3>Initial Intent</h3>
+                        <div class="intent-box initial" id="initialIntent">
+                            <div class="placeholder">No initial query</div>
+                        </div>
+                    </div>
+                    <div class="semantic-panel">
+                        <h3>Current Context</h3>
+                        <div class="intent-box current" id="currentIntent">
+                            <div class="placeholder">No queries yet</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="semantic-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">Semantic Similarity:</span>
+                        <span class="metric-value" id="similarity">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Topic Coherence:</span>
+                        <span class="metric-value" id="coherence">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Vocabulary Overlap:</span>
+                        <span class="metric-value" id="overlap">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Intent Stability:</span>
+                        <span class="metric-value" id="stability">--</span>
+                    </div>
+                </div>
+                <div class="keyword-comparison">
+                    <div class="keywords-column">
+                        <h4>Initial Keywords</h4>
+                        <div id="initialKeywords" class="keyword-list">
+                            <span class="placeholder-text">No keywords</span>
+                        </div>
+                    </div>
+                    <div class="keywords-column">
+                        <h4>Current Keywords</h4>
+                        <div id="currentKeywords" class="keyword-list">
+                            <span class="placeholder-text">No keywords</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interaction History Tab -->
+            <section id="interaction" class="tab-content">
+                <div class="section-title">Interaction History</div>
+                <div class="interaction-controls">
+                    <button class="btn btn-small" onclick="window.analyzer.addSimulatedInteraction()">+ Add Interaction</button>
+                    <button class="btn btn-small" onclick="window.analyzer.clearSession()">Clear Session</button>
+                </div>
+                <div class="interactions-list" id="interactionsList">
+                    <div class="placeholder">Start a session to record interactions</div>
+                </div>
+            </section>
+
+            <!-- Drift Map Tab -->
+            <section id="drift-map" class="tab-content">
+                <div class="section-title">Intent Drift Map</div>
+                <canvas id="driftMapCanvas" class="chart-canvas" style="height: 400px;"></canvas>
+                <div class="drift-info">
+                    <div class="info-box">
+                        <h4>Drift Analysis</h4>
+                        <p id="driftAnalysis">No analysis available</p>
+                    </div>
+                    <div class="info-box">
+                        <h4>Phase Detection</h4>
+                        <p id="phaseInfo">No phases detected</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alerts Tab -->
+            <section id="alerts" class="tab-content">
+                <div class="section-title">Drift Alerts & Warnings</div>
+                <div class="alert-filters">
+                    <label for="alertType">Type:</label>
+                    <select id="alertType">
+                        <option value="">All</option>
+                        <option value="drift-warning">Drift Warning</option>
+                        <option value="drift-critical">Drift Critical</option>
+                        <option value="coherence-low">Low Coherence</option>
+                        <option value="shift-detected">Shift Detected</option>
+                    </select>
+                </div>
+                <div class="alerts-list" id="alertsList">
+                    <div class="placeholder">No alerts</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>Session Status: <span id="sessionStatus">Idle</span> | Duration: <span id="sessionDuration">0:00</span></p>
+            <p>Drift Threshold: <span id="driftThreshold">30%</span> | Coherence Target: <span id="coherenceTarget">0.8</span></p>
+        </footer>
+    </div>
+
+    <!-- Modal for Interaction Details -->
+    <div id="interactionModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="interactionTitle">Interaction Details</h2>
+            <div id="interactionDetails"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="window.analyzer.closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="analyzer.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            window.analyzer = new ContextualIntentDriftAnalyzer();
+            window.analyzer.initialize();
+
+            document.getElementById('startSession').addEventListener('click', () => window.analyzer.startSession());
+            document.getElementById('analyzeSession').addEventListener('click', () => window.analyzer.analyzeSession());
+            document.getElementById('exportData').addEventListener('click', () => window.analyzer.exportSession());
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const tabName = e.target.dataset.tab;
+                    
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    document.getElementById(tabName).classList.add('active');
+                });
+            });
+
+            document.getElementById('timelineGranularity').addEventListener('change', () => window.analyzer.updateTimeline());
+            document.getElementById('alertType').addEventListener('change', () => window.analyzer.filterAlerts());
+
+            document.querySelector('.modal-close').addEventListener('click', () => window.analyzer.closeModal());
+            window.addEventListener('click', (e) => {
+                const modal = document.getElementById('interactionModal');
+                if (e.target === modal) window.analyzer.closeModal();
+            });
+        });
+    </script>
+</body>
+</html>

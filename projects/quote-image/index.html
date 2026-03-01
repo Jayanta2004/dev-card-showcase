@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Quote to image · visual generator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #f7f3ff 0%, #e9e0f5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            margin: 0;
+        }
+        .card {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 3rem;
+            box-shadow: 0 25px 50px -10px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.6);
+            padding: 2rem 2rem 2.5rem;
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            background: linear-gradient(130deg, #1d1b38, #4a2f6b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-left: 0.5rem;
+        }
+        h1 span {
+            font-size: 2rem;
+        }
+        .sub {
+            color: #4b3b5c;
+            margin-left: 1rem;
+            margin-bottom: 2rem;
+            font-weight: 400;
+            border-left: 4px solid #b47aff;
+            padding-left: 1.2rem;
+            background: rgba(230, 215, 250, 0.4);
+            border-radius: 0 999px 999px 0;
+            width: fit-content;
+            padding-right: 1.5rem;
+        }
+        .generator-panel {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        /* left controls */
+        .controls {
+            flex: 1 1 280px;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            border-radius: 2rem;
+            padding: 1.7rem 1.5rem;
+            box-shadow: 0 8px 18px rgba(85, 52, 120, 0.1);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .control-group {
+            margin-bottom: 2rem;
+        }
+        .control-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: #2d1b44;
+            margin-bottom: 0.6rem;
+            font-size: 1rem;
+            letter-spacing: 0.3px;
+        }
+        .control-group label i {
+            font-size: 1.2rem;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border: 2px solid rgba(255,255,255,0.9);
+            background: rgba(255,255,255,0.7);
+            border-radius: 2rem;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.15s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            color: #1f112f;
+            font-weight: 500;
+        }
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+        textarea:focus, input:focus, select:focus {
+            border-color: #b77aff;
+            background: white;
+            box-shadow: 0 8px 18px #dec8ff;
+        }
+        .input-row {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+        }
+        .input-row input {
+            flex: 1;
+        }
+        .input-row input[type="color"] {
+            width: 60px;
+            height: 55px;
+            padding: 0.3rem;
+            border-radius: 2rem;
+            background: white;
+            cursor: pointer;
+            flex: 0 0 auto;
+        }
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            background: rgba(255,255,255,0.4);
+            padding: 0.5rem 0.8rem;
+            border-radius: 3rem;
+            border: 1px solid white;
+        }
+        .radio-group label {
+            display: flex;
+            gap: 0.3rem;
+            align-items: center;
+            font-weight: 500;
+            color: #3d2b55;
+        }
+        .download-btn {
+            background: linear-gradient(125deg, #301a4e, #5d3b85);
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            padding: 1rem 2rem;
+            border-radius: 3rem;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: 0.2s;
+            box-shadow: 0 12px 28px -8px #936dd6;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .download-btn:hover {
+            background: linear-gradient(125deg, #412463, #6e4a9c);
+            transform: scale(1.02);
+            box-shadow: 0 20px 30px -6px #9b7bd9;
+        }
+        .download-btn:active {
+            transform: scale(0.98);
+        }
+        /* right preview */
+        .preview-area {
+            flex: 2 1 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        .canvas-wrapper {
+            background: rgba(255,255,255,0.3);
+            border-radius: 2.5rem;
+            padding: 1.8rem;
+            box-shadow: inset 0 2px 8px rgba(255,255,255,0.8), 0 18px 28px -12px #ab8fd1;
+            backdrop-filter: blur(2px);
+            display: flex;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.9);
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -8px #4b2e6e;
+            background: #faf7ff; /* fallback, but will be overwritten by drawing */
+            transition: box-shadow 0.2s;
+            cursor: pointer;
+            margin: 0 auto;
+        }
+        .canvas-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 0 0.5rem;
+            color: #3b2852;
+            font-weight: 500;
+        }
+        .update-hint {
+            background: #e4d3ff;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+        .emoji-badge {
+            font-size: 1.3rem;
+        }
+        hr {
+            border: 1px solid rgba(255,215,255,0.7);
+            margin: 1rem 0;
+        }
+        small {
+            color: #5b4880;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>
+            <span>🖼️💬</span> 
+            quote → image
+        </h1>
+        <div class="sub">type your words, tune the style — download as PNG</div>
+
+        <div class="generator-panel">
+            <!-- left controls -->
+            <div class="controls">
+                <div class="control-group">
+                    <label><i>📝</i> Quote text</label>
+                    <textarea id="quoteInput" placeholder="e.g. The only limit is your mind.">Creativity is intelligence having fun</textarea>
+                </div>
+
+                <div class="control-group">
+                    <label><i>✍️</i> Author (optional)</label>
+                    <input type="text" id="authorInput" placeholder="— Unknown" value="Albert Einstein">
+                </div>
+
+                <div class="control-group">
+                    <label><i>🎨</i> Background style</label>
+                    <select id="bgSelect">
+                        <option value="gradient1" selected>🌅 Sunset dream</option>
+                        <option value="gradient2">🌿 mint & lavender</option>
+                        <option value="gradient3">🌌 midnight galaxy</option>
+                        <option value="gradient4">🍑 peachy dust</option>
+                        <option value="gradient5">💎 emerald water</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label><i>🖌️</i> Text color</label>
+                    <div class="input-row">
+                        <input type="color" id="textColorInput" value="#2b1b3e">
+                        <input type="color" id="authorColorInput" value="#5e3c7e">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.4rem; font-size:0.9rem; color:#4f3a65;">
+                        <span>main quote</span><span>author</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label><i>⚙️</i> Font style</label>
+                    <select id="fontSelect">
+                        <option value="'Times New Roman', serif" selected>🎭 classic serif</option>
+                        <option value="'Georgia', serif">📜 georgia</option>
+                        <option value="'Arial', sans-serif">🧊 arial (clean)</option>
+                        <option value="'Courier New', monospace">💻 monospace</option>
+                        <option value="'Brush Script MT', cursive">🖋️ script</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label><i>🔠</i> Alignment</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="align" value="left" > ⬅️ left</label>
+                        <label><input type="radio" name="align" value="center" checked> 🔯 center</label>
+                        <label><input type="radio" name="align" value="right"> ➡️ right</label>
+                    </div>
+                </div>
+
+                <button class="download-btn" id="downloadBtn">
+                    <span>📥</span> download image (PNG)
+                </button>
+                <hr>
+                <small>click canvas to randomize colors (fun mode) ✨</small>
+            </div>
+
+            <!-- preview with canvas -->
+            <div class="preview-area">
+                <div class="canvas-wrapper">
+                    <canvas id="quoteCanvas" width="600" height="600"></canvas>
+                </div>
+                <div class="canvas-footer">
+                    <span class="emoji-badge">🖼️ 👆</span>
+                    <span class="update-hint" id="liveIndicator">⚡ live update</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ----- get elements -----
+            const canvas = document.getElementById('quoteCanvas');
+            const ctx = canvas.getContext('2d');
+
+            const quoteInput = document.getElementById('quoteInput');
+            const authorInput = document.getElementById('authorInput');
+            const bgSelect = document.getElementById('bgSelect');
+            const textColorInput = document.getElementById('textColorInput');
+            const authorColorInput = document.getElementById('authorColorInput');
+            const fontSelect = document.getElementById('fontSelect');
+            const alignRadios = document.getElementsByName('align');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            // helper: get selected alignment
+            function getSelectedAlign() {
+                for (let radio of alignRadios) {
+                    if (radio.checked) return radio.value;
+                }
+                return 'center'; // fallback
+            }
+
+            // ----- gradient presets (backgrounds) -----
+            function applyBackground(styleKey, ctx, width, height) {
+                let gradient;
+                switch (styleKey) {
+                    case 'gradient1': // sunset dream
+                        gradient = ctx.createLinearGradient(0, 0, width*0.8, height);
+                        gradient.addColorStop(0, '#ffd4b0');
+                        gradient.addColorStop(0.4, '#ff9f9f');
+                        gradient.addColorStop(0.8, '#c09bd8');
+                        gradient.addColorStop(1, '#7b5c9e');
+                        break;
+                    case 'gradient2': // mint & lavender
+                        gradient = ctx.createLinearGradient(0, height, width, 0);
+                        gradient.addColorStop(0, '#d3c6f0');
+                        gradient.addColorStop(0.5, '#f2e3c9');
+                        gradient.addColorStop(1, '#b8e0d2');
+                        break;
+                    case 'gradient3': // midnight galaxy
+                        gradient = ctx.createRadialGradient(width*0.3, height*0.3, 40, width*0.7, height*0.7, 700);
+                        gradient.addColorStop(0, '#261447');
+                        gradient.addColorStop(0.5, '#371c5a');
+                        gradient.addColorStop(1, '#120b2b');
+                        break;
+                    case 'gradient4': // peachy dust
+                        gradient = ctx.createLinearGradient(0, 0, width, height);
+                        gradient.addColorStop(0, '#fbc7b7');
+                        gradient.addColorStop(0.6, '#f5a3b9');
+                        gradient.addColorStop(1, '#cb9edb');
+                        break;
+                    case 'gradient5': // emerald water
+                        gradient = ctx.createLinearGradient(0, height*0.3, width, height*0.8);
+                        gradient.addColorStop(0, '#a6e0d2');
+                        gradient.addColorStop(0.5, '#b7d9e4');
+                        gradient.addColorStop(1, '#b3a9d9');
+                        break;
+                    default: // fallback
+                        gradient = ctx.createLinearGradient(0, 0, width, height);
+                        gradient.addColorStop(0, '#f3e7ff');
+                        gradient.addColorStop(1, '#dccdff');
+                }
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+            }
+
+            // ----- main drawing function -----
+            function drawQuote() {
+                const width = canvas.width;
+                const height = canvas.height;
+
+                // clear with white background (for transparent gaps)
+                ctx.clearRect(0, 0, width, height);
+                
+                // 1. draw background gradient
+                const bgStyle = bgSelect.value;
+                applyBackground(bgStyle, ctx, width, height);
+
+                // 2. text variables
+                const quote = quoteInput.value.trim() || "—";
+                const author = authorInput.value.trim();
+                const mainColor = textColorInput.value;
+                const authorColor = authorColorInput.value;
+                const fontFamily = fontSelect.value;
+                const align = getSelectedAlign();
+
+                // set text alignment
+                let canvasAlign = align;
+                ctx.textAlign = canvasAlign;
+
+                // set x coordinate based on alignment
+                let xPos;
+                if (align === 'left') xPos = 80;
+                else if (align === 'right') xPos = width - 80;
+                else xPos = width / 2; // center
+
+                // ----- draw main quote (with auto wrap) -----
+                ctx.shadowColor = 'rgba(0,0,0,0.2)';
+                ctx.shadowBlur = 12;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                
+                // wrap quote
+                const maxWidth = width - 160; // comfortable margins
+                const lineHeight = 64;
+                const fontSize = 44;
+                ctx.font = `600 ${fontSize}px ${fontFamily}`;
+                ctx.fillStyle = mainColor;
+
+                const words = quote.split(' ');
+                let lines = [];
+                let currentLine = words[0];
+
+                for (let i = 1; i < words.length; i++) {
+                    const testLine = currentLine + ' ' + words[i];
+                    const metrics = ctx.measureText(testLine);
+                    if (metrics.width > maxWidth) {
+                        lines.push(currentLine);
+                        currentLine = words[i];
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                lines.push(currentLine); // last line
+
+                // if quote empty
+                if (quote === "—" || quote === "") lines = ["—"];
+
+                // starting Y (roughly vertical center, but dynamic)
+                let startY = height / 2 - ((lines.length - 1) * lineHeight) / 2.2;
+
+                for (let i = 0; i < lines.length; i++) {
+                    ctx.font = `600 ${fontSize}px ${fontFamily}`;
+                    ctx.fillStyle = mainColor;
+                    ctx.fillText(lines[i], xPos, startY + i * lineHeight);
+                }
+
+                // ----- draw author (smaller, separate) -----
+                if (author) {
+                    ctx.shadowBlur = 8;
+                    ctx.shadowOffsetX = 1;
+                    ctx.shadowOffsetY = 1;
+                    ctx.font = `300 30px ${fontFamily}`;
+                    ctx.fillStyle = authorColor;
+                    
+                    const authorLine = author.startsWith('—') ? author : `— ${author}`;
+                    const authorY = startY + lines.length * lineHeight + 48;
+                    
+                    // constrain width for author too
+                    const authorMetrics = ctx.measureText(authorLine);
+                    if (authorMetrics.width > maxWidth && authorLine.length > 20) {
+                        // if too long, just truncate (rare)
+                        ctx.fillText(authorLine.substring(0, 30) + '…', xPos, authorY);
+                    } else {
+                        ctx.fillText(authorLine, xPos, authorY);
+                    }
+                }
+
+                // reset shadow
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+            }
+
+            // ----- attach event listeners for live update -----
+            quoteInput.addEventListener('input', drawQuote);
+            authorInput.addEventListener('input', drawQuote);
+            bgSelect.addEventListener('change', drawQuote);
+            textColorInput.addEventListener('input', drawQuote);
+            authorColorInput.addEventListener('input', drawQuote);
+            fontSelect.addEventListener('change', drawQuote);
+            for (let radio of alignRadios) {
+                radio.addEventListener('change', drawQuote);
+            }
+
+            // randomize colors on canvas click (for fun)
+            canvas.addEventListener('click', function() {
+                const randomHex = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+                textColorInput.value = randomHex();
+                authorColorInput.value = randomHex();
+                drawQuote(); // redraw with new colors
+            });
+
+            // download as PNG
+            downloadBtn.addEventListener('click', function() {
+                const link = document.createElement('a');
+                link.download = `quote-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+
+            // initial draw
+            drawQuote();
+
+            // optional: adjust canvas resolution for sharper image (already 600x600)
+            // but we keep it crisp
+        })();
+    </script>
+</body>
+</html>

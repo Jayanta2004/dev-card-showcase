@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌿 The Alchemist's Garden</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #2b4f3b;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .garden {
+            width: 1000px;
+            background: #d9b382;
+            background: linear-gradient(145deg, #f0d5b0, #c4a078);
+            border-radius: 120px 120px 60px 60px;
+            padding: 40px;
+            box-shadow: 0 40px 60px #1a2f1a, inset 0 0 0 15px #b5926a, inset 0 0 0 30px #9b7a56;
+            border: 12px solid #6b4f34;
+        }
+        
+        .garden-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            color: #3a2a1a;
+            font-size: 32px;
+        }
+        
+        .herb-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .herb {
+            aspect-ratio: 1;
+            background: #5a7a4a;
+            border-radius: 40% 60% 40% 60%;
+            border: 8px solid #3a5a3a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: inset 0 -10px 0 #2a3a2a, 0 10px 0 #1a2a1a;
+            color: #f0e6d2;
+            font-size: 36px;
+        }
+        .herb:hover {
+            transform: translateY(-5px);
+        }
+        .herb.harvested {
+            background: #8b5a2a;
+        }
+        
+        .herb-name {
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        
+        .apothecary {
+            background: #6b4f34;
+            border-radius: 60px;
+            padding: 30px;
+            border: 8px solid #3a2a1a;
+            color: #f0e6d2;
+        }
+        
+        .potion-mixer {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        #potionInput {
+            flex: 1;
+            background: #f0e6d2;
+            border: 6px solid #3a2a1a;
+            padding: 20px;
+            font-size: 20px;
+            border-radius: 60px;
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .garden-btn {
+            background: #3a2a1a;
+            border: none;
+            color: #f0e6d2;
+            font-size: 24px;
+            padding: 20px 40px;
+            border-radius: 60px;
+            cursor: pointer;
+            border-bottom: 8px solid #1a0a0a;
+            transition: 0.05s linear;
+        }
+        .garden-btn:active {
+            border-bottom-width: 2px;
+            transform: translateY(6px);
+        }
+        
+        .inventory {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .herb-icon {
+            font-size: 30px;
+            padding: 10px;
+            background: #8b5a2a;
+            border-radius: 30px;
+            border: 2px solid #f0e6d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="garden">
+        <div class="garden-header">
+            <span>🌿 ALCHEMIST'S GARDEN</span>
+            <span id="harvestCount">0/16 harvested</span>
+        </div>
+        
+        <div class="herb-grid" id="herbGrid">
+            <!-- Herbs will be generated -->
+        </div>
+        
+        <div class="apothecary">
+            <div class="potion-mixer">
+                <input type="text" id="potionInput" placeholder="Mix your herbs into a potion...">
+                <button class="garden-btn" id="mixPotion">⚗️ MIX</button>
+            </div>
+            <div id="potionResult"></div>
+            <div class="inventory" id="inventory"></div>
+        </div>
+    </div>
+
+    <script>
+        const herbGrid = document.getElementById('herbGrid');
+        const harvestCount = document.getElementById('harvestCount');
+        const potionInput = document.getElementById('potionInput');
+        const potionResult = document.getElementById('potionResult');
+        const inventory = document.getElementById('inventory');
+        
+        const herbs = [
+            { name: 'Rosemary', icon: '🌿', property: 'memory' },
+            { name: 'Lavender', icon: '🌸', property: 'calm' },
+            { name: 'Sage', icon: '🌾', property: 'wisdom' },
+            { name: 'Thyme', icon: '🌱', property: 'courage' },
+            { name: 'Mint', icon: '🍃', property: 'energy' },
+            { name: 'Chamomile', icon: '🌼', property: 'peace' },
+            { name: 'Basil', icon: '🌿', property: 'love' },
+            { name: 'Dill', icon: '🌱', property: 'protection' },
+            { name: 'Oregano', icon: '🌿', property: 'strength' },
+            { name: 'Parsley', icon: '🌿', property: 'purification' },
+            { name: 'Cilantro', icon: '🌿', property: 'healing' },
+            { name: 'Fennel', icon: '🌱', property: 'longevity' },
+            { name: 'Tarragon', icon: '🌿', property: 'dreams' },
+            { name: 'Marjoram', icon: '🌿', property: 'joy' },
+            { name: 'Bay', icon: '🌿', property: 'victory' },
+            { name: 'Rosemary', icon: '🌿', property: 'remembrance' }
+        ];
+        
+        let harvested = Array(16).fill(false);
+        let inventory_items = [];
+        
+        function createGarden() {
+            herbGrid.innerHTML = '';
+            
+            for (let i = 0; i < 16; i++) {
+                const herb = document.createElement('div');
+                herb.className = `herb ${harvested[i] ? 'harvested' : ''}`;
+                herb.dataset.index = i;
+                
+                const icon = document.createElement('div');
+                icon.textContent = herbs[i].icon;
+                herb.appendChild(icon);
+                
+                const name = document.createElement('div');
+                name.className = 'herb-name';
+                name.textContent = herbs[i].name;
+                herb.appendChild(name);
+                
+                herb.addEventListener('click', () => harvestHerb(i));
+                herbGrid.appendChild(herb);
+            }
+            
+            const harvestedCount = harvested.filter(h => h).length;
+            harvestCount.textContent = `${harvestedCount}/16 harvested`;
+        }
+        
+        function harvestHerb(index) {
+            if (!harvested[index]) {
+                harvested[index] = true;
+                inventory_items.push(herbs[index]);
+                createGarden();
+                updateInventory();
+                potionResult.innerHTML = `🌿 Harvested ${herbs[index].name}!`;
+            }
+        }
+        
+        function updateInventory() {
+            inventory.innerHTML = '';
+            inventory_items.forEach((item, i) => {
+                const herbIcon = document.createElement('span');
+                herbIcon.className = 'herb-icon';
+                herbIcon.textContent = item.icon;
+                herbIcon.title = item.name;
+                inventory.appendChild(herbIcon);
+            });
+        }
+        
+        function mixPotion() {
+            if (inventory_items.length === 0) {
+                potionResult.innerHTML = 'No herbs to mix! Harvest some first.';
+                return;
+            }
+            
+            const intention = potionInput.value.trim();
+            
+            // Combine herb properties
+            const properties = inventory_items.map(h => h.property);
+            const uniqueProps = [...new Set(properties)];
+            
+            let potionEffect = '';
+            if (uniqueProps.length === 1) {
+                potionEffect = `A pure ${uniqueProps[0]} potion`;
+            } else if (uniqueProps.length === 2) {
+                potionEffect = `A ${uniqueProps[0]} and ${uniqueProps[1]} blend`;
+            } else {
+                potionEffect = `A complex elixir of ${uniqueProps.join(', ')}`;
+            }
+            
+            if (intention) {
+                potionEffect += ` for ${intention}`;
+            }
+            
+            potionResult.innerHTML = `⚗️ Brewed: ${potionEffect}!`;
+            
+            // Clear inventory after mixing
+            inventory_items = [];
+            harvested = Array(16).fill(false);
+            createGarden();
+            updateInventory();
+        }
+        
+        document.getElementById('mixPotion').addEventListener('click', mixPotion);
+        
+        createGarden();
+    </script>
+</body>
+</html>

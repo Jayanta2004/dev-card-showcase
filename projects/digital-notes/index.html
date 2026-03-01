@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sticky notes · digital board</title>
+    <!-- Google Font & icon-ish style (no external icons) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #e3dac9;
+            background-image: radial-gradient(circle at 30% 40%, #f0eadb 0%, #d6cdb8 100%);
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.2rem;
+        }
+
+        /* main board – cork / paper texture feel */
+        .board {
+            max-width: 1400px;
+            width: 100%;
+            background: #fcf5e8;
+            background-image: repeating-linear-gradient(45deg, #f3ecddaa 0px, #f3ecddaa 2px, #fcf5e8 2px, #fcf5e8 12px);
+            border-radius: 56px;
+            box-shadow: 0 30px 40px -20px #5f4e33, 0 0 0 1px #e4d5b6 inset, 0 0 0 3px #fffef8 inset;
+            padding: 2.5rem 2.2rem 3rem;
+            border: 1px solid #fff4df;
+        }
+
+        .board-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2.5rem;
+            background: #fffff0b0;
+            backdrop-filter: blur(8px);
+            border-radius: 100px;
+            padding: 0.8rem 1.8rem;
+            border: 1px solid #eeddbb;
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: #4f412b;
+        }
+
+        h1 span {
+            background: #b0926d;
+            color: #fffbe6;
+            font-size: 0.9rem;
+            padding: 0.25rem 1rem;
+            border-radius: 60px;
+            font-weight: 500;
+        }
+
+        .note-counter {
+            background: #e5cfb5;
+            border-radius: 60px;
+            padding: 0.3rem 1.5rem;
+            font-weight: 500;
+            color: #3f321e;
+            font-size: 0.95rem;
+            display: flex;
+            gap: 0.4rem;
+            align-items: center;
+        }
+
+        /* add note bar */
+        .add-note-panel {
+            background: #fffef7;
+            border-radius: 80px;
+            padding: 0.3rem 0.3rem 0.3rem 1.8rem;
+            margin-bottom: 2.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 10px 16px -16px #5f4f3a, 0 0 0 1px #f5e5ce;
+        }
+
+        .add-note-panel input {
+            flex: 3 1 250px;
+            background: transparent;
+            border: none;
+            padding: 1rem 0.5rem;
+            font-size: 1rem;
+            color: #3d3522;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+
+        .add-note-panel input::placeholder {
+            color: #a48e76;
+            font-style: italic;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f1e7da;
+            border-radius: 60px;
+            padding: 0.25rem 0.6rem;
+        }
+
+        .color-dot {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: 0.1s;
+            box-shadow: 0 2px 6px #997f60a0;
+        }
+
+        .color-dot.selected {
+            border-color: #2f4b5c;
+            transform: scale(1.15);
+            box-shadow: 0 0 0 2px white;
+        }
+
+        .add-btn {
+            background: #9f8b72;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.9rem 2.2rem;
+            border-radius: 60px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.15s;
+            border: 1px solid #fffde9;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .add-btn:hover {
+            background: #b7a084;
+        }
+
+        /* notes grid — responsive */
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.8rem;
+            margin-top: 1.2rem;
+        }
+
+        /* sticky note style */
+        .note {
+            background: #fef9c3;  /* default yellow, will be overridden by inline style */
+            border-radius: 32px 12px 32px 12px;
+            padding: 1.5rem 1.5rem 1.8rem;
+            box-shadow: 10px 12px 0 -4px #c9b180, 14px 16px 12px -12px #3f3a2e, 0 0 0 1px #fcf2dd inset;
+            transition: all 0.15s;
+            display: flex;
+            flex-direction: column;
+            word-break: break-word;
+            transform: rotate(0deg);
+            border: 1px solid #fffadc;
+        }
+
+        .note:hover {
+            transform: scale(1.02) rotate(0.3deg);
+            box-shadow: 10px 14px 0 -4px #b09f70, 14px 18px 16px -12px #2b2a1e;
+        }
+
+        .note-content {
+            font-family: 'Shadows Into Light', cursive;
+            font-size: 1.5rem;
+            line-height: 1.3;
+            color: #2d2a17;
+            margin-bottom: 1.4rem;
+            flex: 1;
+            min-height: 4rem;
+        }
+
+        .note-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #5a4d34;
+            border-top: 2px dashed #f5e7bf;
+            padding-top: 0.7rem;
+        }
+
+        .note-date {
+            background: #faf0d7;
+            border-radius: 40px;
+            padding: 0.2rem 0.9rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.65rem;
+            letter-spacing: 0.2px;
+            color: #6b5439;
+        }
+
+        .delete-note {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #9a7b5e;
+            transition: 0.1s;
+            line-height: 1;
+            padding: 0 0.3rem;
+        }
+
+        .delete-note:hover {
+            color: #d1472b;
+            transform: scale(1.2);
+        }
+
+        /* empty state */
+        .empty-notes {
+            grid-column: 1 / -1;
+            background: #f9efdde0;
+            border-radius: 90px;
+            padding: 3.5rem 2rem;
+            text-align: center;
+            color: #7f6e54;
+            font-size: 1.3rem;
+            border: 2px dashed #dccbb0;
+            backdrop-filter: blur(4px);
+        }
+
+        /* color dots palette */
+        .palette {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        /* footer small */
+        .board-footer {
+            margin-top: 2.5rem;
+            display: flex;
+            justify-content: flex-end;
+            color: #ae9b81;
+            font-size: 0.8rem;
+        }
+
+        .clear-btn {
+            background: #d6c4ad;
+            border: none;
+            padding: 0.5rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 500;
+            color: #443d2c;
+            cursor: pointer;
+            transition: background 0.1s;
+            border: 1px solid #fff4e0;
+        }
+        .clear-btn:hover {
+            background: #cbb79c;
+        }
+    </style>
+</head>
+<body>
+    <div class="board">
+        <div class="board-header">
+            <h1>
+                📌 sticky notes
+                <span>board</span>
+            </h1>
+            <div class="note-counter" id="counterDisplay">
+                <span>📋</span> <span id="noteCount">0</span> notes
+            </div>
+        </div>
+
+        <!-- input row + color picker -->
+        <div class="add-note-panel">
+            <input type="text" id="noteInput" placeholder="write a note ... (e.g. 'buy milk', 'call mom')" autocomplete="off">
+            <div class="color-picker-wrapper">
+                <div class="palette" id="colorPalette">
+                    <!-- colored dots injected via js, but we can prefill with defaults (optional) -->
+                </div>
+            </div>
+            <button class="add-btn" id="addNoteBtn">➕ add note</button>
+        </div>
+
+        <!-- notes grid (dynamic) -->
+        <div id="notesGrid" class="notes-grid">
+            <!-- js will fill -->
+        </div>
+
+        <!-- bottom row with clear all -->
+        <div class="board-footer">
+            <button class="clear-btn" id="clearAllBtn">🗑️ clear all</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ----- available sticky colors (matching dot palette) -----
+            const NOTE_COLORS = [
+                '#fef9c3', // yellow
+                '#fed7d7', // soft pink
+                '#c3e6cb', // mint
+                '#d5e6f5', // light sky
+                '#fde2c4', // peach
+                '#e2cfb5', // tan
+                '#d9d2f0', // lavender
+            ];
+
+            // ----- default seed notes (demo) -----
+            let notes = [
+                { id: 'n1', text: '📓 study revision scheduler', color: '#c3e6cb', createdAt: Date.now() - 86400000 },
+                { id: 'n2', text: '🎨 design scroll story', color: '#fde2c4', createdAt: Date.now() - 172800000 },
+                { id: 'n3', text: '🧠 brainstorm poll system', color: '#fed7d7', createdAt: Date.now() - 3600000 },
+                { id: 'n4', text: '📞 call with team @ 4pm', color: '#d5e6f5', createdAt: Date.now() - 7200000 },
+            ];
+
+            // ----- state for selected color (default index 0) -----
+            let selectedColorIndex = 0;  // will match palette
+
+            // ----- dom elements -----
+            const notesGridEl = document.getElementById('notesGrid');
+            const noteInput = document.getElementById('noteInput');
+            const addBtn = document.getElementById('addNoteBtn');
+            const counterSpan = document.getElementById('noteCount');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const paletteContainer = document.getElementById('colorPalette');
+
+            // ----- helper: format timestamp to short date -----
+            function formatDate(timestamp) {
+                const date = new Date(timestamp);
+                const today = new Date();
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+
+                if (date.toDateString() === today.toDateString()) {
+                    return 'today';
+                } else if (date.toDateString() === yesterday.toDateString()) {
+                    return 'yesterday';
+                } else {
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }
+            }
+
+            // ----- render color palette with selection highlight -----
+            function renderPalette() {
+                let paletteHtml = '';
+                NOTE_COLORS.forEach((color, idx) => {
+                    const isSelected = (idx === selectedColorIndex);
+                    paletteHtml += `<div class="color-dot" style="background-color: ${color};" data-index="${idx}" title="color ${idx+1}"></div>`;
+                });
+                paletteContainer.innerHTML = paletteHtml;
+
+                // attach click listeners to dots
+                document.querySelectorAll('.color-dot').forEach(dot => {
+                    dot.addEventListener('click', (e) => {
+                        // remove selected class from all dots
+                        document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+                        dot.classList.add('selected');
+                        selectedColorIndex = parseInt(dot.dataset.index, 10);
+                    });
+                });
+
+                // set selected class on initial index
+                const initialDot = document.querySelector(`.color-dot[data-index="${selectedColorIndex}"]`);
+                if (initialDot) initialDot.classList.add('selected');
+            }
+
+            // ----- render all notes from array -----
+            function renderNotes() {
+                if (notes.length === 0) {
+                    notesGridEl.innerHTML = `<div class="empty-notes">✨ board is empty — add a sticky note ✨</div>`;
+                    counterSpan.innerText = '0';
+                    return;
+                }
+
+                let gridHtml = '';
+                // sort by newest first (optional, but nice)
+                const sorted = [...notes].sort((a,b) => b.createdAt - a.createdAt);
+                sorted.forEach(note => {
+                    const dateStr = formatDate(note.createdAt);
+                    gridHtml += `
+                        <div class="note" style="background: ${note.color};" data-id="${note.id}">
+                            <div class="note-content">${escapeHtml(note.text)}</div>
+                            <div class="note-footer">
+                                <span class="note-date">📌 ${dateStr}</span>
+                                <button class="delete-note" data-id="${note.id}" title="delete note">✕</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                notesGridEl.innerHTML = gridHtml;
+
+                // attach delete events
+                document.querySelectorAll('.delete-note').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = btn.dataset.id;
+                        deleteNoteById(id);
+                    });
+                });
+
+                counterSpan.innerText = notes.length;
+            }
+
+            // simple escape to avoid XSS
+            function escapeHtml(unsafe) {
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; if(m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            // ----- delete note by id -----
+            function deleteNoteById(id) {
+                notes = notes.filter(n => n.id !== id);
+                renderNotes();
+            }
+
+            // ----- add new note -----
+            function addNote(text) {
+                if (!text.trim()) {
+                    alert('cannot add empty note');
+                    return;
+                }
+
+                const newNote = {
+                    id: 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                    text: text.trim(),
+                    color: NOTE_COLORS[selectedColorIndex] || NOTE_COLORS[0],
+                    createdAt: Date.now(),
+                };
+                notes.push(newNote);
+                renderNotes();
+                noteInput.value = '';   // clear input
+            }
+
+            // ----- clear all notes (with confirm) -----
+            function clearAllNotes() {
+                if (notes.length === 0) return;
+                if (confirm('delete all sticky notes?')) {
+                    notes = [];
+                    renderNotes();
+                }
+            }
+
+            // ----- event listeners -----
+            addBtn.addEventListener('click', () => {
+                addNote(noteInput.value);
+            });
+
+            noteInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addNote(noteInput.value);
+                }
+            });
+
+            clearAllBtn.addEventListener('click', clearAllNotes);
+
+            // initialize palette and render
+            renderPalette();
+            renderNotes();
+
+            // optional: expose for debugging (can be removed)
+            window.__board = { notes, addNote, deleteNoteById };
+        })();
+    </script>
+    <!-- subtle note: pure css+js board -->
+    <div style="position: fixed; bottom: 18px; right: 28px; background: #efe7d9d0; border-radius: 60px; padding: 8px 22px; font-size: 0.75rem; backdrop-filter: blur(4px); color: #7b6349;">📋 sticky notes · click ✕ to delete</div>
+</body>
+</html>

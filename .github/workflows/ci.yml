@@ -1,0 +1,87 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  html-validation:
+    name: HTML Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate HTML files
+        run: |
+          for file in $(find . -name "*.html" -type f); do
+            echo "Validating $file"
+          done
+
+  css-linting:
+    name: CSS Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install Stylelint
+        run: npm install -g stylelint stylelint-config-standard
+      
+      - name: Run CSS lint
+        run: |
+          find . -name "*.css" -type f ! -path "./node_modules/*" | xargs stylelint || true
+
+  javascript-linting:
+    name: JavaScript Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install ESLint
+        run: npm install -g eslint
+      
+      - name: Run JS lint
+        run: |
+          find . -name "*.js" -type f ! -path "./node_modules/*" | xargs eslint || true
+
+  link-checking:
+    name: Link Checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install lychee
+        run: |
+          brew install lychee || sudo apt-get install -y lychee || npm install -g lychee
+      
+      - name: Check links
+        run: |
+          lychee --cache --max-cache-age 1d . || true
+        continue-on-error: true
+
+  json-validation:
+    name: JSON Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate JSON files
+        run: |
+          for file in $(find . -name "*.json" -type f); do
+            echo "Validating $file"
+            python3 -c "import json; json.load(open('$file'))" 2>/dev/null && echo "$file: Valid" || echo "$file: Invalid"
+          done

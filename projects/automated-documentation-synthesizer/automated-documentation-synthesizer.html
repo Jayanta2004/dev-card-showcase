@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Documentation Synthesizer</title>
+    <link rel="stylesheet" href="automated-documentation-synthesizer.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+</head>
+<body>
+    <header class="docs-header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-book-open"></i>
+                <h1>Automated Documentation Synthesizer</h1>
+            </div>
+            <nav class="main-nav">
+                <a href="#input" class="nav-link active">Input</a>
+                <a href="#generate" class="nav-link">Generate</a>
+                <a href="#preview" class="nav-link">Preview</a>
+                <a href="#export" class="nav-link">Export</a>
+                <a href="#templates" class="nav-link">Templates</a>
+            </nav>
+            <div class="header-actions">
+                <button id="saveProjectBtn" class="btn-secondary"><i class="fas fa-save"></i> Save</button>
+                <button id="loadProjectBtn" class="btn-secondary"><i class="fas fa-folder-open"></i> Load</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="input" class="section active">
+            <div class="container">
+                <h2>Code Input</h2>
+                <p>Input your code, upload files, or provide project details to generate comprehensive documentation automatically.</p>
+
+                <div class="input-methods">
+                    <div class="input-method-tabs">
+                        <button class="tab-btn active" data-tab="code">Code Input</button>
+                        <button class="tab-btn" data-tab="files">File Upload</button>
+                        <button class="tab-btn" data-tab="project">Project Info</button>
+                    </div>
+
+                    <div id="codeTab" class="input-tab active">
+                        <div class="code-input-section">
+                            <div class="input-controls">
+                                <select id="languageSelect">
+                                    <option value="javascript">JavaScript</option>
+                                    <option value="python">Python</option>
+                                    <option value="java">Java</option>
+                                    <option value="cpp">C++</option>
+                                    <option value="csharp">C#</option>
+                                    <option value="php">PHP</option>
+                                    <option value="ruby">Ruby</option>
+                                    <option value="go">Go</option>
+                                    <option value="typescript">TypeScript</option>
+                                </select>
+                                <button id="detectLanguageBtn" class="btn-small">Auto Detect</button>
+                                <button id="clearCodeBtn" class="btn-small">Clear</button>
+                            </div>
+                            <textarea id="codeInput" placeholder="Paste your code here..."></textarea>
+                        </div>
+                    </div>
+
+                    <div id="filesTab" class="input-tab">
+                        <div class="file-upload-section">
+                            <div class="upload-area" id="uploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Drag & drop files here or click to browse</p>
+                                <input type="file" id="fileInput" multiple accept=".js,.py,.java,.cpp,.c,.cs,.php,.rb,.go,.ts,.html,.css,.md,.json,.xml,.yaml,.yml">
+                            </div>
+                            <div id="fileList" class="file-list"></div>
+                        </div>
+                    </div>
+
+                    <div id="projectTab" class="input-tab">
+                        <div class="project-info-section">
+                            <div class="form-group">
+                                <label for="projectName">Project Name</label>
+                                <input type="text" id="projectName" placeholder="My Awesome Project">
+                            </div>
+                            <div class="form-group">
+                                <label for="projectDescription">Description</label>
+                                <textarea id="projectDescription" placeholder="Brief description of your project..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="authorName">Author</label>
+                                <input type="text" id="authorName" placeholder="Your Name">
+                            </div>
+                            <div class="form-group">
+                                <label for="projectVersion">Version</label>
+                                <input type="text" id="projectVersion" placeholder="1.0.0">
+                            </div>
+                            <div class="form-group">
+                                <label for="licenseSelect">License</label>
+                                <select id="licenseSelect">
+                                    <option value="mit">MIT</option>
+                                    <option value="apache">Apache 2.0</option>
+                                    <option value="gpl">GPL 3.0</option>
+                                    <option value="bsd">BSD 3-Clause</option>
+                                    <option value="isc">ISC</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="dependencies">Dependencies (one per line)</label>
+                                <textarea id="dependencies" placeholder="express@^4.17.1&#10;mongoose@^5.12.0"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="generate" class="section">
+            <div class="container">
+                <h2>Generate Documentation</h2>
+                <p>Configure and generate documentation based on your input.</p>
+
+                <div class="generation-options">
+                    <div class="option-group">
+                        <h3>Documentation Types</h3>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" id="readmeCheck" checked> README.md</label>
+                            <label><input type="checkbox" id="apiCheck"> API Documentation</label>
+                            <label><input type="checkbox" id="changelogCheck"> CHANGELOG.md</label>
+                            <label><input type="checkbox" id="contributingCheck"> CONTRIBUTING.md</label>
+                            <label><input type="checkbox" id="licenseCheck"> LICENSE</label>
+                            <label><input type="checkbox" id="deploymentCheck"> Deployment Guide</label>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <h3>Analysis Options</h3>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" id="functionsCheck" checked> Function Analysis</label>
+                            <label><input type="checkbox" id="classesCheck" checked> Class Analysis</label>
+                            <label><input type="checkbox" id="dependenciesCheck" checked> Dependency Analysis</label>
+                            <label><input type="checkbox" id="complexityCheck"> Complexity Analysis</label>
+                            <label><input type="checkbox" id="securityCheck"> Security Analysis</label>
+                            <label><input type="checkbox" id="performanceCheck"> Performance Tips</label>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <h3>Style & Format</h3>
+                        <div class="radio-group">
+                            <label><input type="radio" name="style" value="comprehensive" checked> Comprehensive</label>
+                            <label><input type="radio" name="style" value="concise"> Concise</label>
+                            <label><input type="radio" name="style" value="minimal"> Minimal</label>
+                        </div>
+                        <div class="form-group">
+                            <label for="toneSelect">Tone</label>
+                            <select id="toneSelect">
+                                <option value="professional">Professional</option>
+                                <option value="friendly">Friendly</option>
+                                <option value="technical">Technical</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="generation-controls">
+                    <button id="generateBtn" class="btn-primary large"><i class="fas fa-magic"></i> Generate Documentation</button>
+                    <button id="previewBtn" class="btn-secondary"><i class="fas fa-eye"></i> Preview</button>
+                </div>
+
+                <div id="generationProgress" class="progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Analyzing code...</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="preview" class="section">
+            <div class="container">
+                <h2>Documentation Preview</h2>
+                <p>Review and edit the generated documentation before exporting.</p>
+
+                <div class="preview-controls">
+                    <div class="preview-tabs">
+                        <button class="preview-tab active" data-doc="readme">README.md</button>
+                        <button class="preview-tab" data-doc="api">API Docs</button>
+                        <button class="preview-tab" data-doc="changelog">CHANGELOG.md</button>
+                        <button class="preview-tab" data-doc="contributing">CONTRIBUTING.md</button>
+                    </div>
+                    <div class="preview-actions">
+                        <button id="editModeBtn" class="btn-secondary"><i class="fas fa-edit"></i> Edit</button>
+                        <button id="copyBtn" class="btn-secondary"><i class="fas fa-copy"></i> Copy</button>
+                    </div>
+                </div>
+
+                <div id="previewContent" class="preview-content">
+                    <div class="loading-preview">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Generating preview...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="export" class="section">
+            <div class="container">
+                <h2>Export Documentation</h2>
+                <p>Download your generated documentation or export to various formats.</p>
+
+                <div class="export-options">
+                    <div class="export-group">
+                        <h3>Download Files</h3>
+                        <div class="export-buttons">
+                            <button id="downloadZipBtn" class="btn-primary"><i class="fas fa-download"></i> Download ZIP</button>
+                            <button id="downloadMarkdownBtn" class="btn-secondary"><i class="fas fa-file-alt"></i> Markdown Files</button>
+                        </div>
+                    </div>
+
+                    <div class="export-group">
+                        <h3>Export Formats</h3>
+                        <div class="format-buttons">
+                            <button id="exportPDFBtn" class="btn-secondary"><i class="fas fa-file-pdf"></i> PDF</button>
+                            <button id="exportHTMLBtn" class="btn-secondary"><i class="fas fa-code"></i> HTML</button>
+                            <button id="exportJSONBtn" class="btn-secondary"><i class="fas fa-database"></i> JSON</button>
+                        </div>
+                    </div>
+
+                    <div class="export-group">
+                        <h3>Integration</h3>
+                        <div class="integration-buttons">
+                            <button id="githubBtn" class="btn-secondary"><i class="fab fa-github"></i> Push to GitHub</button>
+                            <button id="gitlabBtn" class="btn-secondary"><i class="fab fa-gitlab"></i> Push to GitLab</button>
+                            <button id="confluenceBtn" class="btn-secondary"><i class="fab fa-confluence"></i> Confluence</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="exportStatus" class="export-status"></div>
+            </div>
+        </section>
+
+        <section id="templates" class="section">
+            <div class="container">
+                <h2>Documentation Templates</h2>
+                <p>Choose from pre-built templates or create your own custom templates.</p>
+
+                <div class="templates-grid">
+                    <div class="template-card" data-template="web-app">
+                        <div class="template-icon"><i class="fas fa-globe"></i></div>
+                        <h3>Web Application</h3>
+                        <p>Complete documentation for web apps including setup, API, and deployment guides.</p>
+                        <button class="btn-small">Use Template</button>
+                    </div>
+
+                    <div class="template-card" data-template="library">
+                        <div class="template-icon"><i class="fas fa-book"></i></div>
+                        <h3>Code Library</h3>
+                        <p>Detailed API documentation with examples and usage instructions.</p>
+                        <button class="btn-small">Use Template</button>
+                    </div>
+
+                    <div class="template-card" data-template="cli">
+                        <div class="template-icon"><i class="fas fa-terminal"></i></div>
+                        <h3>CLI Tool</h3>
+                        <p>Command-line interface documentation with examples and options.</p>
+                        <button class="btn-small">Use Template</button>
+                    </div>
+
+                    <div class="template-card" data-template="mobile">
+                        <div class="template-icon"><i class="fas fa-mobile-alt"></i></div>
+                        <h3>Mobile App</h3>
+                        <p>Mobile application documentation including features and platform specifics.</p>
+                        <button class="btn-small">Use Template</button>
+                    </div>
+
+                    <div class="template-card" data-template="api">
+                        <div class="template-icon"><i class="fas fa-cogs"></i></div>
+                        <h3>REST API</h3>
+                        <p>Comprehensive API documentation with endpoints, parameters, and examples.</p>
+                        <button class="btn-small">Use Template</button>
+                    </div>
+
+                    <div class="template-card" data-template="custom">
+                        <div class="template-icon"><i class="fas fa-wrench"></i></div>
+                        <h3>Custom Template</h3>
+                        <p>Create your own documentation template with custom sections and formatting.</p>
+                        <button class="btn-small">Create Custom</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="docs-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>About</h4>
+                    <p>Automated Documentation Synthesizer uses AI to generate comprehensive documentation from your code and project information.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Features</h4>
+                    <ul>
+                        <li>Multi-language support</li>
+                        <li>AI-powered analysis</li>
+                        <li>Multiple export formats</li>
+                        <li>Custom templates</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <p>Email: docs@automated-docs.com</p>
+                    <p>Documentation: <a href="#docs">docs.automated-docs.com</a></p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Automated Documentation Synthesizer. Powered by AI.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <div id="editModal" class="modal">
+        <div class="modal-content large">
+            <span class="close">&times;</span>
+            <h3>Edit Documentation</h3>
+            <textarea id="editTextarea"></textarea>
+            <div class="modal-actions">
+                <button id="saveEditBtn" class="btn-primary">Save Changes</button>
+                <button id="cancelEditBtn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="templateModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Custom Template</h3>
+            <div class="template-builder">
+                <div class="form-group">
+                    <label for="templateName">Template Name</label>
+                    <input type="text" id="templateName" placeholder="My Custom Template">
+                </div>
+                <div class="form-group">
+                    <label for="templateSections">Sections (one per line)</label>
+                    <textarea id="templateSections" placeholder="Introduction&#10;Installation&#10;Usage&#10;API Reference&#10;Contributing"></textarea>
+                </div>
+                <button id="createTemplateBtn" class="btn-primary">Create Template</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="automated-documentation-synthesizer.js"></script>
+</body>
+</html>

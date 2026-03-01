@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lower Back Strain Tracker - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/lower-back-strain-tracker.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="activity"></i> Lower Back Strain Tracker</h1>
+            <p>Monitor lower back discomfort linked to posture with pain logging and sitting duration analysis for desk workers.</p>
+        </header>
+
+        <div class="tracker-grid">
+            <!-- Strain Logger -->
+            <section class="tracker-section strain-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Back Strain</h2>
+                <form id="strainForm" class="strain-form">
+                    <div class="form-group">
+                        <label for="strainDate">Date</label>
+                        <input type="date" id="strainDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="strainTime">Time</label>
+                        <input type="time" id="strainTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="painLevel">Pain Level (1-10)</label>
+                        <div class="pain-input">
+                            <input type="range" id="painLevel" min="1" max="10" value="3">
+                            <div class="pain-display">
+                                <span class="pain-value" id="painValue">3</span>
+                                <span class="pain-text" id="painText">Mild</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="sittingDuration">Sitting Duration Before Pain (minutes)</label>
+                        <input type="number" id="sittingDuration" min="0" max="480" placeholder="e.g., 120" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="postureType">Posture During Sitting</label>
+                        <select id="postureType" required>
+                            <option value="">Select posture</option>
+                            <option value="good">Good posture (upright, supported)</option>
+                            <option value="slouched">Slouched forward</option>
+                            <option value="leaning">Leaning to one side</option>
+                            <option value="crossed_legs">Crossed legs</option>
+                            <option value="no_back_support">No back support</option>
+                            <option value="standing">Standing/walking</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="activityType">Activity Type</label>
+                        <select id="activityType" required>
+                            <option value="">Select activity</option>
+                            <option value="desk_work">Desk work/computer</option>
+                            <option value="meeting">Meeting/conference</option>
+                            <option value="driving">Driving</option>
+                            <option value="reading">Reading</option>
+                            <option value="eating">Eating at desk</option>
+                            <option value="phone">Phone use</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="strainNotes">Additional Notes (optional)</label>
+                        <textarea id="strainNotes" placeholder="Any specific movements or positions that triggered the pain?"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Log Strain
+                    </button>
+                </form>
+            </section>
+
+            <!-- Strain Dashboard -->
+            <section class="tracker-section strain-dashboard">
+                <h2><i data-lucide="bar-chart-3"></i> Back Health Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgPainLevel">--</div>
+                        <div class="metric-label">Avg Pain Level</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgSittingTime">--</div>
+                        <div class="metric-label">Avg Sitting Time</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="totalEpisodes">0</div>
+                        <div class="metric-label">Total Episodes</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="strainScore">--</div>
+                        <div class="metric-label">Strain Score</div>
+                    </div>
+                </div>
+                <div class="risk-indicator">
+                    <h3>Current Back Strain Risk</h3>
+                    <div id="riskLevel" class="risk-level">
+                        <div class="risk-bar">
+                            <div class="risk-fill" id="riskFill"></div>
+                        </div>
+                        <div class="risk-label" id="riskLabel">No data available</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Strain Trends -->
+            <section class="tracker-section strain-trends">
+                <h2><i data-lucide="trending-up"></i> Strain Trends & Sitting Overlay</h2>
+                <div class="chart-controls">
+                    <select id="timeRange">
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="all">All Time</option>
+                    </select>
+                    <button id="refreshChart" class="btn-secondary">
+                        <i data-lucide="refresh-cw"></i> Refresh
+                    </button>
+                </div>
+                <div class="trends-chart">
+                    <canvas id="strainChart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color pain-line"></div>
+                        <span>Pain Level</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color sitting-line"></div>
+                        <span>Sitting Duration (min)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Strain History -->
+            <section class="tracker-section strain-history">
+                <h2><i data-lucide="calendar"></i> Strain History</h2>
+                <div class="history-controls">
+                    <button id="viewRecent" class="btn-secondary active">Recent</button>
+                    <button id="viewAll" class="btn-secondary">All Time</button>
+                </div>
+                <div class="history-list" id="strainHistory">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+
+            <!-- Posture Insights -->
+            <section class="tracker-section posture-insights">
+                <h2><i data-lucide="lightbulb"></i> Posture & Strain Insights</h2>
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <h3>Pain Patterns</h3>
+                        <div class="insight-content" id="painPatterns">
+                            <p>Analysis of your pain level trends and patterns.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Posture Risks</h3>
+                        <div class="insight-content" id="postureRisks">
+                            <p>Posture types most associated with strain.</p>
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <h3>Sitting Habits</h3>
+                        <div class="insight-content" id="sittingHabits">
+                            <p>Analysis of sitting duration and break patterns.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tips-list" id="tips">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Ergonomics Guide -->
+        <section class="ergonomics-guide">
+            <h2><i data-lucide="shield"></i> Desk Ergonomics Guide</h2>
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <h3>Proper Sitting Posture</h3>
+                    <ul>
+                        <li>Feet flat on floor</li>
+                        <li>Knees at 90° angle</li>
+                        <li>Back supported by chair</li>
+                        <li>Shoulders relaxed</li>
+                        <li>Screen at eye level</li>
+                    </ul>
+                </div>
+                <div class="guide-card">
+                    <h3>Break Recommendations</h3>
+                    <ul>
+                        <li>Stand up every 30-45 minutes</li>
+                        <li>Walk around for 2-3 minutes</li>
+                        <li>Stretch your back and neck</li>
+                        <li>Change positions frequently</li>
+                        <li>Use standing desk options</li>
+                    </ul>
+                </div>
+                <div class="guide-card">
+                    <h3>Risk Factors</h3>
+                    <ul>
+                        <li>Prolonged sitting (>2 hours)</li>
+                        <li>Poor chair support</li>
+                        <li>Forward head posture</li>
+                        <li>Crossed legs</li>
+                        <li>Screen too low/high</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="../js/lower-back-strain-tracker.js"></script>
+    <script>
+        // Load navbar
+        fetch('../navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+                // Re-initialize Lucide icons after navbar is loaded
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            })
+            .catch(error => console.error('Error loading navbar:', error));
+    </script>
+</body>
+</html>

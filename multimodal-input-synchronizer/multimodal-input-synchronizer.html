@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multimodal Input Synchronizer</title>
+    <link rel="stylesheet" href="multimodal-input-synchronizer.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-sync-alt"></i> Multimodal Input Synchronizer</h1>
+            <p>Synchronize and analyze multiple input modalities: keyboard, mouse, touch, and voice inputs</p>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-button active" data-tab="capture">Capture</button>
+            <button class="tab-button" data-tab="playback">Playback</button>
+            <button class="tab-button" data-tab="analysis">Analysis</button>
+            <button class="tab-button" data-tab="settings">Settings</button>
+        </nav>
+
+        <div id="capture-tab" class="tab-content active">
+            <div class="capture-controls">
+                <button id="startCapture" class="btn-primary">
+                    <i class="fas fa-play"></i> Start Capture
+                </button>
+                <button id="stopCapture" class="btn-danger" disabled>
+                    <i class="fas fa-stop"></i> Stop Capture
+                </button>
+                <button id="clearCapture" class="btn-secondary">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+                <div class="capture-status">
+                    <span id="statusText">Ready to capture</span>
+                    <span id="recordingTime">00:00:00</span>
+                </div>
+            </div>
+
+            <div class="input-modes">
+                <div class="mode-toggle">
+                    <label>
+                        <input type="checkbox" id="keyboardMode" checked>
+                        <i class="fas fa-keyboard"></i> Keyboard
+                    </label>
+                </div>
+                <div class="mode-toggle">
+                    <label>
+                        <input type="checkbox" id="mouseMode" checked>
+                        <i class="fas fa-mouse-pointer"></i> Mouse
+                    </label>
+                </div>
+                <div class="mode-toggle">
+                    <label>
+                        <input type="checkbox" id="touchMode" checked>
+                        <i class="fas fa-hand-pointer"></i> Touch
+                    </label>
+                </div>
+                <div class="mode-toggle">
+                    <label>
+                        <input type="checkbox" id="voiceMode">
+                        <i class="fas fa-microphone"></i> Voice
+                    </label>
+                </div>
+            </div>
+
+            <div class="capture-area">
+                <div class="interaction-zone" id="interactionZone">
+                    <div class="zone-placeholder">
+                        <i class="fas fa-mouse-pointer"></i>
+                        <p>Interact here to capture inputs</p>
+                        <small>Click, type, touch, or speak</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="live-events">
+                <h3>Live Events</h3>
+                <div id="eventsLog" class="events-log"></div>
+            </div>
+        </div>
+
+        <div id="playback-tab" class="tab-content">
+            <div class="playback-controls">
+                <button id="playRecording" class="btn-primary" disabled>
+                    <i class="fas fa-play"></i> Play
+                </button>
+                <button id="pauseRecording" class="btn-secondary" disabled>
+                    <i class="fas fa-pause"></i> Pause
+                </button>
+                <button id="stopPlayback" class="btn-secondary" disabled>
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+                <input type="range" id="playbackSpeed" min="0.25" max="4" step="0.25" value="1">
+                <span id="speedLabel">1x</span>
+            </div>
+
+            <div class="playback-visualization">
+                <canvas id="playbackCanvas"></canvas>
+                <div class="timeline">
+                    <div class="timeline-bar">
+                        <div id="timelineProgress" class="timeline-progress"></div>
+                    </div>
+                    <div class="timeline-markers" id="timelineMarkers"></div>
+                    <div class="timeline-time">
+                        <span id="currentTime">00:00:00</span> / <span id="totalTime">00:00:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="saved-recordings">
+                <h3>Saved Recordings</h3>
+                <div id="recordingsList" class="recordings-list"></div>
+            </div>
+        </div>
+
+        <div id="analysis-tab" class="tab-content">
+            <div class="analysis-controls">
+                <select id="analysisType">
+                    <option value="timeline">Timeline Analysis</option>
+                    <option value="frequency">Frequency Analysis</option>
+                    <option value="correlation">Input Correlation</option>
+                    <option value="patterns">Pattern Recognition</option>
+                </select>
+                <button id="runAnalysis" class="btn-primary">Run Analysis</button>
+                <button id="exportAnalysis" class="btn-secondary">Export Results</button>
+            </div>
+
+            <div class="analysis-results">
+                <div class="chart-container">
+                    <canvas id="analysisChart"></canvas>
+                </div>
+                <div class="stats-panel">
+                    <div class="stat-card">
+                        <h4>Total Events</h4>
+                        <span id="totalEvents">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Duration</h4>
+                        <span id="sessionDuration">00:00:00</span>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Avg. Interval</h4>
+                        <span id="avgInterval">0ms</span>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Peak Activity</h4>
+                        <span id="peakActivity">00:00:00</span>
+                    </div>
+                </div>
+                <div class="insights-panel">
+                    <h4>Insights</h4>
+                    <ul id="insightsList"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-tab" class="tab-content">
+            <div class="settings-container">
+                <div class="setting-group">
+                    <h3>Capture Settings</h3>
+                    <label>
+                        <span>Max Recording Time (minutes)</span>
+                        <input type="number" id="maxRecordingTime" min="1" max="60" value="10">
+                    </label>
+                    <label>
+                        <span>Event Buffer Size</span>
+                        <input type="number" id="bufferSize" min="100" max="10000" value="1000">
+                    </label>
+                    <label>
+                        <input type="checkbox" id="autoSave">
+                        <span>Auto-save recordings</span>
+                    </label>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Input Sensitivity</h3>
+                    <label>
+                        <span>Mouse Movement Threshold</span>
+                        <input type="range" id="mouseThreshold" min="1" max="50" value="5">
+                        <span id="mouseThresholdValue">5px</span>
+                    </label>
+                    <label>
+                        <span>Touch Sensitivity</span>
+                        <input type="range" id="touchSensitivity" min="0.1" max="2" step="0.1" value="1">
+                        <span id="touchSensitivityValue">1.0x</span>
+                    </label>
+                    <label>
+                        <span>Voice Activation Threshold</span>
+                        <input type="range" id="voiceThreshold" min="0" max="100" value="30">
+                        <span id="voiceThresholdValue">30%</span>
+                    </label>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Visualization</h3>
+                    <label>
+                        <input type="checkbox" id="showHeatmap" checked>
+                        <span>Show activity heatmap</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="showTrails" checked>
+                        <span>Show input trails</span>
+                    </label>
+                    <label>
+                        <span>Trail Length</span>
+                        <input type="range" id="trailLength" min="10" max="200" value="50">
+                        <span id="trailLengthValue">50</span>
+                    </label>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Data Management</h3>
+                    <button id="exportSettings" class="btn-secondary">Export Settings</button>
+                    <button id="importSettings" class="btn-secondary">Import Settings</button>
+                    <button id="resetSettings" class="btn-danger">Reset to Defaults</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div id="saveModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Save Recording</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <label>
+                        <span>Recording Name</span>
+                        <input type="text" id="recordingName" placeholder="Enter recording name">
+                    </label>
+                    <label>
+                        <span>Description (optional)</span>
+                        <textarea id="recordingDescription" placeholder="Enter description"></textarea>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveRecording" class="btn-primary">Save</button>
+                    <button class="close-modal btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="confirmModal" class="modal">
+            <div class="modal-content small">
+                <div class="modal-header">
+                    <h3>Confirm Action</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button id="confirmYes" class="btn-danger">Yes</button>
+                    <button class="close-modal btn-secondary">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="multimodal-input-synchronizer.js"></script>
+</body>
+</html>

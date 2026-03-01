@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUANTUM CONSCIOUSNESS · observer effect · von Neumann chain</title>
+    <!-- single file · quantum measurement + conscious observation + wavefunction collapse -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #03010f;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .consciousness-lab {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 30% 40%, #2a1a3a, #010008);
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #quantumCanvas {
+            z-index: 1;
+            filter: drop-shadow(0 0 20px #b07eff);
+        }
+
+        #observerCanvas {
+            z-index: 2;
+            mix-blend-mode: screen;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        #consciousnessCanvas {
+            z-index: 3;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+
+        .consciousness-panel {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(20, 5, 40, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(200, 130, 255, 0.7);
+            border-radius: 60px 60px 30px 30px;
+            padding: 1.5rem 3rem;
+            display: flex;
+            gap: 3rem;
+            color: #e0c0ff;
+            box-shadow: 0 0 80px #b07eff, 0 20px 40px black;
+            pointer-events: auto;
+        }
+
+        .consciousness-param {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .param-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            opacity: 0.7;
+            color: #d0a0ff;
+        }
+
+        .param-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #d0a0ff, #ffa0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px #f8f;
+        }
+
+        .consciousness-slider {
+            width: 200px;
+            height: 6px;
+            background: #2a1a4a;
+            border-radius: 3px;
+            position: relative;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+
+        .slider-fill {
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, #b07eff, #ff7ec8);
+            border-radius: 3px;
+            box-shadow: 0 0 20px #f8f;
+        }
+
+        .slider-handle {
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 30px #ffaaff;
+            border: 3px solid #b07eff;
+            cursor: grab;
+        }
+
+        .consciousness-badge {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            z-index: 10;
+            background: rgba(10, 0, 30, 0.6);
+            backdrop-filter: blur(8px);
+            border: 2px solid #b07eff;
+            border-radius: 40px;
+            padding: 1rem 2.5rem;
+            color: white;
+            font-size: 1.6rem;
+            letter-spacing: 4px;
+            box-shadow: 0 0 50px #b07eff;
+        }
+
+        .consciousness-stats {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            z-index: 10;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(30, 10, 50, 0.7);
+            backdrop-filter: blur(8px);
+            border: 2px solid #d0a0ff;
+            border-radius: 30px;
+            padding: 1.2rem 2rem;
+            text-align: center;
+            color: #ffd0ff;
+            min-width: 140px;
+        }
+
+        .stat-number {
+            font-size: 2.4rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .observer-meter {
+            position: absolute;
+            bottom: 200px;
+            left: 60px;
+            z-index: 10;
+            width: 300px;
+            height: 30px;
+            background: #1a1a2a;
+            border-radius: 15px;
+            border: 3px solid #b07eff;
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, #b07eff, #ff7ec8, #ffb0f0);
+            border-radius: 12px;
+            box-shadow: 0 0 30px #f8f;
+        }
+
+        .quantum-state {
+            position: absolute;
+            bottom: 200px;
+            right: 60px;
+            z-index: 10;
+            background: rgba(30, 10, 40, 0.8);
+            backdrop-filter: blur(4px);
+            padding: 1.2rem 2rem;
+            border-radius: 40px;
+            border-right: 8px solid #b07eff;
+            color: #ffd0ff;
+            font-size: 1.2rem;
+            max-width: 350px;
+        }
+    </style>
+</head>
+<body>
+    <div class="consciousness-lab">
+        <canvas id="quantumCanvas"></canvas>
+        <canvas id="observerCanvas"></canvas>
+        <canvas id="consciousnessCanvas"></canvas>
+
+        <!-- consciousness control panel -->
+        <div class="consciousness-panel">
+            <div class="consciousness-param">
+                <span class="param-label">OBSERVER GAIN</span>
+                <div class="consciousness-slider" id="observerSlider">
+                    <div class="slider-fill" id="observerFill" style="width: 40%;"></div>
+                    <div class="slider-handle" id="observerHandle" style="left: 40%;"></div>
+                </div>
+                <span class="param-value" id="observerDisplay">0.4</span>
+            </div>
+
+            <div class="consciousness-param">
+                <span class="param-label">COHERENCE</span>
+                <div class="consciousness-slider" id="coherenceSlider">
+                    <div class="slider-fill" id="coherenceFill" style="width: 70%;"></div>
+                    <div class="slider-handle" id="coherenceHandle" style="left: 70%;"></div>
+                </div>
+                <span class="param-value" id="coherenceDisplay">0.7</span>
+            </div>
+
+            <div class="consciousness-param">
+                <span class="param-label">AWARENESS</span>
+                <div class="consciousness-slider" id="awarenessSlider">
+                    <div class="slider-fill" id="awarenessFill" style="width: 60%;"></div>
+                    <div class="slider-handle" id="awarenessHandle" style="left: 60%;"></div>
+                </div>
+                <span class="param-value" id="awarenessDisplay">0.6</span>
+            </div>
+        </div>
+
+        <div class="consciousness-badge">🧠 QUANTUM CONSCIOUSNESS · von Neumann chain</div>
+        
+        <div class="consciousness-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="entanglement">0.73</div>
+                <div>ENTANGLEMENT</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="collapsed">47%</div>
+                <div>COLLAPSED</div>
+            </div>
+        </div>
+
+        <div class="observer-meter">
+            <div class="meter-fill" id="observerMeter" style="width: 47%;"></div>
+        </div>
+
+        <div class="quantum-state" id="quantumState">
+            ⚛️ |ψ⟩ = α|0⟩ + β|1⟩ · α² = 0.73
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- QUANTUM CONSCIOUSNESS ----------
+            // Simulates the observer effect in quantum mechanics and conscious perception
+            
+            const quantumCanvas = document.getElementById('quantumCanvas');
+            const observerCanvas = document.getElementById('observerCanvas');
+            const consciousnessCanvas = document.getElementById('consciousnessCanvas');
+            
+            const ctxQuantum = quantumCanvas.getContext('2d');
+            const ctxObserver = observerCanvas.getContext('2d');
+            const ctxConsciousness = consciousnessCanvas.getContext('2d');
+
+            let width, height;
+            let time = 0;
+
+            // consciousness parameters
+            let observerGain = 0.4;       // strength of observation
+            let coherence = 0.7;            // quantum coherence
+            let awareness = 0.6;             // conscious awareness level
+            
+            // quantum system
+            let alpha = 0.73; // amplitude for |0⟩
+            let beta = Math.sqrt(1 - alpha*alpha); // amplitude for |1⟩
+            let phase = 0;
+            
+            // observer chain
+            let observed = false;
+            let collapseRatio = 0.47;
+
+            // qubit particles
+            const qubits = [];
+            const QUBIT_COUNT = 50;
+
+            // UI elements
+            const observerDisplay = document.getElementById('observerDisplay');
+            const coherenceDisplay = document.getElementById('coherenceDisplay');
+            const awarenessDisplay = document.getElementById('awarenessDisplay');
+            const entanglementSpan = document.getElementById('entanglement');
+            const collapsedSpan = document.getElementById('collapsed');
+            const observerMeter = document.getElementById('observerMeter');
+            const quantumStateSpan = document.getElementById('quantumState');
+            
+            // sliders
+            const observerSlider = document.getElementById('observerSlider');
+            const observerHandle = document.getElementById('observerHandle');
+            const observerFill = document.getElementById('observerFill');
+            
+            const coherenceSlider = document.getElementById('coherenceSlider');
+            const coherenceHandle = document.getElementById('coherenceHandle');
+            const coherenceFill = document.getElementById('coherenceFill');
+            
+            const awarenessSlider = document.getElementById('awarenessSlider');
+            const awarenessHandle = document.getElementById('awarenessHandle');
+            const awarenessFill = document.getElementById('awarenessFill');
+
+            // qubit particle class
+            class Qubit {
+                constructor() {
+                    this.reset();
+                }
+                
+                reset() {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.vx = (Math.random() - 0.5) * 2;
+                    this.vy = (Math.random() - 0.5) * 2;
+                    this.state = Math.random() < 0.5 ? 0 : 1; // 0 or 1
+                    this.superposition = Math.random();
+                    this.phase = Math.random() * Math.PI * 2;
+                }
+                
+                update(observerGain, coherence, time) {
+                    // quantum evolution
+                    this.phase += 0.05;
+                    
+                    // observation effect
+                    if (Math.random() < observerGain * 0.01) {
+                        // wavefunction collapse
+                        this.superposition = this.state;
+                    } else {
+                        // coherent evolution
+                        this.superposition = 0.5 + 0.5 * Math.sin(this.phase + time);
+                    }
+                    
+                    // movement
+                    this.x += this.vx * (1 - observerGain * 0.5);
+                    this.y += this.vy * (1 - observerGain * 0.5);
+                    
+                    // boundary conditions
+                    if (this.x < 0 || this.x > width) this.vx *= -1;
+                    if (this.y < 0 || this.y > height) this.vy *= -1;
+                }
+            }
+
+            // initialize qubits
+            function initQubits() {
+                for (let i = 0; i < QUBIT_COUNT; i++) {
+                    qubits.push(new Qubit());
+                }
+            }
+
+            // resize
+            function resizeCanvases() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                quantumCanvas.width = width;
+                quantumCanvas.height = height;
+                observerCanvas.width = width;
+                observerCanvas.height = height;
+                consciousnessCanvas.width = width;
+                consciousnessCanvas.height = height;
+                
+                initQubits();
+            }
+            window.addEventListener('resize', resizeCanvases);
+            resizeCanvases();
+
+            // slider interactions
+            function setupSliders() {
+                // observer gain slider
+                function updateObserverFromEvent(e) {
+                    const rect = observerSlider.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    x = Math.max(0, Math.min(rect.width, x));
+                    let val = x / rect.width;
+                    
+                    observerGain = val;
+                    observerDisplay.innerText = observerGain.toFixed(2);
+                    observerFill.style.width = (val * 100) + '%';
+                    observerHandle.style.left = (val * 100) + '%';
+                    
+                    updateQuantumState();
+                }
+                
+                observerHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const onMove = (e) => updateObserverFromEvent(e);
+                    const onUp = () => {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                
+                observerSlider.addEventListener('click', (e) => {
+                    updateObserverFromEvent(e);
+                });
+                
+                // coherence slider
+                function updateCoherenceFromEvent(e) {
+                    const rect = coherenceSlider.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    x = Math.max(0, Math.min(rect.width, x));
+                    let val = x / rect.width;
+                    
+                    coherence = val;
+                    coherenceDisplay.innerText = coherence.toFixed(2);
+                    coherenceFill.style.width = (val * 100) + '%';
+                    coherenceHandle.style.left = (val * 100) + '%';
+                    
+                    updateQuantumState();
+                }
+                
+                coherenceHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const onMove = (e) => updateCoherenceFromEvent(e);
+                    const onUp = () => {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                
+                coherenceSlider.addEventListener('click', (e) => {
+                    updateCoherenceFromEvent(e);
+                });
+                
+                // awareness slider
+                function updateAwarenessFromEvent(e) {
+                    const rect = awarenessSlider.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    x = Math.max(0, Math.min(rect.width, x));
+                    let val = x / rect.width;
+                    
+                    awareness = val;
+                    awarenessDisplay.innerText = awareness.toFixed(2);
+                    awarenessFill.style.width = (val * 100) + '%';
+                    awarenessHandle.style.left = (val * 100) + '%';
+                    
+                    updateQuantumState();
+                }
+                
+                awarenessHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const onMove = (e) => updateAwarenessFromEvent(e);
+                    const onUp = () => {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                
+                awarenessSlider.addEventListener('click', (e) => {
+                    updateAwarenessFromEvent(e);
+                });
+            }
+            setupSliders();
+
+            // update quantum state based on parameters
+            function updateQuantumState() {
+                // von Neumann chain: observer causes collapse
+                let collapseProb = observerGain * awareness * (1 - coherence);
+                collapseRatio = Math.min(1, collapseProb);
+                
+                // update amplitudes
+                alpha = Math.sqrt(1 - collapseRatio);
+                beta = Math.sqrt(collapseRatio);
+                
+                entanglementSpan.innerText = alpha.toFixed(2);
+                collapsedSpan.innerText = Math.round(collapseRatio * 100) + '%';
+                observerMeter.style.width = (collapseRatio * 100) + '%';
+                
+                quantumStateSpan.innerHTML = `⚛️ |ψ⟩ = ${alpha.toFixed(2)}|0⟩ + ${beta.toFixed(2)}|1⟩ · α² = ${(alpha*alpha).toFixed(2)}`;
+            }
+
+            // draw quantum system
+            function drawQuantum() {
+                ctxQuantum.clearRect(0, 0, width, height);
+                
+                // draw quantum field
+                for (let i = 0; i < 20; i++) {
+                    let x = width * (0.1 + 0.8 * i/20);
+                    let y = height * 0.3;
+                    
+                    // probability wave
+                    ctxQuantum.beginPath();
+                    ctxQuantum.moveTo(x, y);
+                    for (let j = 0; j < 10; j++) {
+                        let waveY = y + 30 * Math.sin(x * 0.02 + time * 5 + j) * coherence;
+                        ctxQuantum.lineTo(x + j * 10, waveY);
+                    }
+                    ctxQuantum.strokeStyle = `rgba(200, 130, 255, ${0.3})`;
+                    ctxQuantum.stroke();
+                }
+                
+                // draw qubits
+                for (let qubit of qubits) {
+                    qubit.update(observerGain, coherence, time);
+                    
+                    // size based on superposition
+                    let size = 5 + qubit.superposition * 10;
+                    
+                    // color based on state
+                    let hue;
+                    if (qubit.superposition > 0.7) {
+                        hue = 280; // purple - superposition
+                    } else if (qubit.state === 0) {
+                        hue = 200; // blue - |0⟩
+                    } else {
+                        hue = 340; // pink - |1⟩
+                    }
+                    
+                    ctxQuantum.beginPath();
+                    ctxQuantum.arc(qubit.x, qubit.y, size, 0, 2 * Math.PI);
+                    ctxQuantum.fillStyle = `hsla(${hue}, 80%, 70%, ${0.7})`;
+                    ctxQuantum.shadowBlur = 15;
+                    ctxQuantum.shadowColor = `hsl(${hue}, 90%, 70%)`;
+                    ctxQuantum.fill();
+                    
+                    // superposition indicator
+                    if (qubit.superposition > 0.3 && qubit.superposition < 0.7) {
+                        ctxQuantum.beginPath();
+                        ctxQuantum.arc(qubit.x, qubit.y, size + 3, 0, 2 * Math.PI);
+                        ctxQuantum.strokeStyle = '#ffffff80';
+                        ctxQuantum.stroke();
+                    }
+                }
+            }
+
+            // draw observer chain
+            function drawObserver() {
+                ctxObserver.clearRect(0, 0, width, height);
+                
+                let centerX = width/2;
+                let centerY = height/2;
+                
+                // von Neumann chain
+                let levels = 5;
+                for (let i = 0; i < levels; i++) {
+                    let y = centerY - 100 + i * 50;
+                    let opacity = 1 - i * 0.15;
+                    
+                    // observer level
+                    ctxObserver.beginPath();
+                    ctxObserver.arc(centerX - 100, y, 20, 0, 2 * Math.PI);
+                    ctxObserver.fillStyle = `rgba(140, 140, 255, ${opacity * 0.3})`;
+                    ctxObserver.fill();
+                    
+                    // measurement arrow
+                    ctxObserver.beginPath();
+                    ctxObserver.moveTo(centerX - 80, y);
+                    ctxObserver.lineTo(centerX - 30, y - 20);
+                    ctxObserver.strokeStyle = `rgba(255, 200, 100, ${opacity})`;
+                    ctxObserver.lineWidth = 2;
+                    ctxObserver.stroke();
+                    
+                    // conscious observer at top
+                    if (i === 0) {
+                        ctxObserver.font = 'bold 16px monospace';
+                        ctxObserver.fillStyle = '#ffffff80';
+                        ctxObserver.fillText('consciousness', centerX - 150, y - 30);
+                    }
+                }
+                
+                // measurement apparatus
+                ctxObserver.fillStyle = '#8a8aff20';
+                ctxObserver.fillRect(centerX + 50, centerY - 50, 100, 100);
+                ctxObserver.strokeStyle = '#8a8aff';
+                ctxObserver.lineWidth = 2;
+                ctxObserver.strokeRect(centerX + 50, centerY - 50, 100, 100);
+                
+                // detector readout
+                ctxObserver.font = '24px monospace';
+                ctxObserver.fillStyle = '#fff';
+                ctxObserver.fillText(collapseRatio > 0.5 ? '|1⟩' : '|0⟩', centerX + 80, centerY);
+            }
+
+            // draw consciousness field
+            function drawConsciousness() {
+                ctxConsciousness.clearRect(0, 0, width, height);
+                
+                let centerX = width/2;
+                let centerY = height/2;
+                
+                // draw awareness waves
+                for (let i = 0; i < 5; i++) {
+                    let radius = 100 + i * 60 + 20 * Math.sin(time * 2 + i);
+                    let alpha = 0.1 * (5 - i) * awareness;
+                    
+                    ctxConsciousness.beginPath();
+                    ctxConsciousness.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                    ctxConsciousness.strokeStyle = `rgba(200, 130, 255, ${alpha})`;
+                    ctxConsciousness.lineWidth = 2;
+                    ctxConsciousness.stroke();
+                }
+                
+                // draw collapse events
+                for (let i = 0; i < 10; i++) {
+                    if (Math.random() < observerGain * 0.1) {
+                        let x = Math.random() * width;
+                        let y = Math.random() * height;
+                        
+                        ctxConsciousness.beginPath();
+                        ctxConsciousness.arc(x, y, 30, 0, 2 * Math.PI);
+                        ctxConsciousness.fillStyle = '#ffffff20';
+                        ctxConsciousness.shadowBlur = 40;
+                        ctxConsciousness.shadowColor = '#f8f';
+                        ctxConsciousness.fill();
+                        
+                        // collapse rays
+                        for (let j = 0; j < 8; j++) {
+                            let angle = (j / 8) * Math.PI * 2;
+                            ctxConsciousness.beginPath();
+                            ctxConsciousness.moveTo(x, y);
+                            ctxConsciousness.lineTo(x + 50 * Math.cos(angle), y + 50 * Math.sin(angle));
+                            ctxConsciousness.strokeStyle = '#ffffff40';
+                            ctxConsciousness.stroke();
+                        }
+                    }
+                }
+            }
+
+            // animation loop
+            function animate() {
+                time += 0.02;
+                
+                updateQuantumState();
+                drawQuantum();
+                drawObserver();
+                drawConsciousness();
+                
+                requestAnimationFrame(animate);
+            }
+            animate();
+
+            // initial update
+            updateQuantumState();
+        })();
+    </script>
+</body>
+</html>

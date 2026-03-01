@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Service Degradation Forecaster</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>🔮 Predictive Degradation Forecaster</h1>
+                <p class="subtitle">Anticipates gradual service degradation before complete failure through performance indicator monitoring</p>
+            </div>
+            <div class="header-controls">
+                <button id="startMonitoring" class="btn btn-primary">Start Monitoring</button>
+                <button id="simulateDegradation" class="btn btn-secondary">Simulate Degradation</button>
+                <button id="generateReport" class="btn btn-tertiary">Generate Report</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Degradation Overview Cards -->
+            <section class="degradation-overview">
+                <div class="overview-card active">
+                    <div class="card-icon">📊</div>
+                    <div class="card-info">
+                        <h3>Services Monitored</h3>
+                        <p class="card-value" id="servicesCount">0</p>
+                        <p class="card-label">Active Endpoints</p>
+                    </div>
+                </div>
+                <div class="overview-card warning">
+                    <div class="card-icon">⚠️</div>
+                    <div class="card-info">
+                        <h3>Degradation Alerts</h3>
+                        <p class="card-value" id="alertsCount">0</p>
+                        <p class="card-label">Predicted Issues</p>
+                    </div>
+                </div>
+                <div class="overview-card critical">
+                    <div class="card-icon">🚨</div>
+                    <div class="card-info">
+                        <h3>Failure Predictions</h3>
+                        <p class="card-value" id="failuresPredicted">0</p>
+                        <p class="card-label">Critical Forecasts</p>
+                    </div>
+                </div>
+                <div class="overview-card success">
+                    <div class="card-icon">✅</div>
+                    <div class="card-info">
+                        <h3>Prevention Success</h3>
+                        <p class="card-value" id="preventedFailures">0</p>
+                        <p class="card-label">Issues Resolved</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabs Navigation -->
+            <section class="tabs-section">
+                <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+                <button class="tab-button" data-tab="services">Service Health</button>
+                <button class="tab-button" data-tab="predictions">Predictions</button>
+                <button class="tab-button" data-tab="trends">Performance Trends</button>
+                <button class="tab-button" data-tab="alerts">Alert History</button>
+            </section>
+
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <div class="section-title">Real-Time Degradation Monitor</div>
+
+                <div class="monitoring-grid">
+                    <div class="monitor-panel">
+                        <h3>System Health Overview</h3>
+                        <div class="health-indicators">
+                            <div class="health-item">
+                                <span class="label">Overall Status:</span>
+                                <span class="value" id="overallStatus">Healthy</span>
+                            </div>
+                            <div class="health-item">
+                                <span class="label">Avg Response Time:</span>
+                                <span class="value" id="avgResponseTime">--ms</span>
+                            </div>
+                            <div class="health-item">
+                                <span class="label">Error Rate:</span>
+                                <span class="value" id="errorRate">0.00%</span>
+                            </div>
+                            <div class="health-item">
+                                <span class="label">Throughput:</span>
+                                <span class="value" id="throughput">-- req/sec</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="monitor-panel">
+                        <h3>Degradation Indicators</h3>
+                        <div class="degradation-metrics">
+                            <div class="metric">
+                                <span class="label">Latency Variance:</span>
+                                <span class="value" id="latencyVariance">Low</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Error Acceleration:</span>
+                                <span class="value" id="errorAcceleration">Stable</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Memory Pressure:</span>
+                                <span class="value" id="memoryPressure">Normal</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Resource Saturation:</span>
+                                <span class="value" id="resourceSaturation">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Service Health Trends (Last 24 Hours)</h3>
+                    <canvas id="healthChart" class="chart-canvas"></canvas>
+                </div>
+
+                <div class="recent-activity">
+                    <h3>Recent Degradation Events</h3>
+                    <div id="recentEvents" class="activity-list">
+                        <div class="placeholder">No degradation events detected</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Service Health Tab -->
+            <section id="services" class="tab-content">
+                <div class="section-title">Service Health Monitoring</div>
+
+                <div class="filter-controls">
+                    <select id="serviceFilter" class="filter-select">
+                        <option value="all">All Services</option>
+                        <option value="healthy">Healthy</option>
+                        <option value="degrading">Degrading</option>
+                        <option value="critical">Critical</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                    <select id="sortBy" class="filter-select">
+                        <option value="health">Sort by Health Score</option>
+                        <option value="latency">Sort by Latency</option>
+                        <option value="errors">Sort by Error Rate</option>
+                        <option value="predictions">Sort by Risk Level</option>
+                    </select>
+                </div>
+
+                <div id="servicesList" class="services-grid">
+                    <div class="placeholder">Loading services...</div>
+                </div>
+            </section>
+
+            <!-- Predictions Tab -->
+            <section id="predictions" class="tab-content">
+                <div class="section-title">Degradation Predictions</div>
+
+                <div class="predictions-summary">
+                    <div class="prediction-card">
+                        <h4>Short-term (1-4 hours)</h4>
+                        <p id="shortTermPredictions">--</p>
+                    </div>
+                    <div class="prediction-card">
+                        <h4>Medium-term (4-24 hours)</h4>
+                        <p id="mediumTermPredictions">--</p>
+                    </div>
+                    <div class="prediction-card">
+                        <h4>Long-term (24+ hours)</h4>
+                        <p id="longTermPredictions">--</p>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Degradation Risk Forecast</h3>
+                    <canvas id="predictionChart" class="chart-canvas"></canvas>
+                </div>
+
+                <div class="prediction-analysis">
+                    <div class="analysis-card">
+                        <h4>🔍 Key Risk Factors</h4>
+                        <p id="riskFactors">--</p>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>📈 Trend Analysis</h4>
+                        <p id="trendAnalysis">--</p>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>🎯 Recommended Actions</h4>
+                        <p id="recommendedActions">--</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Performance Trends Tab -->
+            <section id="trends" class="tab-content">
+                <div class="section-title">Performance Trend Analysis</div>
+
+                <div class="trend-controls">
+                    <select id="metricType" class="filter-select">
+                        <option value="latency">Response Latency</option>
+                        <option value="errors">Error Rate</option>
+                        <option value="throughput">Throughput</option>
+                        <option value="memory">Memory Usage</option>
+                        <option value="cpu">CPU Usage</option>
+                    </select>
+                    <select id="timeRange" class="filter-select">
+                        <option value="1h">Last Hour</option>
+                        <option value="6h">Last 6 Hours</option>
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                    </select>
+                </div>
+
+                <div class="chart-container">
+                    <h3 id="trendChartTitle">Performance Trends</h3>
+                    <canvas id="trendChart" class="chart-canvas"></canvas>
+                </div>
+
+                <div class="trend-analysis">
+                    <div class="analysis-card">
+                        <h4>📊 Statistical Analysis</h4>
+                        <p id="statisticalAnalysis">--</p>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>🔄 Pattern Recognition</h4>
+                        <p id="patternRecognition">--</p>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>⚡ Performance Insights</h4>
+                        <p id="performanceInsights">--</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alert History Tab -->
+            <section id="alerts" class="tab-content">
+                <div class="section-title">Degradation Alert History</div>
+
+                <div class="alert-filters">
+                    <input type="text" id="alertSearch" class="search-input" placeholder="Search alerts...">
+                    <select id="alertSeverity" class="filter-select">
+                        <option value="all">All Severities</option>
+                        <option value="info">Info</option>
+                        <option value="warning">Warning</option>
+                        <option value="critical">Critical</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                    <select id="alertType" class="filter-select">
+                        <option value="all">All Types</option>
+                        <option value="latency">Latency Spike</option>
+                        <option value="errors">Error Rate</option>
+                        <option value="memory">Memory Pressure</option>
+                        <option value="cpu">CPU Saturation</option>
+                        <option value="prediction">Failure Prediction</option>
+                    </select>
+                </div>
+
+                <div id="alertList" class="alert-list">
+                    <div class="placeholder">No alerts generated</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>System Status: <span id="footerStatus">Ready</span> | Services: <span id="footerServices">0</span> | Alerts: <span id="footerAlerts">0</span> | Predictions: <span id="footerPredictions">0</span></p>
+        </footer>
+    </div>
+
+    <!-- Modal for Service Details -->
+    <div id="serviceModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="serviceTitle">Service Details</h2>
+            <div id="serviceDetails" class="service-details"></div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="window.controller.mitigateIssue()">Mitigate Issue</button>
+                <button class="btn btn-warning" onclick="window.controller.scaleService()">Scale Service</button>
+                <button class="btn btn-secondary" onclick="window.controller.closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="controller.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            window.controller = new PredictiveDegradationForecaster();
+            window.controller.initialize();
+
+            // Button handlers
+            document.getElementById('startMonitoring').addEventListener('click', () => window.controller.toggleMonitoring());
+            document.getElementById('simulateDegradation').addEventListener('click', () => window.controller.simulateDegradation());
+            document.getElementById('generateReport').addEventListener('click', () => window.controller.generateReport());
+
+            // Tab handlers
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const tabName = e.target.dataset.tab;
+
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    document.getElementById(tabName).classList.add('active');
+
+                    window.controller.onTabChange(tabName);
+                });
+            });
+
+            // Filter handlers
+            document.getElementById('serviceFilter')?.addEventListener('change', () => window.controller.filterServices());
+            document.getElementById('sortBy')?.addEventListener('change', () => window.controller.filterServices());
+            document.getElementById('metricType')?.addEventListener('change', () => window.controller.updateTrendChart());
+            document.getElementById('timeRange')?.addEventListener('change', () => window.controller.updateTrendChart());
+            document.getElementById('alertSeverity')?.addEventListener('change', () => window.controller.filterAlerts());
+            document.getElementById('alertType')?.addEventListener('change', () => window.controller.filterAlerts());
+            document.getElementById('alertSearch')?.addEventListener('input', () => window.controller.filterAlerts());
+
+            // Modal handlers
+            document.querySelector('.modal-close').addEventListener('click', () => window.controller.closeModal());
+            window.addEventListener('click', (e) => {
+                if (e.target.id === 'serviceModal') window.controller.closeModal();
+            });
+        });
+    </script>
+</body>
+</html>

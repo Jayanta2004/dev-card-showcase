@@ -1,0 +1,683 @@
+{
+  "version": "1.0.0",
+  "description": "Configuration for Predictive Service Degradation Forecaster",
+  "lastUpdated": "2024-01-15",
+
+  "system": {
+    "name": "Predictive Service Degradation Forecaster",
+    "monitoringInterval": 5000,
+    "alertRetentionDays": 7,
+    "metricsRetentionHours": 168,
+    "maxConcurrentServices": 1000,
+    "predictionConfidenceThreshold": 0.7
+  },
+
+  "services": [
+    {
+      "id": "api-gateway-1",
+      "name": "API Gateway Service",
+      "type": "api",
+      "region": "us-east-1",
+      "endpoints": ["https://api.example.com"],
+      "description": "Main API gateway handling user requests",
+      "tags": ["critical", "external-facing"],
+      "owner": "platform-team"
+    },
+    {
+      "id": "user-db-1",
+      "name": "User Database Service",
+      "type": "database",
+      "region": "us-east-1",
+      "endpoints": ["postgresql://user-db.internal:5432/users"],
+      "description": "Primary user data storage",
+      "tags": ["critical", "data-persistence"],
+      "owner": "data-team"
+    },
+    {
+      "id": "auth-service-1",
+      "name": "Authentication Service",
+      "type": "auth",
+      "region": "us-east-1",
+      "endpoints": ["https://auth.example.com"],
+      "description": "User authentication and authorization",
+      "tags": ["critical", "security"],
+      "owner": "security-team"
+    },
+    {
+      "id": "cache-cluster-1",
+      "name": "Redis Cache Cluster",
+      "type": "cache",
+      "region": "us-east-1",
+      "endpoints": ["redis://cache-cluster.internal:6379"],
+      "description": "Distributed caching layer",
+      "tags": ["performance", "scalability"],
+      "owner": "platform-team"
+    },
+    {
+      "id": "queue-service-1",
+      "name": "Message Queue Service",
+      "type": "queue",
+      "region": "us-east-1",
+      "endpoints": ["amqp://queue.internal:5672"],
+      "description": "Asynchronous message processing",
+      "tags": ["async", "scalability"],
+      "owner": "platform-team"
+    },
+    {
+      "id": "storage-service-1",
+      "name": "Object Storage Service",
+      "type": "storage",
+      "region": "us-east-1",
+      "endpoints": ["https://storage.example.com"],
+      "description": "File and object storage",
+      "tags": ["data", "external"],
+      "owner": "data-team"
+    },
+    {
+      "id": "compute-worker-1",
+      "name": "Background Compute Worker",
+      "type": "compute",
+      "region": "us-east-1",
+      "endpoints": ["tcp://compute-worker.internal:8080"],
+      "description": "Background processing and computation",
+      "tags": ["batch", "compute-intensive"],
+      "owner": "platform-team"
+    },
+    {
+      "id": "monitoring-db-1",
+      "name": "Monitoring Database",
+      "type": "database",
+      "region": "us-east-1",
+      "endpoints": ["influxdb://monitoring.internal:8086"],
+      "description": "Time-series metrics storage",
+      "tags": ["monitoring", "metrics"],
+      "owner": "platform-team"
+    }
+  ],
+
+  "thresholds": {
+    "global": {
+      "latency": {
+        "warning": 1.5,
+        "critical": 2.5,
+        "baseline": 200
+      },
+      "errorRate": {
+        "warning": 0.05,
+        "critical": 0.15,
+        "baseline": 0.01
+      },
+      "throughput": {
+        "warning": 0.7,
+        "critical": 0.4,
+        "baseline": 100
+      },
+      "memoryUsage": {
+        "warning": 0.8,
+        "critical": 0.95,
+        "baseline": 0.6
+      },
+      "cpuUsage": {
+        "warning": 0.7,
+        "critical": 0.9,
+        "baseline": 0.4
+      },
+      "uptime": {
+        "warning": 0.995,
+        "critical": 0.99,
+        "baseline": 0.999
+      }
+    },
+    "serviceSpecific": {
+      "database": {
+        "latency": { "warning": 2.0, "critical": 3.0 },
+        "errorRate": { "warning": 0.03, "critical": 0.1 },
+        "memoryUsage": { "warning": 0.85, "critical": 0.95 }
+      },
+      "cache": {
+        "latency": { "warning": 1.2, "critical": 2.0 },
+        "errorRate": { "warning": 0.02, "critical": 0.08 },
+        "memoryUsage": { "warning": 0.9, "critical": 0.98 }
+      },
+      "api": {
+        "latency": { "warning": 1.3, "critical": 2.0 },
+        "errorRate": { "warning": 0.08, "critical": 0.2 },
+        "throughput": { "warning": 0.6, "critical": 0.3 }
+      }
+    }
+  },
+
+  "prediction": {
+    "windows": {
+      "shortTerm": {
+        "hours": 4,
+        "confidence": 0.9,
+        "dataPoints": 12,
+        "weight": 0.4
+      },
+      "mediumTerm": {
+        "hours": 24,
+        "confidence": 0.8,
+        "dataPoints": 24,
+        "weight": 0.4
+      },
+      "longTerm": {
+        "hours": 168,
+        "confidence": 0.7,
+        "dataPoints": 168,
+        "weight": 0.2
+      }
+    },
+    "algorithms": {
+      "linearRegression": {
+        "enabled": true,
+        "minDataPoints": 6,
+        "maxSlope": 100,
+        "r2Threshold": 0.3
+      },
+      "exponentialSmoothing": {
+        "enabled": true,
+        "alpha": 0.3,
+        "beta": 0.1
+      },
+      "movingAverage": {
+        "enabled": true,
+        "windowSize": 5,
+        "type": "simple"
+      }
+    },
+    "riskFactors": {
+      "latency": {
+        "slopeWeight": 0.3,
+        "accelerationWeight": 0.2,
+        "varianceWeight": 0.1
+      },
+      "errorRate": {
+        "slopeWeight": 0.25,
+        "accelerationWeight": 0.2,
+        "varianceWeight": 0.15
+      },
+      "throughput": {
+        "slopeWeight": 0.2,
+        "accelerationWeight": 0.15,
+        "varianceWeight": 0.1
+      },
+      "resourceUsage": {
+        "memoryWeight": 0.15,
+        "cpuWeight": 0.1,
+        "diskWeight": 0.05
+      }
+    }
+  },
+
+  "alerting": {
+    "rules": [
+      {
+        "id": "latency-spike",
+        "name": "Latency Spike Alert",
+        "condition": "latency > baseline * thresholds.latency.critical",
+        "severity": "critical",
+        "cooldown": 300000,
+        "escalation": ["email", "slack"],
+        "channels": ["platform-alerts", "oncall-engineer"]
+      },
+      {
+        "id": "error-rate-surge",
+        "name": "Error Rate Surge",
+        "condition": "errorRate > thresholds.errorRate.critical",
+        "severity": "critical",
+        "cooldown": 180000,
+        "escalation": ["pagerduty", "sms"],
+        "channels": ["platform-alerts", "devops-team"]
+      },
+      {
+        "id": "memory-pressure",
+        "name": "Memory Pressure Alert",
+        "condition": "memoryUsage > thresholds.memoryUsage.critical",
+        "severity": "warning",
+        "cooldown": 600000,
+        "escalation": ["email"],
+        "channels": ["platform-alerts"]
+      },
+      {
+        "id": "degradation-trend",
+        "name": "Service Degradation Trend",
+        "condition": "riskScore > 60",
+        "severity": "warning",
+        "cooldown": 900000,
+        "escalation": ["email"],
+        "channels": ["platform-alerts"]
+      },
+      {
+        "id": "failure-prediction",
+        "name": "Imminent Failure Prediction",
+        "condition": "timeToFailure < 7200000",
+        "severity": "critical",
+        "cooldown": 300000,
+        "escalation": ["pagerduty", "slack", "sms"],
+        "channels": ["platform-alerts", "management"]
+      }
+    ],
+    "escalation": {
+      "levels": [
+        {
+          "name": "immediate",
+          "delay": 0,
+          "channels": ["pagerduty", "sms", "slack"]
+        },
+        {
+          "name": "urgent",
+          "delay": 300000,
+          "channels": ["email", "slack"]
+        },
+        {
+          "name": "normal",
+          "delay": 1800000,
+          "channels": ["email"]
+        }
+      ]
+    },
+    "templates": {
+      "latency": "Service {serviceName} experiencing high latency: {currentValue}ms (threshold: {threshold}ms)",
+      "errorRate": "Service {serviceName} error rate surged to {currentValue}% (threshold: {threshold}%)",
+      "memory": "Service {serviceName} memory usage at {currentValue}% (threshold: {threshold}%)",
+      "prediction": "Service {serviceName} predicted to fail in {timeToFailure} hours (risk score: {riskScore})"
+    }
+  },
+
+  "mitigation": {
+    "actions": [
+      {
+        "id": "scale-up",
+        "name": "Scale Up Resources",
+        "type": "auto",
+        "conditions": ["riskScore > 70", "timeToFailure < 14400000"],
+        "commands": ["kubectl scale deployment {serviceName} --replicas={currentReplicas + 2}"],
+        "cooldown": 1800000
+      },
+      {
+        "id": "restart-service",
+        "name": "Restart Service",
+        "type": "manual",
+        "conditions": ["memoryUsage > 0.95", "errorRate > 0.2"],
+        "commands": ["kubectl rollout restart deployment/{serviceName}"],
+        "cooldown": 3600000
+      },
+      {
+        "id": "clear-cache",
+        "name": "Clear Cache",
+        "type": "auto",
+        "conditions": ["cacheHitRate < 0.5", "memoryUsage > 0.9"],
+        "commands": ["redis-cli -h {cacheHost} FLUSHALL"],
+        "cooldown": 900000
+      },
+      {
+        "id": "optimize-queries",
+        "name": "Database Query Optimization",
+        "type": "manual",
+        "conditions": ["latency > 2000", "databaseConnections > 80"],
+        "commands": ["pg_analyze {databaseName}"],
+        "cooldown": 7200000
+      }
+    ],
+    "recommendations": {
+      "latency": [
+        "Scale compute resources horizontally",
+        "Optimize database query performance",
+        "Implement response caching",
+        "Review network configuration and routing"
+      ],
+      "errors": [
+        "Check application logs for error patterns",
+        "Review recent code deployments",
+        "Validate input data quality and sanitization",
+        "Monitor external service dependencies"
+      ],
+      "memory": [
+        "Increase memory allocation limits",
+        "Optimize memory usage patterns",
+        "Implement memory leak detection",
+        "Consider horizontal pod scaling"
+      ],
+      "cpu": [
+        "Scale compute instances",
+        "Optimize CPU-intensive operations",
+        "Review background process efficiency",
+        "Implement load balancing improvements"
+      ]
+    }
+  },
+
+  "reporting": {
+    "schedules": [
+      {
+        "id": "daily-health",
+        "name": "Daily Health Report",
+        "frequency": "daily",
+        "time": "09:00",
+        "format": "html",
+        "recipients": ["platform-team@example.com"],
+        "include": ["healthScores", "alertSummary", "predictions"]
+      },
+      {
+        "id": "weekly-trends",
+        "name": "Weekly Trends Report",
+        "frequency": "weekly",
+        "time": "09:00",
+        "day": "monday",
+        "format": "pdf",
+        "recipients": ["management@example.com"],
+        "include": ["trendAnalysis", "riskFactors", "mitigationSuccess"]
+      }
+    ],
+    "metrics": {
+      "healthScore": {
+        "calculation": "weighted_average",
+        "weights": {
+          "latency": 0.3,
+          "errorRate": 0.25,
+          "throughput": 0.2,
+          "resourceUsage": 0.15,
+          "uptime": 0.1
+        }
+      },
+      "riskScore": {
+        "calculation": "multiplicative",
+        "factors": ["trendSlope", "acceleration", "variance", "currentHealth"]
+      },
+      "mttr": {
+        "calculation": "average_resolution_time",
+        "severityFilter": ["critical", "warning"]
+      },
+      "mtbf": {
+        "calculation": "average_time_between_failures",
+        "failureDefinition": "status == 'failed'"
+      }
+    }
+  },
+
+  "simulation": {
+    "scenarios": [
+      {
+        "id": "normal-operation",
+        "name": "Normal Operation",
+        "description": "Baseline service operation with normal variations",
+        "duration": 3600000,
+        "services": ["all"],
+        "modifications": {
+          "latency": { "variance": 0.1, "trend": 0 },
+          "errorRate": { "variance": 0.05, "trend": 0 },
+          "throughput": { "variance": 0.15, "trend": 0 }
+        }
+      },
+      {
+        "id": "traffic-spike",
+        "name": "Traffic Spike",
+        "description": "Sudden increase in request volume",
+        "duration": 1800000,
+        "services": ["api-gateway-1", "cache-cluster-1"],
+        "modifications": {
+          "throughput": { "multiplier": 3, "duration": 900000 },
+          "latency": { "multiplier": 2.5, "duration": 900000 },
+          "cpuUsage": { "multiplier": 2, "duration": 900000 }
+        }
+      },
+      {
+        "id": "memory-leak",
+        "name": "Memory Leak Scenario",
+        "description": "Gradual memory usage increase leading to failure",
+        "duration": 7200000,
+        "services": ["user-db-1"],
+        "modifications": {
+          "memoryUsage": { "trend": 0.02, "maxValue": 0.98 },
+          "latency": { "correlation": "memoryUsage", "multiplier": 3 },
+          "errorRate": { "correlation": "memoryUsage", "multiplier": 10 }
+        }
+      },
+      {
+        "id": "database-contention",
+        "name": "Database Contention",
+        "description": "High database load causing performance degradation",
+        "duration": 3600000,
+        "services": ["user-db-1", "api-gateway-1"],
+        "modifications": {
+          "latency": { "multiplier": 4, "variance": 0.3 },
+          "errorRate": { "multiplier": 5, "variance": 0.2 },
+          "cpuUsage": { "multiplier": 2.5, "variance": 0.1 }
+        }
+      },
+      {
+        "id": "network-latency",
+        "name": "Network Latency Spike",
+        "description": "Network issues causing increased response times",
+        "duration": 1800000,
+        "services": ["all"],
+        "modifications": {
+          "latency": { "multiplier": 3, "variance": 0.4 },
+          "errorRate": { "multiplier": 2, "variance": 0.1 },
+          "throughput": { "multiplier": 0.6, "variance": 0.2 }
+        }
+      },
+      {
+        "id": "cascade-failure",
+        "name": "Cascade Failure",
+        "description": "One service failure causing others to degrade",
+        "duration": 5400000,
+        "services": ["auth-service-1", "api-gateway-1", "user-db-1"],
+        "sequence": [
+          {
+            "service": "auth-service-1",
+            "delay": 0,
+            "modifications": {
+              "latency": { "multiplier": 5 },
+              "errorRate": { "value": 0.8 },
+              "status": "failed"
+            }
+          },
+          {
+            "service": "api-gateway-1",
+            "delay": 300000,
+            "modifications": {
+              "latency": { "multiplier": 3 },
+              "errorRate": { "multiplier": 4 }
+            }
+          },
+          {
+            "service": "user-db-1",
+            "delay": 900000,
+            "modifications": {
+              "latency": { "multiplier": 2 },
+              "errorRate": { "multiplier": 2 }
+            }
+          }
+        ]
+      }
+    ],
+    "testData": {
+      "baselineMetrics": {
+        "latency": 200,
+        "errorRate": 0.01,
+        "throughput": 100,
+        "memoryUsage": 0.6,
+        "cpuUsage": 0.4,
+        "responseTime": 200,
+        "uptime": 0.999
+      },
+      "varianceRanges": {
+        "latency": { "min": -50, "max": 100 },
+        "errorRate": { "min": -0.005, "max": 0.02 },
+        "throughput": { "min": -20, "max": 30 },
+        "memoryUsage": { "min": -0.05, "max": 0.1 },
+        "cpuUsage": { "min": -0.1, "max": 0.15 }
+      },
+      "degradationPatterns": {
+        "slow": { "rate": 0.001, "duration": 3600000 },
+        "medium": { "rate": 0.005, "duration": 1800000 },
+        "fast": { "rate": 0.02, "duration": 900000 }
+      }
+    }
+  },
+
+  "ui": {
+    "theme": {
+      "primary": "#f97316",
+      "secondary": "#fb923c",
+      "background": "#0f172a",
+      "surface": "#1e293b",
+      "text": "#e2e8f0",
+      "textSecondary": "#cbd5e1",
+      "border": "#334155",
+      "success": "#10b981",
+      "warning": "#f59e0b",
+      "error": "#ef4444",
+      "info": "#3b82f6"
+    },
+    "charts": {
+      "colors": ["#f97316", "#fb923c", "#10b981", "#3b82f6", "#8b5cf6", "#ef4444"],
+      "gridColor": "#334155",
+      "textColor": "#cbd5e1",
+      "lineWidth": 2,
+      "pointRadius": 4
+    },
+    "animations": {
+      "duration": 300,
+      "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "stagger": 50
+    },
+    "breakpoints": {
+      "mobile": 480,
+      "tablet": 768,
+      "desktop": 1500
+    }
+  },
+
+  "integrations": {
+    "prometheus": {
+      "enabled": true,
+      "endpoint": "/metrics",
+      "labels": {
+        "service": "{serviceName}",
+        "region": "{region}",
+        "type": "{serviceType}"
+      }
+    },
+    "grafana": {
+      "enabled": true,
+      "dashboard": "predictive-degradation-forecaster",
+      "datasource": "prometheus"
+    },
+    "slack": {
+      "enabled": true,
+      "webhook": "https://hooks.slack.com/services/...",
+      "channels": {
+        "alerts": "#platform-alerts",
+        "warnings": "#platform-warnings",
+        "critical": "#platform-critical"
+      }
+    },
+    "pagerduty": {
+      "enabled": true,
+      "routingKey": "...",
+      "serviceId": "..."
+    },
+    "email": {
+      "enabled": true,
+      "smtp": {
+        "host": "smtp.example.com",
+        "port": 587,
+        "secure": false,
+        "auth": {
+          "user": "alerts@example.com",
+          "pass": "..."
+        }
+      },
+      "from": "Predictive Degradation Forecaster <alerts@example.com>",
+      "templates": {
+        "critical": "critical-alert.html",
+        "warning": "warning-alert.html",
+        "info": "info-alert.html"
+      }
+    }
+  },
+
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "outputs": ["console", "file"],
+    "file": {
+      "path": "./logs/degradation-forecaster.log",
+      "maxSize": "100m",
+      "maxFiles": 5,
+      "compress": true
+    },
+    "categories": {
+      "alerts": "warn",
+      "predictions": "info",
+      "metrics": "debug",
+      "performance": "info"
+    }
+  },
+
+  "security": {
+    "authentication": {
+      "enabled": true,
+      "type": "jwt",
+      "secret": "...",
+      "expiresIn": "24h"
+    },
+    "authorization": {
+      "roles": ["admin", "operator", "viewer"],
+      "permissions": {
+        "admin": ["read", "write", "delete", "admin"],
+        "operator": ["read", "write"],
+        "viewer": ["read"]
+      }
+    },
+    "encryption": {
+      "enabled": true,
+      "algorithm": "aes-256-gcm",
+      "key": "..."
+    },
+    "rateLimiting": {
+      "enabled": true,
+      "windowMs": 900000,
+      "maxRequests": 100
+    }
+  },
+
+  "performance": {
+    "optimization": {
+      "caching": {
+        "enabled": true,
+        "ttl": 300000,
+        "maxSize": 1000
+      },
+      "compression": {
+        "enabled": true,
+        "level": 6
+      },
+      "connectionPooling": {
+        "enabled": true,
+        "maxConnections": 20,
+        "idleTimeout": 30000
+      }
+    },
+    "scaling": {
+      "autoScaling": {
+        "enabled": true,
+        "minInstances": 1,
+        "maxInstances": 10,
+        "cpuThreshold": 70,
+        "memoryThreshold": 80
+      },
+      "loadBalancing": {
+        "algorithm": "round-robin",
+        "healthChecks": {
+          "enabled": true,
+          "interval": 30000,
+          "timeout": 5000
+        }
+      }
+    }
+  }
+}

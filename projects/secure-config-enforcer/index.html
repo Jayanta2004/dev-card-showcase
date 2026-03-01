@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Configuration Baseline Enforcer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>🔐 Configuration Baseline Enforcer</h1>
+                <p class="subtitle">Standardized Configuration Management & Compliance</p>
+            </div>
+            <div class="header-controls">
+                <button id="validateAll" class="btn btn-primary">Validate All</button>
+                <button id="syncConfigs" class="btn btn-secondary">Sync Baselines</button>
+                <button id="generateReport" class="btn btn-tertiary">Generate Report</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Status Overview -->
+            <section class="status-overview">
+                <div class="status-card compliant">
+                    <div class="status-icon">✅</div>
+                    <div class="status-info">
+                        <h3>Compliant Environments</h3>
+                        <p class="status-value" id="compliantCount">0</p>
+                    </div>
+                </div>
+                <div class="status-card non-compliant">
+                    <div class="status-icon">⚠️</div>
+                    <div class="status-info">
+                        <h3>Non-Compliant</h3>
+                        <p class="status-value" id="nonCompliantCount">0</p>
+                    </div>
+                </div>
+                <div class="status-card issues">
+                    <div class="status-icon">🚨</div>
+                    <div class="status-info">
+                        <h3>Critical Issues</h3>
+                        <p class="status-value" id="criticalCount">0</p>
+                    </div>
+                </div>
+                <div class="status-card coverage">
+                    <div class="status-icon">📊</div>
+                    <div class="status-info">
+                        <h3>Compliance Score</h3>
+                        <p class="status-value" id="complianceScore">--</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabs Navigation -->
+            <section class="tabs-section">
+                <button class="tab-button active" data-tab="environments">Environments</button>
+                <button class="tab-button" data-tab="baselines">Baselines</button>
+                <button class="tab-button" data-tab="violations">Violations</button>
+                <button class="tab-button" data-tab="policies">Policies</button>
+                <button class="tab-button" data-tab="audit">Audit Log</button>
+            </section>
+
+            <!-- Environments Tab -->
+            <section id="environments" class="tab-content active">
+                <div class="section-title">Environment Status</div>
+                <div class="environments-list" id="environmentsList">
+                    <div class="placeholder">Loading environments...</div>
+                </div>
+            </section>
+
+            <!-- Baselines Tab -->
+            <section id="baselines" class="tab-content">
+                <div class="section-title">Configuration Baselines</div>
+                <div class="baseline-controls">
+                    <button class="btn btn-small" onclick="window.enforcer.addBaseline()">+ New Baseline</button>
+                    <button class="btn btn-small" onclick="window.enforcer.importBaseline()">Import</button>
+                    <button class="btn btn-small" onclick="window.enforcer.exportBaseline()">Export</button>
+                </div>
+                <div class="baselines-list" id="baselinesList">
+                    <div class="placeholder">No baselines defined</div>
+                </div>
+            </section>
+
+            <!-- Violations Tab -->
+            <section id="violations" class="tab-content">
+                <div class="section-title">Configuration Violations</div>
+                <div class="filter-controls">
+                    <label for="severityFilter">Severity:</label>
+                    <select id="severityFilter">
+                        <option value="">All</option>
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                    <label for="environmentFilter">Environment:</label>
+                    <select id="environmentFilter">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="violations-list" id="violationsList">
+                    <div class="placeholder">No violations detected</div>
+                </div>
+            </section>
+
+            <!-- Policies Tab -->
+            <section id="policies" class="tab-content">
+                <div class="section-title">Configuration Policies</div>
+                <div class="policies-grid" id="policiesGrid">
+                    <div class="placeholder">Loading policies...</div>
+                </div>
+            </section>
+
+            <!-- Audit Log Tab -->
+            <section id="audit" class="tab-content">
+                <div class="section-title">Audit Trail</div>
+                <div class="audit-controls">
+                    <label for="auditFilter">Show:</label>
+                    <select id="auditFilter">
+                        <option value="">All Events</option>
+                        <option value="validation">Validations</option>
+                        <option value="violation">Violations</option>
+                        <option value="remediation">Remediations</option>
+                        <option value="sync">Syncs</option>
+                    </select>
+                </div>
+                <div class="audit-list" id="auditList">
+                    <div class="placeholder">No audit records</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>Last validation: <span id="lastValidation">--</span></p>
+            <p>Compliance baseline: <span id="baselineVersion">--</span> | Monitored environments: <span id="envCount">0</span></p>
+        </footer>
+    </div>
+
+    <!-- Modal for violation details -->
+    <div id="violationModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="violationTitle">Violation Details</h2>
+            <div id="violationDetails"></div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="window.enforcer.remediateViolation()">Auto-Remediate</button>
+                <button class="btn btn-secondary" onclick="window.enforcer.closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="enforcer.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            window.enforcer = new ConfigurationBaselineEnforcer();
+            window.enforcer.initialize();
+            
+            document.getElementById('validateAll').addEventListener('click', () => window.enforcer.validateAll());
+            document.getElementById('syncConfigs').addEventListener('click', () => window.enforcer.syncBaselines());
+            document.getElementById('generateReport').addEventListener('click', () => window.enforcer.generateComplianceReport());
+            
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const tabName = e.target.dataset.tab;
+                    
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    document.getElementById(tabName).classList.add('active');
+                });
+            });
+
+            document.getElementById('severityFilter').addEventListener('change', () => window.enforcer.filterViolations());
+            document.getElementById('environmentFilter').addEventListener('change', () => window.enforcer.filterViolations());
+            document.getElementById('auditFilter').addEventListener('change', () => window.enforcer.filterAuditLog());
+
+            // Modal close
+            document.querySelector('.modal-close').addEventListener('click', () => window.enforcer.closeModal());
+            window.addEventListener('click', (e) => {
+                const modal = document.getElementById('violationModal');
+                if (e.target === modal) window.enforcer.closeModal();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔮 The Probability Oracle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0718;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .oracle-chamber {
+            width: 900px;
+            background: #15122a;
+            border-radius: 120px;
+            padding: 40px;
+            box-shadow: 0 30px 60px #000000cc, 0 0 0 6px #b8860b, 0 0 100px #b8860b99;
+            border: 2px solid #ffd700;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quantum-sigil {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            font-size: 80px;
+            opacity: 0.2;
+            transform: rotate(15deg);
+            animation: spin 20s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .probability-display {
+            display: flex;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .question-area {
+            flex: 2;
+        }
+        
+        #oracleQuestion {
+            width: 100%;
+            background: #0f0d1f;
+            border: 4px solid #b8860b;
+            padding: 25px;
+            font-size: 24px;
+            color: #ffd78c;
+            border-radius: 60px;
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 20px;
+            outline: none;
+        }
+        
+        .probability-circle {
+            flex: 1;
+            aspect-ratio: 1;
+            background: #0f0d1f;
+            border-radius: 50%;
+            border: 8px solid #b8860b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 100px #b8860b33, inset 0 0 50px #000000;
+        }
+        
+        #probabilityValue {
+            font-size: 64px;
+            color: #ffd700;
+            text-shadow: 0 0 30px #ffaa00;
+            font-weight: bold;
+        }
+        
+        .probability-label {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #b8860b;
+            font-size: 18px;
+        }
+        
+        .outcome-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .outcome-card {
+            background: #0f0d1f;
+            border: 3px solid #b8860b;
+            border-radius: 40px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .outcome-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 30px #00000099, 0 0 60px #b8860b;
+        }
+        .outcome-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .outcome-title {
+            color: #ffd78c;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .outcome-prob {
+            color: #b8860b;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .oracle-controls {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .oracle-btn {
+            background: #0f0d1f;
+            border: 4px solid #b8860b;
+            color: #ffd78c;
+            font-size: 28px;
+            padding: 20px 60px;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 4px;
+        }
+        .oracle-btn:hover {
+            background: #b8860b;
+            color: #0f0d1f;
+            box-shadow: 0 0 80px #ffaa00;
+        }
+        
+        .quantum-noise {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #b8860b33;
+            font-size: 12px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="oracle-chamber">
+        <div class="quantum-sigil">⚛️</div>
+        
+        <div class="probability-display">
+            <div class="question-area">
+                <input type="text" id="oracleQuestion" placeholder="ask the oracle a question...">
+                <div style="color: #b8860b; font-size: 18px; margin-top: 10px;">
+                    the answer exists in probability space
+                </div>
+            </div>
+            
+            <div class="probability-circle">
+                <span id="probabilityValue">47%</span>
+                <span class="probability-label">CERTAINTY</span>
+            </div>
+        </div>
+        
+        <div class="outcome-grid">
+            <div class="outcome-card" data-outcome="yes">
+                <div class="outcome-icon">✅</div>
+                <div class="outcome-title">AFFIRMATIVE</div>
+                <div class="outcome-prob" id="probYes">34%</div>
+            </div>
+            <div class="outcome-card" data-outcome="no">
+                <div class="outcome-icon">❌</div>
+                <div class="outcome-title">NEGATIVE</div>
+                <div class="outcome-prob" id="probNo">33%</div>
+            </div>
+            <div class="outcome-card" data-outcome="maybe">
+                <div class="outcome-icon">🌀</div>
+                <div class="outcome-title">UNCERTAIN</div>
+                <div class="outcome-prob" id="probMaybe">33%</div>
+            </div>
+        </div>
+        
+        <div class="oracle-controls">
+            <button class="oracle-btn" id="consultBtn">🔮 CONSULT</button>
+            <button class="oracle-btn" id="collapseBtn">⚡ COLLAPSE</button>
+            <button class="oracle-btn" id="resetBtn">⟲ RESET</button>
+        </div>
+        
+        <div class="quantum-noise" id="quantumState">
+            ⚛️ observing changes reality
+        </div>
+    </div>
+
+    <script>
+        const probabilityValue = document.getElementById('probabilityValue');
+        const probYes = document.getElementById('probYes');
+        const probNo = document.getElementById('probNo');
+        const probMaybe = document.getElementById('probMaybe');
+        const oracleQuestion = document.getElementById('oracleQuestion');
+        const quantumState = document.getElementById('quantumState');
+        
+        let probabilities = {
+            yes: 34,
+            no: 33,
+            maybe: 33
+        };
+        
+        let observing = false;
+        
+        function updateDisplay() {
+            probabilityValue.textContent = Math.floor(Math.random() * 100) + '%';
+            probYes.textContent = probabilities.yes + '%';
+            probNo.textContent = probabilities.no + '%';
+            probMaybe.textContent = probabilities.maybe + '%';
+            
+            // Quantum noise effect
+            quantumState.textContent = '⚛️ ' + Array.from({length: 10}, () => Math.random() > 0.5 ? '1' : '0').join('');
+        }
+        
+        function consult() {
+            if (!oracleQuestion.value) {
+                oracleQuestion.value = "the universe whispers...";
+            }
+            
+            // Quantum fluctuation
+            probabilities.yes = Math.floor(20 + Math.random() * 60);
+            probabilities.no = Math.floor(20 + Math.random() * 60);
+            probabilities.maybe = Math.floor(20 + Math.random() * 60);
+            
+            // Normalize to 100%
+            const total = probabilities.yes + probabilities.no + probabilities.maybe;
+            probabilities.yes = Math.floor((probabilities.yes / total) * 100);
+            probabilities.no = Math.floor((probabilities.no / total) * 100);
+            probabilities.maybe = 100 - probabilities.yes - probabilities.no;
+            
+            updateDisplay();
+        }
+        
+        function collapse() {
+            // Collapse to a definite outcome based on probabilities
+            const random = Math.random() * 100;
+            let outcome;
+            
+            if (random < probabilities.yes) {
+                outcome = 'yes';
+                probabilities = { yes: 100, no: 0, maybe: 0 };
+            } else if (random < probabilities.yes + probabilities.no) {
+                outcome = 'no';
+                probabilities = { yes: 0, no: 100, maybe: 0 };
+            } else {
+                outcome = 'maybe';
+                probabilities = { yes: 0, no: 0, maybe: 100 };
+            }
+            
+            updateDisplay();
+            
+            // Show outcome
+            oracleQuestion.value = `the oracle says: ${outcome}`;
+        }
+        
+        function reset() {
+            probabilities = {
+                yes: 34,
+                no: 33,
+                maybe: 33
+            };
+            oracleQuestion.value = '';
+            updateDisplay();
+        }
+        
+        document.getElementById('consultBtn').addEventListener('click', consult);
+        document.getElementById('collapseBtn').addEventListener('click', collapse);
+        document.getElementById('resetBtn').addEventListener('click', reset);
+        
+        // Click on outcomes to influence probabilities
+        document.querySelectorAll('.outcome-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const outcome = card.dataset.outcome;
+                // Observer effect - focusing on one outcome changes probabilities
+                if (outcome === 'yes') {
+                    probabilities.yes = Math.min(90, probabilities.yes + 10);
+                    probabilities.no = Math.max(5, probabilities.no - 5);
+                    probabilities.maybe = Math.max(5, probabilities.maybe - 5);
+                } else if (outcome === 'no') {
+                    probabilities.no = Math.min(90, probabilities.no + 10);
+                    probabilities.yes = Math.max(5, probabilities.yes - 5);
+                    probabilities.maybe = Math.max(5, probabilities.maybe - 5);
+                } else {
+                    probabilities.maybe = Math.min(90, probabilities.maybe + 10);
+                    probabilities.yes = Math.max(5, probabilities.yes - 5);
+                    probabilities.no = Math.max(5, probabilities.no - 5);
+                }
+                
+                // Normalize
+                const total = probabilities.yes + probabilities.no + probabilities.maybe;
+                probabilities.yes = Math.floor((probabilities.yes / total) * 100);
+                probabilities.no = Math.floor((probabilities.no / total) * 100);
+                probabilities.maybe = 100 - probabilities.yes - probabilities.no;
+                
+                updateDisplay();
+            });
+        });
+        
+        // Initial update
+        updateDisplay();
+        
+        // Continuous quantum fluctuation
+        setInterval(() => {
+            if (!observing) {
+                // Tiny random fluctuations
+                probabilities.yes += (Math.random() - 0.5) * 2;
+                probabilities.no += (Math.random() - 0.5) * 2;
+                probabilities.maybe += (Math.random() - 0.5) * 2;
+                
+                // Keep in bounds
+                probabilities.yes = Math.max(5, Math.min(90, probabilities.yes));
+                probabilities.no = Math.max(5, Math.min(90, probabilities.no));
+                probabilities.maybe = Math.max(5, Math.min(90, probabilities.maybe));
+                
+                // Normalize
+                const total = probabilities.yes + probabilities.no + probabilities.maybe;
+                probabilities.yes = Math.floor((probabilities.yes / total) * 100);
+                probabilities.no = Math.floor((probabilities.no / total) * 100);
+                probabilities.maybe = 100 - probabilities.yes - probabilities.no;
+                
+                updateDisplay();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

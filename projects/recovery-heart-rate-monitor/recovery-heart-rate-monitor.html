@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recovery Heart Rate Monitor - Dev Card Showcase</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .recovery-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .analyzer-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .hr-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-group input, .form-group textarea {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .recovery-chart {
+            margin-top: 1rem;
+            height: 300px;
+        }
+
+        .readings-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .reading-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reading-info {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .reading-time {
+            font-weight: 500;
+        }
+
+        .reading-hr {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        @media (max-width: 768px) {
+            .recovery-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <header class="page-header">
+            <h1><i data-lucide="heart"></i> Recovery Heart Rate Monitor</h1>
+            <p>Track your heart rate recovery after exercise to measure cardiovascular fitness. Log post-workout heart rates and visualize your recovery curve for better training insights.</p>
+        </header>
+
+        <div class="recovery-grid">
+            <!-- HR Logger -->
+            <section class="analyzer-section hr-logger">
+                <h2><i data-lucide="plus-circle"></i> Log Heart Rate Reading</h2>
+                <form id="hrForm" class="hr-form">
+                    <div class="form-group">
+                        <label for="sessionDate">Workout Date</label>
+                        <input type="date" id="sessionDate" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="readingTime">Time After Workout (minutes)</label>
+                            <input type="number" id="readingTime" min="0" step="1" placeholder="e.g., 1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="heartRate">Heart Rate (bpm)</label>
+                            <input type="number" id="heartRate" min="40" max="220" step="1" placeholder="e.g., 150" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes (optional)</label>
+                        <textarea id="notes" placeholder="How you feel, exercise type, etc."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="check-circle"></i> Log Reading
+                    </button>
+                </form>
+            </section>
+
+            <!-- Recovery Dashboard -->
+            <section class="analyzer-section recovery-dashboard">
+                <h2><i data-lucide="activity"></i> Recovery Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="initialHR">--</div>
+                        <div class="metric-label">Initial HR</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="lowestHR">--</div>
+                        <div class="metric-label">Lowest HR</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="recoveryTime">-- min</div>
+                        <div class="metric-label">Recovery Time</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="recoveryRate">-- bpm/min</div>
+                        <div class="metric-label">Recovery Rate</div>
+                    </div>
+                </div>
+                <div class="recovery-chart">
+                    <canvas id="recoveryChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Recent Readings -->
+            <section class="analyzer-section recent-readings">
+                <h2><i data-lucide="clock"></i> Recent Readings</h2>
+                <div id="readingsList" class="readings-list">
+                    <!-- Readings will be populated here -->
+                </div>
+            </section>
+
+            <!-- Recovery History -->
+            <section class="analyzer-section recovery-history">
+                <h2><i data-lucide="calendar"></i> Recovery History</h2>
+                <div id="historyChartContainer" class="recovery-chart">
+                    <canvas id="historyChart"></canvas>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Include footer -->
+    <div id="footer-container"></div>
+
+    <script>
+        // Load navbar and footer
+        fetch('../navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+                lucide.createIcons();
+            });
+
+        fetch('../footer.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('footer-container').innerHTML = data;
+            });
+
+        // Initialize charts
+        let recoveryChart = null;
+        let historyChart = null;
+
+        // Load data from localStorage
+        let readings = JSON.parse(localStorage.getItem('recoveryHRReadings') || '[]');
+
+        // Form submission
+        document.getElementById('hrForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const sessionDate = document.getElementById('sessionDate').value;
+            const readingTime = parseInt(document.getElementById('readingTime').value);
+            const heartRate = parseInt(document.getElementById('heartRate').value);
+            const notes = document.getElementById('notes').value;
+
+            const reading = {
+                id: Date.now(),
+                date: sessionDate,
+                time: readingTime,
+                hr: heartRate,
+                notes: notes,
+                timestamp: new Date().toISOString()
+            };
+
+            readings.push(reading);
+            localStorage.setItem('recoveryHRReadings', JSON.stringify(readings));
+
+            // Reset form
+            this.reset();
+            document.getElementById('sessionDate').value = sessionDate; // Keep date
+
+            updateDashboard();
+            updateReadingsList();
+        });
+
+        function updateDashboard() {
+            // Group readings by date
+            const today = new Date().toISOString().split('T')[0];
+            const todayReadings = readings.filter(r => r.date === today).sort((a, b) => a.time - b.time);
+
+            if (todayReadings.length === 0) {
+                document.getElementById('initialHR').textContent = '--';
+                document.getElementById('lowestHR').textContent = '--';
+                document.getElementById('recoveryTime').textContent = '-- min';
+                document.getElementById('recoveryRate').textContent = '-- bpm/min';
+                if (recoveryChart) recoveryChart.destroy();
+                return;
+            }
+
+            const initialHR = todayReadings[0].hr;
+            const lowestHR = Math.min(...todayReadings.map(r => r.hr));
+            const recoveryTime = todayReadings[todayReadings.length - 1].time;
+            const recoveryRate = recoveryTime > 0 ? ((initialHR - lowestHR) / recoveryTime).toFixed(1) : 0;
+
+            document.getElementById('initialHR').textContent = initialHR;
+            document.getElementById('lowestHR').textContent = lowestHR;
+            document.getElementById('recoveryTime').textContent = recoveryTime + ' min';
+            document.getElementById('recoveryRate').textContent = recoveryRate + ' bpm/min';
+
+            // Update recovery chart
+            const ctx = document.getElementById('recoveryChart').getContext('2d');
+            if (recoveryChart) recoveryChart.destroy();
+            
+            recoveryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: todayReadings.map(r => r.time + ' min'),
+                    datasets: [{
+                        label: 'Heart Rate (bpm)',
+                        data: todayReadings.map(r => r.hr),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Today\'s Recovery Curve'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Heart Rate (bpm)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time After Workout (minutes)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Update history chart
+            updateHistoryChart();
+        }
+
+        function updateHistoryChart() {
+            // Group by date and get initial and final HR for each session
+            const sessions = {};
+            readings.forEach(reading => {
+                if (!sessions[reading.date]) {
+                    sessions[reading.date] = [];
+                }
+                sessions[reading.date].push(reading);
+            });
+
+            const sessionData = Object.keys(sessions).map(date => {
+                const sessionReadings = sessions[date].sort((a, b) => a.time - b.time);
+                const initial = sessionReadings[0].hr;
+                const final = sessionReadings[sessionReadings.length - 1].hr;
+                return {
+                    date: date,
+                    initial: initial,
+                    final: final,
+                    drop: initial - final
+                };
+            }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const ctx = document.getElementById('historyChart').getContext('2d');
+            if (historyChart) historyChart.destroy();
+
+            historyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sessionData.map(s => new Date(s.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'HR Drop (bpm)',
+                        data: sessionData.map(s => s.drop),
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Recovery History - Heart Rate Drop'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Heart Rate Drop (bpm)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateReadingsList() {
+            const list = document.getElementById('readingsList');
+            list.innerHTML = '';
+
+            // Show last 10 readings
+            const recentReadings = readings.slice(-10).reverse();
+
+            recentReadings.forEach(reading => {
+                const item = document.createElement('div');
+                item.className = 'reading-item';
+                item.innerHTML = `
+                    <div class="reading-info">
+                        <div class="reading-time">${new Date(reading.date).toLocaleDateString()} - ${reading.time} min</div>
+                        <div class="reading-hr">${reading.hr} bpm</div>
+                        ${reading.notes ? `<div class="reading-notes">${reading.notes}</div>` : ''}
+                    </div>
+                    <button class="delete-btn" onclick="deleteReading(${reading.id})">Delete</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function deleteReading(id) {
+            readings = readings.filter(r => r.id !== id);
+            localStorage.setItem('recoveryHRReadings', JSON.stringify(readings));
+            updateDashboard();
+            updateReadingsList();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('sessionDate').value = new Date().toISOString().split('T')[0];
+            updateDashboard();
+            updateReadingsList();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

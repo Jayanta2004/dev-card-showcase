@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LockLogic · pin tumbler simulation</title>
+    <!-- Font Awesome 6 (free) for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        body {
+            background: #2b3e4f;  /* deep industrial */
+            background: radial-gradient(circle at 30% 30%, #3e576b, #1d2c38);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .lock-panel {
+            max-width: 1000px;
+            width: 100%;
+            background: #465f73;
+            background: linear-gradient(165deg, #3a5265, #59768f);
+            border-radius: 3.5rem 3.5rem 3rem 3rem;
+            box-shadow: 0 30px 35px -10px #0f1a21, inset 0 1px 4px #c0d0dd;
+            border: 3px solid #8ba0b3;
+            padding: 2rem 2rem 2.5rem 2rem;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            background: #2b3f50c9;
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            border: 2px solid #6f8fa5;
+            box-shadow: inset 0 2px 5px #1d2f3b;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #f2e9d8;
+            text-shadow: 3px 3px 0 #1e2f3c;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 i {
+            color: #ffcf9a;
+            filter: drop-shadow(0 0 4px #fbb360);
+        }
+
+        .status-badge {
+            margin-left: auto;
+            background: #263b48;
+            border-radius: 50px;
+            padding: 0.5rem 1.8rem;
+            border: 2px solid #aac0d0;
+            display: flex;
+            align-items: center;
+            gap: 1.4rem;
+        }
+
+        .lock-state {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: #e9dccd;
+        }
+
+        .lock-state i {
+            font-size: 1.7rem;
+        }
+
+        .locked-color {
+            color: #ffaa88;
+        }
+
+        .unlocked-color {
+            color: #b0f2b4;
+        }
+
+        .key-status {
+            background: #1f313e;
+            padding: 0.3rem 1.3rem;
+            border-radius: 40px;
+            font-weight: 600;
+            color: #bdd3e2;
+        }
+
+        /* ----- main lock diagram ----- */
+        .lock-diagram {
+            background: #314b5b;
+            border-radius: 4rem 4rem 3rem 3rem;
+            padding: 1.8rem 1rem 2.5rem 1rem;
+            margin-bottom: 2rem;
+            border: 3px solid #779eb3;
+            box-shadow: inset 0 -6px 0 #1f3541, 0 15px 25px #0e1f29;
+        }
+
+        .plug-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1rem 0 0.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .pin-columns {
+            display: flex;
+            gap: 1.2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            background: #25414e;
+            padding: 1.8rem 1.5rem;
+            border-radius: 100px 100px 30px 30px;
+            border: 3px solid #789eb2;
+            box-shadow: inset 0 2px 8px #10232e;
+        }
+
+        .pin-pair {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 65px;
+        }
+
+        .pin-label {
+            color: #bad2e3;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 6px;
+            text-shadow: 2px 2px 0 #1f313d;
+        }
+
+        .pin-chamber {
+            background: #1c2d38;
+            width: 50px;
+            height: 90px;
+            border-radius: 30px 30px 15px 15px;
+            border: 3px solid #577a8f;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            overflow: hidden;
+            box-shadow: inset 0 -4px 6px #0c1a22;
+            position: relative;
+        }
+
+        .pin {
+            width: 100%;
+            background: linear-gradient(145deg, #f0cb97, #dba772);
+            border-top: 2px solid #ffe3b6;
+            box-sizing: border-box;
+            transition: height 0.2s ease;
+            box-shadow: inset -2px 0 4px #a77d51;
+        }
+
+        .driver {
+            background: linear-gradient(145deg, #b5c5d4, #8f9fb0);
+            border-top: 2px solid #dbe5f0;
+            box-shadow: inset -2px 0 4px #6f7e91;
+        }
+
+        .shear-line {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: #ffd966;
+            top: 33px;  /* shear line at 33px from bottom = 1/3 of 90px? we'll set dynamic later via js, but this is placeholder */
+            left: 0;
+            opacity: 0.7;
+            border-radius: 2px;
+            box-shadow: 0 0 8px #ffbb33;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .key-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            background: #2c4453;
+            border-radius: 60px;
+            padding: 1rem 2.2rem;
+            margin-top: 1.5rem;
+            border: 3px solid #83a1b3;
+        }
+
+        .key-bitting {
+            display: flex;
+            gap: 1.2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .cut-slider {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #1d3643;
+            padding: 0.5rem 1rem 1rem 1rem;
+            border-radius: 40px;
+            border: 2px solid #597e94;
+        }
+
+        .cut-slider label {
+            color: #ffdeb4;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .cut-slider input {
+            width: 80px;
+        }
+
+        .cut-value {
+            color: white;
+            font-weight: 700;
+            background: #0b212d;
+            padding: 0.2rem 1rem;
+            border-radius: 30px;
+            margin-top: 4px;
+        }
+
+        .key-controls {
+            display: flex;
+            gap: 0.8rem;
+            margin-left: 1rem;
+        }
+
+        .key-btn {
+            background: #5d7c91;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #2f4453, 0 8px 12px black;
+            transition: 0.07s ease;
+            border: 2px solid #b3d0e0;
+        }
+
+        .key-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 3px 0 #2f4453, 0 8px 12px black;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 1.8rem 0 0.5rem;
+        }
+
+        .big-btn {
+            background: #516e82;
+            border: none;
+            color: white;
+            font-size: 1.4rem;
+            padding: 0.8rem 2.8rem;
+            border-radius: 60px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #283b47, 0 10px 25px #0d1f28;
+            transition: 0.07s linear;
+            border: 3px solid #9ebfd2;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .big-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 3px 0 #283b47, 0 10px 20px #0d1f28;
+        }
+
+        .big-btn:disabled {
+            opacity: 0.45;
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #283b47;
+            pointer-events: none;
+        }
+
+        .reset-btn {
+            background: #415f70;
+            font-size: 1.2rem;
+            padding: 0.7rem 1.8rem;
+        }
+
+        .log-area {
+            background: #1d313f;
+            border-radius: 40px;
+            padding: 0.8rem 2rem;
+            color: #d6e8f0;
+            font-weight: 500;
+            text-align: center;
+            border: 3px solid #6f8d9f;
+            margin-top: 1.8rem;
+            font-size: 1.1rem;
+        }
+
+        footer {
+            text-align: center;
+            color: #b0c9db;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="lock-panel">
+        <div class="header">
+            <h1>
+                <i class="fas fa-lock"></i> LockLogic
+            </h1>
+            <div class="status-badge" id="lockStatusBadge">
+                <span class="lock-state" id="lockIcon"><i class="fas fa-lock"></i> <span id="lockStateText">LOCKED</span></span>
+                <span class="key-status" id="keyPresence"><i class="fas fa-key"></i> key inserted</span>
+            </div>
+        </div>
+
+        <!-- main lock diagram -->
+        <div class="lock-diagram">
+            <div class="pin-columns" id="pinColumnsContainer">
+                <!-- pin pairs will be injected via JS -->
+            </div>
+
+            <!-- key cutting controls -->
+            <div class="key-section">
+                <div class="key-bitting" id="keyBittingContainer">
+                    <!-- sliders will be injected -->
+                </div>
+                <div class="key-controls">
+                    <button class="key-btn" id="randomKeyBtn" title="random key"><i class="fas fa-dice"></i></button>
+                    <button class="key-btn" id="zeroKeyBtn" title="all cuts to 0"><i class="fas fa-undo-alt"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- main actions -->
+        <div class="action-buttons">
+            <button class="big-btn" id="insertKeyBtn"><i class="fas fa-arrow-right-to-bracket"></i> Insert key</button>
+            <button class="big-btn" id="turnPlugBtn"><i class="fas fa-rotate-right"></i> Turn plug</button>
+            <button class="big-btn reset-btn" id="resetLockBtn"><i class="fas fa-broom"></i> Reset lock</button>
+        </div>
+
+        <!-- message log -->
+        <div class="log-area" id="logMessage">
+            ⚙️ Ready. Insert a key to start.
+        </div>
+        <footer>
+            <i class="fas fa-wrench"></i> pin tumbler logic · shear line simulation
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // --- configuration ---
+            const PIN_COUNT = 5;          // 5-pin lock
+            const MAX_CUT = 9;             // cuts 0..9 (some lock sims use 0-9)
+            const PIN_HEIGHT = 90;          // total chamber height in px
+            const SHEAR_POS = 33;            // fixed shear line from bottom (px). Must be consistent: driver + key pin = total height - shear? Actually we treat chamber: bottom is 0, top is 90. shear at 33px means bottom part (key pin) should be 33px when cut correct.
+
+            // we'll compute actual pin lengths: keyPin height = CUT * factor? we set bottom part = base + cut * step
+            const BASE_PIN = 12;   // minimum pin height (cut 0)
+            const STEP = 4;         // each cut increases height by 4px  (max cut 9 -> 12+36=48 <= 57? need to keep under shear line margin)
+            // driver fills rest: driverHeight = totalHeight - keyPinHeight (but we want shear at 33 from bottom: keyPin should be exactly 33 when correct cut?)
+            // Let's define: correct cut for a given pin: keyPinHeight = 15 + cut*3; shear fixed at 33. then driver height = 90 - keyPinHeight. at correct cut, keyPinHeight =33? 33 = 15+cut*3 => cut=6. That means reference cut 6 aligns with shear. That's okay – different locks have different "true" heights. We want visual shear line fixed.
+            // to make it intuitive: We want when key cut matches the preset secret cut, the gap between key pin and driver aligns with shear. Let's define secret cuts (random on reset). then keyPinHeight = BASE + cut*STEP. And we set shearLine at HEIGHT where correct cut makes keyPinHeight = correctShearHeight.
+            // we'll define secretCuts array. for each pin, the "correct cut" gives keyPinHeight = BASE + correctCut*STEP = SHEAR_POS.
+            // thus correctCut = (SHEAR_POS - BASE)/STEP . We need integer round. Let's set BASE = 15, STEP = 4, SHEAR_POS = 35 (makes cut 5 = 15+20=35). good.
+            // then if cut is less, key pin too short, driver sinks; if cut more, key pin too tall pushes driver up.
+            
+            const BASE = 15;           
+            const STEP_PX = 4;          
+            const SHEAR_PX = 35;         // shear line at 35px from bottom
+
+            // ----- global state -----
+            let secretCuts = [];            // the correct cuts (0-9) for each pin (set randomly on reset)
+            let currentKeyCuts = [2, 2, 2, 2, 2];   // default key cuts
+            let keyInserted = false;
+            let plugRotated = false;        // if plug rotated (lock unlocked)
+            let lockRotated = false;        // alias for unlocked state
+
+            // DOM elements
+            const pinColumnsEl = document.getElementById('pinColumnsContainer');
+            const keyBittingEl = document.getElementById('keyBittingContainer');
+            const logMessageEl = document.getElementById('logMessage');
+            const lockStateText = document.getElementById('lockStateText');
+            const lockIcon = document.querySelector('#lockIcon i');
+            const keyPresenceSpan = document.getElementById('keyPresence');
+
+            const insertKeyBtn = document.getElementById('insertKeyBtn');
+            const turnPlugBtn = document.getElementById('turnPlugBtn');
+            const resetLockBtn = document.getElementById('resetLockBtn');
+            const randomKeyBtn = document.getElementById('randomKeyBtn');
+            const zeroKeyBtn = document.getElementById('zeroKeyBtn');
+
+            // ---- helper: generate random secret (0..MAX_CUT)
+            function randomCuts() {
+                return Array.from({ length: PIN_COUNT }, () => Math.floor(Math.random() * (MAX_CUT + 1)));
+            }
+
+            // ---- reset lock (new secret, clears rotation, removes key)
+            function resetLock() {
+                secretCuts = randomCuts();
+                // make sure currentKeyCuts are not undefined; keep same or set default to all 2?
+                currentKeyCuts = [2, 2, 2, 2, 2];
+                keyInserted = false;
+                plugRotated = false;
+                lockRotated = false;
+                updateUI();
+                logMessage('Lock reset · new secret cuts generated');
+            }
+
+            // ---- insert / remove key (toggle)
+            function insertKey() {
+                if (!keyInserted) {
+                    keyInserted = true;
+                    plugRotated = false;  // pulling key resets rotation
+                    lockRotated = false;
+                    logMessage('Key inserted. Try turning the plug.');
+                } else {
+                    // remove key
+                    keyInserted = false;
+                    plugRotated = false;
+                    lockRotated = false;
+                    logMessage('Key removed.');
+                }
+                updateUI();
+            }
+
+            // ---- attempt to turn plug
+            function turnPlug() {
+                if (!keyInserted) {
+                    logMessage('No key inserted!', 'warn');
+                    return;
+                }
+                if (plugRotated) {
+                    logMessage('Plug already rotated (unlocked). Reset or remove key.', 'info');
+                    return;
+                }
+
+                // check if key cuts match secret cuts (within tolerance? exactly equal)
+                const match = currentKeyCuts.every((cut, idx) => cut === secretCuts[idx]);
+                if (match) {
+                    plugRotated = true;
+                    lockRotated = true;
+                    logMessage('✅ SUCCESS! Correct key – plug rotates, lock OPEN.');
+                } else {
+                    plugRotated = false;
+                    lockRotated = false;
+                    logMessage('❌ Wrong key – pins block the shear line. Lock remains LOCKED.');
+                }
+                updateUI();
+            }
+
+            // --- update pin graphics, key sliders, statuses
+            function updateUI() {
+                renderPinColumns();
+                renderKeySliders();
+                // update status text & icons
+                if (lockRotated) {
+                    lockStateText.textContent = 'UNLOCKED';
+                    lockIcon.className = 'fas fa-unlock-alt unlocked-color';
+                } else {
+                    lockStateText.textContent = 'LOCKED';
+                    lockIcon.className = 'fas fa-lock locked-color';
+                }
+                // key presence
+                if (keyInserted) {
+                    keyPresenceSpan.innerHTML = '<i class="fas fa-key"></i> key inserted';
+                } else {
+                    keyPresenceSpan.innerHTML = '<i class="fas fa-key"></i> no key';
+                }
+
+                // enable/disable turn button depending if keyInserted and not already rotated
+                turnPlugBtn.disabled = !keyInserted || lockRotated;
+            }
+
+            // render pin columns based on secret, current cuts, keyInserted, rotation
+            function renderPinColumns() {
+                if (!pinColumnsEl) return;
+                let html = '';
+                for (let i = 0; i < PIN_COUNT; i++) {
+                    const secret = secretCuts[i];
+                    const keyCut = currentKeyCuts[i] !== undefined ? currentKeyCuts[i] : 0;
+
+                    // key pin height (bottom part) depends on key if inserted, else default? In real lock, without key all pins are at rest (driver down, keypin up?). Actually no key: key pins rest on bottom? We simplify: with no key, key pins are at 0 height (resting on plug?) Actually typical: no key, key pins are flush with plug, drivers pushed down by springs. We'll represent: when key not inserted, keypin = 0 (or very small) , driver fills almost all.
+                    let keyPinHeight, driverHeight;
+                    if (!keyInserted) {
+                        // no key: keypin minimal (0px) but we show small pad, driver almost full (down)
+                        keyPinHeight = 4; // just a sliver
+                        driverHeight = PIN_HEIGHT - keyPinHeight;
+                    } else {
+                        // key inserted: key pin height = BASE + keyCut * STEP_PX (capped to reasonable)
+                        keyPinHeight = Math.min(PIN_HEIGHT - 8, BASE + keyCut * STEP_PX);
+                        // ensure not negative
+                        keyPinHeight = Math.max(4, keyPinHeight);
+                        // driver height = rest
+                        driverHeight = PIN_HEIGHT - keyPinHeight;
+                    }
+
+                    // also when plug rotated (unlocked) the pins are sheared and may not align? we simplify: just show same but we can add visual effect: shift.
+                    // but we only care about shear line: draw shear line at SHEAR_PX.
+                    const shearStyle = `top: ${SHEAR_PX}px;`;
+
+                    // determine if key matches secret, only relevant if key inserted and not rotated? just visual hint.
+                    const cutMatch = (keyInserted && (keyCut === secret));
+
+                    html += `
+                        <div class="pin-pair">
+                            <div class="pin-label">Pin ${i+1}</div>
+                            <div class="pin-chamber">
+                                <div class="pin driver" style="height: ${driverHeight}px;"></div>
+                                <div class="pin" style="height: ${keyPinHeight}px; background: ${cutMatch ? '#b5e6a7' : '#f0cb97'};"></div>
+                                <div class="shear-line" style="${shearStyle}"></div>
+                            </div>
+                            <div style="font-size: 0.75rem; color: #d4e2ed; margin-top: 5px;">secret: ${secret}</div>
+                        </div>
+                    `;
+                }
+                pinColumnsEl.innerHTML = html;
+            }
+
+            // render sliders for key cuts
+            function renderKeySliders() {
+                if (!keyBittingEl) return;
+                let html = '';
+                for (let i = 0; i < PIN_COUNT; i++) {
+                    const val = currentKeyCuts[i] !== undefined ? currentKeyCuts[i] : 0;
+                    html += `
+                        <div class="cut-slider">
+                            <label>${i+1}</label>
+                            <input type="range" min="0" max="${MAX_CUT}" value="${val}" step="1" data-index="${i}" class="key-slider">
+                            <span class="cut-value" id="cutVal${i}">${val}</span>
+                        </div>
+                    `;
+                }
+                keyBittingEl.innerHTML = html;
+
+                // attach listeners
+                document.querySelectorAll('.key-slider').forEach(slider => {
+                    slider.addEventListener('input', function(e) {
+                        const idx = parseInt(this.dataset.index);
+                        const newVal = parseInt(this.value);
+                        currentKeyCuts[idx] = newVal;
+                        // update displayed value next to slider
+                        const span = document.getElementById(`cutVal${idx}`);
+                        if (span) span.textContent = newVal;
+                        // if key inserted, changing cuts affects pin heights dynamically (in reality maybe need to remove key first, but we allow live tweak for sim)
+                        if (keyInserted) {
+                            // changing cuts while key inserted will rearrange pins, lock should become locked unless correct.
+                            plugRotated = false;
+                            lockRotated = false;
+                            logMessage('Key cuts changed — plug is locked again.');
+                        }
+                        renderPinColumns();  // update pins
+                        updateUI(); // refresh turn button state etc
+                    });
+                });
+            }
+
+            // randomize key cuts (0-9 each)
+            function randomizeKey() {
+                currentKeyCuts = currentKeyCuts.map(() => Math.floor(Math.random() * (MAX_CUT + 1)));
+                if (keyInserted) {
+                    plugRotated = false;
+                    lockRotated = false;
+                }
+                updateUI();
+                logMessage('Random key cuts generated.');
+            }
+
+            // zero out cuts
+            function zeroKey() {
+                currentKeyCuts = currentKeyCuts.map(() => 0);
+                if (keyInserted) {
+                    plugRotated = false;
+                    lockRotated = false;
+                }
+                updateUI();
+                logMessage('All cuts set to 0 (lowest).');
+            }
+
+            // log helper
+            function logMessage(msg, type = 'info') {
+                if (logMessageEl) {
+                    logMessageEl.innerHTML = `⚡ ${msg}`;
+                }
+            }
+
+            // ----- initial setup and event binding ----
+            function init() {
+                // random secret on first load
+                secretCuts = randomCuts();
+                currentKeyCuts = [2,2,2,2,2];
+                keyInserted = false;
+                plugRotated = false;
+                lockRotated = false;
+
+                updateUI();
+
+                // buttons
+                insertKeyBtn.addEventListener('click', () => { insertKey(); });
+                turnPlugBtn.addEventListener('click', () => { turnPlug(); });
+                resetLockBtn.addEventListener('click', () => { resetLock(); });
+                randomKeyBtn.addEventListener('click', () => { randomizeKey(); });
+                zeroKeyBtn.addEventListener('click', () => { zeroKey(); });
+
+                logMessage('🔧 LockLogic ready. Insert a key and turn.');
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>

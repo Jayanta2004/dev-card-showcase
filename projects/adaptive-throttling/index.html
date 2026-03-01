@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Interaction Throttling Controller</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>🚦 Adaptive Throttling Controller</h1>
+                <p class="subtitle">Dynamic rate limiting based on behavioral heuristics and contextual usage patterns</p>
+            </div>
+            <div class="header-controls">
+                <button id="enableThrottling" class="btn btn-primary">Enable Throttling</button>
+                <button id="simulateLoad" class="btn btn-secondary">Simulate Load</button>
+                <button id="generateReport" class="btn btn-tertiary">Generate Report</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Throttling Overview Cards -->
+            <section class="throttling-overview">
+                <div class="overview-card active">
+                    <div class="card-icon">✓</div>
+                    <div class="card-info">
+                        <h3>Active Users</h3>
+                        <p class="card-value" id="activeUsers">0</p>
+                        <p class="card-label">Currently Monitored</p>
+                    </div>
+                </div>
+                <div class="overview-card throttled">
+                    <div class="card-icon">⏱️</div>
+                    <div class="card-info">
+                        <h3>Throttled Requests</h3>
+                        <p class="card-value" id="throttledCount">0</p>
+                        <p class="card-label">Today</p>
+                    </div>
+                </div>
+                <div class="overview-card fairness">
+                    <div class="card-icon">⚖️</div>
+                    <div class="card-info">
+                        <h3>Fairness Score</h3>
+                        <p class="card-value" id="fairnessScore">100%</p>
+                        <p class="card-label">Distribution Quality</p>
+                    </div>
+                </div>
+                <div class="overview-card security">
+                    <div class="card-icon">🛡️</div>
+                    <div class="card-info">
+                        <h3>Attack Detection</h3>
+                        <p class="card-value" id="attacksBlocked">0</p>
+                        <p class="card-label">Threats Mitigated</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabs Navigation -->
+            <section class="tabs-section">
+                <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+                <button class="tab-button" data-tab="users">User Sessions</button>
+                <button class="tab-button" data-tab="patterns">Behavior Patterns</button>
+                <button class="tab-button" data-tab="rules">Throttling Rules</button>
+                <button class="tab-button" data-tab="events">Event Log</button>
+            </section>
+
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <div class="section-title">Real-Time Throttling Monitor</div>
+                
+                <div class="monitoring-grid">
+                    <div class="monitor-panel">
+                        <h3>System Health</h3>
+                        <div class="health-indicators">
+                            <div class="health-item">
+                                <span class="label">Status:</span>
+                                <span class="value" id="systemStatus">Idle</span>
+                            </div>
+                            <div class="health-item">
+                                <span class="label">Requests/sec:</span>
+                                <span class="value" id="requestsPerSec">0</span>
+                            </div>
+                            <div class="health-item">
+                                <span class="label">Avg Latency:</span>
+                                <span class="value" id="avgLatency">--ms</span>
+                            </div>
+                            <div class="health-item">
+                                <span class="label">CPU % (est.):</span>
+                                <span class="value" id="cpuUsage">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="monitor-panel">
+                        <h3>Behavioral Analysis</h3>
+                        <div class="behavior-metrics">
+                            <div class="metric">
+                                <span class="label">Burst Detected:</span>
+                                <span class="badge" id="burstStatus">No</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Anomaly Score:</span>
+                                <span class="value" id="anomalyScore">0%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">False Positives:</span>
+                                <span class="value" id="falsePositives">0</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Adaptation Rate:</span>
+                                <span class="value" id="adaptationRate">Fast</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Request Rate (Last 10 Minutes)</h3>
+                    <canvas id="requestChart" class="chart-canvas"></canvas>
+                </div>
+
+                <div class="recent-activity">
+                    <h3>Recent Throttling Events</h3>
+                    <div id="recentEvents" class="activity-list">
+                        <div class="placeholder">No throttling events yet</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Sessions Tab -->
+            <section id="users" class="tab-content">
+                <div class="section-title">Active User Sessions</div>
+                
+                <div class="filter-controls">
+                    <select id="userFilter" class="filter-select">
+                        <option value="all">All Users</option>
+                        <option value="throttled">Throttled</option>
+                        <option value="normal">Normal</option>
+                        <option value="suspicious">Suspicious</option>
+                    </select>
+                    <select id="sortBy" class="filter-select">
+                        <option value="requests">Sort by Requests</option>
+                        <option value="limit">Sort by Limit</option>
+                        <option value="risk">Sort by Risk</option>
+                    </select>
+                </div>
+
+                <div id="usersList" class="users-grid">
+                    <div class="placeholder">Loading users...</div>
+                </div>
+            </section>
+
+            <!-- Behavior Patterns Tab -->
+            <section id="patterns" class="tab-content">
+                <div class="section-title">Behavioral Pattern Analysis</div>
+                
+                <canvas id="behaviorChart" class="chart-canvas"></canvas>
+
+                <div class="pattern-analysis">
+                    <div class="analysis-card">
+                        <h4>Normal Behavior</h4>
+                        <p id="normalPatternDesc">--</p>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>Burst Pattern</h4>
+                        <p id="burstPatternDesc">--</p>
+                    </div>
+                    <div class="analysis-card">
+                        <h4>Attack Pattern</h4>
+                        <p id="attackPatternDesc">--</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Throttling Rules Tab -->
+            <section id="rules" class="tab-content">
+                <div class="section-title">Adaptive Throttling Rules</div>
+                
+                <div class="rules-controls">
+                    <button class="btn btn-small" onclick="window.controller.addRule()">+ New Rule</button>
+                    <button class="btn btn-small" onclick="window.controller.resetRules()">Reset to Default</button>
+                </div>
+
+                <div id="rulesList" class="rules-list">
+                    <div class="placeholder">Loading rules...</div>
+                </div>
+            </section>
+
+            <!-- Event Log Tab -->
+            <section id="events" class="tab-content">
+                <div class="section-title">Event Log</div>
+                
+                <div class="event-filters">
+                    <input type="text" id="eventSearch" class="search-input" placeholder="Search logs...">
+                    <select id="eventTypeFilter" class="filter-select">
+                        <option value="all">All Types</option>
+                        <option value="throttle">Throttle Events</option>
+                        <option value="burst">Burst Detected</option>
+                        <option value="attack">Attack Detected</option>
+                        <option value="adaptation">Adaptation</option>
+                    </select>
+                </div>
+
+                <div id="eventList" class="event-list">
+                    <div class="placeholder">No events logged</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>System Status: <span id="footerStatus">Ready</span> | Users: <span id="footerUsers">0</span> | Throttling: <span id="footerThrottling">Disabled</span></p>
+        </footer>
+    </div>
+
+    <!-- Modal for User Details -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="userTitle">User Details</h2>
+            <div id="userDetails" class="user-details"></div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="window.controller.adjustUserLimit()">Adjust Limit</button>
+                <button class="btn btn-warning" onclick="window.controller.blockUser()">Block User</button>
+                <button class="btn btn-secondary" onclick="window.controller.closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="controller.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            window.controller = new AdaptiveThrottlingController();
+            window.controller.initialize();
+
+            // Button handlers
+            document.getElementById('enableThrottling').addEventListener('click', () => window.controller.toggleThrottling());
+            document.getElementById('simulateLoad').addEventListener('click', () => window.controller.simulateLoad());
+            document.getElementById('generateReport').addEventListener('click', () => window.controller.generateReport());
+
+            // Tab handlers
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const tabName = e.target.dataset.tab;
+                    
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    document.getElementById(tabName).classList.add('active');
+                    
+                    window.controller.onTabChange(tabName);
+                });
+            });
+
+            // Filter handlers
+            document.getElementById('userFilter')?.addEventListener('change', () => window.controller.filterUsers());
+            document.getElementById('sortBy')?.addEventListener('change', () => window.controller.filterUsers());
+            document.getElementById('eventTypeFilter')?.addEventListener('change', () => window.controller.filterEvents());
+            document.getElementById('eventSearch')?.addEventListener('input', () => window.controller.filterEvents());
+
+            // Modal handlers
+            document.querySelector('.modal-close').addEventListener('click', () => window.controller.closeModal());
+            window.addEventListener('click', (e) => {
+                if (e.target.id === 'userModal') window.controller.closeModal();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUANTUM FIELD THEORY · particle creation · vacuum fluctuations</title>
+    <!-- single file · qft + feynman diagrams + virtual particles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #03010f;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Aeonik', 'Inter', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .qft-lab {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 30% 40%, #1a103a, #010008);
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #fieldCanvas {
+            z-index: 1;
+            filter: drop-shadow(0 0 20px #7f7fff);
+        }
+
+        #particleCanvas {
+            z-index: 2;
+            mix-blend-mode: screen;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        #feynmanCanvas {
+            z-index: 3;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+
+        .qft-panel {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(20, 5, 40, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(140, 140, 255, 0.7);
+            border-radius: 60px 60px 30px 30px;
+            padding: 1.5rem 3rem;
+            display: flex;
+            gap: 3rem;
+            color: #c0c0ff;
+            box-shadow: 0 0 80px #8a8aff, 0 20px 40px black;
+            pointer-events: auto;
+        }
+
+        .qft-param {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .param-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            opacity: 0.7;
+            color: #a0a0ff;
+        }
+
+        .param-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a0a0ff, #ff8af0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px #f8f;
+        }
+
+        .qft-slider {
+            width: 200px;
+            height: 6px;
+            background: #2a1a4a;
+            border-radius: 3px;
+            position: relative;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+
+        .slider-fill {
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, #8a8aff, #ff8ac8);
+            border-radius: 3px;
+            box-shadow: 0 0 20px #f8f;
+        }
+
+        .slider-handle {
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 30px #ffaaff;
+            border: 3px solid #8a8aff;
+            cursor: grab;
+        }
+
+        .qft-badge {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            z-index: 10;
+            background: rgba(10, 0, 30, 0.6);
+            backdrop-filter: blur(8px);
+            border: 2px solid #8a8aff;
+            border-radius: 40px;
+            padding: 1rem 2.5rem;
+            color: white;
+            font-size: 1.6rem;
+            letter-spacing: 4px;
+            box-shadow: 0 0 50px #8a8aff;
+        }
+
+        .qft-stats {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            z-index: 10;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(30, 10, 50, 0.7);
+            backdrop-filter: blur(8px);
+            border: 2px solid #a0a0ff;
+            border-radius: 30px;
+            padding: 1.2rem 2rem;
+            text-align: center;
+            color: #d0d0ff;
+            min-width: 140px;
+        }
+
+        .stat-number {
+            font-size: 2.4rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .vacuum-energy-meter {
+            position: absolute;
+            bottom: 200px;
+            left: 60px;
+            z-index: 10;
+            width: 300px;
+            height: 30px;
+            background: #1a1a2a;
+            border-radius: 15px;
+            border: 3px solid #8a8aff;
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, #8a8aff, #ff8ac8, #ffb0f0);
+            border-radius: 12px;
+            box-shadow: 0 0 30px #f8f;
+        }
+
+        .interaction-display {
+            position: absolute;
+            bottom: 200px;
+            right: 60px;
+            z-index: 10;
+            background: rgba(30, 10, 40, 0.8);
+            backdrop-filter: blur(4px);
+            padding: 1.2rem 2rem;
+            border-radius: 40px;
+            border-right: 8px solid #8a8aff;
+            color: #d0d0ff;
+            font-size: 1.2rem;
+            max-width: 350px;
+        }
+    </style>
+</head>
+<body>
+    <div class="qft-lab">
+        <canvas id="fieldCanvas"></canvas>
+        <canvas id="particleCanvas"></canvas>
+        <canvas id="feynmanCanvas"></canvas>
+
+        <!-- qft control panel -->
+        <div class="qft-panel">
+            <div class="qft-param">
+                <span class="param-label">COUPLING</span>
+                <div class="qft-slider" id="couplingSlider">
+                    <div class="slider-fill" id="couplingFill" style="width: 30%;"></div>
+                    <div class="slider-handle" id="couplingHandle" style="left: 30%;"></div>
+                </div>
+                <span class="param-value" id="couplingDisplay">0.3</span>
+            </div>
+
+            <div class="qft-param">
+                <span class="param-label">MASS</span>
+                <div class="qft-slider" id="massSlider">
+                    <div class="slider-fill" id="massFill" style="width: 50%;"></div>
+                    <div class="slider-handle" id="massHandle" style="left: 50%;"></div>
+                </div>
+                <span class="param-value" id="massDisplay">0.5</span>
+            </div>
+
+            <div class="qft-param">
+                <span class="param-label">ENERGY</span>
+                <div class="qft-slider" id="energySlider">
+                    <div class="slider-fill" id="energyFill" style="width: 70%;"></div>
+                    <div class="slider-handle" id="energyHandle" style="left: 70%;"></div>
+                </div>
+                <span class="param-value" id="energyDisplay">0.7</span>
+            </div>
+        </div>
+
+        <div class="qft-badge">⚛️ QUANTUM FIELD THEORY · virtual particles</div>
+        
+        <div class="qft-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="particleCount">127</div>
+                <div>PARTICLES</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="vacuumEnergy">2.3</div>
+                <div>VACUUM ENERGY</div>
+            </div>
+        </div>
+
+        <div class="vacuum-energy-meter">
+            <div class="meter-fill" id="vacuumMeter" style="width: 46%;"></div>
+        </div>
+
+        <div class="interaction-display" id="interactionDisplay">
+            🌊 e⁺e⁻ → γγ · cross section: 2.3 pb
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- QUANTUM FIELD THEORY ----------
+            // Simulates quantum fields, particle creation/annihilation, and feynman diagrams
+            
+            const fieldCanvas = document.getElementById('fieldCanvas');
+            const particleCanvas = document.getElementById('particleCanvas');
+            const feynmanCanvas = document.getElementById('feynmanCanvas');
+            
+            const ctxField = fieldCanvas.getContext('2d');
+            const ctxParticle = particleCanvas.getContext('2d');
+            const ctxFeynman = feynmanCanvas.getContext('2d');
+
+            let width, height;
+            let time = 0;
+
+            // qft parameters
+            let coupling = 0.3;           // interaction strength
+            let mass = 0.5;                // particle mass (GeV)
+            let energy = 0.7;               // center of mass energy
+            
+            // field grid
+            const GRID_SIZE = 80;
+            let fieldReal = new Float32Array(GRID_SIZE * GRID_SIZE);
+            let fieldImag = new Float32Array(GRID_SIZE * GRID_SIZE);
+            
+            // particles
+            const particles = [];
+            const MAX_PARTICLES = 200;
+            
+            // feynman diagrams
+            const diagrams = [];
+
+            // interaction types
+            const interactions = [
+                "e⁺e⁻ → γγ · cross section: 2.3 pb",
+                "γγ → e⁺e⁻ · threshold: 1.02 MeV",
+                "q\bar{q} → gg · QCD coupling: αₛ = 0.118",
+                "W⁺W⁻ → H · Higgs resonance",
+                "ν_e + n → p + e⁻ · weak interaction",
+                "γ + γ → γ + γ · light-by-light scattering",
+                "e⁻ → e⁻γ · bremsstrahlung",
+                "μ → eν\bar{ν} · decay width: 2.9e-19 GeV"
+            ];
+
+            // UI elements
+            const couplingDisplay = document.getElementById('couplingDisplay');
+            const massDisplay = document.getElementById('massDisplay');
+            const energyDisplay = document.getElementById('energyDisplay');
+            const particleCount = document.getElementById('particleCount');
+            const vacuumEnergy = document.getElementById('vacuumEnergy');
+            const vacuumMeter = document.getElementById('vacuumMeter');
+            const interactionDisplay = document.getElementById('interactionDisplay');
+            
+            // sliders
+            const couplingSlider = document.getElementById('couplingSlider');
+            const couplingHandle = document.getElementById('couplingHandle');
+            const couplingFill = document.getElementById('couplingFill');
+            
+            const massSlider = document.getElementById('massSlider');
+            const massHandle = document.getElementById('massHandle');
+            const massFill = document.getElementById('massFill');
+            
+            const energySlider = document.getElementById('energySlider');
+            const energyHandle = document.getElementById('energyHandle');
+            const energyFill = document.getElementById('energyFill');
+
+            // particle class
+            class Particle {
+                constructor(type, x, y, px, py) {
+                    this.type = type; // 'e-', 'e+', 'γ', 'q', etc.
+                    this.x = x;
+                    this.y = y;
+                    this.px = px;
+                    this.py = py;
+                    this.energy = Math.sqrt(px*px + py*py + mass*mass);
+                    this.lifetime = 1.0;
+                    this.color = this.getColor();
+                }
+                
+                getColor() {
+                    switch(this.type) {
+                        case 'e-': return '#8a8aff'; // electron
+                        case 'e+': return '#ff8a8a'; // positron
+                        case 'γ': return '#ffff8a';   // photon
+                        case 'q': return '#8aff8a';   // quark
+                        default: return '#ffffff';
+                    }
+                }
+                
+                update() {
+                    this.x += this.px * 0.01;
+                    this.y += this.py * 0.01;
+                    this.lifetime -= 0.005;
+                    
+                    // boundary conditions
+                    if (this.x < 0 || this.x > width) this.px *= -1;
+                    if (this.y < 0 || this.y > height) this.py *= -1;
+                    
+                    return this.lifetime > 0;
+                }
+            }
+
+            // initialize quantum field
+            function initField() {
+                for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+                    // vacuum fluctuations
+                    fieldReal[i] = (Math.random() - 0.5) * 0.1;
+                    fieldImag[i] = (Math.random() - 0.5) * 0.1;
+                }
+            }
+
+            // resize
+            function resizeCanvases() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                fieldCanvas.width = width;
+                fieldCanvas.height = height;
+                particleCanvas.width = width;
+                particleCanvas.height = height;
+                feynmanCanvas.width = width;
+                feynmanCanvas.height = height;
+                
+                initField();
+            }
+            window.addEventListener('resize', resizeCanvases);
+            resizeCanvases();
+
+            // slider interactions
+            function setupSliders() {
+                // coupling slider
+                function updateCouplingFromEvent(e) {
+                    const rect = couplingSlider.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    x = Math.max(0, Math.min(rect.width, x));
+                    let val = x / rect.width;
+                    
+                    coupling = val;
+                    couplingDisplay.innerText = coupling.toFixed(2);
+                    couplingFill.style.width = (val * 100) + '%';
+                    couplingHandle.style.left = (val * 100) + '%';
+                }
+                
+                couplingHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const onMove = (e) => updateCouplingFromEvent(e);
+                    const onUp = () => {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                
+                couplingSlider.addEventListener('click', (e) => {
+                    updateCouplingFromEvent(e);
+                });
+                
+                // mass slider
+                function updateMassFromEvent(e) {
+                    const rect = massSlider.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    x = Math.max(0, Math.min(rect.width, x));
+                    let val = x / rect.width;
+                    
+                    mass = val;
+                    massDisplay.innerText = mass.toFixed(2);
+                    massFill.style.width = (val * 100) + '%';
+                    massHandle.style.left = (val * 100) + '%';
+                }
+                
+                massHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const onMove = (e) => updateMassFromEvent(e);
+                    const onUp = () => {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                
+                massSlider.addEventListener('click', (e) => {
+                    updateMassFromEvent(e);
+                });
+                
+                // energy slider
+                function updateEnergyFromEvent(e) {
+                    const rect = energySlider.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    x = Math.max(0, Math.min(rect.width, x));
+                    let val = x / rect.width;
+                    
+                    energy = val;
+                    energyDisplay.innerText = energy.toFixed(2);
+                    energyFill.style.width = (val * 100) + '%';
+                    energyHandle.style.left = (val * 100) + '%';
+                }
+                
+                energyHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const onMove = (e) => updateEnergyFromEvent(e);
+                    const onUp = () => {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                
+                energySlider.addEventListener('click', (e) => {
+                    updateEnergyFromEvent(e);
+                });
+            }
+            setupSliders();
+
+            // update field (klein-gordon equation)
+            function updateField() {
+                let newField = new Float32Array(GRID_SIZE * GRID_SIZE);
+                
+                for (let y = 1; y < GRID_SIZE-1; y++) {
+                    for (let x = 1; x < GRID_SIZE-1; x++) {
+                        let idx = y * GRID_SIZE + x;
+                        
+                        // wave equation with mass term
+                        let laplacian = fieldReal[idx - 1] + fieldReal[idx + 1] +
+                                       fieldReal[idx - GRID_SIZE] + fieldReal[idx + GRID_SIZE] -
+                                       4 * fieldReal[idx];
+                        
+                        // klein-gordon: (□ + m²)φ = 0
+                        newField[idx] = fieldReal[idx] + 0.1 * (laplacian - mass * mass * fieldReal[idx]);
+                        
+                        // add quantum fluctuations
+                        newField[idx] += (Math.random() - 0.5) * coupling * 0.01;
+                    }
+                }
+                
+                fieldReal = newField;
+            }
+
+            // create particles from field excitations
+            function createParticles() {
+                if (particles.length < MAX_PARTICLES && Math.random() < coupling * 0.1) {
+                    let x = Math.random() * width;
+                    let y = Math.random() * height;
+                    let px = (Math.random() - 0.5) * energy;
+                    let py = (Math.random() - 0.5) * energy;
+                    
+                    // particle type based on energy
+                    let type;
+                    let r = Math.random();
+                    if (r < 0.3) type = 'e-';
+                    else if (r < 0.6) type = 'e+';
+                    else if (r < 0.8) type = 'γ';
+                    else type = 'q';
+                    
+                    particles.push(new Particle(type, x, y, px, py));
+                    
+                    // pair production at high energy
+                    if (energy > 0.8 && Math.random() < 0.3) {
+                        particles.push(new Particle('e+', x + 20, y, -px, -py));
+                    }
+                }
+                
+                // update particle count display
+                particleCount.innerText = particles.length;
+                
+                // vacuum energy (zero-point fluctuations)
+                let vacEnergy = 0.5 + 0.5 * Math.sin(time) * coupling;
+                vacuumEnergy.innerText = vacEnergy.toFixed(2);
+                vacuumMeter.style.width = (vacEnergy * 100) + '%';
+                
+                // update interaction display occasionally
+                if (Math.floor(time * 2) % 30 === 0) {
+                    let idx = Math.floor(Math.random() * interactions.length);
+                    interactionDisplay.innerHTML = '🌊 ' + interactions[idx];
+                }
+            }
+
+            // draw quantum field
+            function drawField() {
+                ctxField.clearRect(0, 0, width, height);
+                
+                let cellW = width / GRID_SIZE;
+                let cellH = height / GRID_SIZE;
+                
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    for (let x = 0; x < GRID_SIZE; x++) {
+                        let val = fieldReal[y * GRID_SIZE + x];
+                        
+                        // map to color
+                        let intensity = Math.floor(128 + val * 100);
+                        intensity = Math.max(0, Math.min(255, intensity));
+                        
+                        ctxField.fillStyle = `rgb(${intensity}, ${intensity/2}, 255)`;
+                        ctxField.fillRect(x * cellW, y * cellH, cellW + 1, cellH + 1);
+                    }
+                }
+            }
+
+            // draw particles
+            function drawParticles() {
+                ctxParticle.clearRect(0, 0, width, height);
+                
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    let p = particles[i];
+                    if (!p.update()) {
+                        particles.splice(i, 1);
+                        continue;
+                    }
+                    
+                    // draw particle
+                    ctxParticle.beginPath();
+                    ctxParticle.arc(p.x, p.y, 5 + p.energy * 5, 0, 2 * Math.PI);
+                    ctxParticle.fillStyle = p.color + 'aa';
+                    ctxParticle.shadowBlur = 15;
+                    ctxParticle.shadowColor = p.color;
+                    ctxParticle.fill();
+                    
+                    // draw momentum arrow
+                    ctxParticle.beginPath();
+                    ctxParticle.moveTo(p.x, p.y);
+                    ctxParticle.lineTo(p.x + p.px * 20, p.y + p.py * 20);
+                    ctxParticle.strokeStyle = '#ffffff80';
+                    ctxParticle.lineWidth = 1;
+                    ctxParticle.stroke();
+                }
+            }
+
+            // draw feynman diagrams
+            function drawFeynman() {
+                ctxFeynman.clearRect(0, 0, width, height);
+                
+                let centerX = width/2;
+                let centerY = height/2;
+                
+                // incoming particles
+                ctxFeynman.beginPath();
+                ctxFeynman.moveTo(centerX - 150, centerY - 50);
+                ctxFeynman.lineTo(centerX - 50, centerY - 20);
+                ctxFeynman.strokeStyle = '#8a8aff';
+                ctxFeynman.lineWidth = 2;
+                ctxFeynman.stroke();
+                
+                ctxFeynman.beginPath();
+                ctxFeynman.moveTo(centerX - 150, centerY + 50);
+                ctxFeynman.lineTo(centerX - 50, centerY + 20);
+                ctxFeynman.strokeStyle = '#ff8a8a';
+                ctxFeynman.stroke();
+                
+                // interaction vertex
+                ctxFeynman.beginPath();
+                ctxFeynman.arc(centerX - 25, centerY, 10, 0, 2 * Math.PI);
+                ctxFeynman.fillStyle = '#ffff8a80';
+                ctxFeynman.fill();
+                
+                // virtual particle
+                ctxFeynman.beginPath();
+                ctxFeynman.moveTo(centerX - 20, centerY - 5);
+                ctxFeynman.lineTo(centerX + 20, centerY + 5);
+                ctxFeynman.strokeStyle = '#ffffff80';
+                ctxFeynman.lineWidth = 2;
+                ctxFeynman.setLineDash([5, 5]);
+                ctxFeynman.stroke();
+                ctxFeynman.setLineDash([]);
+                
+                // outgoing particles
+                ctxFeynman.beginPath();
+                ctxFeynman.moveTo(centerX + 50, centerY - 20);
+                ctxFeynman.lineTo(centerX + 150, centerY - 50);
+                ctxFeynman.strokeStyle = '#ffff8a';
+                ctxFeynman.stroke();
+                
+                ctxFeynman.beginPath();
+                ctxFeynman.moveTo(centerX + 50, centerY + 20);
+                ctxFeynman.lineTo(centerX + 150, centerY + 50);
+                ctxFeynman.strokeStyle = '#ffff8a';
+                ctxFeynman.stroke();
+                
+                // draw multiple diagrams
+                for (let i = 0; i < 3; i++) {
+                    let y = 100 + i * 150;
+                    
+                    ctxFeynman.beginPath();
+                    ctxFeynman.moveTo(100, y);
+                    ctxFeynman.lineTo(200, y - 20);
+                    ctxFeynman.lineTo(300, y + 20);
+                    ctxFeynman.lineTo(400, y);
+                    ctxFeynman.strokeStyle = `rgba(140, 140, 255, ${0.3})`;
+                    ctxFeynman.stroke();
+                }
+            }
+
+            // animation loop
+            function animate() {
+                time += 0.02;
+                
+                updateField();
+                createParticles();
+                
+                drawField();
+                drawParticles();
+                drawFeynman();
+                
+                requestAnimationFrame(animate);
+            }
+            animate();
+
+            // initial field
+            initField();
+        })();
+    </script>
+</div>
+</body>
+</html>

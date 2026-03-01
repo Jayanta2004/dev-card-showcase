@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributed Cache Coherency Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>🔗 Distributed Cache Coherency Manager</h1>
+                <p class="subtitle">Event-driven cache coordination across distributed nodes with version-based validation</p>
+            </div>
+            <div class="header-controls">
+                <button id="startCoordination" class="btn btn-primary">Start Coordination</button>
+                <button id="simulateWrite" class="btn btn-secondary">Simulate Write</button>
+                <button id="generateReport" class="btn btn-tertiary">Report</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Cache Overview Cards -->
+            <section class="cache-overview">
+                <div class="cache-card consistency">
+                    <div class="card-icon">✓</div>
+                    <div class="card-info">
+                        <h3>Coherency</h3>
+                        <p class="card-value" id="coherencyScore">100%</p>
+                        <p class="card-label">Status</p>
+                    </div>
+                </div>
+                <div class="cache-card nodes">
+                    <div class="card-icon">⚙️</div>
+                    <div class="card-info">
+                        <h3>Active Nodes</h3>
+                        <p class="card-value" id="activeNodes">0</p>
+                        <p class="card-label">Synchronized</p>
+                    </div>
+                </div>
+                <div class="cache-card entries">
+                    <div class="card-icon">💾</div>
+                    <div class="card-info">
+                        <h3>Cache Entries</h3>
+                        <p class="card-value" id="totalEntries">0</p>
+                        <p class="card-label">Tracked</p>
+                    </div>
+                </div>
+                <div class="cache-card invalidations">
+                    <div class="card-icon">🔄</div>
+                    <div class="card-info">
+                        <h3>Invalidations</h3>
+                        <p class="card-value" id="invalidationCount">0</p>
+                        <p class="card-label">Processed</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabs Navigation -->
+            <section class="tabs-section">
+                <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+                <button class="tab-button" data-tab="nodes">Nodes</button>
+                <button class="tab-button" data-tab="entries">Cache Entries</button>
+                <button class="tab-button" data-tab="protocols">Protocols</button>
+                <button class="tab-button" data-tab="events">Invalidation Events</button>
+            </section>
+
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <div class="section-title">System Overview</div>
+                
+                <div class="coordination-status">
+                    <div class="status-panel">
+                        <h3>Coordination Status</h3>
+                        <div class="status-indicator">
+                            <span class="status-dot" id="statusDot"></span>
+                            <span id="coordinationStatus">Stopped</span>
+                        </div>
+                        <div class="status-details">
+                            <div class="status-item">
+                                <span class="label">Uptime:</span>
+                                <span class="value" id="uptime">0:00:00</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="label">Nodes:</span>
+                                <span class="value" id="nodeCount">0</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="label">Cache Hit Rate:</span>
+                                <span class="value" id="hitRate">0%</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="label">Last Event:</span>
+                                <span class="value" id="lastEvent">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="status-panel">
+                        <h3>Network Health</h3>
+                        <div id="networkHealth" class="health-list">
+                            <div class="placeholder">Awaiting initialization</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Coherency Timeline</h3>
+                    <canvas id="coherencyChart" class="chart-canvas"></canvas>
+                </div>
+
+                <div class="recent-events">
+                    <h3>Recent Invalidation Events</h3>
+                    <div id="recentEvents" class="events-list">
+                        <div class="placeholder">No events yet</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Nodes Tab -->
+            <section id="nodes" class="tab-content">
+                <div class="section-title">Distributed Nodes</div>
+                
+                <div class="nodes-grid" id="nodesGrid">
+                    <div class="placeholder">Loading nodes...</div>
+                </div>
+            </section>
+
+            <!-- Cache Entries Tab -->
+            <section id="entries" class="tab-content">
+                <div class="section-title">Cached Data Entries</div>
+                
+                <div class="filter-controls">
+                    <select id="versionFilter" class="filter-select">
+                        <option value="all">All Versions</option>
+                        <option value="latest">Latest</option>
+                        <option value="stale">Stale</option>
+                    </select>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="coherent">Coherent</option>
+                        <option value="inconsistent">Inconsistent</option>
+                    </select>
+                </div>
+
+                <div id="entriesList" class="entries-list">
+                    <div class="placeholder">No cache entries</div>
+                </div>
+            </section>
+
+            <!-- Protocols Tab -->
+            <section id="protocols" class="tab-content">
+                <div class="section-title">Cache Coherency Protocols</div>
+                
+                <div class="protocols-grid" id="protocolsGrid">
+                    <div class="placeholder">Loading protocols...</div>
+                </div>
+            </section>
+
+            <!-- Events Tab -->
+            <section id="events" class="tab-content">
+                <div class="section-title">Invalidation Event Log</div>
+                
+                <div class="event-filters">
+                    <select id="eventTypeFilter" class="filter-select">
+                        <option value="all">All Types</option>
+                        <option value="write">Write Operations</option>
+                        <option value="broadcast">Broadcast Events</option>
+                        <option value="sync">Synchronization</option>
+                        <option value="validation">Validation</option>
+                    </select>
+                </div>
+
+                <div id="eventLog" class="event-timeline">
+                    <div class="placeholder">No events recorded</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>System: <span id="systemStatus">Idle</span> | Nodes: <span id="footerNodes">0</span> | Coherency: <span id="footerCoherency">--</span> | Events: <span id="footerEvents">0</span></p>
+        </footer>
+    </div>
+
+    <!-- Modal for Node Details -->
+    <div id="nodeModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="nodeTitle">Node Details</h2>
+            <div id="nodeDetails" class="node-details"></div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="window.manager.syncNode()">Sync Now</button>
+                <button class="btn btn-secondary" onclick="window.manager.closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Entry Details -->
+    <div id="entryModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="entryTitle">Cache Entry Details</h2>
+            <div id="entryDetails" class="entry-details"></div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="window.manager.invalidateEntry()">Invalidate</button>
+                <button class="btn btn-secondary" onclick="window.manager.closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            window.manager = new DistributedCacheCoherencyManager();
+            window.manager.initialize();
+
+            document.getElementById('startCoordination').addEventListener('click', () => window.manager.toggleCoordination());
+            document.getElementById('simulateWrite').addEventListener('click', () => window.manager.simulateWrite());
+            document.getElementById('generateReport').addEventListener('click', () => window.manager.generateReport());
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const tabName = e.target.dataset.tab;
+                    
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    document.getElementById(tabName).classList.add('active');
+                });
+            });
+
+            document.getElementById('versionFilter')?.addEventListener('change', () => window.manager.applyFilters());
+            document.getElementById('statusFilter')?.addEventListener('change', () => window.manager.applyFilters());
+            document.getElementById('eventTypeFilter')?.addEventListener('change', () => window.manager.filterEvents());
+
+            document.querySelectorAll('.modal-close').forEach(el => {
+                el.addEventListener('click', () => window.manager.closeModal());
+            });
+
+            window.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    window.manager.closeModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

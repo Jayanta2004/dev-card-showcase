@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>quantum vortex field · light fabric</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #030611;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .vortex-chamber {
+            background: #0b101f;
+            border-radius: 3rem;
+            padding: 1.8rem;
+            box-shadow: 0 35px 65px #000000cc, 0 0 0 1px #4d5b88 inset, 0 0 60px #1e2f6040;
+        }
+
+        canvas {
+            display: block;
+            width: 960px;
+            height: 540px;
+            border-radius: 2rem;
+            box-shadow: 0 0 0 1px #6780b0, 0 20px 40px -5px black;
+            cursor: move;
+            background: #0a0d18;
+        }
+
+        .field-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 0.5rem 0.5rem 0.5rem 2rem;
+            background: #121b30;
+            border-radius: 4rem;
+            box-shadow: inset 0 3px 8px #020308, 0 12px 24px #000000cc;
+            color: #d0e2ff;
+        }
+
+        .badge-group {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .quantum-badge {
+            background: #1d2b48;
+            border-radius: 3rem;
+            padding: 0.5rem 1.6rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            color: #b8d0ff;
+            box-shadow: inset 0 -1px 0 #6988c0, 0 4px 12px #00000080;
+            backdrop-filter: blur(4px);
+        }
+
+        .dials {
+            display: flex;
+            gap: 2.2rem;
+        }
+
+        .dial-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .dial-item span {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 300;
+            opacity: 0.8;
+        }
+
+        input[type=range] {
+            width: 130px;
+            height: 4px;
+            background: #26334f;
+            border-radius: 10px;
+            -webkit-appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #c2deff;
+            border-radius: 50%;
+            box-shadow: 0 0 18px #7aa9ff;
+            border: 1px solid white;
+            cursor: grab;
+        }
+
+        .field-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .field-btn {
+            background: #1f2f4a;
+            border: none;
+            color: #d0e6ff;
+            font-size: 1.6rem;
+            width: 3.2rem;
+            height: 3.2rem;
+            border-radius: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: inset 0 -2px 4px #03050b, 0 5px 12px black;
+            transition: 0.07s;
+        }
+
+        .field-btn:hover {
+            background: #2f4570;
+            color: white;
+            transform: scale(1.02);
+            box-shadow: inset 0 -1px 5px #99bcff, 0 8px 18px black;
+        }
+
+        #fieldStatus {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            min-width: 100px;
+            text-align: right;
+            color: #aac9ff;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+<div class="vortex-chamber">
+    <canvas id="quantumCanvas" width="960" height="540"></canvas>
+
+    <div class="field-panel">
+        <div class="badge-group">
+            <span class="quantum-badge">🌀 QUANTUM VORTEX v.3</span>
+            <div class="dials">
+                <div class="dial-item">
+                    <span>🌀 SPIN</span>
+                    <input type="range" id="spinStrength" min="0.0" max="2.2" value="1.1" step="0.02">
+                </div>
+                <div class="dial-item">
+                    <span>⚡ FLUX</span>
+                    <input type="range" id="fluxDensity" min="0.3" max="2.8" value="1.6" step="0.05">
+                </div>
+            </div>
+        </div>
+        <div class="field-actions">
+            <button class="field-btn" id="resetVortex" title="reset field">↺</button>
+            <button class="field-btn" id="singularity" title="create singularity">◉</button>
+        </div>
+        <span id="fieldStatus">⏣ 0 K</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ==========  QUANTUM VORTEX FIELD — HIGH-LEVEL UNIQUE ==========
+        // Coherent fluid interference + particle vortices + relativistic light bending
+        // Combines: meta‑particles, wave interference, time warping, mouse as gravitational lens
+        
+        const canvas = document.getElementById('quantumCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+
+        // ==========  core parameters ==========
+        const PARTICLE_COUNT = 680;               // visible flux quanta
+        const WAVE_RES = 6;                        // interference grid resolution (coarse but beautiful)
+        const VORTEX_MEMORY = 0.96;
+
+        let spin = 1.1;                             // from slider (vorticity)
+        let flux = 1.6;                              // from slider (particle density / energy)
+
+        // particle array (quantum flux)
+        let quanta = new Array(PARTICLE_COUNT);
+
+        // wave interference field (scalar grid)
+        const GRID_SIZE = 38;                        // number of cells (38x21 ≈ 800 cells)
+        const GRID_COLS = GRID_SIZE;
+        const GRID_ROWS = Math.floor(GRID_SIZE * H / W);
+        const CELL_W = W / GRID_COLS;
+        const CELL_H = H / GRID_ROWS;
+        let waveField = new Float32Array(GRID_COLS * GRID_ROWS);
+        let waveVelocity = new Float32Array(GRID_COLS * GRID_ROWS);
+
+        // vortex centers (dynamic singularities)
+        let vortices = [
+            { x: W * 0.33, y: H * 0.5, strength: 1.2, phase: 0 },
+            { x: W * 0.66, y: H * 0.5, strength: -0.9, phase: 2.1 }
+        ];
+
+        // ==========  initialize quanta ==========
+        function initQuanta() {
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                quanta[i] = {
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    vx: (Math.random() - 0.5) * 1.8,
+                    vy: (Math.random() - 0.5) * 1.8,
+                    age: Math.random() * 100,
+                    spinPhase: Math.random() * 6.28,
+                };
+            }
+        }
+
+        // wave field reset
+        function resetWaveField() {
+            waveField.fill(0);
+            waveVelocity.fill(0);
+            // seed some interference
+            for (let i = 0; i < waveField.length; i++) {
+                waveField[i] = Math.sin(i * 0.3) * 0.1 + (Math.random() - 0.5) * 0.2;
+            }
+        }
+
+        // full system reset
+        function fullReset() {
+            initQuanta();
+            resetWaveField();
+            vortices = [
+                { x: W * (0.2 + 0.6 * Math.random()), y: H * (0.3 + 0.4 * Math.random()), strength: 1.0 * (Math.random() - 0.5) * 2, phase: Math.random() * 6 },
+                { x: W * (0.2 + 0.6 * Math.random()), y: H * (0.3 + 0.4 * Math.random()), strength: 1.0 * (Math.random() - 0.5) * 2, phase: Math.random() * 6 },
+            ];
+        }
+
+        // ==========  singularity burst (new vortex at mouse) ==========
+        function createSingularity(atX = W/2, atY = H/2) {
+            const str = (Math.random() - 0.5) * 3.0 * spin;
+            vortices.push({ x: atX, y: atY, strength: str, phase: Math.random() * 6.28 });
+            if (vortices.length > 6) vortices.shift(); // keep reasonable
+
+            // also add energy to particles nearby
+            for (let i = 0; i < quanta.length; i++) {
+                const dx = quanta[i].x - atX;
+                const dy = quanta[i].y - atY;
+                const dist = Math.hypot(dx, dy);
+                if (dist < 120) {
+                    quanta[i].vx += (dx / (dist + 10)) * 3.2 * flux;
+                    quanta[i].vy += (dy / (dist + 10)) * 3.2 * flux;
+                }
+            }
+        }
+
+        // ==========  mouse interaction (gravitational lens) ==========
+        let mouseX = -1000, mouseY = -1000, mouseDown = false;
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            mouseX = (e.clientX - rect.left) * scaleX;
+            mouseY = (e.clientY - rect.top) * scaleY;
+            mouseDown = e.buttons === 1;
+        });
+        canvas.addEventListener('mouseleave', () => { mouseX = -1000; mouseDown = false; });
+        canvas.addEventListener('mousedown', (e) => { if (e.button === 0) mouseDown = true; });
+        canvas.addEventListener('mouseup', () => { mouseDown = false; });
+
+        // ==========  sliders ==========
+        document.getElementById('spinStrength').addEventListener('input', (e) => spin = parseFloat(e.target.value));
+        document.getElementById('fluxDensity').addEventListener('input', (e) => flux = parseFloat(e.target.value));
+        document.getElementById('resetVortex').addEventListener('click', fullReset);
+        document.getElementById('singularity').addEventListener('click', () => {
+            createSingularity(mouseX > 0 && mouseX < W ? mouseX : W/2, mouseY > 0 && mouseY < H ? mouseY : H/2);
+        });
+
+        // ==========  wave field evolution (reaction-diffusion like) ==========
+        function updateWaveField() {
+            // simple wave propagation + vortex influence
+            for (let r = 1; r < GRID_ROWS - 1; r++) {
+                for (let c = 1; c < GRID_COLS - 1; c++) {
+                    const idx = r * GRID_COLS + c;
+                    // laplacian
+                    const lap = (waveField[idx - 1] + waveField[idx + 1] + waveField[idx - GRID_COLS] + waveField[idx + GRID_COLS]) * 0.25 - waveField[idx];
+                    waveVelocity[idx] += lap * 0.18 - waveField[idx] * 0.005;
+                    
+                    // vortex forcing
+                    const x = (c + 0.5) * CELL_W;
+                    const y = (r + 0.5) * CELL_H;
+                    for (let v of vortices) {
+                        const dx = x - v.x;
+                        const dy = y - v.y;
+                        const dist = Math.hypot(dx, dy) + 15;
+                        const influence = (v.strength * 12) / (dist * dist) * Math.sin(dist * 0.05 + v.phase);
+                        waveVelocity[idx] += influence * 0.14 * flux;
+                    }
+
+                    // mouse lens (gravity well)
+                    if (mouseX > 0 && mouseY > 0 && mouseX < W && mouseY < H) {
+                        const dx = x - mouseX;
+                        const dy = y - mouseY;
+                        const dist = Math.hypot(dx, dy) + 10;
+                        const lens = (mouseDown ? -0.4 : 0.25) * 8 / (dist + 20);
+                        waveVelocity[idx] += lens * 0.5;
+                    }
+                }
+            }
+
+            // integrate
+            for (let i = 0; i < waveField.length; i++) {
+                waveVelocity[i] *= 0.992;
+                waveField[i] += waveVelocity[i];
+                // damping
+                waveField[i] *= 0.998;
+            }
+        }
+
+        // ==========  particle update (quantum vorticity) ==========
+        function updateQuanta() {
+            for (let i = 0; i < quanta.length; i++) {
+                const q = quanta[i];
+
+                // sample wave field gradient (for force)
+                const gx = q.x / W * GRID_COLS;
+                const gy = q.y / H * GRID_ROWS;
+                const c0 = Math.floor(gx);
+                const r0 = Math.floor(gy);
+                const fx = gx - c0;
+                const fy = gy - r0;
+                if (c0 >= 1 && c0 < GRID_COLS - 1 && r0 >= 1 && r0 < GRID_ROWS - 1) {
+                    const idx00 = r0 * GRID_COLS + c0;
+                    const idx10 = idx00 + 1;
+                    const idx01 = idx00 + GRID_COLS;
+                    const idx11 = idx01 + 1;
+                    
+                    const gradX = (waveField[idx10] - waveField[idx00]) * (1 - fy) + (waveField[idx11] - waveField[idx01]) * fy;
+                    const gradY = (waveField[idx01] - waveField[idx00]) * (1 - fx) + (waveField[idx11] - waveField[idx10]) * fx;
+                    
+                    q.vx += gradX * 0.024 * flux;
+                    q.vy += gradY * 0.024 * flux;
+                }
+
+                // vortex spin (direct)
+                for (let v of vortices) {
+                    const dx = q.x - v.x;
+                    const dy = q.y - v.y;
+                    const dist = Math.hypot(dx, dy) + 5;
+                    const str = (v.strength * 0.7) / (dist * 0.5);
+                    q.vx += -dy * str * spin * 0.012;
+                    q.vy += dx * str * spin * 0.012;
+                }
+
+                // mouse interaction (repel/attract)
+                if (mouseX > 0 && mouseY > 0 && mouseX < W && mouseY < H) {
+                    const dx = q.x - mouseX;
+                    const dy = q.y - mouseY;
+                    const dist = Math.hypot(dx, dy) + 8;
+                    const force = (mouseDown ? -0.6 : 0.35) * 30 / (dist + 20);
+                    q.vx += (dx / dist) * force * 0.4;
+                    q.vy += (dy / dist) * force * 0.4;
+                }
+
+                // move
+                q.x += q.vx;
+                q.y += q.vy;
+
+                // boundary (periodic-like with soft barrier)
+                if (q.x < 5) { q.x = 5 + (5 - q.x) * 0.2; q.vx *= -0.3; }
+                if (q.x > W - 5) { q.x = W - 5 - (q.x - (W - 5)) * 0.2; q.vx *= -0.3; }
+                if (q.y < 5) { q.y = 5 + (5 - q.y) * 0.2; q.vy *= -0.3; }
+                if (q.y > H - 5) { q.y = H - 5 - (q.y - (H - 5)) * 0.2; q.vy *= -0.3; }
+
+                // drag
+                q.vx *= 0.994;
+                q.vy *= 0.994;
+                q.age += 0.1;
+            }
+        }
+
+        // ==========  rendering — quantum interference style ==========
+        function draw() {
+            // background (deep space)
+            ctx.fillStyle = '#060a16';
+            ctx.fillRect(0, 0, W, H);
+
+            // draw wave field as interference pattern (translucent)
+            ctx.globalAlpha = 0.23;
+            for (let r = 0; r < GRID_ROWS - 1; r++) {
+                for (let c = 0; c < GRID_COLS - 1; c++) {
+                    const idx = r * GRID_COLS + c;
+                    const val = waveField[idx];
+                    if (Math.abs(val) < 0.01) continue;
+                    
+                    const x = c * CELL_W;
+                    const y = r * CELL_H;
+                    const intensity = Math.min(1, Math.abs(val) * 1.8);
+                    const hue = 200 + val * 30 + (r * 0.2);
+                    
+                    ctx.fillStyle = `hsla(${hue}, 85%, 65%, ${intensity * 0.3})`;
+                    ctx.fillRect(x, y, CELL_W + 1, CELL_H + 1);
+                }
+            }
+
+            // draw vortices as gravitational lenses
+            for (let v of vortices) {
+                ctx.beginPath();
+                ctx.arc(v.x, v.y, 24 + 6 * Math.sin(Date.now() * 0.005 + v.phase), 0, 2 * Math.PI);
+                ctx.strokeStyle = `rgba(200, 240, 255, 0.33)`;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([8, 10]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // draw quanta (flux particles)
+            ctx.shadowColor = '#9fcbff';
+            ctx.shadowBlur = 18;
+            for (let i = 0; i < quanta.length; i++) {
+                const q = quanta[i];
+                // color based on spin phase and flux
+                const r = 120 + 100 * Math.sin(q.spinPhase + q.age * 0.2);
+                const g = 140 + 80 * Math.sin(q.spinPhase + 2.1 + q.age * 0.15);
+                const b = 255;
+                const size = 2.2 + 1.8 * Math.sin(q.spinPhase * 2 + q.age * 0.5) * flux;
+
+                ctx.beginPath();
+                ctx.arc(q.x, q.y, size, 0, 2 * Math.PI);
+                ctx.fillStyle = `rgba(${Math.floor(r)}, ${Math.floor(g)}, ${b}, 0.9)`;
+                ctx.fill();
+
+                // tiny highlight
+                ctx.shadowBlur = 12;
+                ctx.beginPath();
+                ctx.arc(q.x - 1, q.y - 1, size * 0.4, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+
+            // mouse reticule
+            if (mouseX > 0 && mouseY > 0 && mouseX < W && mouseY < H) {
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 18, 0, 2 * Math.PI);
+                ctx.strokeStyle = mouseDown ? '#ff9f7f' : '#b4d5ff';
+                ctx.lineWidth = 2.2;
+                ctx.setLineDash([6, 6]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        // ==========  animation loop with FPS and temperature ==========
+        let lastTime = performance.now();
+        let frames = 0;
+        let fps = 0;
+
+        function tick(now) {
+            // simulation steps
+            for (let iter = 0; iter < 2; iter++) {   // double update for smoother wave
+                updateWaveField();
+            }
+            updateQuanta();
+
+            // render
+            draw();
+
+            // update status (FPS + vortex count)
+            frames++;
+            if (now - lastTime >= 400) {
+                fps = Math.round((frames * 1000) / (now - lastTime));
+                document.getElementById('fieldStatus').innerHTML = `⏣ ${vortices.length}  |  ${fps} fps`;
+                frames = 0;
+                lastTime = now;
+            }
+
+            requestAnimationFrame(tick);
+        }
+
+        // start
+        fullReset();
+        // extra initial burst
+        createSingularity(W*0.5, H*0.3);
+        createSingularity(W*0.5, H*0.7);
+        tick(performance.now());
+    })();
+</script>
+</body>
+</html>

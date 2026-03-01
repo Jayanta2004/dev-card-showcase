@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ReflexLab — Reaction Time Tester</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <div class="screen active" id="sHome">
+    <div class="scanlines"></div>
+    <div class="home-inner">
+      <div class="lab-badge">&#x1F9EA; REFLEXLAB v2.0</div>
+      <h1 class="home-title">Test Your<br/><span>Reaction</span><br/>Time</h1>
+      <p class="home-sub">When the screen flashes — click as fast as you can.<br/>5 rounds. Average calculated. Compare with world stats.</p>
+
+      <div class="mode-row">
+        <button class="mode-card active" data-mode="classic" id="modeClassic">
+          <span class="mode-icon">&#x26A1;</span>
+          <span class="mode-name">Classic</span>
+          <span class="mode-desc">Click when green</span>
+        </button>
+        <button class="mode-card" data-mode="audio" id="modeAudio">
+          <span class="mode-icon">&#x1F514;</span>
+          <span class="mode-name">Audio</span>
+          <span class="mode-desc">React to sound</span>
+        </button>
+        <button class="mode-card" data-mode="color" id="modeColor">
+          <span class="mode-icon">&#x1F3AF;</span>
+          <span class="mode-name">Color</span>
+          <span class="mode-desc">Only click GREEN</span>
+        </button>
+      </div>
+
+      <button class="btn-launch" id="btnStart">
+        <span class="btn-text">LAUNCH TEST</span>
+        <span class="btn-glow"></span>
+      </button>
+
+      <div class="personal-best" id="pbRow">
+        <div class="pb-item">
+          <span class="pb-val" id="pbAvg">---</span>
+          <span class="pb-lbl">Best Avg (ms)</span>
+        </div>
+        <div class="pb-div"></div>
+        <div class="pb-item">
+          <span class="pb-val" id="pbFastest">---</span>
+          <span class="pb-lbl">Fastest (ms)</span>
+        </div>
+        <div class="pb-div"></div>
+        <div class="pb-item">
+          <span class="pb-val" id="pbTests">0</span>
+          <span class="pb-lbl">Tests Done</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEST SCREEN -->
+  <div class="screen" id="sTest">
+    <div class="scanlines"></div>
+
+    <div class="test-hud">
+      <button class="hud-back" id="btnQuit">&#10005; QUIT</button>
+      <div class="round-indicator" id="roundIndicator">
+        <span class="ri-label">ROUND</span>
+        <div class="round-dots" id="roundDots"></div>
+      </div>
+      <div class="hud-mode" id="hudMode">CLASSIC</div>
+    </div>
+
+    <!-- Main reaction zone -->
+    <div class="reaction-zone" id="reactionZone">
+      <div class="zone-inner" id="zoneInner">
+
+        <!-- WAITING state -->
+        <div class="zone-state" id="stateWait">
+          <div class="wait-ring"></div>
+          <p class="zone-title">Get Ready...</p>
+          <p class="zone-sub">Don't click yet!</p>
+        </div>
+
+        <!-- READY state (flash!) -->
+        <div class="zone-state hidden" id="stateReady">
+          <div class="flash-icon" id="flashIcon">&#x26A1;</div>
+          <p class="zone-title" id="readyTitle">CLICK NOW!</p>
+          <p class="zone-sub">Go go go!</p>
+        </div>
+
+        <!-- TOO EARLY -->
+        <div class="zone-state hidden" id="stateTooEarly">
+          <div class="early-icon">&#x274C;</div>
+          <p class="zone-title">Too Early!</p>
+          <p class="zone-sub">Wait for the signal...</p>
+        </div>
+
+        <!-- RESULT per round -->
+        <div class="zone-state hidden" id="stateRoundResult">
+          <div class="round-ms" id="roundMs">000</div>
+          <div class="round-ms-label">milliseconds</div>
+          <div class="round-rating" id="roundRating">Good</div>
+          <p class="zone-sub" id="roundNext">Click anywhere for next round</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Live results bar -->
+    <div class="live-bar" id="liveBar">
+      <div class="live-rounds" id="liveRounds"></div>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="screen" id="sResult">
+    <div class="scanlines"></div>
+    <div class="result-inner">
+
+      <div class="result-top">
+        <div class="result-rank" id="resultRank">B</div>
+        <div>
+          <div class="result-tag">TEST COMPLETE</div>
+          <h2 class="result-heading" id="resultHeading">Nice Reflexes!</h2>
+        </div>
+      </div>
+
+      <div class="avg-display">
+        <span class="avg-num" id="avgNum">000</span>
+        <span class="avg-ms">ms</span>
+        <span class="avg-label">average reaction time</span>
+      </div>
+
+      <!-- Bar chart of rounds -->
+      <div class="chart-section">
+        <div class="chart-label">ROUND BREAKDOWN</div>
+        <div class="bar-chart" id="barChart"></div>
+      </div>
+
+      <!-- Comparison -->
+      <div class="compare-row">
+        <div class="compare-item">
+          <div class="cmp-bar-wrap">
+            <div class="cmp-bar you" id="cmpYou"></div>
+          </div>
+          <span class="cmp-label">You</span>
+        </div>
+        <div class="compare-item">
+          <div class="cmp-bar-wrap">
+            <div class="cmp-bar avg-human"></div>
+          </div>
+          <span class="cmp-label">Avg Human (284ms)</span>
+        </div>
+        <div class="compare-item">
+          <div class="cmp-bar-wrap">
+            <div class="cmp-bar pro"></div>
+          </div>
+          <span class="cmp-label">Pro Gamer (180ms)</span>
+        </div>
+      </div>
+
+      <div class="new-best-msg" id="newBestMsg"></div>
+
+      <div class="result-btns">
+        <button class="btn-launch" id="btnRetry">
+          <span class="btn-text">&#x1F501; TEST AGAIN</span>
+          <span class="btn-glow"></span>
+        </button>
+        <button class="btn-secondary" id="btnHome">&#x1F3E0; Home</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

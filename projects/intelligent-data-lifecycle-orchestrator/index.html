@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Data Lifecycle Orchestrator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="intelligent-data-lifecycle-orchestrator.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-database"></i> Intelligent Data Lifecycle Orchestrator</h1>
+                <p>Automated data retention, archival, and deletion policy management</p>
+            </div>
+            <div class="header-actions">
+                <button onclick="openPolicyManager()" class="btn-secondary">
+                    <i class="fas fa-cog"></i> Policies
+                </button>
+                <button onclick="exportData()" class="btn-secondary">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </header>
+
+        <!-- Metrics Overview -->
+        <section class="metrics-overview">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <div class="metric-info">
+                    <h3>Total Storage</h3>
+                    <div class="metric-value" id="totalStorage">2.4 PB</div>
+                    <div class="metric-change" id="storageChange">
+                        <i class="fas fa-arrow-up"></i> +8.2%
+                    </div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-archive"></i>
+                </div>
+                <div class="metric-info">
+                    <h3>Archived Data</h3>
+                    <div class="metric-value" id="archivedData">1.8 PB</div>
+                    <div class="metric-percentage" id="archivePercentage">75.2%</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <div class="metric-info">
+                    <h3>Data Deleted</h3>
+                    <div class="metric-value" id="deletedData">156 TB</div>
+                    <div class="metric-period">This Month</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="metric-info">
+                    <h3>Compliance Score</h3>
+                    <div class="metric-value" id="complianceScore">98.7%</div>
+                    <div class="metric-status" id="complianceStatus">Excellent</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Storage Tier Visualization -->
+            <section class="storage-tiers">
+                <div class="section-header">
+                    <h2><i class="fas fa-layer-group"></i> Storage Tiers</h2>
+                    <div class="tier-controls">
+                        <select id="tierView" onchange="updateTierView()">
+                            <option value="capacity">Capacity</option>
+                            <option value="cost">Cost Analysis</option>
+                            <option value="access">Access Patterns</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="tier-visualization">
+                    <canvas id="tierChart"></canvas>
+                </div>
+                <div class="tier-details" id="tierDetails">
+                    <!-- Tier details will be populated by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Lifecycle Policies -->
+            <section class="lifecycle-policies">
+                <div class="section-header">
+                    <h2><i class="fas fa-calendar-alt"></i> Lifecycle Policies</h2>
+                    <div class="policy-controls">
+                        <button onclick="createNewPolicy()" class="btn-primary">
+                            <i class="fas fa-plus"></i> New Policy
+                        </button>
+                        <button onclick="runPolicySimulation()" class="btn-secondary">
+                            <i class="fas fa-play"></i> Simulate
+                        </button>
+                    </div>
+                </div>
+
+                <div class="policies-dashboard">
+                    <!-- Active Policies -->
+                    <div class="policies-list">
+                        <h3>Active Policies</h3>
+                        <div class="policies-grid" id="policiesGrid">
+                            <!-- Policies will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Policy Performance -->
+                    <div class="policy-performance">
+                        <h3>Policy Performance</h3>
+                        <canvas id="policyPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Classification -->
+            <section class="data-classification">
+                <div class="section-header">
+                    <h2><i class="fas fa-tags"></i> Data Classification</h2>
+                    <div class="classification-controls">
+                        <select id="classificationFilter" onchange="filterClassification()">
+                            <option value="all">All Classes</option>
+                            <option value="hot">Hot Data</option>
+                            <option value="warm">Warm Data</option>
+                            <option value="cold">Cold Data</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="classification-dashboard">
+                    <!-- Classification Distribution -->
+                    <div class="classification-chart">
+                        <canvas id="classificationChart"></canvas>
+                    </div>
+
+                    <!-- Classification Rules -->
+                    <div class="classification-rules">
+                        <h3>Classification Rules</h3>
+                        <div class="rules-list" id="rulesList">
+                            <!-- Rules will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Migration Queue -->
+            <section class="migration-queue">
+                <div class="section-header">
+                    <h2><i class="fas fa-exchange-alt"></i> Migration Queue</h2>
+                    <div class="migration-controls">
+                        <button onclick="startMigration()" class="btn-primary">
+                            <i class="fas fa-play"></i> Start Migration
+                        </button>
+                        <button onclick="pauseMigration()" class="btn-warning">
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        <button onclick="clearQueue()" class="btn-danger">
+                            <i class="fas fa-trash"></i> Clear Queue
+                        </button>
+                    </div>
+                </div>
+
+                <div class="migration-dashboard">
+                    <!-- Migration Progress -->
+                    <div class="migration-progress">
+                        <h3>Migration Progress</h3>
+                        <div class="progress-bars" id="progressBars">
+                            <!-- Progress bars will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Migration Queue -->
+                    <div class="migration-queue-list">
+                        <h3>Queued Migrations</h3>
+                        <div class="queue-table-container">
+                            <table class="queue-table">
+                                <thead>
+                                    <tr>
+                                        <th>Dataset</th>
+                                        <th>Source Tier</th>
+                                        <th>Target Tier</th>
+                                        <th>Size</th>
+                                        <th>Priority</th>
+                                        <th>ETA</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="migrationQueueTable">
+                                    <!-- Queue items will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Compliance Monitoring -->
+            <section class="compliance-monitoring">
+                <div class="section-header">
+                    <h2><i class="fas fa-gavel"></i> Compliance Monitoring</h2>
+                    <div class="compliance-controls">
+                        <select id="complianceTimeframe" onchange="updateComplianceView()">
+                            <option value="7d">Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
+                            <option value="90d">Last 90 Days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="compliance-dashboard">
+                    <!-- Compliance Violations -->
+                    <div class="compliance-violations">
+                        <h3>Compliance Violations</h3>
+                        <div class="violations-list" id="violationsList">
+                            <!-- Violations will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Retention Compliance -->
+                    <div class="retention-compliance">
+                        <h3>Retention Compliance</h3>
+                        <canvas id="retentionComplianceChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cost Analysis -->
+            <section class="cost-analysis">
+                <div class="section-header">
+                    <h2><i class="fas fa-dollar-sign"></i> Cost Analysis</h2>
+                    <div class="cost-controls">
+                        <select id="costView" onchange="updateCostView()">
+                            <option value="monthly">Monthly Costs</option>
+                            <option value="savings">Savings Analysis</option>
+                            <option value="projections">Cost Projections</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="cost-dashboard">
+                    <!-- Cost Breakdown -->
+                    <div class="cost-breakdown">
+                        <canvas id="costBreakdownChart"></canvas>
+                    </div>
+
+                    <!-- Cost Metrics -->
+                    <div class="cost-metrics">
+                        <div class="cost-metric-card">
+                            <h4>Storage Costs</h4>
+                            <div class="cost-value" id="storageCosts">$45,230</div>
+                            <div class="cost-trend">
+                                <i class="fas fa-arrow-down"></i> -12% vs last month
+                            </div>
+                        </div>
+                        <div class="cost-metric-card">
+                            <h4>Transfer Costs</h4>
+                            <div class="cost-value" id="transferCosts">$8,450</div>
+                            <div class="cost-trend">
+                                <i class="fas fa-arrow-up"></i> +5% vs last month
+                            </div>
+                        </div>
+                        <div class="cost-metric-card">
+                            <h4>Archival Savings</h4>
+                            <div class="cost-value" id="archivalSavings">$32,180</div>
+                            <div class="cost-trend positive">
+                                <i class="fas fa-arrow-up"></i> +18% efficiency
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="settings-panel">
+            <button onclick="toggleRealTime()" class="btn-primary">
+                <i class="fas fa-play"></i> Start Orchestrator
+            </button>
+        </div>
+    </div>
+
+    <!-- Policy Manager Modal -->
+    <div id="policyManagerModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Lifecycle Policy Manager</h2>
+                <button onclick="closePolicyManager()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="policy-editor">
+                    <div class="policy-form">
+                        <div class="form-section">
+                            <h3>Policy Configuration</h3>
+                            <div class="form-group">
+                                <label for="policyName">Policy Name</label>
+                                <input type="text" id="policyName" placeholder="e.g., Standard Retention Policy">
+                            </div>
+                            <div class="form-group">
+                                <label for="policyDescription">Description</label>
+                                <textarea id="policyDescription" placeholder="Policy description..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="dataClass">Data Classification</label>
+                                <select id="dataClass">
+                                    <option value="hot">Hot Data</option>
+                                    <option value="warm">Warm Data</option>
+                                    <option value="cold">Cold Data</option>
+                                    <option value="archive">Archive Data</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Retention Rules</h3>
+                            <div class="rules-builder" id="rulesBuilder">
+                                <!-- Rules will be built dynamically -->
+                            </div>
+                            <button onclick="addRetentionRule()" class="btn-secondary">
+                                <i class="fas fa-plus"></i> Add Rule
+                            </button>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Actions</h3>
+                            <div class="actions-config">
+                                <div class="action-item">
+                                    <label>
+                                        <input type="checkbox" id="enableArchival" checked>
+                                        Enable Automatic Archival
+                                    </label>
+                                </div>
+                                <div class="action-item">
+                                    <label>
+                                        <input type="checkbox" id="enableDeletion" checked>
+                                        Enable Automatic Deletion
+                                    </label>
+                                </div>
+                                <div class="action-item">
+                                    <label>
+                                        <input type="checkbox" id="enableCompression">
+                                        Enable Compression
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="savePolicy()" class="btn-primary">Save Policy</button>
+                <button onclick="closePolicyManager()" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div id="notifications" class="notifications"></div>
+
+    <script src="intelligent-data-lifecycle-orchestrator.js"></script>
+</body>
+</html>

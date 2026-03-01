@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Depth Control Corridor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 25px 40px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-top: 5px;
+            max-width: 500px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid rgba(0, 255, 255, 0.5);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: rgba(0, 255, 255, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        /* Corridor Container */
+        .corridor-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* The Corridor */
+        .corridor {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-style: preserve-3d;
+            transform: translate(-50%, -50%) rotateX(75deg);
+            width: 100%;
+            height: 100%;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* Floor */
+        .floor {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                repeating-linear-gradient(90deg, 
+                    rgba(50, 50, 80, 0.8) 0px, 
+                    rgba(50, 50, 80, 0.8) 40px, 
+                    rgba(30, 30, 60, 0.8) 40px, 
+                    rgba(30, 30, 60, 0.8) 80px),
+                linear-gradient(to bottom, #151530, #0a0a1a);
+            transform: translate(-50%, -50%) rotateX(90deg) translateZ(-400px);
+            transform-style: preserve-3d;
+        }
+
+        /* Walls */
+        .wall {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #1a1a3a, #0d0d25);
+            transform-style: preserve-3d;
+        }
+
+        .left-wall {
+            left: 0;
+            transform: rotateY(90deg) translateZ(-500px);
+            border-right: 2px solid rgba(0, 200, 255, 0.3);
+        }
+
+        .right-wall {
+            right: 0;
+            transform: rotateY(-90deg) translateZ(-500px);
+            border-left: 2px solid rgba(0, 200, 255, 0.3);
+        }
+
+        /* Depth Layers */
+        .depth-layer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-style: preserve-3d;
+            transition: transform 0.15s ease-out;
+        }
+
+        /* Depth Layer 1 (Closest) */
+        .layer-1 {
+            width: 300px;
+            height: 400px;
+            transform: translate(-50%, -50%) translateZ(200px);
+        }
+
+        /* Depth Layer 2 */
+        .layer-2 {
+            width: 250px;
+            height: 350px;
+            transform: translate(-50%, -50%) translateZ(100px);
+        }
+
+        /* Depth Layer 3 */
+        .layer-3 {
+            width: 200px;
+            height: 300px;
+            transform: translate(-50%, -50%) translateZ(0px);
+        }
+
+        /* Depth Layer 4 */
+        .layer-4 {
+            width: 150px;
+            height: 250px;
+            transform: translate(-50%, -50%) translateZ(-100px);
+        }
+
+        /* Depth Layer 5 (Farthest) */
+        .layer-5 {
+            width: 100px;
+            height: 200px;
+            transform: translate(-50%, -50%) translateZ(-200px);
+        }
+
+        /* Layer Content */
+        .layer-content {
+            width: 100%;
+            height: 100%;
+            background: rgba(20, 20, 60, 0.7);
+            border: 2px solid rgba(0, 200, 255, 0.5);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.2);
+            backdrop-filter: blur(5px);
+            overflow: hidden;
+        }
+
+        .layer-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 200, 255, 0.7);
+        }
+
+        .layer-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #00ccff;
+        }
+
+        .layer-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+
+        /* Floating Objects */
+        .floating-object {
+            position: absolute;
+            border-radius: 50%;
+            transform-style: preserve-3d;
+            transition: transform 0.2s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        .object-1 {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #ff0066, #cc0052);
+            top: 30%;
+            left: 20%;
+            transform: translateZ(150px);
+            animation: float 8s infinite ease-in-out;
+        }
+
+        .object-2 {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #00ff99, #00cc7a);
+            top: 60%;
+            right: 25%;
+            transform: translateZ(50px);
+            animation: float 10s infinite ease-in-out reverse;
+        }
+
+        .object-3 {
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, #ffcc00, #cca300);
+            bottom: 40%;
+            left: 15%;
+            transform: translateZ(-50px);
+            animation: float 12s infinite ease-in-out;
+        }
+
+        .object-4 {
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle, #9966ff, #7a52cc);
+            top: 20%;
+            right: 15%;
+            transform: translateZ(-150px);
+            animation: float 9s infinite ease-in-out reverse;
+        }
+
+        .object-5 {
+            width: 45px;
+            height: 45px;
+            background: radial-gradient(circle, #00ccff, #0099cc);
+            bottom: 20%;
+            right: 30%;
+            transform: translateZ(100px);
+            animation: float 11s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateZ(var(--depth, 0px)); }
+            50% { transform: translateY(-20px) translateZ(var(--depth, 0px)); }
+        }
+
+        /* Ceiling */
+        .ceiling {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                repeating-linear-gradient(90deg, 
+                    rgba(40, 40, 70, 0.8) 0px, 
+                    rgba(40, 40, 70, 0.8) 60px, 
+                    rgba(25, 25, 50, 0.8) 60px, 
+                    rgba(25, 25, 50, 0.8) 120px),
+                linear-gradient(to top, #151530, #0a0a1a);
+            transform: translate(-50%, -50%) rotateX(-90deg) translateZ(-400px);
+            transform-style: preserve-3d;
+        }
+
+        /* Control Instructions */
+        .instructions {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 100;
+            padding: 0 20px;
+        }
+
+        .instructions-box {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .instructions-title {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #00ccff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .instructions-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .instruction-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        /* Depth Indicator */
+        .depth-indicator {
+            position: absolute;
+            top: 50%;
+            right: 30px;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        .depth-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(to top, #00ccff, #0066ff);
+            transition: height 0.2s;
+        }
+
+        .depth-label {
+            position: absolute;
+            right: 35px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9rem;
+            color: #00ccff;
+            white-space: nowrap;
+        }
+
+        /* Mouse Position Indicator */
+        .mouse-indicator {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff0066, transparent 70%);
+            pointer-events: none;
+            z-index: 1000;
+            transform: translate(-50%, -50%);
+            opacity: 0.7;
+            mix-blend-mode: screen;
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                display: none;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .depth-indicator {
+                right: 15px;
+                height: 200px;
+            }
+            
+            .instructions-box {
+                padding: 15px;
+            }
+            
+            .instructions-list {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Fullscreen mode */
+        .container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <header>
+            <div>
+                <h1><i class="fas fa-cube"></i> Mouse Depth Control Corridor</h1>
+                <p class="subtitle">Move your mouse to control depth perception. Experience immersive 3D parallax effects.</p>
+            </div>
+            <div class="controls">
+                <button class="btn" id="resetBtn">
+                    <i class="fas fa-redo"></i> Reset View
+                </button>
+                <button class="btn" id="fullscreenBtn">
+                    <i class="fas fa-expand"></i> Fullscreen
+                </button>
+                <button class="btn" id="helpBtn">
+                    <i class="fas fa-question-circle"></i> Help
+                </button>
+            </div>
+        </header>
+
+        <!-- Depth Indicator -->
+        <div class="depth-indicator">
+            <div class="depth-fill" id="depthFill"></div>
+        </div>
+        <div class="depth-label" id="depthLabel">Depth: 50%</div>
+
+        <!-- Mouse Indicator -->
+        <div class="mouse-indicator" id="mouseIndicator"></div>
+
+        <!-- Corridor Container -->
+        <div class="corridor-container">
+            <div class="corridor" id="corridor">
+                <!-- Floor -->
+                <div class="floor"></div>
+                
+                <!-- Ceiling -->
+                <div class="ceiling"></div>
+                
+                <!-- Walls -->
+                <div class="wall left-wall"></div>
+                <div class="wall right-wall"></div>
+                
+                <!-- Depth Layers -->
+                <div class="depth-layer layer-1" id="layer1">
+                    <div class="layer-content">
+                        <div class="layer-icon"><i class="fas fa-layer-group"></i></div>
+                        <div class="layer-title">Depth Layer 1</div>
+                        <div class="layer-description">Closest layer to viewer</div>
+                    </div>
+                </div>
+                
+                <div class="depth-layer layer-2" id="layer2">
+                    <div class="layer-content">
+                        <div class="layer-icon"><i class="fas fa-boxes"></i></div>
+                        <div class="layer-title">Depth Layer 2</div>
+                        <div class="layer-description">Mid-close layer with parallax</div>
+                    </div>
+                </div>
+                
+                <div class="depth-layer layer-3" id="layer3">
+                    <div class="layer-content">
+                        <div class="layer-icon"><i class="fas fa-cube"></i></div>
+                        <div class="layer-title">Depth Layer 3</div>
+                        <div class="layer-description">Central reference layer</div>
+                    </div>
+                </div>
+                
+                <div class="depth-layer layer-4" id="layer4">
+                    <div class="layer-content">
+                        <div class="layer-icon"><i class="fas fa-th-large"></i></div>
+                        <div class="layer-title">Depth Layer 4</div>
+                        <div class="layer-description">Mid-far layer with parallax</div>
+                    </div>
+                </div>
+                
+                <div class="depth-layer layer-5" id="layer5">
+                    <div class="layer-content">
+                        <div class="layer-icon"><i class="fas fa-cubes"></i></div>
+                        <div class="layer-title">Depth Layer 5</div>
+                        <div class="layer-description">Farthest layer from viewer</div>
+                    </div>
+                </div>
+                
+                <!-- Floating Objects -->
+                <div class="floating-object object-1"><i class="fas fa-star"></i></div>
+                <div class="floating-object object-2"><i class="fas fa-circle"></i></div>
+                <div class="floating-object object-3"><i class="fas fa-diamond"></i></div>
+                <div class="floating-object object-4"><i class="fas fa-heart"></i></div>
+                <div class="floating-object object-5"><i class="fas fa-bolt"></i></div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions" id="instructions">
+            <div class="instructions-box">
+                <div class="instructions-title">
+                    <i class="fas fa-mouse-pointer"></i> Depth Control Instructions
+                </div>
+                <p>Move your mouse around the screen to control depth perception. The corridor and objects respond to your cursor position.</p>
+                
+                <div class="instructions-list">
+                    <div class="instruction-item">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>Move Up: Increase depth</span>
+                    </div>
+                    <div class="instruction-item">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>Move Down: Decrease depth</span>
+                    </div>
+                    <div class="instruction-item">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Move Left: Rotate left</span>
+                    </div>
+                    <div class="instruction-item">
+                        <i class="fas fa-arrow-right"></i>
+                        <span>Move Right: Rotate right</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const container = document.getElementById('container');
+            const corridor = document.getElementById('corridor');
+            const depthFill = document.getElementById('depthFill');
+            const depthLabel = document.getElementById('depthLabel');
+            const mouseIndicator = document.getElementById('mouseIndicator');
+            const resetBtn = document.getElementById('resetBtn');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const helpBtn = document.getElementById('helpBtn');
+            const instructions = document.getElementById('instructions');
+            
+            // Depth layers
+            const layer1 = document.getElementById('layer1');
+            const layer2 = document.getElementById('layer2');
+            const layer3 = document.getElementById('layer3');
+            const layer4 = document.getElementById('layer4');
+            const layer5 = document.getElementById('layer5');
+            
+            // Floating objects
+            const object1 = document.querySelector('.object-1');
+            const object2 = document.querySelector('.object-2');
+            const object3 = document.querySelector('.object-3');
+            const object4 = document.querySelector('.object-4');
+            const object5 = document.querySelector('.object-5');
+            
+            // State
+            let mouseX = 0.5; // 0 to 1
+            let mouseY = 0.5; // 0 to 1
+            let depth = 0.5; // 0 to 1
+            let rotationY = 0; // degrees
+            let rotationX = 0; // degrees
+            let isFullscreen = false;
+            let showInstructions = true;
+            
+            // Initialize
+            function init() {
+                // Set up event listeners
+                setupEventListeners();
+                
+                // Initialize mouse indicator
+                updateMouseIndicator();
+                
+                // Start animation loop
+                requestAnimationFrame(updateCorridor);
+                
+                // Show instructions initially
+                instructions.style.display = 'block';
+            }
+            
+            // Set up event listeners
+            function setupEventListeners() {
+                // Mouse movement
+                container.addEventListener('mousemove', handleMouseMove);
+                container.addEventListener('touchmove', handleTouchMove, { passive: false });
+                
+                // Mouse enter/leave
+                container.addEventListener('mouseenter', function() {
+                    mouseIndicator.style.display = 'block';
+                });
+                
+                container.addEventListener('mouseleave', function() {
+                    mouseIndicator.style.display = 'none';
+                });
+                
+                // Control buttons
+                resetBtn.addEventListener('click', resetView);
+                fullscreenBtn.addEventListener('click', toggleFullscreen);
+                helpBtn.addEventListener('click', toggleInstructions);
+                
+                // Fullscreen change
+                document.addEventListener('fullscreenchange', handleFullscreenChange);
+                document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+                document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+                document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+            }
+            
+            // Handle mouse movement
+            function handleMouseMove(e) {
+                const rect = container.getBoundingClientRect();
+                mouseX = (e.clientX - rect.left) / rect.width;
+                mouseY = (e.clientY - rect.top) / rect.height;
+                
+                // Update mouse indicator position
+                updateMouseIndicator();
+                
+                // Update depth based on mouse Y position
+                depth = 1 - mouseY; // Invert so up = more depth
+                
+                // Update rotation based on mouse X position
+                rotationY = (mouseX - 0.5) * 40; // -20 to 20 degrees
+                rotationX = (mouseY - 0.5) * 20; // -10 to 10 degrees
+                
+                // Update depth indicator
+                updateDepthIndicator();
+            }
+            
+            // Handle touch movement
+            function handleTouchMove(e) {
+                if (e.touches.length === 1) {
+                    e.preventDefault();
+                    const rect = container.getBoundingClientRect();
+                    const touch = e.touches[0];
+                    
+                    mouseX = (touch.clientX - rect.left) / rect.width;
+                    mouseY = (touch.clientY - rect.top) / rect.height;
+                    
+                    // Update depth based on touch Y position
+                    depth = 1 - mouseY;
+                    
+                    // Update rotation based on touch X position
+                    rotationY = (mouseX - 0.5) * 40;
+                    rotationX = (mouseY - 0.5) * 20;
+                    
+                    // Update depth indicator
+                    updateDepthIndicator();
+                }
+            }
+            
+            // Update mouse indicator position
+            function updateMouseIndicator() {
+                const rect = container.getBoundingClientRect();
+                mouseIndicator.style.left = `${mouseX * rect.width}px`;
+                mouseIndicator.style.top = `${mouseY * rect.height}px`;
+                
+                // Change color based on depth
+                const hue = 200 + depth * 160; // 200 to 360
+                mouseIndicator.style.background = `radial-gradient(circle, hsl(${hue}, 100%, 60%), transparent 70%)`;
+            }
+            
+            // Update depth indicator
+            function updateDepthIndicator() {
+                // Update depth fill height
+                const fillHeight = depth * 100;
+                depthFill.style.height = `${fillHeight}%`;
+                
+                // Update depth label
+                const depthPercent = Math.round(depth * 100);
+                depthLabel.textContent = `Depth: ${depthPercent}%`;
+                
+                // Update label position
+                depthLabel.style.top = `${50 - (depth - 0.5) * 100}%`;
+                
+                // Change label color based on depth
+                const hue = 200 + depth * 160;
+                depthLabel.style.color = `hsl(${hue}, 100%, 70%)`;
+            }
+            
+            // Update corridor and objects
+            function updateCorridor() {
+                // Calculate parallax offsets for each layer
+                // Closer layers move more, farther layers move less
+                const layer1Offset = (mouseX - 0.5) * 100 + (mouseY - 0.5) * 50;
+                const layer2Offset = (mouseX - 0.5) * 80 + (mouseY - 0.5) * 40;
+                const layer3Offset = (mouseX - 0.5) * 60 + (mouseY - 0.5) * 30;
+                const layer4Offset = (mouseX - 0.5) * 40 + (mouseY - 0.5) * 20;
+                const layer5Offset = (mouseX - 0.5) * 20 + (mouseY - 0.5) * 10;
+                
+                // Apply depth-based Z translation
+                const depthFactor = depth * 2; // 0 to 2
+                
+                // Update layer positions with parallax
+                layer1.style.transform = `translate(-50%, -50%) translate(${layer1Offset}px, ${(mouseY - 0.5) * 30}px) translateZ(${200 + depthFactor * 100}px)`;
+                layer2.style.transform = `translate(-50%, -50%) translate(${layer2Offset}px, ${(mouseY - 0.5) * 25}px) translateZ(${100 + depthFactor * 50}px)`;
+                layer3.style.transform = `translate(-50%, -50%) translate(${layer3Offset}px, ${(mouseY - 0.5) * 20}px) translateZ(${0 + depthFactor * 25}px)`;
+                layer4.style.transform = `translate(-50%, -50%) translate(${layer4Offset}px, ${(mouseY - 0.5) * 15}px) translateZ(${-100 - depthFactor * 25}px)`;
+                layer5.style.transform = `translate(-50%, -50%) translate(${layer5Offset}px, ${(mouseY - 0.5) * 10}px) translateZ(${-200 - depthFactor * 50}px)`;
+                
+                // Update corridor rotation based on mouse position
+                corridor.style.transform = `translate(-50%, -50%) rotateX(${75 + rotationX}deg) rotateY(${rotationY}deg)`;
+                
+                // Update floating objects with depth
+                updateFloatingObjects();
+                
+                // Update layer styles based on depth
+                updateLayerStyles();
+                
+                // Continue animation loop
+                requestAnimationFrame(updateCorridor);
+            }
+            
+            // Update floating objects
+            function updateFloatingObjects() {
+                // Calculate object depths based on mouse position
+                const object1Depth = 150 + (mouseX - 0.5) * 100 + depth * 50;
+                const object2Depth = 50 + (mouseY - 0.5) * 80 + depth * 30;
+                const object3Depth = -50 + (mouseX - 0.5) * 60 - depth * 30;
+                const object4Depth = -150 + (mouseY - 0.5) * 40 - depth * 50;
+                const object5Depth = 100 + (mouseX - 0.5) * 120 + depth * 40;
+                
+                // Apply depths to objects
+                object1.style.setProperty('--depth', `${object1Depth}px`);
+                object2.style.setProperty('--depth', `${object2Depth}px`);
+                object3.style.setProperty('--depth', `${object3Depth}px`);
+                object4.style.setProperty('--depth', `${object4Depth}px`);
+                object5.style.setProperty('--depth', `${object5Depth}px`);
+                
+                // Move objects based on mouse position (parallax)
+                const object1X = 20 + (mouseX - 0.5) * 40;
+                const object1Y = 30 + (mouseY - 0.5) * 40;
+                object1.style.left = `${object1X}%`;
+                object1.style.top = `${object1Y}%`;
+                
+                const object2X = 25 + (mouseX - 0.5) * 30;
+                const object2Y = 60 + (mouseY - 0.5) * 30;
+                object2.style.right = `${object2X}%`;
+                object2.style.top = `${object2Y}%`;
+                
+                const object3X = 15 + (mouseX - 0.5) * 50;
+                const object3Y = 40 + (mouseY - 0.5) * 50;
+                object3.style.left = `${object3X}%`;
+                object3.style.bottom = `${object3Y}%`;
+                
+                const object4X = 15 + (mouseX - 0.5) * 35;
+                const object4Y = 20 + (mouseY - 0.5) * 35;
+                object4.style.right = `${object4X}%`;
+                object4.style.top = `${object4Y}%`;
+                
+                const object5X = 30 + (mouseX - 0.5) * 45;
+                const object5Y = 20 + (mouseY - 0.5) * 45;
+                object5.style.right = `${object5X}%`;
+                object5.style.bottom = `${object5Y}%`;
+            }
+            
+            // Update layer styles based on depth
+            function updateLayerStyles() {
+                // Calculate brightness based on depth (deeper = darker)
+                const brightness = 0.5 + depth * 0.5;
+                
+                // Update layer opacity and blur based on depth
+                const layers = [layer1, layer2, layer3, layer4, layer5];
+                layers.forEach((layer, index) => {
+                    const content = layer.querySelector('.layer-content');
+                    const distance = Math.abs(index - 2); // 0 to 2
+                    
+                    // Calculate layer-specific depth effect
+                    const layerDepth = Math.max(0.2, 1 - distance * 0.2 + depth * 0.5);
+                    const layerBlur = distance * (1 - depth) * 2;
+                    
+                    if (content) {
+                        content.style.opacity = layerDepth;
+                        content.style.filter = `blur(${layerBlur}px) brightness(${brightness})`;
+                        
+                        // Update border color based on depth
+                        const hue = 200 + depth * 160;
+                        content.style.borderColor = `hsla(${hue}, 70%, 60%, ${0.3 + depth * 0.5})`;
+                        content.style.boxShadow = `0 0 ${20 + depth * 20}px hsla(${hue}, 70%, 60%, ${0.2 + depth * 0.3})`;
+                    }
+                });
+            }
+            
+            // Reset view to default
+            function resetView() {
+                mouseX = 0.5;
+                mouseY = 0.5;
+                depth = 0.5;
+                rotationY = 0;
+                rotationX = 0;
+                
+                // Update depth indicator
+                updateDepthIndicator();
+                
+                // Show confirmation
+                resetBtn.innerHTML = '<i class="fas fa-check"></i> Reset!';
+                setTimeout(() => {
+                    resetBtn.innerHTML = '<i class="fas fa-redo"></i> Reset View';
+                }, 1500);
+            }
+            
+            // Toggle fullscreen
+            function toggleFullscreen() {
+                if (!isFullscreen) {
+                    enterFullscreen();
+                } else {
+                    exitFullscreen();
+                }
+            }
+            
+            // Enter fullscreen
+            function enterFullscreen() {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.mozRequestFullScreen) {
+                    container.mozRequestFullScreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+            }
+            
+            // Exit fullscreen
+            function exitFullscreen() {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+            
+            // Handle fullscreen change
+            function handleFullscreenChange() {
+                isFullscreen = !!(document.fullscreenElement || 
+                                document.webkitFullscreenElement || 
+                                document.mozFullScreenElement || 
+                                document.msFullscreenElement);
+                
+                // Update button text
+                if (isFullscreen) {
+                    fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen';
+                    container.classList.add('fullscreen');
+                } else {
+                    fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
+                    container.classList.remove('fullscreen');
+                }
+            }
+            
+            // Toggle instructions
+            function toggleInstructions() {
+                showInstructions = !showInstructions;
+                
+                if (showInstructions) {
+                    instructions.style.display = 'block';
+                    helpBtn.innerHTML = '<i class="fas fa-times"></i> Hide Help';
+                } else {
+                    instructions.style.display = 'none';
+                    helpBtn.innerHTML = '<i class="fas fa-question-circle"></i> Help';
+                }
+            }
+            
+            // Initialize the application
+            init();
+        });
+    </script>
+</body>
+</html>
