@@ -146,6 +146,36 @@ function showTaskInput() {
     document.getElementById('answerInput').focus();
 }
 
+function showFeedback(isCorrect) {
+    const feedbackContainer = document.getElementById('feedbackContainer');
+    
+    feedbackContainer.innerHTML = '';
+    
+    const feedbackElement = document.createElement('div');
+    feedbackElement.className = `feedback-message ${isCorrect ? 'correct' : 'incorrect'}`;
+    
+    if (isCorrect) {
+        feedbackElement.innerHTML = `
+            <i class="fas fa-check-circle"></i>
+            <span>Correct!</span>
+        `;
+    } else {
+        feedbackElement.innerHTML = `
+            <i class="fas fa-times-circle"></i>
+            <span>Incorrect</span>
+        `;
+    }
+    
+    feedbackContainer.appendChild(feedbackElement);
+    
+    setTimeout(() => {
+        feedbackElement.classList.add('fade-out');
+        setTimeout(() => {
+            feedbackContainer.innerHTML = '';
+        }, 300);
+    }, 1000);
+}
+
 function submitAnswer() {
     if (!currentTask || !taskStartTime) return;
     
@@ -177,6 +207,7 @@ function submitAnswer() {
             isCorrect = answer.toLowerCase() === 'ready';
             break;
     }
+    showFeedback(isCorrect);
     
     responses.push({
         task: currentTask.type,
@@ -190,7 +221,7 @@ function submitAnswer() {
     
     document.getElementById('taskInput').style.display = 'none';
     document.getElementById('taskDisplay').innerHTML = `
-        <p>${isCorrect ? '✅ Correct!' : '❌ Incorrect'} (Response time: ${responseTime.toFixed(2)}s)</p>
+        <p>Response time: ${responseTime.toFixed(2)}s</p>
         <p>Select another task to continue.</p>
     `;
     
