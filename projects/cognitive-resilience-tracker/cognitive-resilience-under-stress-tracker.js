@@ -13,7 +13,30 @@ document.addEventListener('DOMContentLoaded', function() {
     updateStatistics();
     initializeChart();
     displaySessions();
+    
+    if (sessions.length > 0) {
+        showNotification(`Loaded ${sessions.length} saved session${sessions.length > 1 ? 's' : ''}`, 'info');
+    } else {
+        showNotification('Welcome to Cognitive Resilience Tracker!', 'info');
+    }
 });
+
+function showNotification(message, type = 'success') {
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(notification => notification.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
 
 function initializeEventListeners() {
     const stressSlider = document.getElementById('stressLevel');
@@ -35,6 +58,7 @@ function initializeEventListeners() {
             document.getElementById('stressLevel').value = stressValue;
             currentStressLevel = stressValue;
             updateStressDisplay();
+            showNotification(`Stress level set to ${stressValue} (${level})`, 'info');
         });
     });
 }
@@ -86,6 +110,7 @@ function startMathTask() {
     
     showTaskInput();
     taskStartTime = Date.now();
+    showNotification('Math challenge started!', 'info');
 }
 
 function startMemoryTask() {
@@ -163,6 +188,8 @@ function startMemoryTask() {
         showTaskInput();
         taskStartTime = Date.now();
     }, memorizationTime);
+    
+    showNotification('Memory test started! Memorize the sequence', 'info');
 }
 
 function startReactionTask() {
@@ -188,6 +215,8 @@ function startReactionTask() {
         showTaskInput();
         document.getElementById('answerInput').placeholder = 'Type "ready" and click Submit';
     }, Math.random() * 3000 + 2000);
+
+    showNotification('Reaction test started! Wait for the signal', 'info');
 }
 
 function generateMathQuestion() {
@@ -249,13 +278,13 @@ function submitAnswer() {
     
     if (currentTask.type === 'math') {
         if (answer === '' || isNaN(answer)) {
-            alert('Please enter a valid number');
+            showNotification('Please enter a valid number', 'error');
             return;
         }
     }
     
     if (currentTask.type === 'reaction' && answer.toLowerCase() !== 'ready') {
-        alert('Please type "ready" to complete the reaction test');
+        showNotification('Please type "ready" to complete the reaction test', 'error');
         return;
     }
     
@@ -277,6 +306,12 @@ function submitAnswer() {
     
     showFeedback(isCorrect);
     
+    if (isCorrect) {
+        showNotification('Correct answer! Great job!', 'success');
+    } else {
+        showNotification('Incorrect answer. Keep trying!', 'error');
+    }
+    
     responses.push({
         task: currentTask.type,
         stressLevel: currentStressLevel,
@@ -295,6 +330,7 @@ function submitAnswer() {
     
     if (responses.length > 0) {
         document.getElementById('saveSessionBtn').disabled = false;
+        showNotification('Complete your session and click Save Session', 'info');
     }
     
     currentTask = null;
@@ -322,32 +358,45 @@ function updateResults() {
 }
 
 function saveSession() {
-    if (responses.length === 0) return;
+    if (responses.length === 0) {
+        showNotification('No responses to save. Complete some tasks first!', 'warning');
+        return;
+    }
     
-    const session = {
-        id: Date.now(),
-        date: new Date().toLocaleString(),
-        responses: [...responses],
-        averageStress: responses.reduce((sum, r) => sum + r.stressLevel, 0) / responses.length,
-        accuracy: parseFloat(document.getElementById('accuracyResult').textContent),
-        avgResponseTime: parseFloat(document.getElementById('responseTimeResult').textContent),
-        resilienceScore: parseInt(document.getElementById('resilienceScore').textContent)
-    };
-    
-    sessions.push(session);
-    localStorage.setItem('resilienceSessions', JSON.stringify(sessions));
-    
-    responses = [];
-    document.getElementById('saveSessionBtn').disabled = true;
-    document.getElementById('accuracyResult').textContent = '0%';
-    document.getElementById('responseTimeResult').textContent = '0s';
-    document.getElementById('resilienceScore').textContent = '0';
-    
-    updateStatistics();
-    updateChart();
-    displaySessions();
-    
-    alert('Session saved successfully!');
+    try {
+        const session = {
+            id: Date.now(),
+            date: new Date().toLocaleString(),
+            responses: [...responses],
+            averageStress: responses.reduce((sum, r) => sum + r.stressLevel, 0) / responses.length,
+            accuracy: parseFloat(document.getElementById('accuracyResult').textContent),
+            avgResponseTime: parseFloat(document.getElementById('responseTimeResult').textContent),
+            resilienceScore: parseInt(document.getElementById('resilienceScore').textContent)
+        };
+        
+        sessions.push(session);
+        localStorage.setItem('resilienceSessions', JSON.stringify(sessions));
+        
+        showNotification('✅ Session saved successfully!', 'success');
+        
+        responses = [];
+        document.getElementById('saveSessionBtn').disabled = true;
+        document.getElementById('accuracyResult').textContent = '0%';
+        document.getElementById('responseTimeResult').textContent = '0s';
+        document.getElementById('resilienceScore').textContent = '0';
+        
+        updateStatistics();
+        updateChart();
+        displaySessions();
+        
+    } catch (error) {
+        console.error('Error saving session:', error);
+        if (error.name === 'QuotaExceededError') {
+            showNotification('Storage limit reached. Please clear some old sessions.', 'error');
+        } else {
+            showNotification('Failed to save session. Please try again.', 'error');
+        }
+    }
 }
 
 function updateStatistics() {
@@ -453,6 +502,17 @@ function displaySessions() {
         `;
         historyDiv.appendChild(sessionEl);
     });
+}
+
+function clearAllSessions() {
+    if (confirm('Are you sure you want to clear all saved sessions?')) {
+        sessions = [];
+        localStorage.removeItem('resilienceSessions');
+        updateStatistics();
+        updateChart();
+        displaySessions();
+        showNotification('All sessions cleared', 'warning');
+    }
 }
 
 window.addEventListener('beforeunload', function() {
