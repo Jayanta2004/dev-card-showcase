@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>flowt • no‑code automation builder</title>
+  <!-- open source fonts & icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0d0b17;
+      background-image: radial-gradient(circle at 70% 30%, #1f1b38 0%, #0a0818 100%);
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #e5defa;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.8rem;
+    }
+
+    /* main builder panel — distinct geometric edges */
+    .builder {
+      max-width: 1480px;
+      width: 100%;
+      background: rgba(14, 12, 26, 0.8);
+      backdrop-filter: blur(18px) saturate(200%);
+      -webkit-backdrop-filter: blur(18px) saturate(200%);
+      border: 1px solid rgba(120, 90, 230, 0.3);
+      border-radius: 3.5rem 1.8rem 3.5rem 1.8rem;
+      box-shadow: 0 40px 80px -25px #000, 0 0 0 1px rgba(160, 130, 255, 0.2) inset;
+      padding: 2rem 2rem 2rem 2rem;
+    }
+
+    /* header: flow identity + live indicator */
+    .flow-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2.2rem;
+    }
+
+    .title-block {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-icon {
+      background: linear-gradient(135deg, #5f4bdb, #8f7af0);
+      width: 54px;
+      height: 54px;
+      border-radius: 28px 8px 28px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      box-shadow: 0 12px 20px -12px #3a2d99;
+    }
+
+    .title-block h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 2.2rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(140deg, #ffffff, #cfb9ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge-group {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .pill {
+      background: #1e1b34;
+      border: 1px solid #4f4580;
+      border-radius: 60px;
+      padding: 0.5rem 1.4rem;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.6);
+    }
+
+    .pill i {
+      color: #68e0b0;
+    }
+
+    /* main workspace = left palette + right canvas */
+    .workspace {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 1.8rem;
+      margin-bottom: 2rem;
+    }
+
+    /* component palette — draggable blocks */
+    .palette {
+      background: rgba(22, 18, 38, 0.7);
+      border: 1px solid #3d3563;
+      border-radius: 2.2rem 0.8rem 2.2rem 0.8rem;
+      padding: 1.8rem 1.2rem;
+      backdrop-filter: blur(4px);
+      height: fit-content;
+    }
+
+    .palette-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #c5b7ff;
+      margin-bottom: 1.8rem;
+    }
+
+    .draggable-node {
+      background: #221f3a;
+      border: 1px solid #60529e;
+      border-radius: 1.6rem 0.4rem 1.6rem 0.4rem;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: grab;
+      transition: 0.15s;
+      box-shadow: 0 8px 0 #0f0d20;
+      user-select: none;
+    }
+
+    .draggable-node:hover {
+      background: #312b57;
+      border-color: #9a84ff;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 0 #0f0d20;
+    }
+
+    .draggable-node:active {
+      cursor: grabbing;
+      opacity: 0.8;
+    }
+
+    .node-icon {
+      width: 36px;
+      height: 36px;
+      background: #302a55;
+      border-radius: 18px 3px 18px 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #c1afff;
+    }
+
+    /* canvas — drop zone */
+    .canvas-area {
+      background: rgba(10, 8, 22, 0.6);
+      border: 2px dashed #4b407a;
+      border-radius: 2.2rem 1.2rem 2.2rem 1.2rem;
+      padding: 1.8rem;
+      min-height: 460px;
+      transition: border 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .canvas-area.drag-over {
+      border-color: #b29eff;
+      background: rgba(40, 30, 80, 0.4);
+      box-shadow: 0 0 30px #372b70;
+    }
+
+    .canvas-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .canvas-header h3 {
+      font-weight: 500;
+      display: flex;
+      gap: 8px;
+    }
+
+    .clear-btn {
+      background: #221f3a;
+      border: 1px solid #6255a0;
+      border-radius: 30px;
+      padding: 0.3rem 1.2rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .clear-btn:hover { background: #3e3570; }
+
+    /* workflow steps container (dynamic list) */
+    .workflow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+      min-height: 280px;
+    }
+
+    .step-item {
+      background: #1d1a33;
+      border: 1px solid #584b96;
+      border-radius: 2rem 0.5rem 2rem 0.5rem;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 6px 0 #0b0820;
+      transition: 0.1s;
+      cursor: default;
+    }
+
+    .step-item.dragging {
+      opacity: 0.4;
+      transform: scale(0.98);
+    }
+
+    .step-index {
+      background: #322c58;
+      width: 34px;
+      height: 34px;
+      border-radius: 20px 2px 20px 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #ded1ff;
+    }
+
+    .step-content {
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .step-actions {
+      display: flex;
+      gap: 12px;
+      color: #aa9cf0;
+    }
+
+    .step-actions i {
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .step-actions i:hover { color: #ff8a8a; }
+
+    .empty-canvas-message {
+      color: #7b6db0;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 140px;
+      border: 2px dotted #3f3765;
+      border-radius: 50px 10px 50px 10px;
+      background: #0c0a1e;
+    }
+
+    /* bottom toolbar — simulation + open source note */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      background: #15122bcc;
+      border-radius: 60px 16px 60px 16px;
+      padding: 1rem 2rem;
+      border: 1px solid #5a4d99;
+      margin-top: 1rem;
+    }
+
+    .simulate-btn {
+      background: #3c3178;
+      border: none;
+      color: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      padding: 0.7rem 2rem;
+      border-radius: 40px 6px 40px 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      border: 1px solid #9d85ff;
+      transition: 0.15s;
+    }
+
+    .simulate-btn:hover {
+      background: #5849b0;
+      box-shadow: 0 0 20px #705dd4;
+    }
+
+    .foss {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      color: #b9abff;
+    }
+
+    .foss i {
+      font-size: 1.5rem;
+    }
+
+    /* simulation output */
+    .simulation-output {
+      margin-top: 1rem;
+      background: #141127;
+      border-radius: 32px 8px 32px 8px;
+      padding: 0.8rem 1.5rem;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 0.95rem;
+      border: 1px solid #6d5cb0;
+      color: #ced2ff;
+    }
+  </style>
+</head>
+<body>
+<div class="builder">
+
+  <!-- header -->
+  <div class="flow-header">
+    <div class="title-block">
+      <div class="logo-icon"><i class="fas fa-diagram-project"></i></div>
+      <h1>flowt · no‑code builder</h1>
+    </div>
+    <div class="badge-group">
+      <span class="pill"><i class="fas fa-sync-alt"></i> auto‑save</span>
+      <span class="pill"><i class="fas fa-grip"></i> v0.5.3</span>
+    </div>
+  </div>
+
+  <!-- main workspace: palette (left) + canvas (right) -->
+  <div class="workspace">
+    <!-- palette: draggable components -->
+    <div class="palette">
+      <div class="palette-title"><i class="fas fa-cubes"></i> components</div>
+      <div class="draggable-node" draggable="true" data-node-type="trigger" id="dragTrigger">
+        <div class="node-icon"><i class="fas fa-bolt"></i></div>
+        <div>trigger</div>
+        <i class="fas fa-grip-dots-vertical" style="margin-left: auto; color:#7a6bb0;"></i>
+      </div>
+      <div class="draggable-node" draggable="true" data-node-type="action" id="dragAction">
+        <div class="node-icon"><i class="fas fa-gear"></i></div>
+        <div>action</div>
+        <i class="fas fa-grip-dots-vertical" style="margin-left: auto; color:#7a6bb0;"></i>
+      </div>
+      <div class="draggable-node" draggable="true" data-node-type="condition" id="dragCondition">
+        <div class="node-icon"><i class="fas fa-code-branch"></i></div>
+        <div>condition</div>
+        <i class="fas fa-grip-dots-vertical" style="margin-left: auto; color:#7a6bb0;"></i>
+      </div>
+      <div class="draggable-node" draggable="true" data-node-type="delay" id="dragDelay">
+        <div class="node-icon"><i class="fas fa-hourglass"></i></div>
+        <div>delay</div>
+        <i class="fas fa-grip-dots-vertical" style="margin-left: auto; color:#7a6bb0;"></i>
+      </div>
+      <div style="margin-top: 2rem; font-size:0.8rem; background:#1f1c39; padding:0.7rem; border-radius:30px; text-align:center;">
+        <i class="fa-regular fa-hand-pointer"></i> drag onto canvas
+      </div>
+    </div>
+
+    <!-- canvas area (drop zone) -->
+    <div class="canvas-area" id="canvasDropZone">
+      <div class="canvas-header">
+        <h3><i class="fas fa-code-merge"></i> workflow canvas</h3>
+        <div class="clear-btn" id="clearCanvasBtn"><i class="fa-regular fa-trash-can"></i> clear all</div>
+      </div>
+
+      <!-- container for dynamic workflow steps -->
+      <div class="workflow-steps" id="workflowStepsContainer">
+        <!-- empty state will be shown by JS if no steps -->
+      </div>
+
+      <!-- simulation output panel (visible after run) -->
+      <div id="simulationBox" class="simulation-output" style="display: none;">
+        <i class="fa-regular fa-circle-play"></i> <span id="simMessage">workflow simulated → </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- bottom toolbar -->
+  <div class="toolbar">
+    <div class="simulate-btn" id="simulateWorkflow">
+      <i class="fas fa-play"></i> simulate workflow
+    </div>
+    <div class="foss">
+      <i class="fab fa-osi"></i>
+      <span>open source · drag & drop · mit</span>
+    </div>
+    <div style="color:#7c6fc0;">
+      <i class="fa-regular fa-gem"></i> visual automation
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // references
+    const canvas = document.getElementById('canvasDropZone');
+    const stepsContainer = document.getElementById('workflowStepsContainer');
+    const clearBtn = document.getElementById('clearCanvasBtn');
+    const simulateBtn = document.getElementById('simulateWorkflow');
+    const simulationBox = document.getElementById('simulationBox');
+    const simMessage = document.getElementById('simMessage');
+
+    // ----- internal state: array of workflow steps -----
+    let workflowSteps = [];
+
+    // ----- helper: render steps from array -----
+    function renderWorkflow() {
+      if (workflowSteps.length === 0) {
+        stepsContainer.innerHTML = `<div class="empty-canvas-message"><i class="fa-regular fa-compass" style="margin-right:10px;"></i> drag components here to build automation</div>`;
+        simulationBox.style.display = 'none';
+        return;
+      }
+
+      let html = '';
+      workflowSteps.forEach((step, idx) => {
+        let icon = 'fa-puzzle-piece';
+        if (step.type === 'trigger') icon = 'fa-bolt';
+        else if (step.type === 'action') icon = 'fa-gear';
+        else if (step.type === 'condition') icon = 'fa-code-branch';
+        else if (step.type === 'delay') icon = 'fa-hourglass';
+        
+        html += `
+          <div class="step-item" data-index="${idx}">
+            <div class="step-index">${idx+1}</div>
+            <div class="step-content"><i class="fas ${icon}" style="margin-right: 12px;"></i> ${step.type}</div>
+            <div class="step-actions">
+              <i class="fa-regular fa-pen-to-square" onclick="editStep(${idx})" style="color:#a997ff;"></i>
+              <i class="fa-regular fa-trash-can" onclick="removeStep(${idx})" style="color:#ffa28b;"></i>
+            </div>
+          </div>
+        `;
+      });
+      stepsContainer.innerHTML = html;
+      simulationBox.style.display = 'none';
+    }
+
+    // ----- global functions for step actions (edit/remove) -----
+    window.editStep = function(index) {
+      const step = workflowSteps[index];
+      const newLabel = prompt('Edit step label / type (simulated)', step.type);
+      if (newLabel && newLabel.trim() !== '') {
+        workflowSteps[index].type = newLabel.trim();
+        renderWorkflow();
+      }
+    };
+
+    window.removeStep = function(index) {
+      workflowSteps.splice(index, 1);
+      renderWorkflow();
+    };
+
+    // ----- drag & drop from palette to canvas -----
+    const draggables = document.querySelectorAll('.draggable-node');
+    
+    draggables.forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', item.dataset.nodeType);
+        e.dataTransfer.effectAllowed = 'copy';
+      });
+    });
+
+    // prevent default on canvas to allow drop
+    canvas.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      canvas.classList.add('drag-over');
+    });
+
+    canvas.addEventListener('dragleave', (e) => {
+      canvas.classList.remove('drag-over');
+    });
+
+    canvas.addEventListener('drop', (e) => {
+      e.preventDefault();
+      canvas.classList.remove('drag-over');
+      
+      const nodeType = e.dataTransfer.getData('text/plain');
+      if (!nodeType) return;
+
+      // add new step to workflow
+      workflowSteps.push({ type: nodeType, id: Date.now() + Math.random() });
+      renderWorkflow();
+    });
+
+    // ----- clear canvas -----
+    clearBtn.addEventListener('click', () => {
+      if (workflowSteps.length > 0 && confirm('Clear entire workflow?')) {
+        workflowSteps = [];
+        renderWorkflow();
+      }
+    });
+
+    // ----- simulate workflow (unique no-code style output) -----
+    simulateBtn.addEventListener('click', () => {
+      if (workflowSteps.length === 0) {
+        alert('workflow empty — add some steps');
+        return;
+      }
+
+      // generate readable simulation
+      let description = '⚡ simulation: ';
+      for (let i = 0; i < workflowSteps.length; i++) {
+        const step = workflowSteps[i];
+        description += `${i+1}.${step.type} `;
+        if (step.type === 'condition') description += '(if/else) ';
+        else if (step.type === 'delay') description += '(wait 2s) ';
+        else if (step.type === 'trigger') description += '(webhook) ';
+        else if (step.type === 'action') description += '(api call) ';
+        if (i < workflowSteps.length-1) description += '→ ';
+      }
+
+      // extra detail based on last step
+      const last = workflowSteps[workflowSteps.length-1];
+      if (last.type === 'condition') description += ' → branch resolved (true)';
+      else description += ' → completed ✅';
+
+      simMessage.innerText = description;
+      simulationBox.style.display = 'block';
+    });
+
+    // ----- optional: remove drag-over class if drag ends outside
+    document.addEventListener('dragend', () => {
+      canvas.classList.remove('drag-over');
+    });
+
+    // ----- start with a couple of demo steps for better no-code feel (optional) -----
+    workflowSteps.push({ type: 'trigger', id: 1 });
+    workflowSteps.push({ type: 'action', id: 2 });
+    workflowSteps.push({ type: 'condition', id: 3 });
+    workflowSteps.push({ type: 'delay', id: 4 });
+    renderWorkflow();  // show demo steps
+
+    // ----- ensure draggable items are truly draggable (some browsers need explicit) -----
+    draggables.forEach(item => {
+      item.setAttribute('draggable', 'true');
+    });
+  })();
+</script>
+<!-- extra note: prevent image drag on icons inside draggable (optional) -->
+<style>
+  .draggable-node * { pointer-events: none; } 
+  .step-actions i { pointer-events: auto; }  /* make trash/edit clickable */
+</style>
+</body>
+</html>

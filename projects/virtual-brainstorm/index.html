@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✨ Virtual Brainstorm Board</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(145deg, #3b3f5c 0%, #2a2e45 100%);
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* main board card */
+    .board-container {
+      width: 1300px;
+      max-width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 48px;
+      padding: 28px 24px;
+      box-shadow: 0 30px 45px -20px rgba(0,0,0,0.6), inset 0 1px 3px rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    /* header + toolbar */
+    .board-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      gap: 16px 10px;
+      color: white;
+    }
+
+    .board-header h1 {
+      font-weight: 500;
+      font-size: 2rem;
+      letter-spacing: 1px;
+      background: #f9d56e;
+      background: linear-gradient(135deg, #f9d56e, #f8b56c);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .board-header h1 span {
+      font-size: 1.8rem;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      background: rgba(20, 22, 36, 0.7);
+      padding: 10px 22px;
+      border-radius: 60px;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,240,0.2);
+    }
+
+    .tool-btn {
+      background: rgba(255,255,255,0.05);
+      border: none;
+      color: #f5e9d8;
+      font-size: 1.7rem;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,200,0.15);
+    }
+
+    .tool-btn:hover {
+      background: #f3b33d;
+      color: #1e1f2b;
+      transform: scale(1.08) translateY(-2px);
+      border-color: #ffe3a3;
+    }
+
+    .tool-btn:active {
+      transform: scale(0.96);
+    }
+
+    .color-picker-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,0,0,0.3);
+      padding: 4px 14px 4px 8px;
+      border-radius: 40px;
+      border-left: 2px solid #ffd966;
+    }
+
+    .color-label {
+      font-size: 0.9rem;
+      color: #cfd8dc;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    #bgColorPicker {
+      width: 42px;
+      height: 42px;
+      border: 2px solid white;
+      border-radius: 42px;
+      cursor: pointer;
+      background: #fee28b;
+      padding: 0;
+      box-shadow: 0 2px 10px black;
+    }
+
+    #bgColorPicker::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    #bgColorPicker::-webkit-color-swatch {
+      border: none;
+      border-radius: 42px;
+    }
+
+    /* the actual brainstorming canvas / grid */
+    .board-grid {
+      background: rgba(25, 28, 43, 0.7);
+      border-radius: 36px;
+      padding: 25px 20px;
+      min-height: 550px;
+      backdrop-filter: blur(4px);
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.5), 0 10px 15px -5px black;
+      border: 1px solid rgba(255,255,180,0.2);
+    }
+
+    .notes-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      align-items: flex-start;
+      transition: all 0.1s;
+    }
+
+    /* sticky note design */
+    .sticky-note {
+      width: 200px;
+      min-height: 180px;
+      background: #feff9c;  /* default, overridden by js inline */
+      border-radius: 12px 0 20px 0;
+      box-shadow: 8px 8px 15px rgba(0, 0, 0, 0.5), 0 0 0 1px #ffffff40 inset;
+      padding: 18px 14px 25px 14px;
+      display: flex;
+      flex-direction: column;
+      transition: 0.15s ease;
+      word-wrap: break-word;
+      cursor: default;
+      position: relative;
+      backdrop-filter: blur(2px);
+      border-left: 3px solid rgba(255,255,255,0.4);
+      border-top: 2px solid rgba(255,255,255,0.5);
+    }
+
+    .sticky-note:hover {
+      transform: scale(1.02) rotate(0.5deg);
+      filter: brightness(1.08);
+      box-shadow: 12px 12px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .note-content {
+      flex: 1;
+      font-size: 1.1rem;
+      line-height: 1.5;
+      color: #1d1a0e;
+      font-weight: 500;
+      margin-bottom: 10px;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      max-height: 300px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      background: rgba(255,255,240,0.2);
+      border-radius: 4px;
+      padding: 4px 6px;
+    }
+
+    .note-content:focus {
+      outline: 2px solid #ab8e5a;
+      background: rgba(255,255,210,0.5);
+    }
+
+    /* bottom bar of note */
+    .note-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #2b2b1c;
+    }
+
+    .delete-note {
+      background: rgba(30, 20, 10, 0.3);
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 30px;
+      font-weight: bold;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #3d2f17;
+      transition: 0.15s;
+      backdrop-filter: blur(2px);
+      border: 1px solid rgba(255,255,200,0.5);
+    }
+
+    .delete-note:hover {
+      background: #e65c4b;
+      color: white;
+      transform: scale(1.12);
+    }
+
+    .note-id {
+      background: rgba(0,0,0,0.2);
+      padding: 4px 8px;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #312e1a;
+    }
+
+    .empty-board-message {
+      width: 100%;
+      text-align: center;
+      padding: 70px 20px;
+      color: #acb8c9;
+      font-size: 1.8rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 60px;
+      border: 2px dashed #d4b47c;
+      backdrop-filter: blur(4px);
+    }
+
+    .empty-board-message span {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+<div class="board-container">
+  <div class="board-header">
+    <h1>
+      <span>🧠</span> BRAINSTORM LOOM
+    </h1>
+    <div class="toolbar">
+      <button class="tool-btn" id="addNoteBtn" title="Add new idea (sticky note)">➕</button>
+      <div class="color-picker-wrapper">
+        <span class="color-label">note</span>
+        <input type="color" id="bgColorPicker" value="#feff9c">
+      </div>
+      <button class="tool-btn" id="clearAllBtn" title="Clear all notes (double confirm)">🗑️</button>
+    </div>
+  </div>
+
+  <div class="board-grid">
+    <div id="notesContainer" class="notes-wrapper">
+      <!-- dynamic sticky notes will be injected here -->
+      <div class="empty-board-message">
+        <span>💡</span> click <strong>➕</strong> to plant an idea
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ----- state & references -----
+    const notesContainer = document.getElementById('notesContainer');
+    const addBtn = document.getElementById('addNoteBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const colorPicker = document.getElementById('bgColorPicker');
+
+    // initial default color (matches colorPicker value)
+    let currentBgColor = colorPicker.value; // '#feff9c'
+
+    // each note will have a unique id
+    let noteCounter = 0;
+
+    // Helper: generate a soft random rotation for fun sticky effect
+    function getRandomRotation() {
+      const rot = (Math.random() * 4 - 2).toFixed(1); // between -2deg and 2deg
+      return `rotate(${rot}deg)`;
+    }
+
+    // Create a new DOM element for a sticky note
+    function createNoteElement(text = 'New idea...', bgColor = currentBgColor, id = null) {
+      // if id not provided, generate incremental
+      const noteId = id !== null ? id : `note-${Date.now()}-${Math.random().toString(36).substr(2, 6)}-${++noteCounter}`;
+      const rotation = getRandomRotation();
+
+      // main container
+      const noteDiv = document.createElement('div');
+      noteDiv.className = 'sticky-note';
+      noteDiv.dataset.noteId = noteId;
+      noteDiv.style.backgroundColor = bgColor;
+      noteDiv.style.transform = rotation;
+      // add a little extra style depth
+      noteDiv.style.transition = 'transform 0.15s, box-shadow 0.2s, background 0.2s';
+
+      // content paragraph (editable)
+      const contentPara = document.createElement('div');
+      contentPara.className = 'note-content';
+      contentPara.setAttribute('contenteditable', 'true');
+      contentPara.innerText = text;
+      // accessibility / role
+      contentPara.setAttribute('aria-label', 'Editable note content');
+
+      // footer
+      const footer = document.createElement('div');
+      footer.className = 'note-footer';
+
+      // small id / label
+      const idSpan = document.createElement('span');
+      idSpan.className = 'note-id';
+      idSpan.textContent = `#${noteId.substr(-4)}`; // last 4 chars as short id
+
+      // delete button
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'delete-note';
+      deleteBtn.innerHTML = '✕';
+      deleteBtn.setAttribute('aria-label', 'Delete note');
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteNoteElement(noteDiv);
+      });
+
+      footer.appendChild(idSpan);
+      footer.appendChild(deleteBtn);
+
+      noteDiv.appendChild(contentPara);
+      noteDiv.appendChild(footer);
+
+      // attach event to sync background color if needed? we rely on create params.
+
+      // double click on background could also change color? we keep it simple – but allow color changes live? 
+      // (extra: we can listen to color picker changes and apply to selected note? but requirement is per-note via picker when adding)
+      // For convenience: we can optionally update current note's background via color picker? not needed, but fun.
+      // Instead, we add a small feature: if you click on a note, you can press a shortcut 'c' to apply current color – but out of scope.
+      // We'll stick to the basic: add uses current picker color. Simpler.
+
+      return noteDiv;
+    }
+
+    // delete note element and clean from DOM, if empty show placeholder
+    function deleteNoteElement(noteElement) {
+      if (noteElement && noteElement.parentNode === notesContainer) {
+        notesContainer.removeChild(noteElement);
+        // if no notes left, show the empty placeholder
+        if (notesContainer.children.length === 0) {
+          showEmptyPlaceholder();
+        }
+      }
+    }
+
+    // show empty placeholder when board is empty
+    function showEmptyPlaceholder() {
+      // ensure it's empty first
+      if (notesContainer.children.length === 0) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'empty-board-message';
+        placeholder.id = 'emptyPlaceholder';
+        placeholder.innerHTML = '<span>🌱</span> click <strong>➕</strong> to plant an idea';
+        notesContainer.appendChild(placeholder);
+      }
+    }
+
+    // remove placeholder if it exists (called before adding a note)
+    function removePlaceholderIfAny() {
+      const placeholder = document.getElementById('emptyPlaceholder');
+      if (placeholder) {
+        placeholder.remove();
+      }
+    }
+
+    // add new note using current bg color
+    function addNewNote() {
+      removePlaceholderIfAny(); // placeholder will be gone once we add a real note
+      const newNote = createNoteElement('✏️ fresh thought', currentBgColor);
+      notesContainer.appendChild(newNote);
+      // focus the content for immediate typing
+      newNote.querySelector('.note-content').focus();
+    }
+
+    // clear all notes (with confirmation)
+    function clearAllNotes() {
+      if (notesContainer.children.length === 0 || (notesContainer.children.length === 1 && document.getElementById('emptyPlaceholder'))) {
+        // already empty, maybe just reset
+        return;
+      }
+
+      const userConfirm = confirm('🧹 Wipe all brainstorm notes?');
+      if (!userConfirm) return;
+
+      // remove every child node
+      while (notesContainer.firstChild) {
+        notesContainer.removeChild(notesContainer.firstChild);
+      }
+      showEmptyPlaceholder();
+    }
+
+    // update currentBgColor when color picker changes
+    colorPicker.addEventListener('input', (e) => {
+      currentBgColor = e.target.value;
+    });
+
+    // event listeners for buttons
+    addBtn.addEventListener('click', () => {
+      addNewNote();
+    });
+
+    clearAllBtn.addEventListener('click', () => {
+      clearAllNotes();
+    });
+
+    // optional: keyboard shortcut: press "N" to add new note (anywhere on board)
+    document.addEventListener('keydown', (e) => {
+      // if input/editable is focused, we don't want to steal keys, except maybe meta
+      const activeEl = document.activeElement;
+      const isEditable = activeEl && (activeEl.isContentEditable || activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+      if (e.key === 'n' || e.key === 'N') {
+        // if not typing in editable, trigger new note
+        if (!isEditable) {
+          e.preventDefault();
+          addNewNote();
+        }
+      }
+      // Bonus: delete key could remove focused note? out of scope.
+    });
+
+    // initialize: check if container is empty – we have a placeholder manually in html, but we might regenerate
+    // But our html initially contains .empty-board-message inside #notesContainer.
+    // That's good, but if we want to treat it as placeholder, we should manage it.
+    // However we have static placeholder there. When we add note we remove it. We'll standardize:
+    // On page load, we can tag the existing placeholder with id.
+    window.addEventListener('load', () => {
+      const existingPlaceholder = document.querySelector('.empty-board-message');
+      if (existingPlaceholder) {
+        existingPlaceholder.id = 'emptyPlaceholder';
+      }
+      // sync currentBgColor with picker (default #feff9c)
+      currentBgColor = colorPicker.value;
+    });
+
+    // optional: if user deletes all notes manually (if we implement delete on each), but we already do in delete handler.
+    // plus we need to handle case where last note is deleted -> show placeholder.
+    // we also need to observe deletions: our deleteNoteElement already calls showEmptyPlaceholder if container empty.
+    // However, if someone deletes by other means? none. good.
+
+    // For convenience, we can double-click on board background to add note (but not required)
+    notesContainer.addEventListener('dblclick', (e) => {
+      // if double click on the container itself (background) or placeholder, create note
+      if (e.target === notesContainer || e.target.classList.contains('empty-board-message')) {
+        addNewNote();
+      }
+    });
+
+    // Additional small feature: pressing Enter key from editable should not create new lines? leave as default.
+    // but shift+enter for new line; plain enter will not create new note.
+    // Option: Ctrl+Enter to add new note from anywhere? keep simple.
+
+    // sync color for newly created notes only, that's it.
+
+    // (optional) we can also allow changing note color after creation by dragging color to note? out of scope.
+    // but we can add small extra: if you click on a note, it gets the current color picker color (right click maybe)
+    // For a better UX, let's add context menu (right click) on note to apply current color picker color.
+    notesContainer.addEventListener('contextmenu', (e) => {
+      const note = e.target.closest('.sticky-note');
+      if (note) {
+        e.preventDefault(); // prevent browser context menu
+        const newColor = colorPicker.value;
+        note.style.backgroundColor = newColor;
+        // optionally update some data attribute
+      }
+    });
+
+    // Also tooltip to explain right-click color change? we can add minor title
+    // We'll just leave it as hidden gem.
+  })();
+</script>
+<!-- tiny extra style for placeholder inside js -->
+</body>
+</html>
