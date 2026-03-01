@@ -4,7 +4,7 @@ let currentTask = null;
 let taskStartTime = null;
 let responses = [];
 let sessions = JSON.parse(localStorage.getItem('resilienceSessions')) || [];
-let chart = null;
+let resilienceChart = null; 
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
@@ -289,16 +289,26 @@ function updateStatistics() {
 }
 
 function initializeChart() {
-    const ctx = document.getElementById('resilienceChart').getContext('2d');
-    chart = new Chart(ctx, {
+    const canvas = document.getElementById('resilienceChart');
+    if (!canvas) return;
+    
+    if (resilienceChart) {
+        resilienceChart.destroy();
+        resilienceChart = null;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    resilienceChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: [],
+            labels: sessions.map(s => new Date(s.date).toLocaleDateString()),
             datasets: [{
                 label: 'Resilience Score',
-                data: [],
+                data: sessions.map(s => s.resilienceScore),
                 borderColor: '#4fd1ff',
-                tension: 0.1
+                backgroundColor: 'rgba(79, 209, 255, 0.1)',
+                tension: 0.1,
+                fill: true
             }]
         },
         options: {
@@ -306,23 +316,44 @@ function initializeChart() {
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Resilience Score'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Session Date'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
                 }
             }
         }
     });
-    updateChart();
 }
 
 function updateChart() {
-    if (!chart) return;
+    if (!resilienceChart) {
+        initializeChart();
+        return;
+    }
     
-    const labels = sessions.map(s => new Date(s.date).toLocaleDateString());
-    const data = sessions.map(s => s.resilienceScore);
-    
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = data;
-    chart.update();
+    try {
+        resilienceChart.data.labels = sessions.map(s => new Date(s.date).toLocaleDateString());
+        resilienceChart.data.datasets[0].data = sessions.map(s => s.resilienceScore);
+        
+        resilienceChart.update();
+    } catch (error) {
+        console.error('Error updating chart:', error);
+        initializeChart();
+    }
 }
 
 function displaySessions() {
@@ -350,3 +381,10 @@ function displaySessions() {
         historyDiv.appendChild(sessionEl);
     });
 }
+
+window.addEventListener('beforeunload', function() {
+    if (resilienceChart) {
+        resilienceChart.destroy();
+        resilienceChart = null;
+    }
+});
