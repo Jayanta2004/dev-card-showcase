@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🪡 The Dream Weaving Loom</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #2c1e12;
+            background-image: repeating-linear-gradient(45deg, #3d2e1e 0px, #3d2e1e 2px, #2c1e12 2px, #2c1e12 8px);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+        }
+        
+        .loom {
+            width: 1000px;
+            background: #d8c8b0;
+            background: linear-gradient(145deg, #e8d8c0, #c8b8a0);
+            border-radius: 120px 120px 60px 60px;
+            padding: 40px;
+            box-shadow: 0 40px 60px #1a120a, inset 0 0 0 10px #b8a890, inset 0 0 0 20px #988870;
+            border: 6px solid #7a6a50;
+            position: relative;
+        }
+        
+        .loom::before {
+            content: "🪡";
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 60px;
+            filter: drop-shadow(0 10px 5px #3a2a1a);
+        }
+        
+        .threads {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        .thread-spool {
+            width: 60px;
+            height: 80px;
+            background: #7a6a50;
+            border-radius: 30px 30px 10px 10px;
+            border: 4px solid #b8a890;
+            position: relative;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .thread-spool::after {
+            content: "";
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 30px;
+            background: var(--thread-color, #c55a5a);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--thread-color);
+        }
+        .thread-spool.selected {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 0 #5a4a38;
+        }
+        
+        .story-canvas {
+            background: #f8f0e0;
+            border-radius: 60px;
+            padding: 40px;
+            margin: 30px 0;
+            border: 8px double #7a6a50;
+            box-shadow: inset 0 0 30px #b8a890;
+            min-height: 250px;
+        }
+        
+        #storyText {
+            font-size: 28px;
+            line-height: 1.6;
+            color: #3a2a1a;
+            font-style: italic;
+            white-space: pre-wrap;
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .weaving-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .weave-btn {
+            background: #7a6a50;
+            border: none;
+            color: #f8f0e0;
+            font-size: 24px;
+            padding: 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            border-bottom: 8px solid #5a4a38;
+            transition: 0.05s linear;
+            font-family: 'Cormorant Garamond', serif;
+            letter-spacing: 2px;
+        }
+        .weave-btn:active {
+            border-bottom-width: 2px;
+            transform: translateY(6px);
+        }
+        
+        .story-elements {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+            color: #5a4a38;
+        }
+        
+        .element-tag {
+            background: #e8d8c0;
+            padding: 10px 20px;
+            border-radius: 40px;
+            border: 2px solid #7a6a50;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .element-tag:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div class="loom">
+        <div class="threads" id="threads">
+            <div class="thread-spool" style="--thread-color: #c55a5a;" data-thread="passion"></div>
+            <div class="thread-spool" style="--thread-color: #5a7ac5;" data-thread="melancholy"></div>
+            <div class="thread-spool" style="--thread-color: #7ac55a;" data-thread="hope"></div>
+            <div class="thread-spool" style="--thread-color: #c5a55a;" data-thread="mystery"></div>
+            <div class="thread-spool" style="--thread-color: #c55ac5;" data-thread="dreams"></div>
+        </div>
+        
+        <div class="story-canvas">
+            <div id="storyText">
+                Pull the threads to weave a tale...
+            </div>
+        </div>
+        
+        <div class="weaving-controls">
+            <button class="weave-btn" id="weavePast">🕰️ WEAVE PAST</button>
+            <button class="weave-btn" id="weavePresent">🌸 WEAVE PRESENT</button>
+            <button class="weave-btn" id="weaveFuture">✨ WEAVE FUTURE</button>
+        </div>
+        
+        <div class="story-elements">
+            <span class="element-tag" data-element="character">👤 character</span>
+            <span class="element-tag" data-element="place">🏰 place</span>
+            <span class="element-tag" data-element="object">🔮 object</span>
+            <span class="element-tag" data-element="emotion">💗 emotion</span>
+            <span class="element-tag" data-element="event">⚡ event</span>
+        </div>
+    </div>
+
+    <script>
+        const storyText = document.getElementById('storyText');
+        const threadSpools = document.querySelectorAll('.thread-spool');
+        
+        let selectedThread = null;
+        let currentStory = [];
+        let storyElements = [];
+        
+        // Story fragments
+        const storyFragments = {
+            passion: ['burning', 'fierce', 'intense', 'yearning', 'fiery'],
+            melancholy: ['whispering', 'fading', 'distant', 'haunting', 'silent'],
+            hope: ['glowing', 'rising', 'blooming', 'promising', 'warm'],
+            mystery: ['shadowed', 'hidden', 'ancient', 'cryptic', 'veiled'],
+            dreams: ['floating', 'ethereal', 'shifting', 'illusory', 'dreamlike'],
+            
+            characters: ['a wanderer', 'the weaver', 'a child', 'an oracle', 'the keeper'],
+            places: ['in a forgotten library', 'beneath silver stars', 'within a crystal cave', 'by the endless sea', 'at the edge of time'],
+            objects: ['a glowing thread', 'an ancient key', 'a broken mirror', 'a whispering shell', 'a frozen moment'],
+            emotions: ['with quiet hope', 'carrying sorrow', 'filled with wonder', 'burning with purpose', 'drifting in peace'],
+            events: ['as dawn breaks', 'when the veil thins', 'during the eclipse', 'while the world sleeps', 'at the turning tide']
+        };
+        
+        threadSpools.forEach(spool => {
+            spool.addEventListener('click', () => {
+                threadSpools.forEach(s => s.classList.remove('selected'));
+                spool.classList.add('selected');
+                selectedThread = spool.dataset.thread;
+            });
+        });
+        
+        function addElement(type) {
+            if (!selectedThread) {
+                storyText.textContent = "💫 select a thread first...";
+                return;
+            }
+            
+            const elementArray = storyFragments[type] || storyFragments[selectedThread];
+            if (elementArray) {
+                const randomElement = elementArray[Math.floor(Math.random() * elementArray.length)];
+                storyElements.push(randomElement);
+                
+                // Update story
+                weaveStory();
+            }
+        }
+        
+        function weaveStory() {
+            if (storyElements.length === 0) {
+                storyText.textContent = "pull threads to weave your tale...";
+                return;
+            }
+            
+            // Construct a narrative from elements
+            let narrative = "";
+            
+            if (storyElements.length >= 3) {
+                narrative = `Once, ${storyElements[0]} came to ${storyElements[1]}, ${storyElements[2]}.`;
+            } else if (storyElements.length === 2) {
+                narrative = `${storyElements[0]} met ${storyElements[1]}...`;
+            } else {
+                narrative = `${storyElements[0]} awaits...`;
+            }
+            
+            // Add more elements if available
+            if (storyElements.length >= 4) {
+                narrative += ` There, ${storyElements[3]} was found.`;
+            }
+            if (storyElements.length >= 5) {
+                narrative += ` And ${storyElements[4]} changed everything.`;
+            }
+            
+            storyText.textContent = narrative;
+        }
+        
+        function weaveTime(time) {
+            if (storyElements.length === 0) {
+                storyText.textContent = "weave some elements first...";
+                return;
+            }
+            
+            let timeNarrative = "";
+            
+            switch(time) {
+                case 'past':
+                    timeNarrative = `Long ago, ${storyElements.join(' ')}... This memory still echoes.`;
+                    break;
+                case 'present':
+                    timeNarrative = `Now, ${storyElements.join(' ')} unfolds in the eternal now.`;
+                    break;
+                case 'future':
+                    timeNarrative = `Someday, ${storyElements.join(' ')} will be remembered as prophecy.`;
+                    break;
+            }
+            
+            storyText.textContent = timeNarrative;
+        }
+        
+        function resetWeave() {
+            storyElements = [];
+            storyText.textContent = "Pull the threads to weave a tale...";
+        }
+        
+        document.querySelectorAll('.element-tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                addElement(tag.dataset.element);
+            });
+        });
+        
+        document.getElementById('weavePast').addEventListener('click', () => weaveTime('past'));
+        document.getElementById('weavePresent').addEventListener('click', () => weaveTime('present'));
+        document.getElementById('weaveFuture').addEventListener('click', () => weaveTime('future'));
+        
+        // Double-click to reset
+        storyText.addEventListener('dblclick', resetWeave);
+    </script>
+</body>
+</html>
