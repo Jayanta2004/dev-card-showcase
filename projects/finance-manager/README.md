@@ -21,7 +21,7 @@ A full-stack personal finance tracker built with **MongoDB**, **Express**, **Rea
 ## 🗂 Project Structure
 
 ```
-mern-finance-tracker/
+finance-manager/
 ├── client/                   # React frontend (Vite + Tailwind CSS v4)
 │   ├── src/
 │   │   ├── components/
