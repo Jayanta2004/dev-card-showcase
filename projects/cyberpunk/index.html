@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberpunk 2088 · Neon Dynasty</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Rajdhani', 'Arial', sans-serif;
+            background-color: #0a0c1a;
+            color: white;
+        }
+        #hud-cyber {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            background: rgba(0, 5, 15, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid #00ffff;
+            border-radius: 40px;
+            padding: 12px 32px;
+            display: flex;
+            gap: 40px;
+            border-left: 6px solid #00ffff;
+            box-shadow: 0 0 40px rgba(0,255,255,0.3);
+            pointer-events: none;
+        }
+        .hud-cyber-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .hud-cyber-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #88ffff;
+            letter-spacing: 2px;
+        }
+        .hud-cyber-value {
+            font-size: 1.6rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fff, #aaffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #network-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 0, 20, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid #ff44aa;
+            border-radius: 48px;
+            padding: 20px 32px;
+            z-index: 50;
+            border-right: 6px solid #ff44aa;
+            min-width: 260px;
+            box-shadow: 0 15px 35px rgba(255,68,170,0.3);
+        }
+        .net-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1rem;
+            border-bottom: 1px solid #442244;
+            padding-bottom: 5px;
+        }
+        .net-label {
+            color: #ff88cc;
+        }
+        .net-value {
+            font-weight: 600;
+            color: #ffd0ff;
+        }
+        .pulse-neon {
+            width: 14px;
+            height: 14px;
+            background: #ff44aa;
+            border-radius: 50%;
+            box-shadow: 0 0 30px #ff44aa;
+            animation: neon-pulse 1.5s infinite;
+        }
+        @keyframes neon-pulse {
+            0% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); background: #ff88cc; }
+            100% { opacity: 0.6; transform: scale(1); }
+        }
+        #weather-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(0, 10, 20, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid #00ccaa;
+            border-radius: 40px;
+            padding: 12px 28px;
+            z-index: 50;
+            border-left: 4px solid #00ffff;
+            color: #aaffff;
+        }
+        .rain-icon {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #00ffff;
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 15px #00ffff;
+        }
+        #system-stats {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(20, 0, 20, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid #aa88ff;
+            border-radius: 40px;
+            padding: 16px 28px;
+            z-index: 50;
+            text-align: right;
+            border-bottom: 4px solid #aa88ff;
+        }
+        .glow-number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ccaaff, #aa88ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="hud-cyber">
+        <div class="hud-cyber-item">
+            <span class="hud-cyber-label">sector</span>
+            <span class="hud-cyber-value">NEO-7</span>
+        </div>
+        <div class="hud-cyber-item">
+            <span class="hud-cyber-label">population</span>
+            <span class="hud-cyber-value">8.2M</span>
+        </div>
+        <div class="hud-cyber-item">
+            <span class="hud-cyber-label">air traffic</span>
+            <span class="hud-cyber-value" id="traffic-count">1,247</span>
+        </div>
+    </div>
+
+    <div id="network-panel">
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
+            <span class="pulse-neon"></span>
+            <span style="font-weight: 600; font-size: 1.3rem;">🌐 NETWORK NODES</span>
+        </div>
+        <div class="net-row">
+            <span class="net-label">data throughput</span>
+            <span class="net-value">4.7 Pb/s</span>
+        </div>
+        <div class="net-row">
+            <span class="net-label">encryption</span>
+            <span class="net-value">quantum · level 9</span>
+        </div>
+        <div class="net-row">
+            <span class="net-label">active AI</span>
+            <span class="net-value" id="ai-count">23</span>
+        </div>
+        <div class="net-row">
+            <span class="net-label">threat level</span>
+            <span class="net-value" style="color:#ff6688;">MODERATE</span>
+        </div>
+    </div>
+
+    <div id="weather-indicator">
+        <span class="rain-icon"></span> <span>acid rain · visibility 4km · wind 12km/h</span>
+    </div>
+
+    <div id="system-stats">
+        <div style="font-size:1rem;">⚡ GRID STATUS</div>
+        <div class="glow-number">98.3<span style="font-size:1rem;">%</span></div>
+        <div style="font-size:0.8rem;">fusion core · battery backup 87%</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        
+        // --- Scene setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0c1a);
+        scene.fog = new THREE.FogExp2(0x0a0c1a, 0.008);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+        camera.position.set(25, 15, 35);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+        
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0';
+        labelRenderer.domElement.style.left = '0';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+        
+        // --- Controls ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+        controls.maxPolarAngle = Math.PI / 2.2;
+        controls.minDistance = 20;
+        controls.maxDistance = 80;
+        
+        // --- Lighting ---
+        const ambient = new THREE.AmbientLight(0x404060);
+        scene.add(ambient);
+        
+        // Colored point lights for neon effect
+        const colors = [0xff00aa, 0x00ffff, 0xaa88ff, 0xffff00];
+        for (let i = 0; i < 6; i++) {
+            const light = new THREE.PointLight(colors[i % colors.length], 0.8, 30);
+            light.position.set(
+                (Math.random() - 0.5) * 30,
+                Math.random() * 15,
+                (Math.random() - 0.5) * 30
+            );
+            scene.add(light);
+        }
+        
+        // Directional light for shadows
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(10, 30, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        const d = 30;
+        dirLight.shadow.camera.left = -d;
+        dirLight.shadow.camera.right = d;
+        dirLight.shadow.camera.top = d;
+        dirLight.shadow.camera.bottom = -d;
+        dirLight.shadow.camera.near = 1;
+        dirLight.shadow.camera.far = 50;
+        scene.add(dirLight);
+        
+        // --- Ground grid (neon) ---
+        const gridHelper = new THREE.GridHelper(60, 40, 0xff00aa, 0x00ffff);
+        gridHelper.position.y = -0.01;
+        scene.add(gridHelper);
+        
+        // --- City buildings ---
+        const buildingCount = 400;
+        const buildingColors = [0x4a90e2, 0xaa44ff, 0x00ccaa, 0xff44aa, 0x3366ff];
+        
+        for (let i = 0; i < buildingCount; i++) {
+            const x = (Math.random() - 0.5) * 50;
+            const z = (Math.random() - 0.5) * 50;
+            
+            const dist = Math.sqrt(x*x + z*z);
+            if (dist > 28) continue;
+            
+            const height = 1.5 + Math.random() * 8;
+            const width = 0.4 + Math.random() * 0.8;
+            const depth = 0.4 + Math.random() * 0.8;
+            
+            const geo = new THREE.BoxGeometry(width, height, depth);
+            const color = buildingColors[Math.floor(Math.random() * buildingColors.length)];
+            const mat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.2 });
+            const building = new THREE.Mesh(geo, mat);
+            building.position.set(x, height/2, z);
+            building.castShadow = true;
+            building.receiveShadow = true;
+            scene.add(building);
+            
+            // Add neon windows
+            const windowCount = Math.floor(height * 3);
+            for (let w = 0; w < windowCount; w++) {
+                const windowGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+                const windowMat = new THREE.MeshStandardMaterial({ color: 0xffdd99, emissive: 0x442200 });
+                const windowLight = new THREE.Mesh(windowGeo, windowMat);
+                windowLight.position.set(
+                    x + (Math.random() - 0.5) * width * 0.8,
+                    height * (0.2 + Math.random() * 0.6),
+                    z + depth/2 + 0.02
+                );
+                scene.add(windowLight);
+            }
+        }
+        
+        // --- Central skyscraper (landmark) ---
+        const towerGeo = new THREE.CylinderGeometry(1.2, 1.8, 20, 8);
+        const towerMat = new THREE.MeshStandardMaterial({ color: 0xaa88ff, emissive: 0x331188 });
+        const tower = new THREE.Mesh(towerGeo, towerMat);
+        tower.position.set(0, 10, 0);
+        tower.castShadow = true;
+        tower.receiveShadow = true;
+        scene.add(tower);
+        
+        // Tower top
+        const topGeo = new THREE.ConeGeometry(1.0, 2, 8);
+        const topMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0x442200 });
+        const top = new THREE.Mesh(topGeo, topMat);
+        top.position.set(0, 21, 0);
+        scene.add(top);
+        
+        // --- Flying vehicles (drones/air taxis) ---
+        const vehicles = [];
+        const vehicleCount = 30;
+        
+        function createVehicle(color = 0x88aaff) {
+            const group = new THREE.Group();
+            
+            // Body
+            const bodyGeo = new THREE.BoxGeometry(0.5, 0.15, 1.0);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: color, emissive: 0x111122 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+            
+            // Wings/rotors
+            const rotorGeo = new THREE.BoxGeometry(0.2, 0.05, 1.4);
+            const rotorMat = new THREE.MeshStandardMaterial({ color: 0xccccdd });
+            const rotor = new THREE.Mesh(rotorGeo, rotorMat);
+            rotor.position.y = 0.1;
+            rotor.castShadow = true;
+            group.add(rotor);
+            
+            // Tail light
+            const lightGeo = new THREE.SphereGeometry(0.08);
+            const lightMat = new THREE.MeshStandardMaterial({ color: 0xff3300, emissive: 0x330000 });
+            const light = new THREE.Mesh(lightGeo, lightMat);
+            light.position.z = -0.6;
+            light.position.y = 0.1;
+            group.add(light);
+            
+            return group;
+        }
+        
+        for (let i = 0; i < vehicleCount; i++) {
+            const colors = [0xff44aa, 0x00ffff, 0xaa88ff, 0xffff00];
+            const vehicle = createVehicle(colors[Math.floor(Math.random() * colors.length)]);
+            
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 10 + Math.random() * 15;
+            const height = 8 + Math.random() * 12;
+            
+            vehicle.position.set(
+                Math.cos(angle) * radius,
+                height,
+                Math.sin(angle) * radius
+            );
+            
+            vehicle.userData = {
+                angle: angle,
+                radius: radius,
+                height: height,
+                speed: 0.005 + Math.random() * 0.005,
+                phase: Math.random() * Math.PI * 2
+            };
+            
+            scene.add(vehicle);
+            vehicles.push(vehicle);
+        }
+        
+        // --- Rain particles ---
+        const rainGeo = new THREE.BufferGeometry();
+        const rainCount = 4000;
+        const rainPositions = new Float32Array(rainCount * 3);
+        const rainVelocities = [];
+        
+        for (let i = 0; i < rainCount; i++) {
+            rainPositions[i*3] = (Math.random() - 0.5) * 80;
+            rainPositions[i*3+1] = Math.random() * 40;
+            rainPositions[i*3+2] = (Math.random() - 0.5) * 80;
+            rainVelocities.push((Math.random() * 0.1 + 0.05));
+        }
+        
+        rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
+        
+        const rainMat = new THREE.PointsMaterial({
+            color: 0x88aaff,
+            size: 0.1,
+            transparent: true,
+            opacity: 0.4,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const rain = new THREE.Points(rainGeo, rainMat);
+        scene.add(rain);
+        
+        // --- Neon billboards (floating text) ---
+        const billboards = [
+            { text: 'NEON', color: '#ff44aa', pos: [5, 6, -8] },
+            { text: 'CYBER', color: '#00ffff', pos: [-7, 5, 10] },
+            { text: '2088', color: '#aa88ff', pos: [10, 8, 5] },
+            { text: 'AI', color: '#ffff00', pos: [-5, 7, -12] }
+        ];
+        
+        billboards.forEach(b => {
+            const div = document.createElement('div');
+            div.textContent = b.text;
+            div.style.color = b.color;
+            div.style.fontSize = '32px';
+            div.style.fontWeight = 'bold';
+            div.style.textShadow = `0 0 20px ${b.color}`;
+            div.style.background = 'rgba(0,0,0,0.3)';
+            div.style.padding = '8px 24px';
+            div.style.borderRadius = '30px';
+            div.style.border = `2px solid ${b.color}`;
+            div.style.backdropFilter = 'blur(4px)';
+            const label = new CSS2DObject(div);
+            label.position.set(b.pos[0], b.pos[1], b.pos[2]);
+            scene.add(label);
+        });
+        
+        // --- Animate ---
+        let time = 0;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.01;
+            
+            // Move vehicles
+            vehicles.forEach(v => {
+                const data = v.userData;
+                data.angle += data.speed;
+                
+                v.position.x = Math.cos(data.angle) * data.radius;
+                v.position.z = Math.sin(data.angle) * data.radius;
+                v.position.y = data.height + Math.sin(data.angle * 2 + data.phase) * 1.5;
+                
+                // Orient vehicle
+                const dir = new THREE.Vector3(
+                    -Math.sin(data.angle) * data.radius,
+                    Math.cos(data.angle * 2 + data.phase) * 1.5,
+                    Math.cos(data.angle) * data.radius
+                ).normalize();
+                v.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), dir);
+            });
+            
+            // Rain animation
+            const positions = rain.geometry.attributes.position.array;
+            for (let i = 1; i < positions.length; i += 3) {
+                positions[i] -= rainVelocities[Math.floor(i/3)] * 0.5;
+                if (positions[i] < -2) {
+                    positions[i] = 30;
+                    positions[i-1] = (Math.random() - 0.5) * 80;
+                    positions[i+1] = (Math.random() - 0.5) * 80;
+                }
+            }
+            rain.geometry.attributes.position.needsUpdate = true;
+            
+            // Update HUD
+            document.getElementById('traffic-count').innerText = 1247 + Math.floor(Math.sin(time)*50);
+            document.getElementById('ai-count').innerText = 23 + Math.floor(Math.sin(time*2)*3);
+            
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
