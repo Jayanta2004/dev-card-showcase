@@ -1,39 +1,96 @@
-const truths = [
+let truths = [
   "What is your biggest fear?",
   "Have you ever lied to your best friend?",
-  "What is a secret you never told anyone?",
   "Who was your first crush?",
-  "What is something embarrassing that happened to you?",
   "What habit do you want to change?",
-  "What is the last thing you searched on Google?"
+  "What is your hidden talent?"
 ];
 
-const dares = [
-  "Do 10 push-ups right now 💪",
-  "Send a funny emoji to a friend 😂",
+let dares = [
+  "Do 10 push-ups 💪",
+  "Sing your favorite song 🎤",
+  "Do a silly dance 💃",
   "Speak in an accent for 30 seconds",
-  "Sing your favorite song loudly 🎤",
-  "Do a silly dance for 15 seconds 💃",
-  "Say the alphabet backwards 🤯",
-  "Post a funny status (or imagine you did 😄)"
+  "Text someone 'I miss you' 😄"
 ];
+
+let usedTruths = [];
+let usedDares = [];
+let playCount = 0;
 
 const resultCard = document.getElementById("resultCard");
+const playCounter = document.getElementById("playCount");
+const clickSound = document.getElementById("clickSound");
+
+function getRandomItem(arr, usedArr) {
+  if (usedArr.length === arr.length) {
+    usedArr.length = 0; // reset when all used
+  }
+
+  let item;
+  do {
+    item = arr[Math.floor(Math.random() * arr.length)];
+  } while (usedArr.includes(item));
+
+  usedArr.push(item);
+  return item;
+}
 
 function generateTruth() {
-  const random = truths[Math.floor(Math.random() * truths.length)];
-  resultCard.textContent = "🤫 Truth: " + random;
-  animateCard();
+  playSound();
+  animateCard("🤫 Truth: " + getRandomItem(truths, usedTruths));
 }
 
 function generateDare() {
-  const random = dares[Math.floor(Math.random() * dares.length)];
-  resultCard.textContent = "🔥 Dare: " + random;
-  animateCard();
+  playSound();
+  animateCard("🔥 Dare: " + getRandomItem(dares, usedDares));
 }
 
-function animateCard() {
-  resultCard.style.animation = "none";
-  resultCard.offsetHeight; // trigger reflow
-  resultCard.style.animation = "slideUp 0.5s ease";
+function animateCard(text) {
+  resultCard.classList.remove("spinner");
+  void resultCard.offsetWidth;
+  resultCard.classList.add("spinner");
+
+  resultCard.textContent = "🎲 Picking...";
+  
+  setTimeout(() => {
+    resultCard.textContent = text;
+    playCount++;
+    playCounter.textContent = playCount;
+  }, 600);
+}
+
+function addTruth() {
+  const input = document.getElementById("customInput");
+  if (input.value.trim() !== "") {
+    truths.push(input.value);
+    input.value = "";
+    alert("Truth added!");
+  }
+}
+
+function addDare() {
+  const input = document.getElementById("customInput");
+  if (input.value.trim() !== "") {
+    dares.push(input.value);
+    input.value = "";
+    alert("Dare added!");
+  }
+}
+
+function resetGame() {
+  usedTruths = [];
+  usedDares = [];
+  playCount = 0;
+  playCounter.textContent = 0;
+  resultCard.textContent = "Game Reset! Click to play.";
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+}
+
+function playSound() {
+  clickSound.currentTime = 0;
+  clickSound.play();
 }
