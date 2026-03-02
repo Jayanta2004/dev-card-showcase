@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Decay Tracker - Retention Reinforcement System</title>
+    <link rel="stylesheet" href="knowledge-decay-tracker.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>📚 Knowledge Decay Tracker</h1>
+            <p>Retention Reinforcement System - Issue #6256</p>
+            <p class="subtitle">Monitor learning decay rates and schedule optimal revision sessions using spaced repetition algorithms</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Knowledge Input Section -->
+        <section class="card">
+            <h2>➕ Add New Knowledge Item</h2>
+            <form id="knowledge-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="topic">Topic/Subject</label>
+                        <input type="text" id="topic" placeholder="e.g., Machine Learning, Calculus, Spanish Vocabulary" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="difficulty">Difficulty Level</label>
+                        <select id="difficulty" required>
+                            <option value="">Select difficulty</option>
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                            <option value="expert">Expert</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description/Key Points</label>
+                    <textarea id="description" rows="3" placeholder="Brief description of what was learned..." required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="confidence">Initial Confidence (1-10)</label>
+                        <input type="range" id="confidence" min="1" max="10" value="7" oninput="updateConfidenceValue()">
+                        <span id="confidence-value">7</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="study-time">Study Time (minutes)</label>
+                        <input type="number" id="study-time" min="1" max="480" value="30" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">📚 Add to Learning Queue</button>
+                    <button type="button" id="generate-sample" class="btn btn-secondary">🎯 Generate Sample Data</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Dashboard Overview -->
+        <section class="dashboard-grid">
+            <div class="card stats-card">
+                <h3>📊 Learning Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-items">0</div>
+                        <div class="stat-label">Total Items</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="due-today">0</div>
+                        <div class="stat-label">Due Today</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="avg-retention">0%</div>
+                        <div class="stat-label">Avg Retention</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="study-streak">0</div>
+                        <div class="stat-label">Study Streak</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>⏰ Next Review Schedule</h3>
+                <div id="upcoming-reviews">
+                    <p class="no-data">No reviews scheduled yet. Add some knowledge items to get started!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Knowledge Items List -->
+        <section class="card">
+            <h2>🧠 Knowledge Items</h2>
+            <div class="filter-controls">
+                <select id="filter-status">
+                    <option value="all">All Items</option>
+                    <option value="new">New</option>
+                    <option value="learning">Learning</option>
+                    <option value="review">Due for Review</option>
+                    <option value="mastered">Mastered</option>
+                </select>
+                <input type="text" id="search-items" placeholder="Search topics...">
+            </div>
+            <div id="knowledge-list" class="knowledge-list">
+                <div class="no-data">
+                    <p>No knowledge items yet. Add your first item above to start tracking retention!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Retention Analytics -->
+        <section class="card">
+            <h2>📈 Retention Analytics</h2>
+            <div class="analytics-controls">
+                <button id="show-retention-chart" class="btn btn-secondary">📊 Show Retention Curves</button>
+                <button id="show-forgetting-chart" class="btn btn-secondary">🕐 Show Forgetting Patterns</button>
+                <button id="export-data" class="btn btn-info">💾 Export Learning Data</button>
+            </div>
+            <div id="analytics-container" class="analytics-container hidden">
+                <canvas id="retention-chart" width="400" height="200"></canvas>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-color easy"></span>
+                        <span>Easy Topics</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color medium"></span>
+                        <span>Medium Topics</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color hard"></span>
+                        <span>Hard Topics</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color expert"></span>
+                        <span>Expert Topics</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Study Session -->
+        <section class="card" id="study-session" style="display: none;">
+            <h2>🎯 Study Session</h2>
+            <div id="study-content">
+                <div class="study-item">
+                    <h3 id="study-topic">Topic</h3>
+                    <p id="study-description">Description</p>
+                    <div class="study-meta">
+                        <span id="study-difficulty">Difficulty: Medium</span>
+                        <span id="study-retention">Current Retention: 85%</span>
+                    </div>
+                </div>
+                <div class="study-actions">
+                    <button id="difficult" class="btn btn-danger">😵 Hard to Recall</button>
+                    <button id="good" class="btn btn-warning">😐 Good Recall</button>
+                    <button id="easy" class="btn btn-success">😊 Easy Recall</button>
+                    <button id="skip-session" class="btn btn-secondary">⏭️ Skip Session</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Educational Disclaimer -->
+    <div class="disclaimer">
+        <div class="container">
+            <h4>🎓 Educational Purpose Only</h4>
+            <p>This Knowledge Decay Tracker is a demonstration of spaced repetition algorithms and learning retention modeling. It is not intended for medical, psychological, or professional educational use. The algorithms are simplified representations of established learning science principles.</p>
+        </div>
+    </div>
+
+    <script src="knowledge-decay-tracker.js"></script>
+</body>
+</html>
