@@ -30,9 +30,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    document.getElementById('mathTaskBtn').addEventListener('click', startMathTask);
+    document.getElementById('memoryTaskBtn').addEventListener('click', startMemoryTask);
+    document.getElementById('reactionTaskBtn').addEventListener('click', startReactionTask);
+    document.getElementById('saveSessionBtn').addEventListener('click', saveSession);
+    document.getElementById('compareSessionsBtn').addEventListener('click', compareSessions);
+
     initializeChart();
-    
     loadSessions();
+    updateSessionDropdowns();
 });
 
 function calculateResilienceScore(accuracy, avgResponseTime, stressLevel, taskType) {
@@ -508,7 +514,6 @@ function updateResults() {
     document.getElementById('resilienceScore').textContent = overallResilience;
     
     updateStatistics();
-    
     updateChart();
 }
 
@@ -600,6 +605,7 @@ function saveSession() {
     updateStatistics();
     updateChart();
     displaySessionsHistory();
+    updateSessionDropdowns();
     
     responses = [];
     document.getElementById('accuracyResult').textContent = '0%';
@@ -641,6 +647,236 @@ function displaySessionsHistory() {
             </div>
         `;
     }).join('');
+}
+
+function updateSessionDropdowns() {
+    const savedSessions = JSON.parse(localStorage.getItem('resilienceSessions')) || [];
+    const select1 = document.getElementById('sessionSelect1');
+    const select2 = document.getElementById('sessionSelect2');
+    const compareBtn = document.getElementById('compareSessionsBtn');
+    
+    select1.innerHTML = '<option value="">Select a session</option>';
+    select2.innerHTML = '<option value="">Select a session</option>';
+    
+    savedSessions.forEach((session, index) => {
+        const date = new Date(session.timestamp).toLocaleString();
+        const option = `<option value="${session.id}">Session ${index + 1}: ${date} (Score: ${session.resilienceScore})</option>`;
+        select1.innerHTML += option;
+        select2.innerHTML += option;
+    });
+    
+    select1.addEventListener('change', checkCompareButton);
+    select2.addEventListener('change', checkCompareButton);
+}
+
+function checkCompareButton() {
+    const select1 = document.getElementById('sessionSelect1');
+    const select2 = document.getElementById('sessionSelect2');
+    const compareBtn = document.getElementById('compareSessionsBtn');
+    
+    compareBtn.disabled = !(select1.value && select2.value && select1.value !== select2.value);
+}
+
+function compareSessions() {
+    const sessionId1 = document.getElementById('sessionSelect1').value;
+    const sessionId2 = document.getElementById('sessionSelect2').value;
+    
+    const savedSessions = JSON.parse(localStorage.getItem('resilienceSessions')) || [];
+    const session1 = savedSessions.find(s => s.id == sessionId1);
+    const session2 = savedSessions.find(s => s.id == sessionId2);
+    
+    if (!session1 || !session2) {
+        showNotification('Error loading sessions', 'error');
+        return;
+    }
+    
+    displayComparison(session1, session2);
+    document.getElementById('comparisonResults').style.display = 'block';
+}
+
+function displayComparison(session1, session2) {
+    displayComparisonGrid(session1, session2);
+    displayStressComparison(session1, session2);
+    displayTaskComparison(session1, session2);
+    displayInsights(session1, session2);
+}
+
+function displayComparisonGrid(session1, session2) {
+    const grid = document.getElementById('comparisonGrid');
+    
+    const metrics = [
+        { label: 'Resilience Score', value1: session1.resilienceScore, value2: session2.resilienceScore, unit: '' },
+        { label: 'Accuracy', value1: session1.accuracy, value2: session2.accuracy, unit: '%' },
+        { label: 'Avg Response Time', value1: parseFloat(session1.avgResponseTime), value2: parseFloat(session2.avgResponseTime), unit: 's' },
+        { label: 'Tasks Completed', value1: session1.responses.length, value2: session2.responses.length, unit: '' }
+    ];
+    
+    grid.innerHTML = metrics.map(metric => {
+        const diff = metric.value2 - metric.value1;
+        const diffPercent = metric.value1 !== 0 ? ((diff / metric.value1) * 100).toFixed(1) : '∞';
+        const diffClass = diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'neutral';
+        const diffSymbol = diff > 0 ? '↑' : diff < 0 ? '↓' : '=';
+        
+        return `
+            <div class="comparison-card">
+                <h4>${metric.label}</h4>
+                <div class="comparison-values">
+                    <div class="session1-value">${metric.value1}${metric.unit}</div>
+                    <div class="comparison-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="session2-value">${metric.value2}${metric.unit}</div>
+                </div>
+                <div class="difference-badge ${diffClass}">
+                    ${diffSymbol} ${Math.abs(diff).toFixed(1)}${metric.unit} (${diffPercent}%)
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function displayStressComparison(session1, session2) {
+    const stressComparison = document.getElementById('stressComparison');
+    
+    const getStressLevels = (session) => {
+        const levels = session.responses.map(r => r.stressLevel);
+        return {
+            avg: (levels.reduce((a, b) => a + b, 0) / levels.length).toFixed(1),
+            min: Math.min(...levels),
+            max: Math.max(...levels)
+        };
+    };
+    
+    const stress1 = getStressLevels(session1);
+    const stress2 = getStressLevels(session2);
+    
+    stressComparison.innerHTML = `
+        <div class="stress-level-card">
+            <h4>Session 1</h4>
+            <p>Average: ${stress1.avg}</p>
+            <p>Range: ${stress1.min} - ${stress1.max}</p>
+        </div>
+        <div class="stress-level-card">
+            <h4>Session 2</h4>
+            <p>Average: ${stress2.avg}</p>
+            <p>Range: ${stress2.min} - ${stress2.max}</p>
+        </div>
+    `;
+}
+
+function displayTaskComparison(session1, session2) {
+    const taskComparison = document.getElementById('taskComparison');
+    const taskTypes = ['math', 'memory', 'reaction'];
+    
+    taskComparison.innerHTML = taskTypes.map(task => {
+        const getTaskPerformance = (session) => {
+            const taskResponses = session.responses.filter(r => r.task === task);
+            if (taskResponses.length === 0) return null;
+            
+            const correctCount = taskResponses.filter(r => r.correct).length;
+            const accuracy = (correctCount / taskResponses.length) * 100;
+            const avgTime = taskResponses.reduce((sum, r) => sum + r.responseTime, 0) / taskResponses.length;
+            const avgStress = taskResponses.reduce((sum, r) => sum + r.stressLevel, 0) / taskResponses.length;
+            
+            return { accuracy, avgTime, avgStress, count: taskResponses.length };
+        };
+        
+        const perf1 = getTaskPerformance(session1);
+        const perf2 = getTaskPerformance(session2);
+        
+        if (!perf1 || !perf2) return '';
+        
+        return `
+            <div class="task-type-card">
+                <h4>${task.charAt(0).toUpperCase() + task.slice(1)}</h4>
+                <p><strong>Session 1:</strong></p>
+                <p>Accuracy: ${perf1.accuracy.toFixed(1)}%</p>
+                <p>Avg Time: ${perf1.avgTime.toFixed(2)}s</p>
+                <p>Stress: ${perf1.avgStress.toFixed(1)}</p>
+                <hr>
+                <p><strong>Session 2:</strong></p>
+                <p>Accuracy: ${perf2.accuracy.toFixed(1)}%</p>
+                <p>Avg Time: ${perf2.avgTime.toFixed(2)}s</p>
+                <p>Stress: ${perf2.avgStress.toFixed(1)}</p>
+            </div>
+        `;
+    }).join('');
+}
+
+function displayInsights(session1, session2) {
+    const insightsContainer = document.getElementById('insightsContainer');
+    const insights = [];
+    
+    if (session1.resilienceScore > session2.resilienceScore) {
+        insights.push({
+            text: `Session 1 showed better overall resilience (${session1.resilienceScore} vs ${session2.resilienceScore})`,
+            highlight: true
+        });
+    } else if (session2.resilienceScore > session1.resilienceScore) {
+        insights.push({
+            text: `Session 2 showed better overall resilience (${session2.resilienceScore} vs ${session1.resilienceScore})`,
+            highlight: true
+        });
+    }
+    
+    if (session1.accuracy > session2.accuracy) {
+        insights.push({
+            text: `Better accuracy in Session 1 (${session1.accuracy}% vs ${session2.accuracy}%)`,
+            highlight: false
+        });
+    } else if (session2.accuracy > session1.accuracy) {
+        insights.push({
+            text: `Better accuracy in Session 2 (${session2.accuracy}% vs ${session1.accuracy}%)`,
+            highlight: false
+        });
+    }
+    
+    if (parseFloat(session1.avgResponseTime) < parseFloat(session2.avgResponseTime)) {
+        insights.push({
+            text: `Faster responses in Session 1 (${session1.avgResponseTime}s vs ${session2.avgResponseTime}s)`,
+            highlight: false
+        });
+    } else if (parseFloat(session2.avgResponseTime) < parseFloat(session1.avgResponseTime)) {
+        insights.push({
+            text: `Faster responses in Session 2 (${session2.avgResponseTime}s vs ${session1.avgResponseTime}s)`,
+            highlight: false
+        });
+    }
+   
+    const taskTypes = ['math', 'memory', 'reaction'];
+    taskTypes.forEach(task => {
+        const getTaskScore = (session) => {
+            return session.resilienceScoresByTask?.[task] || null;
+        };
+        
+        const score1 = getTaskScore(session1);
+        const score2 = getTaskScore(session2);
+        
+        if (score1 && score2 && score1 !== score2) {
+            const better = score1 > score2 ? 'Session 1' : 'Session 2';
+            insights.push({
+                text: `${better} performed better on ${task} tasks (${Math.max(score1, score2)} vs ${Math.min(score1, score2)})`,
+                highlight: false
+            });
+        }
+    });
+    
+    const avgStress1 = session1.responses.reduce((sum, r) => sum + r.stressLevel, 0) / session1.responses.length;
+    const avgStress2 = session2.responses.reduce((sum, r) => sum + r.stressLevel, 0) / session2.responses.length;
+    
+    if (Math.abs(avgStress1 - avgStress2) > 1) {
+        const higherStress = avgStress1 > avgStress2 ? 'Session 1' : 'Session 2';
+        const lowerStress = avgStress1 < avgStress2 ? 'Session 1' : 'Session 2';
+        insights.push({
+            text: `${higherStress} had higher average stress (${higherStress === 'Session 1' ? avgStress1.toFixed(1) : avgStress2.toFixed(1)} vs ${lowerStress === 'Session 1' ? avgStress1.toFixed(1) : avgStress2.toFixed(1)})`,
+            highlight: false
+        });
+    }
+    
+    insightsContainer.innerHTML = insights.map(insight => `
+        <div class="insight-item ${insight.highlight ? 'highlight' : ''}">
+            <i class="fas ${insight.highlight ? 'fa-star' : 'fa-lightbulb'}"></i>
+            ${insight.text}
+        </div>
+    `).join('');
 }
 
 function loadSessions() {
