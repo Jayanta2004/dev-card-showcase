@@ -5,39 +5,238 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Client Communication Timeline Hub</title>
     <link rel="stylesheet" href="timeline-hub.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div id="dashboard">
         <header>
-            <h1>Client Communication Timeline Hub</h1>
+            <h1><i class="fas fa-project-diagram"></i> Client Communication Timeline Hub</h1>
+            <p class="subtitle">Centralized dashboard for tracking client communications, deadlines, and project status</p>
             <nav>
                 <ul>
-                    <li><a href="#clients">Clients</a></li>
-                    <li><a href="#timeline">Timeline</a></li>
-                    <li><a href="#alerts">Alerts</a></li>
-                    <li><a href="#summaries">Weekly Summaries</a></li>
+                    <li><a href="#clients" class="nav-link active"><i class="fas fa-users"></i> Clients</a></li>
+                    <li><a href="#timeline" class="nav-link"><i class="fas fa-clock"></i> Timeline</a></li>
+                    <li><a href="#alerts" class="nav-link"><i class="fas fa-bell"></i> Alerts</a></li>
+                    <li><a href="#summaries" class="nav-link"><i class="fas fa-chart-line"></i> Summaries</a></li>
                 </ul>
             </nav>
         </header>
+
+        <div class="action-bar">
+            <button id="add-client-btn" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Add Client
+            </button>
+            <button id="export-data-btn" class="btn btn-secondary">
+                <i class="fas fa-download"></i> Export Data
+            </button>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search clients, activities..." />
+                <i class="fas fa-search search-icon"></i>
+            </div>
+        </div>
+
         <main>
-            <section id="clients">
-                <h2>Clients</h2>
-                <div id="client-list"></div>
+            <!-- Clients Section -->
+            <section id="clients" class="section active">
+                <div class="section-header">
+                    <h2><i class="fas fa-users"></i> Client Overview</h2>
+                    <div class="filter-controls">
+                        <select id="status-filter">
+                            <option value="all">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                        <select id="sort-clients">
+                            <option value="name">Sort by Name</option>
+                            <option value="date">Sort by Last Contact</option>
+                            <option value="status">Sort by Status</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="client-list" class="client-grid"></div>
             </section>
-            <section id="timeline">
-                <h2>Timeline</h2>
+
+            <!-- Timeline Section -->
+            <section id="timeline" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-clock"></i> Communication Timeline</h2>
+                    <div class="filter-controls">
+                        <select id="client-filter">
+                            <option value="all">All Clients</option>
+                        </select>
+                        <select id="activity-type-filter">
+                            <option value="all">All Types</option>
+                            <option value="Email">Email</option>
+                            <option value="Meeting">Meeting</option>
+                            <option value="Task">Task</option>
+                            <option value="Deadline">Deadline</option>
+                            <option value="Call">Call</option>
+                        </select>
+                        <input type="date" id="date-from" placeholder="From Date">
+                        <input type="date" id="date-to" placeholder="To Date">
+                    </div>
+                </div>
                 <div id="timeline-view"></div>
             </section>
-            <section id="alerts">
-                <h2>Last Contact Alerts</h2>
+
+            <!-- Alerts Section -->
+            <section id="alerts" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-bell"></i> Last Contact Alerts</h2>
+                    <div class="alert-settings">
+                        <label>Alert after <input type="number" id="alert-days" value="5" min="1" max="30"> days</label>
+                        <button id="refresh-alerts" class="btn btn-small"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+                </div>
                 <div id="alerts-view"></div>
             </section>
-            <section id="summaries">
-                <h2>Weekly Status Summaries</h2>
+
+            <!-- Summaries Section -->
+            <section id="summaries" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-line"></i> Weekly Status Summaries</h2>
+                    <div class="summary-controls">
+                        <select id="summary-period">
+                            <option value="7">Last 7 Days</option>
+                            <option value="14">Last 14 Days</option>
+                            <option value="30">Last 30 Days</option>
+                        </select>
+                        <button id="generate-report" class="btn btn-small"><i class="fas fa-file-pdf"></i> Generate Report</button>
+                    </div>
+                </div>
                 <div id="summaries-view"></div>
+                <div id="stats-dashboard" class="stats-grid"></div>
             </section>
         </main>
     </div>
+
+    <!-- Client Modal -->
+    <div id="client-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="client-modal-title"><i class="fas fa-user-plus"></i> Add Client</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="client-form">
+                <div class="form-group">
+                    <label for="client-name">Client Name *</label>
+                    <input type="text" id="client-name" required placeholder="Enter client name">
+                </div>
+                <div class="form-group">
+                    <label for="client-email">Email</label>
+                    <input type="email" id="client-email" placeholder="client@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="client-phone">Phone</label>
+                    <input type="tel" id="client-phone" placeholder="+1 234 567 8900">
+                </div>
+                <div class="form-group">
+                    <label for="client-company">Company</label>
+                    <input type="text" id="client-company" placeholder="Company name">
+                </div>
+                <div class="form-group">
+                    <label for="client-status">Status *</label>
+                    <select id="client-status" required>
+                        <option value="Active">Active</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="client-notes">Notes</label>
+                    <textarea id="client-notes" rows="3" placeholder="Additional notes about client"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Client
+                    </button>
+                    <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Activity Modal -->
+    <div id="activity-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="activity-modal-title"><i class="fas fa-plus-circle"></i> Add Activity</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="activity-form">
+                <input type="hidden" id="activity-client-id">
+                <div class="form-group">
+                    <label for="activity-type">Activity Type *</label>
+                    <select id="activity-type" required>
+                        <option value="Email">Email</option>
+                        <option value="Meeting">Meeting</option>
+                        <option value="Call">Call</option>
+                        <option value="Task">Task</option>
+                        <option value="Deadline">Deadline</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="activity-title">Title *</label>
+                    <input type="text" id="activity-title" required placeholder="Brief description">
+                </div>
+                <div class="form-group">
+                    <label for="activity-date">Date *</label>
+                    <input type="date" id="activity-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="activity-time">Time</label>
+                    <input type="time" id="activity-time">
+                </div>
+                <div class="form-group">
+                    <label for="activity-notes">Notes</label>
+                    <textarea id="activity-notes" rows="4" placeholder="Detailed notes about the activity"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="activity-priority">
+                        Mark as Priority
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Activity
+                    </button>
+                    <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Client Detail Modal -->
+    <div id="client-detail-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="client-detail-title"></h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="client-detail-header">
+                    <div id="client-detail-info"></div>
+                    <div class="client-detail-actions">
+                        <button id="edit-client-btn" class="btn btn-small"><i class="fas fa-edit"></i> Edit</button>
+                        <button id="delete-client-btn" class="btn btn-small btn-danger"><i class="fas fa-trash"></i> Delete</button>
+                        <button id="add-activity-btn" class="btn btn-small btn-primary"><i class="fas fa-plus"></i> Add Activity</button>
+                    </div>
+                </div>
+                <div class="client-activities">
+                    <h3>Activities</h3>
+                    <div id="client-activities-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification"></div>
+
     <script src="timeline-hub.js"></script>
 </body>
 </html>
