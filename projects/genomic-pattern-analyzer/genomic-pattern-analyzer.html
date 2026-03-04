@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genomic Pattern Analyzer - Mutation Clustering Engine</title>
+    <link rel="stylesheet" href="genomic-pattern-analyzer.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>🧬 Genomic Pattern Analyzer</h1>
+            <p>Mutation Clustering Engine for Large-Scale Genetic Datasets</p>
+            <div class="issue-badge">Issue #6255</div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Educational Disclaimer -->
+        <div class="disclaimer">
+            <h4>🔬 Research Tool Disclaimer</h4>
+            <p>This is an educational demonstration of bioinformatics algorithms. Not for clinical diagnosis or medical decision-making. Always consult qualified geneticists and medical professionals for healthcare applications.</p>
+        </div>
+
+        <!-- Data Input Section -->
+        <section class="card data-input-section">
+            <h2>📊 Genomic Data Input</h2>
+            <div class="input-controls">
+                <div class="form-group">
+                    <label for="data-source">Data Source:</label>
+                    <select id="data-source">
+                        <option value="sample">Sample Dataset</option>
+                        <option value="custom">Custom Sequences</option>
+                        <option value="file">Upload VCF File</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="sequence-input">Genetic Sequences (FASTA format):</label>
+                    <textarea id="sequence-input" rows="8" placeholder=">Sample_1
+ATCGATCGATCG...
+>Sample_2
+GCTAGCTAGCTA...
+>Sample_3
+TATATA..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="mutation-data">Mutation Data (VCF-like format):</label>
+                    <textarea id="mutation-data" rows="6" placeholder="CHR POS REF ALT SAMPLE_ID
+1 12345 A T Sample_1
+1 23456 G C Sample_2
+2 34567 T A Sample_3"></textarea>
+                </div>
+
+                <div class="file-upload-group">
+                    <label for="vcf-file">Upload VCF File:</label>
+                    <input type="file" id="vcf-file" accept=".vcf,.txt">
+                    <div class="file-info" id="file-info"></div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button id="load-sample-data" class="btn btn-primary">Load Sample Data</button>
+                <button id="clear-data" class="btn btn-secondary">Clear Data</button>
+                <button id="analyze-data" class="btn btn-success">🔬 Analyze Patterns</button>
+            </div>
+        </section>
+
+        <!-- Analysis Parameters -->
+        <section class="card analysis-params">
+            <h2>⚙️ Clustering Parameters</h2>
+            <div class="params-grid">
+                <div class="form-group">
+                    <label for="clustering-algorithm">Algorithm:</label>
+                    <select id="clustering-algorithm">
+                        <option value="kmeans">K-Means Clustering</option>
+                        <option value="hierarchical">Hierarchical Clustering</option>
+                        <option value="dbscan">DBSCAN</option>
+                        <option value="pca">PCA + K-Means</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="distance-metric">Distance Metric:</label>
+                    <select id="distance-metric">
+                        <option value="hamming">Hamming Distance</option>
+                        <option value="levenshtein">Levenshtein Distance</option>
+                        <option value="jaccard">Jaccard Similarity</option>
+                        <option value="euclidean">Euclidean Distance</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="cluster-count">Number of Clusters (K):</label>
+                    <input type="number" id="cluster-count" value="3" min="2" max="10">
+                </div>
+
+                <div class="form-group">
+                    <label for="min-cluster-size">Minimum Cluster Size:</label>
+                    <input type="number" id="min-cluster-size" value="2" min="1">
+                </div>
+
+                <div class="form-group">
+                    <label for="similarity-threshold">Similarity Threshold:</label>
+                    <input type="range" id="similarity-threshold" min="0.1" max="1.0" step="0.1" value="0.7">
+                    <span id="threshold-value">0.7</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="mutation-type-filter">Filter by Mutation Type:</label>
+                    <select id="mutation-type-filter">
+                        <option value="all">All Mutations</option>
+                        <option value="snv">SNVs Only</option>
+                        <option value="indel">Indels Only</option>
+                        <option value="cnv">CNVs Only</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analysis Results -->
+        <div id="results-container" class="hidden">
+            <section class="card results-section">
+                <h2>🔍 Analysis Results</h2>
+
+                <!-- Summary Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-samples">0</div>
+                        <div class="stat-label">Total Samples</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-mutations">0</div>
+                        <div class="stat-label">Total Mutations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="clusters-found">0</div>
+                        <div class="stat-label">Clusters Found</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-cluster-size">0</div>
+                        <div class="stat-label">Avg Cluster Size</div>
+                    </div>
+                </div>
+
+                <!-- Cluster Visualization -->
+                <div class="visualization-section">
+                    <h3>🗺️ Mutation Pattern Heatmap</h3>
+                    <div class="heatmap-container">
+                        <canvas id="mutation-heatmap"></canvas>
+                    </div>
+                    <div class="heatmap-legend">
+                        <div class="legend-item">
+                            <div class="color-box high"></div>
+                            <span>High Similarity</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box medium"></div>
+                            <span>Medium Similarity</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box low"></div>
+                            <span>Low Similarity</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cluster Details -->
+                <div class="cluster-details">
+                    <h3>📋 Cluster Analysis</h3>
+                    <div id="cluster-list" class="cluster-list">
+                        <!-- Clusters will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Dendrogram (for hierarchical clustering) -->
+                <div id="dendrogram-section" class="visualization-section hidden">
+                    <h3>🌳 Hierarchical Clustering Dendrogram</h3>
+                    <div class="dendrogram-container">
+                        <svg id="dendrogram-svg"></svg>
+                    </div>
+                </div>
+
+                <!-- Pattern Insights -->
+                <div class="insights-section">
+                    <h3>💡 Pattern Insights</h3>
+                    <div id="insights-list" class="insights-list">
+                        <!-- Insights will be populated here -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- No Results Message -->
+        <div id="no-results" class="no-results">
+            <h3>🔬 Ready for Analysis</h3>
+            <p>Load genomic data and configure clustering parameters to begin pattern analysis.</p>
+        </div>
+
+        <!-- Export Section -->
+        <section class="card export-section">
+            <h2>📤 Export Results</h2>
+            <div class="btn-group">
+                <button id="export-json" class="btn btn-primary">Export as JSON</button>
+                <button id="export-csv" class="btn btn-secondary">Export as CSV</button>
+                <button id="export-svg" class="btn btn-info">Export Heatmap (SVG)</button>
+                <button id="generate-report" class="btn btn-success">Generate Report</button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Genomic Pattern Analyzer - Educational Bioinformatics Tool</p>
+            <p>Built with JavaScript, D3.js, and Chart.js for mutation pattern analysis and clustering visualization.</p>
+        </div>
+    </footer>
+
+    <script src="genomic-pattern-analyzer.js"></script>
+</body>
+</html>
