@@ -30,7 +30,66 @@ document.addEventListener('DOMContentLoaded', function() {
     if (progressBar) {
         progressBar.style.width = '0%';
     }
+    
+    initializeKeyboardNavigation();
+    
+    initializeAriaLiveRegions();
 });
+
+function announceToScreenReader(message, priority = 'polite') {
+    const region = document.getElementById(priority === 'assertive' ? 'alertRegion' : 'announcementRegion');
+    if (region) {
+        region.textContent = message;
+        setTimeout(() => {
+            region.textContent = '';
+        }, 3000);
+    }
+}
+
+function updateProgressBarAria(percentage) {
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        progressBar.setAttribute('aria-valuenow', percentage);
+        progressBar.setAttribute('aria-valuetext', `${percentage}% complete`);
+    }
+}
+
+function initializeKeyboardNavigation() {
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && e.key === 'b') {
+            e.preventDefault();
+            document.getElementById('startBaselineBtn').click();
+            announceToScreenReader('Starting baseline test');
+        }
+        
+        if (e.altKey && e.key === 'p') {
+            e.preventDefault();
+            document.getElementById('startConflictBtn').click();
+            announceToScreenReader('Starting post-conflict test');
+        }
+        
+        if (e.key === 'Escape' && document.getElementById('testSection').style.display === 'block') {
+            e.preventDefault();
+            cancelTest();
+            announceToScreenReader('Test cancelled', 'assertive');
+        }
+    });
+    
+    document.getElementById('skipLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('main-content').focus();
+    });
+}
+
+function initializeAriaLiveRegions() {
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        progressBar.setAttribute('role', 'progressbar');
+        progressBar.setAttribute('aria-valuemin', '0');
+        progressBar.setAttribute('aria-valuemax', '100');
+        progressBar.setAttribute('aria-valuenow', '0');
+    }
+}
 
 function tryFallbackFavicons() {
     const fallbacks = [
@@ -101,8 +160,22 @@ function initializeEventListeners() {
     
     // Intensity slider
     document.getElementById('conflictIntensity').addEventListener('input', function() {
-        document.getElementById('intensityValue').textContent = this.value;
+        const value = this.value;
+        document.getElementById('intensityValue').textContent = value;
+        this.setAttribute('aria-valuenow', value);
+        this.setAttribute('aria-valuetext', `Current intensity: ${value} out of 10`);
     });
+    
+    document.getElementById('memoryAnswer').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 5);
+    });
+}
+
+function updateIntensityValue(value) {
+    document.getElementById('intensityValue').textContent = value;
+    const input = document.getElementById('conflictIntensity');
+    input.setAttribute('aria-valuenow', value);
+    input.setAttribute('aria-valuetext', `Current intensity: ${value} out of 10`);
 }
 
 function loadStoredData() {
@@ -131,6 +204,7 @@ function startBaselineTest() {
     currentTest = { type: 'baseline' };
     lastTestTimestamp = Date.now();
     startTest();
+    announceToScreenReader('Starting baseline cognitive test');
 }
 
 function startConflictTest() {
@@ -143,6 +217,7 @@ function startConflictTest() {
     };
     lastTestTimestamp = Date.now();
     startTest();
+    announceToScreenReader(`Starting post-conflict test with intensity ${intensity}`);
 }
 
 function startTest() {
@@ -152,13 +227,18 @@ function startTest() {
     const progressBar = document.getElementById('testProgress');
     if (progressBar) {
         progressBar.style.width = '0%';
+        updateProgressBarAria(0);
     }
     
-    document.getElementById('testSection').style.display = 'block';
+    const testSection = document.getElementById('testSection');
+    testSection.style.display = 'block';
+    testSection.setAttribute('aria-hidden', 'false');
     document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('resultsSection').setAttribute('aria-hidden', 'true');
 
     resetTestUI();
     nextTestStep();
+    testSection.focus();
 }
 
 function resetTestUI() {
@@ -167,6 +247,7 @@ function resetTestUI() {
         reactionBtn.textContent = 'Wait...';
         reactionBtn.className = 'reaction-btn waiting';
         reactionBtn.disabled = true;
+        reactionBtn.setAttribute('aria-label', 'Reaction test button - waiting for green');
     }
     
     document.getElementById('memoryTest').style.display = 'none';
@@ -179,9 +260,11 @@ function resetTestUI() {
 
 function nextTestStep() {
     testStep++;
+    const progressPercentage = (testStep / 3) * 100;
     const progressBar = document.getElementById('testProgress');
     if (progressBar) {
-        progressBar.style.width = `${(testStep / 3) * 100}%`;
+        progressBar.style.width = `${progressPercentage}%`;
+        updateProgressBarAria(progressPercentage);
     }
 
     if (testStep === 1) {
@@ -198,17 +281,21 @@ function startReactionTest() {
     document.getElementById('memoryTest').style.display = 'none';
     document.getElementById('memoryInput').style.display = 'none';
     document.getElementById('testStatus').textContent = 'Reaction Time Test';
+    announceToScreenReader('Reaction time test started');
 
     const btn = document.getElementById('reactionBtn');
     btn.textContent = 'Wait...';
     btn.className = 'reaction-btn waiting';
     btn.disabled = true;
+    btn.setAttribute('aria-label', 'Reaction test button - waiting for green');
 
     setTimeout(() => {
         btn.textContent = 'Click Now!';
         btn.className = 'reaction-btn ready';
         btn.disabled = false;
+        btn.setAttribute('aria-label', 'Reaction test button - click now!');
         reactionStartTime = Date.now();
+        announceToScreenReader('Button is now green - click now!', 'assertive');
     }, Math.random() * 3000 + 1000);
 }
 
@@ -216,6 +303,7 @@ function recordReaction() {
     if (!reactionStartTime) return;
     const reactionTime = Date.now() - reactionStartTime;
     testResults.reactionTime = reactionTime;
+    announceToScreenReader(`Reaction time recorded: ${reactionTime} milliseconds`);
     nextTestStep();
 }
 
@@ -223,6 +311,7 @@ function startMemoryTest() {
     document.getElementById('reactionTest').style.display = 'none';
     document.getElementById('memoryTest').style.display = 'block';
     document.getElementById('testStatus').textContent = 'Memory Test';
+    announceToScreenReader('Memory test started');
 
     const numbers = Math.floor(Math.random() * 90000) + 10000;
     document.getElementById('memoryNumbers').textContent = numbers.toString();
@@ -231,6 +320,8 @@ function startMemoryTest() {
     setTimeout(() => {
         document.getElementById('memoryNumbers').textContent = '???';
         document.getElementById('memoryInput').style.display = 'block';
+        document.getElementById('memoryAnswer').focus();
+        announceToScreenReader('Enter the 5-digit number you memorized');
     }, 5000);
 }
 
@@ -246,6 +337,7 @@ function checkMemory() {
     
     if (!isValid) {
         alert('Please enter exactly 5 digits (0-9 only)');
+        announceToScreenReader('Please enter exactly 5 digits', 'assertive');
         return; 
     }
     
@@ -254,6 +346,7 @@ function checkMemory() {
         if (answer[i] === correct[i]) score++;
     }
     testResults.memoryScore = score;
+    announceToScreenReader(`Memory score: ${score} out of 5`);
     nextTestStep();
 }
 
@@ -309,7 +402,9 @@ function getIntensityBadgeText(intensity) {
 
 function showResults() {
     document.getElementById('testSection').style.display = 'none';
+    document.getElementById('testSection').setAttribute('aria-hidden', 'true');
     document.getElementById('resultsSection').style.display = 'block';
+    document.getElementById('resultsSection').setAttribute('aria-hidden', 'false');
 
     document.getElementById('reactionTimeResult').textContent = `${testResults.reactionTime}ms`;
 
@@ -354,6 +449,8 @@ function showResults() {
     // Store recovery time in testResults
     testResults.recoveryTime = recoveryTime;
     testResults.recoveryCategory = recoveryCategory;
+    announceToScreenReader(`Test results: Reaction time ${testResults.reactionTime}ms, Memory score ${testResults.memoryScore}/5, Recovery status ${recoveryStatus}`, 'assertive');
+    document.getElementById('resultsSection').focus();
 }
 
 function saveResult() {
@@ -361,6 +458,7 @@ function saveResult() {
         baselineResults = testResults;
         localStorage.setItem('cognitiveBaseline', JSON.stringify(baselineResults));
         alert('Baseline results saved successfully!');
+        announceToScreenReader('Baseline results saved successfully', 'assertive');
     } else if (currentTest.type === 'post-conflict') {
         const result = {
             ...currentTest,
@@ -389,17 +487,37 @@ function saveResult() {
         updateChart();
         updateRecoveryTimeTracking();
         alert('Post-conflict results saved successfully!');
+        announceToScreenReader('Post-conflict results saved successfully', 'assertive');
     }
 
     document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('resultsSection').setAttribute('aria-hidden', 'true');
     document.getElementById('testSection').style.display = 'none';
+    document.getElementById('testSection').setAttribute('aria-hidden', 'true');
     
     const progressBar = document.getElementById('testProgress');
     if (progressBar) {
         progressBar.style.width = '0%';
+        updateProgressBarAria(0);
     }
     
     testStep = 0;
+}
+
+function cancelTest() {
+    document.getElementById('testSection').style.display = 'none';
+    document.getElementById('testSection').setAttribute('aria-hidden', 'true');
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('resultsSection').setAttribute('aria-hidden', 'true');
+    
+    const progressBar = document.getElementById('testProgress');
+    if (progressBar) {
+        progressBar.style.width = '0%';
+        updateProgressBarAria(0);
+    }
+    
+    testStep = 0;
+    resetTestUI();
 }
 
 function updateHistory() {
@@ -411,9 +529,13 @@ function updateHistory() {
         return;
     }
 
-    recoveryResults.slice(-5).reverse().forEach(result => {
+    recoveryResults.slice(-5).reverse().forEach((result, index) => {
         const item = document.createElement('div');
         item.className = 'history-item';
+        item.setAttribute('role', 'listitem');
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('aria-label', `Recovery result ${index + 1}`);
+        
         const date = new Date(result.timestamp).toLocaleDateString();
         const intensityBadgeClass = getIntensityBadgeClass(result.intensity);
         const intensityBadgeText = getIntensityBadgeText(result.intensity);
@@ -542,6 +664,11 @@ function updateChart() {
                 legend: {
                     display: true,
                     position: 'top'
+                },
+                tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false
                 }
             }
         }
@@ -604,7 +731,7 @@ function updateRecoveryTimeline() {
     
     let timelineHtml = '<h3>Recent Recovery Times</h3>';
     
-    recentTimes.forEach(rt => {
+    recentTimes.forEach((rt, index) => {
         const date = new Date(rt.timestamp).toLocaleDateString();
         const maxRecoveryTime = 500; // Assume max recovery time for scaling
         const percentage = Math.min(100, (rt.recoveryTime / maxRecoveryTime) * 100);
@@ -619,11 +746,15 @@ function updateRecoveryTimeline() {
         }
         
         timelineHtml += `
-            <div class="timeline-item">
+            <div class="timeline-item" role="listitem" aria-label="Recovery time from ${date}">
                 <div class="timeline-time">${date}</div>
-                <div class="timeline-bar-container">
-                    <div class="timeline-bar" style="width: ${percentage}%; background: ${barColor};"></div>
-                    <div class="timeline-baseline-marker" style="left: ${baselinePosition};"></div>
+                <div class="timeline-bar-container" role="presentation">
+                    <div class="timeline-bar" style="width: ${percentage}%; background: ${barColor};" 
+                         role="progressbar" aria-valuenow="${rt.recoveryTime}" 
+                         aria-valuemin="0" aria-valuemax="500" 
+                         aria-valuetext="${rt.recoveryTime} milliseconds"></div>
+                    <div class="timeline-baseline-marker" style="left: ${baselinePosition};" 
+                         role="presentation"></div>
                 </div>
                 <div class="timeline-value">
                     ${rt.recoveryTime}ms
