@@ -21,16 +21,43 @@ function startConflictTest() {
 function startTest() {
     testStep = 0;
     testResults = {};
-    document.getElementById('baselineSection').style.display = 'none';
-    document.getElementById('conflictSection').style.display = 'none';
+    
+    const progressBar = document.getElementById('testProgress');
+    if (progressBar) {
+        progressBar.style.width = '0%';
+    }
+    
+    document.getElementById('baselineSection').style.display = 'block';
+    document.getElementById('conflictSection').style.display = 'block';
     document.getElementById('testSection').style.display = 'block';
     document.getElementById('resultsSection').style.display = 'none';
+
+    resetTestUI();
     nextTestStep();
+}
+
+function resetTestUI() {
+    const reactionBtn = document.getElementById('reactionBtn');
+    if (reactionBtn) {
+        reactionBtn.textContent = 'Wait...';
+        reactionBtn.className = 'reaction-btn waiting';
+        reactionBtn.disabled = true;
+    }
+    
+    document.getElementById('memoryTest').style.display = 'none';
+    document.getElementById('memoryInput').style.display = 'none';
+    document.getElementById('memoryAnswer').value = '';
+    document.getElementById('testStatus').textContent = 'Test in progress...';
+    
+    reactionStartTime = null;
 }
 
 function nextTestStep() {
     testStep++;
-    document.getElementById('testProgress').style.width = `${(testStep / 3) * 100}%`;
+    const progressBar = document.getElementById('testProgress');
+    if (progressBar) {
+        progressBar.style.width = `${(testStep / 3) * 100}%`;
+    }
 
     if (testStep === 1) {
         startReactionTest();
@@ -149,6 +176,13 @@ function saveResult() {
     document.getElementById('resultsSection').style.display = 'none';
     document.getElementById('baselineSection').style.display = 'block';
     document.getElementById('conflictSection').style.display = 'block';
+    
+    const progressBar = document.getElementById('testProgress');
+    if (progressBar) {
+        progressBar.style.width = '0%';
+    }
+    
+    testStep = 0;
 }
 
 function updateHistory() {
@@ -212,4 +246,9 @@ document.getElementById('conflictIntensity').addEventListener('input', function(
 document.addEventListener('DOMContentLoaded', function() {
     updateHistory();
     updateChart();
+    
+    const progressBar = document.getElementById('testProgress');
+    if (progressBar) {
+        progressBar.style.width = '0%';
+    }
 });
