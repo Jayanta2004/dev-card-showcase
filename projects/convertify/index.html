@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertify · Unit Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #f4f9fe;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            color: #1c3849;
+        }
+
+        .converter-card {
+            max-width: 700px;
+            width: 100%;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 70px;
+            box-shadow: 0 30px 60px -30px rgba(0,0,0,0.2), 0 0 0 1px #d0e3f2 inset;
+            padding: 2.5rem 2.5rem;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .title h1 {
+            font-size: 2.6rem;
+            font-weight: 500;
+            background: linear-gradient(145deg, #2e5a7a, #558bb5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title p {
+            color: #5d7e9c;
+            margin-top: 0.2rem;
+        }
+
+        .category-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1rem 1.8rem;
+            border-radius: 60px;
+            border: 2px solid #cde0f0;
+            justify-content: center;
+        }
+
+        .category-chip {
+            background: #edf5fc;
+            border: 2px solid #c1d9f0;
+            padding: 0.6rem 1.6rem;
+            border-radius: 40px;
+            font-weight: 500;
+            color: #2b6286;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .category-chip.active {
+            background: #2f6d97;
+            border-color: #2f6d97;
+            color: white;
+        }
+
+        .converter-box {
+            background: white;
+            border-radius: 60px;
+            padding: 2rem 2rem;
+            border: 1px solid #d0e3f2;
+            box-shadow: 0 15px 25px -20px rgba(0,0,0,0.1);
+            margin-bottom: 1.8rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            font-weight: 500;
+            color: #2f6080;
+            margin-left: 0.5rem;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .input-row input {
+            flex: 2 1 200px;
+            padding: 1rem 1.5rem;
+            border: 3px solid #cde0f0;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            outline: none;
+            background: white;
+            color: #154d70;
+        }
+
+        .input-row input:focus {
+            border-color: #7fa9cc;
+        }
+
+        .input-row select {
+            flex: 1 1 140px;
+            padding: 1rem 1rem;
+            border: 3px solid #cde0f0;
+            border-radius: 50px;
+            font-size: 1rem;
+            background: white;
+            color: #154d70;
+            cursor: pointer;
+        }
+
+        .swap-btn {
+            background: #e1effa;
+            border: 3px solid #b9d4f0;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #2f6d97;
+            transition: 0.1s;
+            margin: 0 auto;
+        }
+
+        .swap-btn:hover {
+            background: #cbe2f7;
+        }
+
+        .result-area {
+            background: #e6f2fc;
+            border-radius: 40px;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            margin: 1.5rem 0 0.5rem 0;
+            border: 2px solid #bedaf5;
+        }
+
+        .result-value {
+            font-size: 3rem;
+            font-weight: 600;
+            color: #1a5379;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .result-unit {
+            font-size: 1.2rem;
+            color: #4f7fa3;
+            margin-top: 0.2rem;
+        }
+
+        .favorites-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            justify-content: center;
+            margin-top: 1.2rem;
+        }
+
+        .fav-chip {
+            background: white;
+            border: 2px solid #c1d9f0;
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #2d668b;
+        }
+
+        .footer {
+            text-align: center;
+            color: #6f91af;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="converter-card">
+        <div class="header">
+            <div class="title">
+                <h1>🔄 Convertify</h1>
+                <p>length · weight · temperature · more</p>
+            </div>
+        </div>
+
+        <!-- category chips -->
+        <div class="category-panel" id="categoryPanel">
+            <span class="category-chip active" data-cat="length">length</span>
+            <span class="category-chip" data-cat="weight">weight</span>
+            <span class="category-chip" data-cat="temperature">temp</span>
+            <span class="category-chip" data-cat="volume">volume</span>
+            <span class="category-chip" data-cat="speed">speed</span>
+        </div>
+
+        <!-- main converter box -->
+        <div class="converter-box">
+            <div class="input-group">
+                <label>from</label>
+                <div class="input-row">
+                    <input type="number" id="inputValue" value="1" step="any">
+                    <select id="unitFrom"></select>
+                </div>
+            </div>
+
+            <div class="swap-btn" id="swapBtn">⇅</div>
+
+            <div class="input-group">
+                <label>to</label>
+                <div class="input-row">
+                    <input type="text" id="outputValue" readonly disabled>
+                    <select id="unitTo"></select>
+                </div>
+            </div>
+
+            <div class="result-area">
+                <div class="result-value" id="resultDisplay">1</div>
+                <div class="result-unit" id="resultUnit">meter</div>
+            </div>
+        </div>
+
+        <!-- favorite conversions -->
+        <div class="favorites-panel" id="favoritesPanel">
+            <span class="fav-chip" data-from="meter" data-to="kilometer">m → km</span>
+            <span class="fav-chip" data-from="kilogram" data-to="pound">kg → lb</span>
+            <span class="fav-chip" data-from="celsius" data-to="fahrenheit">°C → °F</span>
+            <span class="fav-chip" data-from="liter" data-to="gallon">L → gal</span>
+        </div>
+
+        <div class="footer">
+            ⚡ real-time conversion · click categories
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ----- CONVERSION DATABASE -----
+            const conversionRates = {
+                length: {
+                    meter: 1,
+                    kilometer: 0.001,
+                    centimeter: 100,
+                    millimeter: 1000,
+                    mile: 0.000621371,
+                    yard: 1.09361,
+                    foot: 3.28084,
+                    inch: 39.3701
+                },
+                weight: {
+                    kilogram: 1,
+                    gram: 1000,
+                    milligram: 1e6,
+                    pound: 2.20462,
+                    ounce: 35.274,
+                    ton: 0.001,
+                    stone: 0.157473
+                },
+                volume: {
+                    liter: 1,
+                    milliliter: 1000,
+                    gallon: 0.264172,
+                    quart: 1.05669,
+                    pint: 2.11338,
+                    cup: 4.16667,
+                    tablespoon: 66.6667,
+                    teaspoon: 200
+                },
+                speed: {
+                    'meter per second': 1,
+                    'kilometer per hour': 3.6,
+                    'mile per hour': 2.23694,
+                    knot: 1.94384,
+                    'foot per second': 3.28084
+                }
+            };
+
+            // temperature special functions
+            const tempConversions = {
+                celsius: {
+                    toFahrenheit: (c) => c * 9/5 + 32,
+                    toKelvin: (c) => c + 273.15
+                },
+                fahrenheit: {
+                    toCelsius: (f) => (f - 32) * 5/9,
+                    toKelvin: (f) => (f - 32) * 5/9 + 273.15
+                },
+                kelvin: {
+                    toCelsius: (k) => k - 273.15,
+                    toFahrenheit: (k) => (k - 273.15) * 9/5 + 32
+                }
+            };
+
+            // unit display names and lists per category
+            const unitLists = {
+                length: ['meter', 'kilometer', 'centimeter', 'millimeter', 'mile', 'yard', 'foot', 'inch'],
+                weight: ['kilogram', 'gram', 'milligram', 'pound', 'ounce', 'ton', 'stone'],
+                temperature: ['celsius', 'fahrenheit', 'kelvin'],
+                volume: ['liter', 'milliliter', 'gallon', 'quart', 'pint', 'cup', 'tablespoon', 'teaspoon'],
+                speed: ['meter per second', 'kilometer per hour', 'mile per hour', 'knot', 'foot per second']
+            };
+
+            // state
+            let currentCategory = 'length';
+            let fromUnit = 'meter';
+            let toUnit = 'kilometer';
+            let inputVal = 1;
+
+            // DOM elements
+            const categoryChips = document.querySelectorAll('.category-chip');
+            const unitFromSelect = document.getElementById('unitFrom');
+            const unitToSelect = document.getElementById('unitTo');
+            const inputValue = document.getElementById('inputValue');
+            const outputValue = document.getElementById('outputValue');
+            const resultDisplay = document.getElementById('resultDisplay');
+            const resultUnit = document.getElementById('resultUnit');
+            const swapBtn = document.getElementById('swapBtn');
+            const favChips = document.querySelectorAll('.fav-chip');
+
+            // populate dropdowns for given category
+            function populateUnits() {
+                const units = unitLists[currentCategory];
+                unitFromSelect.innerHTML = '';
+                unitToSelect.innerHTML = '';
+
+                units.forEach(unit => {
+                    const optionFrom = document.createElement('option');
+                    optionFrom.value = unit;
+                    optionFrom.textContent = unit;
+                    if (unit === fromUnit) optionFrom.selected = true;
+                    unitFromSelect.appendChild(optionFrom);
+
+                    const optionTo = document.createElement('option');
+                    optionTo.value = unit;
+                    optionTo.textContent = unit;
+                    if (unit === toUnit) optionTo.selected = true;
+                    unitToSelect.appendChild(optionTo);
+                });
+
+                // ensure from/to not equal
+                if (fromUnit === toUnit) {
+                    // change to second option if possible
+                    if (units.length > 1) {
+                        toUnit = units[1];
+                        unitToSelect.value = toUnit;
+                    }
+                }
+            }
+
+            // perform conversion
+            function convert() {
+                inputVal = parseFloat(inputValue.value) || 0;
+                let result;
+
+                if (currentCategory === 'temperature') {
+                    // handle special temperature formulas
+                    if (fromUnit === toUnit) {
+                        result = inputVal;
+                    } else if (fromUnit === 'celsius' && toUnit === 'fahrenheit') {
+                        result = tempConversions.celsius.toFahrenheit(inputVal);
+                    } else if (fromUnit === 'celsius' && toUnit === 'kelvin') {
+                        result = tempConversions.celsius.toKelvin(inputVal);
+                    } else if (fromUnit === 'fahrenheit' && toUnit === 'celsius') {
+                        result = tempConversions.fahrenheit.toCelsius(inputVal);
+                    } else if (fromUnit === 'fahrenheit' && toUnit === 'kelvin') {
+                        result = tempConversions.fahrenheit.toKelvin(inputVal);
+                    } else if (fromUnit === 'kelvin' && toUnit === 'celsius') {
+                        result = tempConversions.kelvin.toCelsius(inputVal);
+                    } else if (fromUnit === 'kelvin' && toUnit === 'fahrenheit') {
+                        result = tempConversions.kelvin.toFahrenheit(inputVal);
+                    } else {
+                        result = inputVal; // fallback
+                    }
+                } else {
+                    // standard ratio conversion
+                    const rates = conversionRates[currentCategory];
+                    const baseValue = inputVal / rates[fromUnit];
+                    result = baseValue * rates[toUnit];
+                }
+
+                // format result
+                const formatted = Number.isInteger(result) ? result : result.toFixed(4);
+                outputValue.value = formatted;
+                resultDisplay.innerText = formatted;
+                resultUnit.innerText = toUnit;
+            }
+
+            // category change
+            function setCategory(cat) {
+                currentCategory = cat;
+                // set default units
+                const units = unitLists[cat];
+                fromUnit = units[0];
+                toUnit = units.length > 1 ? units[1] : units[0];
+                
+                populateUnits();
+                convert();
+
+                // update active chip
+                categoryChips.forEach(chip => {
+                    chip.classList.remove('active');
+                    if (chip.getAttribute('data-cat') === cat) {
+                        chip.classList.add('active');
+                    }
+                });
+            }
+
+            // event listeners
+            categoryChips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const cat = chip.getAttribute('data-cat');
+                    setCategory(cat);
+                });
+            });
+
+            unitFromSelect.addEventListener('change', (e) => {
+                fromUnit = e.target.value;
+                convert();
+            });
+
+            unitToSelect.addEventListener('change', (e) => {
+                toUnit = e.target.value;
+                convert();
+            });
+
+            inputValue.addEventListener('input', convert);
+
+            swapBtn.addEventListener('click', () => {
+                [fromUnit, toUnit] = [toUnit, fromUnit];
+                unitFromSelect.value = fromUnit;
+                unitToSelect.value = toUnit;
+                convert();
+            });
+
+            favChips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const from = chip.getAttribute('data-from');
+                    const to = chip.getAttribute('data-to');
+                    
+                    // find category that contains both
+                    for (const [cat, units] of Object.entries(unitLists)) {
+                        if (units.includes(from) && units.includes(to)) {
+                            setCategory(cat);
+                            fromUnit = from;
+                            toUnit = to;
+                            unitFromSelect.value = from;
+                            unitToSelect.value = to;
+                            convert();
+                            break;
+                        }
+                    }
+                });
+            });
+
+            // initial setup
+            setCategory('length');
+        })();
+    </script>
+</body>
+</html>
