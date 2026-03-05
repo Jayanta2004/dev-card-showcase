@@ -14,6 +14,22 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         img.src = primaryFavicon.href;
     }
+    
+    // Initialize event listeners
+    initializeEventListeners();
+    
+    // Load data from localStorage
+    loadStoredData();
+    
+    // Update UI with stored data
+    updateHistory();
+    updateChart();
+    updateRecoveryTimeTracking();
+    
+    const progressBar = document.getElementById('testProgress');
+    if (progressBar) {
+        progressBar.style.width = '0%';
+    }
 });
 
 function tryFallbackFavicons() {
@@ -42,7 +58,6 @@ function tryFallbackFavicons() {
         const img = new Image();
         img.onload = function() {
             console.log(`Fallback favicon ${fallbackIndex + 1} loaded`);
-            // Remove all existing favicons and add the working one
             removeAllFavicons();
             document.head.appendChild(fallback.cloneNode());
         };
@@ -78,22 +93,55 @@ function createEmojiFavicon() {
     document.head.appendChild(link);
 }
 
-let baselineResults = JSON.parse(localStorage.getItem('cognitiveBaseline')) || null;
-let recoveryResults = JSON.parse(localStorage.getItem('cognitiveRecoveryResults')) || [];
-let currentTest = null;
-let reactionStartTime = null;
-let testStep = 0;
-let testResults = {};
-let recoveryChartInstance = null;
+function initializeEventListeners() {
+    // Button click handlers
+    document.getElementById('startBaselineBtn').addEventListener('click', startBaselineTest);
+    document.getElementById('startConflictBtn').addEventListener('click', startConflictTest);
+    document.getElementById('reactionBtn').addEventListener('click', recordReaction);
+    
+    // Intensity slider
+    document.getElementById('conflictIntensity').addEventListener('input', function() {
+        document.getElementById('intensityValue').textContent = this.value;
+    });
+}
+
+function loadStoredData() {
+    window.baselineResults = JSON.parse(localStorage.getItem('cognitiveBaseline')) || null;
+    window.recoveryResults = JSON.parse(localStorage.getItem('cognitiveRecoveryResults')) || [];
+    window.recoveryTimes = JSON.parse(localStorage.getItem('cognitiveRecoveryTimes')) || [];
+    window.lastTestTimestamp = null;
+    window.currentTest = null;
+    window.testStep = 0;
+    window.testResults = {};
+    window.reactionStartTime = null;
+    window.recoveryChartInstance = null;
+}
+
+let baselineResults = window.baselineResults;
+let recoveryResults = window.recoveryResults;
+let recoveryTimes = window.recoveryTimes;
+let lastTestTimestamp = window.lastTestTimestamp;
+let currentTest = window.currentTest;
+let reactionStartTime = window.reactionStartTime;
+let testStep = window.testStep;
+let testResults = window.testResults;
+let recoveryChartInstance = window.recoveryChartInstance;
 
 function startBaselineTest() {
     currentTest = { type: 'baseline' };
+    lastTestTimestamp = Date.now();
     startTest();
 }
 
 function startConflictTest() {
     const intensity = document.getElementById('conflictIntensity').value;
-    currentTest = { type: 'post-conflict', intensity: parseInt(intensity), timestamp: new Date().toISOString() };
+    currentTest = { 
+        type: 'post-conflict', 
+        intensity: parseInt(intensity), 
+        timestamp: new Date().toISOString(),
+        startTime: Date.now()
+    };
+    lastTestTimestamp = Date.now();
     startTest();
 }
 
@@ -161,7 +209,7 @@ function startReactionTest() {
         btn.className = 'reaction-btn ready';
         btn.disabled = false;
         reactionStartTime = Date.now();
-    }, Math.random() * 3000 + 1000); // Random delay between 1-4 seconds
+    }, Math.random() * 3000 + 1000);
 }
 
 function recordReaction() {
@@ -176,7 +224,6 @@ function startMemoryTest() {
     document.getElementById('memoryTest').style.display = 'block';
     document.getElementById('testStatus').textContent = 'Memory Test';
 
-    // Generate random 5-digit number
     const numbers = Math.floor(Math.random() * 90000) + 10000;
     document.getElementById('memoryNumbers').textContent = numbers.toString();
     testResults.correctNumbers = numbers.toString();
@@ -184,10 +231,11 @@ function startMemoryTest() {
     setTimeout(() => {
         document.getElementById('memoryNumbers').textContent = '???';
         document.getElementById('memoryInput').style.display = 'block';
-    }, 5000); // Show for 5 seconds
+    }, 5000);
 }
 
 function showMemoryInput() {
+    // Function body is intentionally empty as per original code
 }
 
 function checkMemory() {
@@ -209,6 +257,34 @@ function checkMemory() {
     nextTestStep();
 }
 
+function calculateRecoveryTime() {
+    if (!baselineResults || !currentTest || currentTest.type !== 'post-conflict') {
+        return null;
+    }
+    
+    const reactionDiff = testResults.reactionTime - baselineResults.reactionTime;
+    const memoryDiff = testResults.memoryScore - baselineResults.memoryScore;
+    
+    // Calculate recovery time based on how far from baseline
+    const reactionRecovery = Math.max(0, reactionDiff);
+    const memoryRecovery = Math.max(0, 5 - memoryDiff);
+    
+    // Combined recovery score (lower is better)
+    return reactionRecovery + (memoryRecovery * 50); // Weight memory more heavily
+}
+
+function getRecoveryTimeCategory(recoveryTime) {
+    if (recoveryTime < 100) return 'Fast Recovery';
+    if (recoveryTime < 250) return 'Moderate Recovery';
+    return 'Slow Recovery';
+}
+
+function getRecoveryTimeBadgeClass(recoveryTime) {
+    if (recoveryTime < 100) return 'badge-fast';
+    if (recoveryTime < 250) return 'badge-moderate';
+    return 'badge-slow';
+}
+
 function showResults() {
     document.getElementById('testSection').style.display = 'none';
     document.getElementById('resultsSection').style.display = 'block';
@@ -219,6 +295,9 @@ function showResults() {
     document.getElementById('memoryScoreResult').textContent = `${testResults.memoryScore}/5 (${memoryPercentage.toFixed(0)}%)`;
 
     let recoveryStatus = 'N/A';
+    let recoveryTime = null;
+    let recoveryCategory = 'N/A';
+    
     if (baselineResults && currentTest && currentTest.type === 'post-conflict') {
         const reactionDiff = testResults.reactionTime - baselineResults.reactionTime;
         const memoryDiff = testResults.memoryScore - baselineResults.memoryScore;
@@ -232,8 +311,27 @@ function showResults() {
                 recoveryStatus = 'Impaired';
             }
         }
+        
+        // Calculate recovery time
+        recoveryTime = calculateRecoveryTime();
+        if (recoveryTime !== null) {
+            recoveryCategory = getRecoveryTimeCategory(recoveryTime);
+        }
     }
+    
     document.getElementById('recoveryStatus').textContent = recoveryStatus;
+    
+    // Display recovery time
+    const recoveryTimeElement = document.getElementById('recoveryTimeResult');
+    if (recoveryTime !== null) {
+        recoveryTimeElement.innerHTML = `${recoveryTime}ms <span class="recovery-time-badge ${getRecoveryTimeBadgeClass(recoveryTime)}">${recoveryCategory}</span>`;
+    } else {
+        recoveryTimeElement.textContent = 'N/A';
+    }
+    
+    // Store recovery time in testResults
+    testResults.recoveryTime = recoveryTime;
+    testResults.recoveryCategory = recoveryCategory;
 }
 
 function saveResult() {
@@ -246,12 +344,28 @@ function saveResult() {
             ...currentTest,
             ...testResults,
             baselineReactionTime: baselineResults ? baselineResults.reactionTime : null,
-            baselineMemoryScore: baselineResults ? baselineResults.memoryScore : null
+            baselineMemoryScore: baselineResults ? baselineResults.memoryScore : null,
+            endTime: Date.now()
         };
+        
         recoveryResults.push(result);
         localStorage.setItem('cognitiveRecoveryResults', JSON.stringify(recoveryResults));
+        
+        // Calculate and store recovery time
+        if (testResults.recoveryTime !== null) {
+            const recoveryTimeData = {
+                timestamp: result.timestamp,
+                recoveryTime: testResults.recoveryTime,
+                category: testResults.recoveryCategory,
+                intensity: result.intensity
+            };
+            recoveryTimes.push(recoveryTimeData);
+            localStorage.setItem('cognitiveRecoveryTimes', JSON.stringify(recoveryTimes));
+        }
+        
         updateHistory();
-        updateChart(); // This will now properly handle chart updates
+        updateChart();
+        updateRecoveryTimeTracking();
         alert('Post-conflict results saved successfully!');
     }
 
@@ -279,10 +393,18 @@ function updateHistory() {
         const item = document.createElement('div');
         item.className = 'history-item';
         const date = new Date(result.timestamp).toLocaleDateString();
+        
+        let recoveryTimeHtml = '';
+        if (result.recoveryTime) {
+            const badgeClass = getRecoveryTimeBadgeClass(result.recoveryTime);
+            recoveryTimeHtml = `<br>Recovery Time: ${result.recoveryTime}ms <span class="recovery-time-badge ${badgeClass}">${result.recoveryCategory}</span>`;
+        }
+        
         item.innerHTML = `
             <strong>${date}</strong> - Intensity: ${result.intensity}/10<br>
             Reaction: ${result.reactionTime}ms (Baseline: ${result.baselineReactionTime || 'N/A'}ms)<br>
             Memory: ${result.memoryScore}/5 (Baseline: ${result.baselineMemoryScore || 'N/A'}/5)
+            ${recoveryTimeHtml}
         `;
         historyDiv.appendChild(item);
     });
@@ -304,22 +426,54 @@ function updateChart() {
         return;
     }
 
-    const data = recoveryResults.map(result => ({
+    const reactionData = recoveryResults.map(result => ({
         x: new Date(result.timestamp),
         y: result.reactionTime
+    }));
+
+    const memoryData = recoveryResults.map(result => ({
+        x: new Date(result.timestamp),
+        y: result.memoryScore
+    }));
+
+    const recoveryTimeData = recoveryTimes.map(rt => ({
+        x: new Date(rt.timestamp),
+        y: rt.recoveryTime
     }));
 
     recoveryChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            datasets: [{
-                label: 'Reaction Time (ms)',
-                data: data,
-                borderColor: '#4fd1ff',
-                backgroundColor: 'rgba(79, 209, 255, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
+            datasets: [
+                {
+                    label: 'Reaction Time (ms)',
+                    data: reactionData,
+                    borderColor: '#4fd1ff',
+                    backgroundColor: 'rgba(79, 209, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Memory Score (/5)',
+                    data: memoryData,
+                    borderColor: '#4CAF50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Recovery Time (ms)',
+                    data: recoveryTimeData,
+                    borderColor: '#FF9800',
+                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderDash: [5, 5],
+                    yAxisID: 'y'
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -340,9 +494,22 @@ function updateChart() {
                 },
                 y: {
                     beginAtZero: false,
+                    position: 'left',
                     title: {
                         display: true,
-                        text: 'Reaction Time (ms)'
+                        text: 'Reaction Time / Recovery Time (ms)'
+                    }
+                },
+                y1: {
+                    beginAtZero: true,
+                    max: 5,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Memory Score'
                     }
                 }
             },
@@ -356,22 +523,95 @@ function updateChart() {
     });
 }
 
-// Update intensity value display
-document.getElementById('conflictIntensity').addEventListener('input', function() {
-    document.getElementById('intensityValue').textContent = this.value;
-});
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    updateHistory();
-    updateChart();
-    
-    const progressBar = document.getElementById('testProgress');
-    if (progressBar) {
-        progressBar.style.width = '0%';
+function updateRecoveryTimeTracking() {
+    if (!recoveryTimes || recoveryTimes.length === 0) {
+        document.getElementById('avgRecoveryTime').textContent = '--';
+        document.getElementById('fastestRecovery').textContent = '--';
+        document.getElementById('slowestRecovery').textContent = '--';
+        document.getElementById('recoverySuccessRate').textContent = '--';
+        document.getElementById('recoveryTimeTrend').textContent = '';
+        document.getElementById('recoveryTimeline').innerHTML = '<h3>Recent Recovery Times</h3><p>No recovery time data yet. Complete post-conflict tests to see tracking.</p>';
+        return;
     }
-});
 
+    // Calculate statistics
+    const last5Times = recoveryTimes.slice(-5);
+    const avgTime = last5Times.reduce((sum, rt) => sum + rt.recoveryTime, 0) / last5Times.length;
+    const fastestTime = Math.min(...recoveryTimes.map(rt => rt.recoveryTime));
+    const slowestTime = Math.max(...recoveryTimes.map(rt => rt.recoveryTime));
+    
+    // Calculate success rate (recovery time < 200ms)
+    const successfulRecoveries = recoveryTimes.filter(rt => rt.recoveryTime < 200).length;
+    const successRate = (successfulRecoveries / recoveryTimes.length) * 100;
+
+    // Update UI
+    document.getElementById('avgRecoveryTime').textContent = `${Math.round(avgTime)}ms`;
+    document.getElementById('fastestRecovery').textContent = `${Math.round(fastestTime)}ms`;
+    document.getElementById('slowestRecovery').textContent = `${Math.round(slowestTime)}ms`;
+    document.getElementById('recoverySuccessRate').textContent = `${Math.round(successRate)}%`;
+
+    // Calculate trend
+    if (recoveryTimes.length >= 3) {
+        const recentAvg = last5Times.reduce((sum, rt) => sum + rt.recoveryTime, 0) / last5Times.length;
+        const previousAvg = recoveryTimes.slice(-10, -5).reduce((sum, rt) => sum + rt.recoveryTime, 0) / 
+                           Math.min(5, recoveryTimes.slice(-10, -5).length);
+        
+        const trendElement = document.getElementById('recoveryTimeTrend');
+        if (recentAvg < previousAvg) {
+            trendElement.textContent = '📈 Improving';
+            trendElement.className = 'recovery-trend trend-improving';
+        } else if (recentAvg > previousAvg) {
+            trendElement.textContent = '📉 Worsening';
+            trendElement.className = 'recovery-trend trend-worsening';
+        } else {
+            trendElement.textContent = '➡️ Stable';
+            trendElement.className = 'recovery-trend trend-stable';
+        }
+    }
+
+    // Update timeline
+    updateRecoveryTimeline();
+}
+
+function updateRecoveryTimeline() {
+    const timelineDiv = document.getElementById('recoveryTimeline');
+    const recentTimes = recoveryTimes.slice(-5).reverse();
+    
+    let timelineHtml = '<h3>Recent Recovery Times</h3>';
+    
+    recentTimes.forEach(rt => {
+        const date = new Date(rt.timestamp).toLocaleDateString();
+        const maxRecoveryTime = 500; // Assume max recovery time for scaling
+        const percentage = Math.min(100, (rt.recoveryTime / maxRecoveryTime) * 100);
+        
+        let barColor = 'linear-gradient(90deg, #4CAF50, #FFC107, #f44336)';
+        let baselinePosition = '0%';
+        
+        if (baselineResults) {
+            // Calculate baseline position marker
+            const baselineRecovery = 100; // Ideal recovery time
+            baselinePosition = `${Math.min(100, (baselineRecovery / maxRecoveryTime) * 100)}%`;
+        }
+        
+        timelineHtml += `
+            <div class="timeline-item">
+                <div class="timeline-time">${date}</div>
+                <div class="timeline-bar-container">
+                    <div class="timeline-bar" style="width: ${percentage}%; background: ${barColor};"></div>
+                    <div class="timeline-baseline-marker" style="left: ${baselinePosition};"></div>
+                </div>
+                <div class="timeline-value">
+                    ${rt.recoveryTime}ms
+                    <span class="recovery-time-badge ${getRecoveryTimeBadgeClass(rt.recoveryTime)}">${rt.category}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    timelineDiv.innerHTML = timelineHtml;
+}
+
+// Clean up on page unload
 window.addEventListener('beforeunload', function() {
     if (recoveryChartInstance instanceof Chart) {
         recoveryChartInstance.destroy();
