@@ -84,8 +84,16 @@ function startMemoryTest() {
 }
 
 function checkMemory() {
-    const answer = document.getElementById('memoryAnswer').value;
+    const answer = document.getElementById('memoryAnswer').value.trim();
     const correct = testResults.correctNumbers;
+    
+    const isValid = /^\d{5}$/.test(answer);
+    
+    if (!isValid) {
+        alert('Please enter exactly 5 digits (0-9 only)');
+        return; 
+    }
+    
     let score = 0;
     for (let i = 0; i < correct.length; i++) {
         if (answer[i] === correct[i]) score++;
