@@ -1,5 +1,83 @@
 // cognitive-recovery-after-conflict-monitor.js
 
+document.addEventListener('DOMContentLoaded', function() {
+    const primaryFavicon = document.getElementById('primary-favicon');
+    
+    if (primaryFavicon) {
+        const img = new Image();
+        img.onload = function() {
+            console.log('Primary favicon loaded successfully');
+        };
+        img.onerror = function() {
+            console.log('Primary favicon failed to load, trying fallbacks...');
+            tryFallbackFavicons();
+        };
+        img.src = primaryFavicon.href;
+    }
+});
+
+function tryFallbackFavicons() {
+    const fallbacks = [
+        document.getElementById('fallback-favicon-ico'),
+        document.getElementById('fallback-favicon-png'),
+        document.getElementById('emergency-favicon')
+    ];
+    
+    let fallbackIndex = 0;
+    
+    function tryNextFallback() {
+        if (fallbackIndex >= fallbacks.length) {
+            console.log('All favicons failed, using emoji fallback');
+            createEmojiFavicon();
+            return;
+        }
+        
+        const fallback = fallbacks[fallbackIndex];
+        if (!fallback) {
+            fallbackIndex++;
+            tryNextFallback();
+            return;
+        }
+        
+        const img = new Image();
+        img.onload = function() {
+            console.log(`Fallback favicon ${fallbackIndex + 1} loaded`);
+            // Remove all existing favicons and add the working one
+            removeAllFavicons();
+            document.head.appendChild(fallback.cloneNode());
+        };
+        img.onerror = function() {
+            console.log(`Fallback ${fallbackIndex + 1} failed`);
+            fallbackIndex++;
+            tryNextFallback();
+        };
+        img.src = fallback.href;
+    }
+    
+    tryNextFallback();
+}
+
+function removeAllFavicons() {
+    const favicons = document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]');
+    favicons.forEach(favicon => favicon.remove());
+}
+
+function createEmojiFavicon() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext('2d');
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#4CAF50';
+    ctx.fillText('🧠', 4, 24);
+    
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/png';
+    link.href = canvas.toDataURL('image/png');
+    document.head.appendChild(link);
+}
+
 let baselineResults = JSON.parse(localStorage.getItem('cognitiveBaseline')) || null;
 let recoveryResults = JSON.parse(localStorage.getItem('cognitiveRecoveryResults')) || [];
 let currentTest = null;
@@ -27,8 +105,6 @@ function startTest() {
         progressBar.style.width = '0%';
     }
     
-    document.getElementById('baselineSection').style.display = 'block';
-    document.getElementById('conflictSection').style.display = 'block';
     document.getElementById('testSection').style.display = 'block';
     document.getElementById('resultsSection').style.display = 'none';
 
@@ -110,6 +186,9 @@ function startMemoryTest() {
     }, 5000); // Show for 5 seconds
 }
 
+function showMemoryInput() {
+}
+
 function checkMemory() {
     const answer = document.getElementById('memoryAnswer').value.trim();
     const correct = testResults.correctNumbers;
@@ -139,7 +218,7 @@ function showResults() {
     document.getElementById('memoryScoreResult').textContent = `${testResults.memoryScore}/5 (${memoryPercentage.toFixed(0)}%)`;
 
     let recoveryStatus = 'N/A';
-    if (baselineResults) {
+    if (baselineResults && currentTest && currentTest.type === 'post-conflict') {
         const reactionDiff = testResults.reactionTime - baselineResults.reactionTime;
         const memoryDiff = testResults.memoryScore - baselineResults.memoryScore;
 
@@ -160,6 +239,7 @@ function saveResult() {
     if (currentTest.type === 'baseline') {
         baselineResults = testResults;
         localStorage.setItem('cognitiveBaseline', JSON.stringify(baselineResults));
+        alert('Baseline results saved successfully!');
     } else if (currentTest.type === 'post-conflict') {
         const result = {
             ...currentTest,
@@ -171,11 +251,11 @@ function saveResult() {
         localStorage.setItem('cognitiveRecoveryResults', JSON.stringify(recoveryResults));
         updateHistory();
         updateChart();
+        alert('Post-conflict results saved successfully!');
     }
 
     document.getElementById('resultsSection').style.display = 'none';
-    document.getElementById('baselineSection').style.display = 'block';
-    document.getElementById('conflictSection').style.display = 'block';
+    document.getElementById('testSection').style.display = 'none';
     
     const progressBar = document.getElementById('testProgress');
     if (progressBar) {
@@ -188,6 +268,11 @@ function saveResult() {
 function updateHistory() {
     const historyDiv = document.getElementById('recoveryHistory');
     historyDiv.innerHTML = '';
+
+    if (recoveryResults.length === 0) {
+        historyDiv.innerHTML = '<p>No recovery data yet. Take a post-conflict test to see history.</p>';
+        return;
+    }
 
     recoveryResults.slice(-5).reverse().forEach(result => {
         const item = document.createElement('div');
@@ -205,12 +290,16 @@ function updateHistory() {
 function updateChart() {
     const ctx = document.getElementById('recoveryChart').getContext('2d');
 
+    if (window.recoveryChart instanceof Chart) {
+        window.recoveryChart.destroy();
+    }
+
     const data = recoveryResults.map(result => ({
         x: new Date(result.timestamp),
         y: result.reactionTime
     }));
 
-    new Chart(ctx, {
+    window.recoveryChart = new Chart(ctx, {
         type: 'line',
         data: {
             datasets: [{
@@ -218,19 +307,39 @@ function updateChart() {
                 data: data,
                 borderColor: '#4fd1ff',
                 backgroundColor: 'rgba(79, 209, 255, 0.1)',
-                fill: true
+                fill: true,
+                tension: 0.4
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 x: {
                     type: 'time',
                     time: {
-                        unit: 'day'
+                        unit: 'day',
+                        displayFormats: {
+                            day: 'MMM D'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Date'
                     }
                 },
                 y: {
-                    beginAtZero: false
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: 'Reaction Time (ms)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
                 }
             }
         }
