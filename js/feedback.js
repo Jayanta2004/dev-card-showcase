@@ -42,23 +42,33 @@ document.addEventListener("DOMContentLoaded", function () {
     animateCircles();
 });
 
-const themeToggle = document.getElementById("themeToggle");
+document.addEventListener("DOMContentLoaded", () => {
 
-// Load saved theme
-const savedTheme = localStorage.getItem("theme") || "light";
+    function initThemeToggle() {
 
-if (savedTheme === "dark") {
-    document.body.classList.add("theme-dark");
-    themeToggle.textContent = "🌙";
-} else {
-    themeToggle.textContent = "☀️";
-}
+        const themeToggle = document.getElementById("themeToggle");
 
-themeToggle.addEventListener("click", () => {
-    const isDark = document.body.classList.toggle("theme-dark");
+        if (!themeToggle) {
+            // retry if navbar not loaded yet
+            setTimeout(initThemeToggle, 100);
+            return;
+        }
 
-    themeToggle.textContent = isDark ? "🌙" : "☀️";
-    localStorage.setItem("theme", isDark ? "dark" : "light");
+        themeToggle.addEventListener("click", () => {
+
+            if (document.body.classList.contains("theme-dark")) {
+                document.body.classList.remove("theme-dark");
+                document.body.classList.add("theme-light");
+            } else {
+                document.body.classList.remove("theme-light");
+                document.body.classList.add("theme-dark");
+            }
+
+        });
+    }
+
+    initThemeToggle();
+
 });
 
 // Navbar toggle
