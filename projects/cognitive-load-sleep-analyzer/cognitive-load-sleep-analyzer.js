@@ -3,6 +3,7 @@
 let entries = JSON.parse(localStorage.getItem('cognitiveLoadSleepEntries')) || [];
 let sleepGoal = parseFloat(localStorage.getItem('sleepGoal')) || 8.0;
 let chartInstance = null;
+let currentChartType = 'line';
 
 // Notification settings
 let notificationSettings = JSON.parse(localStorage.getItem('notificationSettings')) || {
@@ -55,6 +56,8 @@ document.addEventListener('DOMContentLoaded', function() {
     updateChart();
     updateEntriesList();
     updateSleepDebtCalculator();
+    renderHeatMap();
+    renderCorrelationMatrix();
     
     initializeCharacterCounters();
     initializeFilters();
@@ -456,7 +459,7 @@ function calculateCorrelation(x, y) {
     const numerator = n * sumXY - sumX * sumY;
     const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
 
-    return denominator === 0 ? 0 : (numerator / denominator).toFixed(2);
+    return denominator === 0 ? 0 : parseFloat((numerator / denominator).toFixed(2));
 }
 
 function updateStats() {
@@ -641,6 +644,21 @@ function addInsightBadges(recentEntries) {
     }
 }
 
+// Change chart type
+function changeChartType(type) {
+    currentChartType = type;
+    
+    // Update active button
+    document.querySelectorAll('.chart-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[onclick="changeChartType('${type}')"]`).classList.add('active');
+    
+    // Update chart
+    updateChart();
+}
+
+// Enhanced chart function with multiple chart types
 function updateChart() {
     const ctx = document.getElementById('correlationChart');
     if (!ctx) return;
@@ -654,82 +672,439 @@ function updateChart() {
     // Prepare data for last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const chartEntries = entries.filter(entry => new Date(entry.date) >= thirtyDaysAgo);
+    const chartEntries = entries.filter(entry => new Date(entry.date) >= thirtyDaysAgo).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    if (chartEntries.length === 0) return;
+    if (chartEntries.length === 0) {
+        // Show empty chart with message
+        chartInstance = new Chart(context, {
+            type: 'line',
+            data: {
+                labels: ['No Data'],
+                datasets: [{
+                    label: 'No entries yet',
+                    data: [0],
+                    borderColor: '#6c757d',
+                    backgroundColor: 'rgba(108, 117, 125, 0.1)',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Log some entries to see the chart'
+                    }
+                }
+            }
+        });
+        return;
+    }
 
     const labels = chartEntries.map(entry => {
         const date = new Date(entry.date);
-        return date.toLocaleDateString();
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     });
 
-    const workLoadData = chartEntries.map(entry => entry.cognitiveLoad);
-    const sleepQualityData = chartEntries.map(entry => entry.sleepQuality);
-    const workHoursData = chartEntries.map(entry => entry.workHours);
+    let chartConfig = {
+        labels: labels,
+        datasets: []
+    };
 
-    chartInstance = new Chart(context, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Cognitive Load',
-                data: workLoadData,
-                borderColor: '#dc3545',
-                backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                yAxisID: 'y',
-                tension: 0.4
-            }, {
-                label: 'Sleep Quality',
-                data: sleepQualityData,
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                yAxisID: 'y',
-                tension: 0.4
-            }, {
-                label: 'Work Hours',
-                data: workHoursData,
-                borderColor: '#ffc107',
-                backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                yAxisID: 'y1',
-                tension: 0.4,
-                pointRadius: 3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: 'Load/Quality (1-10)'
-                    },
-                    min: 1,
-                    max: 10
+    switch(currentChartType) {
+        case 'line':
+            chartConfig.datasets = [
+                {
+                    label: 'Cognitive Load',
+                    data: chartEntries.map(entry => entry.cognitiveLoad),
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    yAxisID: 'y',
+                    tension: 0.4,
+                    fill: false
                 },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: {
-                        display: true,
-                        text: 'Work Hours'
-                    },
-                    grid: {
-                        drawOnChartArea: false,
-                    },
+                {
+                    label: 'Sleep Quality',
+                    data: chartEntries.map(entry => entry.sleepQuality),
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    yAxisID: 'y',
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'Work Hours',
+                    data: chartEntries.map(entry => entry.workHours),
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    yAxisID: 'y1',
+                    tension: 0.4,
+                    pointRadius: 3,
+                    fill: false
                 }
+            ];
+            break;
+
+        case 'scatter':
+            // Create scatter plot data for cognitive load vs sleep quality
+            const scatterData = chartEntries.map(entry => ({
+                x: entry.cognitiveLoad,
+                y: entry.sleepQuality,
+                r: entry.workHours * 2 // Size based on work hours
+            }));
+            
+            chartConfig.datasets = [{
+                label: 'Cognitive Load vs Sleep Quality',
+                data: scatterData,
+                backgroundColor: 'rgba(79, 209, 255, 0.6)',
+                borderColor: '#4fd1ff',
+                borderWidth: 1,
+                pointRadius: scatterData.map(d => Math.max(5, Math.min(15, d.r))),
+                pointHoverRadius: scatterData.map(d => Math.max(7, Math.min(20, d.r + 2)))
+            }];
+            break;
+
+        case 'stacked':
+            // Create stacked area chart for productivity categories
+            const stackedData = chartEntries.map(entry => {
+                // Categorize productivity based on load and sleep
+                let productive = 0, moderate = 0, unproductive = 0;
+                
+                if (entry.cognitiveLoad >= 7 && entry.sleepQuality >= 7) {
+                    productive = entry.workHours;
+                } else if (entry.cognitiveLoad >= 5 && entry.sleepQuality >= 5) {
+                    moderate = entry.workHours;
+                } else {
+                    unproductive = entry.workHours;
+                }
+                
+                return { productive, moderate, unproductive };
+            });
+            
+            chartConfig.datasets = [
+                {
+                    label: 'Highly Productive',
+                    data: stackedData.map(d => d.productive),
+                    backgroundColor: '#28a745',
+                    borderColor: '#28a745',
+                    borderWidth: 1,
+                    fill: true
+                },
+                {
+                    label: 'Moderately Productive',
+                    data: stackedData.map(d => d.moderate),
+                    backgroundColor: '#ffc107',
+                    borderColor: '#ffc107',
+                    borderWidth: 1,
+                    fill: true
+                },
+                {
+                    label: 'Low Productivity',
+                    data: stackedData.map(d => d.unproductive),
+                    backgroundColor: '#dc3545',
+                    borderColor: '#dc3545',
+                    borderWidth: 1,
+                    fill: true
+                }
+            ];
+            break;
+    }
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
             },
-            plugins: {
-                legend: {
-                    display: true
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        if (currentChartType === 'scatter') {
+                            const entry = chartEntries[context.dataIndex];
+                            return [
+                                `Cognitive Load: ${entry.cognitiveLoad}`,
+                                `Sleep Quality: ${entry.sleepQuality}`,
+                                `Work Hours: ${entry.workHours}h`,
+                                `Date: ${new Date(entry.date).toLocaleDateString()}`
+                            ];
+                        } else if (currentChartType === 'stacked') {
+                            return `${context.dataset.label}: ${context.raw.toFixed(1)}h`;
+                        } else {
+                            return `${context.dataset.label}: ${context.raw}`;
+                        }
+                    }
                 }
             }
         }
+    };
+
+    if (currentChartType === 'scatter') {
+        chartOptions.scales = {
+            x: {
+                type: 'linear',
+                position: 'bottom',
+                title: {
+                    display: true,
+                    text: 'Cognitive Load'
+                },
+                min: 1,
+                max: 10,
+                grid: {
+                    color: 'rgba(0,0,0,0.05)'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Sleep Quality'
+                },
+                min: 1,
+                max: 10,
+                grid: {
+                    color: 'rgba(0,0,0,0.05)'
+                }
+            }
+        };
+    } else if (currentChartType === 'stacked') {
+        chartOptions.scales = {
+            x: {
+                stacked: true,
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                stacked: true,
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Hours'
+                },
+                grid: {
+                    color: 'rgba(0,0,0,0.05)'
+                }
+            }
+        };
+    } else {
+        chartOptions.scales = {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Load/Quality (1-10)'
+                },
+                min: 1,
+                max: 10,
+                grid: {
+                    color: 'rgba(0,0,0,0.05)'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Work Hours'
+                },
+                min: 0,
+                max: 24,
+                grid: {
+                    drawOnChartArea: false,
+                },
+            }
+        };
+    }
+
+    chartInstance = new Chart(context, {
+        type: currentChartType === 'scatter' ? 'bubble' : (currentChartType === 'stacked' ? 'line' : 'line'),
+        data: chartConfig,
+        options: chartOptions
     });
+}
+
+// Render heat map calendar
+function renderHeatMap() {
+    const container = document.getElementById('heatmapContainer');
+    if (!container) return;
+    
+    if (entries.length === 0) {
+        container.innerHTML = '<div class="no-data-message"><i class="fas fa-calendar-alt"></i><p>No data available for heat map</p></div>';
+        return;
+    }
+    
+    // Get last 90 days of data
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const recentEntries = entries.filter(entry => new Date(entry.date) >= ninetyDaysAgo);
+    
+    // Create a map of date to productivity score
+    const productivityMap = {};
+    recentEntries.forEach(entry => {
+        // Calculate productivity score based on cognitive load and sleep quality
+        const productivityScore = (entry.sleepQuality / 10) * (10 / entry.cognitiveLoad) * entry.workHours;
+        productivityMap[entry.date] = Math.min(4, Math.floor(productivityScore)); // Scale to 0-4
+    });
+    
+    // Generate calendar data
+    const calendarHTML = generateHeatMapCalendar(productivityMap, ninetyDaysAgo);
+    container.innerHTML = calendarHTML;
+}
+
+// Generate heat map calendar HTML
+function generateHeatMapCalendar(productivityMap, startDate) {
+    const months = [];
+    const currentDate = new Date(startDate);
+    const endDate = new Date();
+    
+    while (currentDate <= endDate) {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const monthName = currentDate.toLocaleString('default', { month: 'long' });
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // Find first day of month (0 = Sunday)
+        const firstDay = new Date(year, month, 1).getDay();
+        
+        let monthHTML = `
+            <div class="heatmap-month-label">${monthName} ${year}</div>
+            <div class="heatmap-day-label">Sun</div>
+            <div class="heatmap-day-label">Mon</div>
+            <div class="heatmap-day-label">Tue</div>
+            <div class="heatmap-day-label">Wed</div>
+            <div class="heatmap-day-label">Thu</div>
+            <div class="heatmap-day-label">Fri</div>
+            <div class="heatmap-day-label">Sat</div>
+        `;
+        
+        // Add empty cells for days before month starts
+        for (let i = 0; i < firstDay; i++) {
+            monthHTML += '<div class="heatmap-cell"></div>';
+        }
+        
+        // Add cells for each day
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const value = productivityMap[dateStr] !== undefined ? productivityMap[dateStr] : 0;
+            const hasData = productivityMap[dateStr] !== undefined;
+            
+            const tooltip = hasData ? 
+                `${new Date(dateStr).toLocaleDateString()}: Productivity Level ${value + 1}/5` : 
+                `${new Date(dateStr).toLocaleDateString()}: No data`;
+            
+            monthHTML += `
+                <div class="heatmap-cell" data-value="${value}" title="${tooltip}">
+                    ${day}
+                    <span class="heatmap-tooltip">${tooltip}</span>
+                </div>
+            `;
+        }
+        
+        months.push(`<div class="heatmap-calendar">${monthHTML}</div>`);
+        
+        // Move to next month
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        currentDate.setDate(1);
+    }
+    
+    return months.join('');
+}
+
+// Render correlation matrix
+function renderCorrelationMatrix() {
+    const container = document.getElementById('correlationMatrix');
+    if (!container) return;
+    
+    if (entries.length < 3) {
+        container.innerHTML = '<div class="no-data-message"><i class="fas fa-chart-line"></i><p>Need at least 3 entries to calculate correlations</p></div>';
+        return;
+    }
+    
+    const workHours = entries.map(e => e.workHours);
+    const cognitiveLoad = entries.map(e => e.cognitiveLoad);
+    const sleepHours = entries.map(e => e.sleepHours);
+    const sleepQuality = entries.map(e => e.sleepQuality);
+    
+    // Calculate all correlations
+    const correlations = {
+        workLoad: calculateCorrelation(workHours, cognitiveLoad),
+        workSleepHours: calculateCorrelation(workHours, sleepHours),
+        workSleepQuality: calculateCorrelation(workHours, sleepQuality),
+        loadSleepHours: calculateCorrelation(cognitiveLoad, sleepHours),
+        loadSleepQuality: calculateCorrelation(cognitiveLoad, sleepQuality),
+        sleepHoursQuality: calculateCorrelation(sleepHours, sleepQuality)
+    };
+    
+    // Get correlation class
+    function getCorrelationClass(value) {
+        if (value > 0.7) return 'positive-high';
+        if (value > 0.4) return 'positive-moderate';
+        if (value > 0.1) return 'positive-low';
+        if (value < -0.7) return 'negative-high';
+        if (value < -0.4) return 'negative-moderate';
+        if (value < -0.1) return 'negative-low';
+        return 'neutral';
+    }
+    
+    // Generate insights
+    let insights = [];
+    if (correlations.loadSleepQuality < -0.5) {
+        insights.push('Strong negative correlation: Higher cognitive load significantly reduces sleep quality');
+    }
+    if (correlations.workSleepHours < -0.3) {
+        insights.push('Working more hours tends to reduce sleep duration');
+    }
+    if (correlations.sleepHoursQuality > 0.6) {
+        insights.push('Sleep duration strongly correlates with sleep quality');
+    }
+    if (correlations.workLoad > 0.7) {
+        insights.push('Work hours strongly correlate with cognitive load - longer days mean more mental effort');
+    }
+    
+    const matrixHTML = `
+        <div class="matrix-grid">
+            <div class="matrix-header"></div>
+            <div class="matrix-header">Work Hours</div>
+            <div class="matrix-header">Cognitive Load</div>
+            <div class="matrix-header">Sleep Hours</div>
+            <div class="matrix-header">Sleep Quality</div>
+            
+            <div class="matrix-label">Work Hours</div>
+            <div class="matrix-cell positive-high">1.00</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.workLoad)}">${correlations.workLoad.toFixed(2)}</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.workSleepHours)}">${correlations.workSleepHours.toFixed(2)}</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.workSleepQuality)}">${correlations.workSleepQuality.toFixed(2)}</div>
+            
+            <div class="matrix-label">Cognitive Load</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.workLoad)}">${correlations.workLoad.toFixed(2)}</div>
+            <div class="matrix-cell positive-high">1.00</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.loadSleepHours)}">${correlations.loadSleepHours.toFixed(2)}</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.loadSleepQuality)}">${correlations.loadSleepQuality.toFixed(2)}</div>
+            
+            <div class="matrix-label">Sleep Hours</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.workSleepHours)}">${correlations.workSleepHours.toFixed(2)}</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.loadSleepHours)}">${correlations.loadSleepHours.toFixed(2)}</div>
+            <div class="matrix-cell positive-high">1.00</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.sleepHoursQuality)}">${correlations.sleepHoursQuality.toFixed(2)}</div>
+            
+            <div class="matrix-label">Sleep Quality</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.workSleepQuality)}">${correlations.workSleepQuality.toFixed(2)}</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.loadSleepQuality)}">${correlations.loadSleepQuality.toFixed(2)}</div>
+            <div class="matrix-cell ${getCorrelationClass(correlations.sleepHoursQuality)}">${correlations.sleepHoursQuality.toFixed(2)}</div>
+            <div class="matrix-cell positive-high">1.00</div>
+        </div>
+        
+        <div class="matrix-insight">
+            <h4><i class="fas fa-lightbulb"></i> Correlation Insights</h4>
+            ${insights.length > 0 ? insights.map(i => `<p>• ${i}</p>`).join('') : '<p>No strong correlations detected yet. Continue logging to see patterns.</p>'}
+        </div>
+    `;
+    
+    container.innerHTML = matrixHTML;
 }
 
 // Toggle filters visibility
@@ -1515,6 +1890,8 @@ function deleteEntry(id) {
         updateChart();
         updateEntriesList();
         updateSleepDebtCalculator();
+        renderHeatMap();
+        renderCorrelationMatrix();
     }
 }
 
@@ -1622,6 +1999,8 @@ function logEntry() {
     updateChart();
     updateEntriesList();
     updateSleepDebtCalculator();
+    renderHeatMap();
+    renderCorrelationMatrix();
     
     // Check for burnout risk after new entry is added
     setTimeout(() => {
@@ -1882,3 +2261,4 @@ window.saveNotificationSettings = saveNotificationSettings;
 window.requestNotificationPermission = requestNotificationPermission;
 window.testNotification = testNotification;
 window.checkBurnoutRisk = checkBurnoutRisk;
+window.changeChartType = changeChartType;
