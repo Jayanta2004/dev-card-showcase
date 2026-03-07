@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Pokémon Battle FSM</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+        }
+        body {
+            background: linear-gradient(145deg, #2a1b3c 0%, #1a2a3a 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            image-rendering: pixelated;
+        }
+        .battle-card {
+            background: #4a2a5a;
+            background-image: radial-gradient(circle at 30% 20%, #6b3f7c, #2a1535);
+            border-radius: 3rem;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 30px 40px #000000cc, inset 0 0 20px #b87cff;
+            border: 6px solid #f0d050;
+            max-width: 1100px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            margin: 0 0 1.5rem 0;
+            font-size: 2rem;
+            color: #ffde7a;
+            text-shadow: 5px 5px 0 #9b4d96, 0 10px 20px black;
+            letter-spacing: 3px;
+            word-break: break-word;
+        }
+        h1 span {
+            font-size: 2.5rem;
+            filter: drop-shadow(2px 4px 0 #5a2a8c);
+        }
+        .battle-arena {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+        /* Battle field */
+        .field-panel {
+            background: #6b8c5c;
+            background: linear-gradient(145deg, #5a7a4a, #3a5a2a);
+            border-radius: 3rem 3rem 2rem 2rem;
+            padding: 2rem 1.5rem;
+            border: 6px solid #b0a060;
+            box-shadow: inset 0 -10px 0 #2a3a1a, 0 20px 30px black;
+            flex: 1;
+            min-width: 320px;
+        }
+        .opponent-area {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .pokemon-card {
+            background: #2a1a2a;
+            border-radius: 2rem;
+            padding: 1.5rem 1rem;
+            border: 4px solid #f0c060;
+            box-shadow: 0 10px 0 #5a3a2a, inset 0 -5px 10px #4a2a4a;
+            text-align: center;
+            width: 200px;
+        }
+        .pokemon-sprite {
+            font-size: 4rem;
+            filter: drop-shadow(0 10px 5px #00000080);
+            background: #3a5a6a;
+            border-radius: 50%;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border: 3px solid gold;
+        }
+        .pokemon-name {
+            font-size: 1rem;
+            color: #f0e060;
+            margin: 0.5rem 0;
+            text-shadow: 2px 2px 0 #8b5800;
+        }
+        .hp-bar {
+            background: #2a1a1a;
+            height: 20px;
+            border-radius: 20px;
+            margin: 0.5rem 0;
+            border: 2px solid #d0a0a0;
+            overflow: hidden;
+        }
+        .hp-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #6f6, #3f3);
+            transition: width 0.2s;
+        }
+        .hp-fill.enemy {
+            background: linear-gradient(90deg, #f66, #c33);
+        }
+        .hp-text {
+            color: white;
+            font-size: 0.7rem;
+        }
+        .vs-divider {
+            font-size: 2rem;
+            color: #ffd966;
+            margin: 0 1rem;
+            align-self: center;
+            text-shadow: 3px 3px 0 #9b4d96;
+        }
+        .player-area {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        .battle-log {
+            background: #1a1a2e;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            margin: 1.5rem 0;
+            border: 4px solid #aac7ff;
+            color: #b8e2ff;
+            font-size: 0.7rem;
+            line-height: 1.5;
+            height: 80px;
+            overflow-y: auto;
+        }
+        .control-panel {
+            background: #2a3a5a;
+            border-radius: 2rem;
+            padding: 1.5rem;
+            border: 4px solid #ffb85c;
+            flex: 1;
+            min-width: 280px;
+        }
+        .turn-indicator {
+            background: #4a2a4a;
+            border-radius: 2rem;
+            padding: 1rem;
+            text-align: center;
+            border: 3px solid #f0d050;
+            margin-bottom: 1.5rem;
+        }
+        .turn-text {
+            font-size: 1.5rem;
+            color: #ffd966;
+            text-shadow: 3px 3px 0 #803080;
+        }
+        .battle-state {
+            font-size: 1rem;
+            color: #b0e0ff;
+            background: #1a2a3a;
+            padding: 0.5rem;
+            border-radius: 1rem;
+        }
+        .move-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .battle-btn {
+            background: #7a4a8c;
+            border: none;
+            border-radius: 1.5rem;
+            padding: 1rem 0.5rem;
+            font-family: inherit;
+            font-size: 0.7rem;
+            color: #f0e0a0;
+            box-shadow: 0 6px 0 #3a1a4a, 0 8px 15px black;
+            cursor: pointer;
+            transition: 0.05s linear;
+            border: 3px solid #e0b04a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .battle-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 1px 0 #3a1a4a, 0 8px 15px black;
+        }
+        .battle-btn:disabled {
+            opacity: 0.3;
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #3a1a4a;
+            pointer-events: none;
+        }
+        .battle-btn.fight {
+            background: #c94f4f;
+            border-color: #ffbaba;
+        }
+        .battle-btn.run {
+            background: #4f7ac9;
+            border-color: #aac9ff;
+        }
+        .battle-btn.potion {
+            background: #4fc98c;
+            border-color: #aeffc6;
+        }
+        .type-badge {
+            display: inline-block;
+            background: #2a3a5a;
+            padding: 0.3rem 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.5rem;
+            color: white;
+            margin: 0.2rem;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            color: #ffd48a;
+            background: #2a1a3ab0;
+            padding: 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.6rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="battle-card">
+        <h1>
+            <span>⚡</span> POKÉMON BATTLE FSM <span>🔥</span>
+        </h1>
+        
+        <div class="battle-arena">
+            <!-- Battle field -->
+            <div class="field-panel">
+                <div class="opponent-area">
+                    <div class="pokemon-card">
+                        <div class="pokemon-sprite" id="enemySprite">👾</div>
+                        <div class="pokemon-name" id="enemyName">WILD CHARMANDER</div>
+                        <div class="hp-bar">
+                            <div class="hp-fill enemy" id="enemyHPFill" style="width: 100%"></div>
+                        </div>
+                        <div class="hp-text" id="enemyHPText">HP: 100/100</div>
+                        <div><span class="type-badge">🔥 FIRE</span></div>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                </div>
+                
+                <div class="player-area">
+                    <div class="pokemon-card">
+                        <div class="pokemon-sprite" id="playerSprite">🐢</div>
+                        <div class="pokemon-name" id="playerName">SQUIRTLE</div>
+                        <div class="hp-bar">
+                            <div class="hp-fill" id="playerHPFill" style="width: 100%"></div>
+                        </div>
+                        <div class="hp-text" id="playerHPText">HP: 100/100</div>
+                        <div><span class="type-badge">💧 WATER</span></div>
+                    </div>
+                </div>
+                
+                <div class="battle-log" id="battleLog">
+                    > A wild Charmander appeared!
+                    > What will Squirtle do?
+                </div>
+            </div>
+            
+            <!-- Control panel -->
+            <div class="control-panel">
+                <div class="turn-indicator">
+                    <div class="turn-text" id="turnIndicator">▶ YOUR TURN</div>
+                    <div class="battle-state" id="battleState">BATTLE</div>
+                </div>
+                
+                <div class="move-grid">
+                    <button class="battle-btn fight" id="btnTackle">💥 TACKLE</button>
+                    <button class="battle-btn fight" id="btnWaterGun">💧 WATER GUN</button>
+                    <button class="battle-btn" id="btnGrowl">📢 GROWL</button>
+                    <button class="battle-btn potion" id="btnPotion">🧪 POTION</button>
+                    <button class="battle-btn run" id="btnRun">🏃 RUN</button>
+                    <button class="battle-btn" id="btnCatch">⚾ CATCH</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin:1rem 0;">
+                    <button class="battle-btn" id="btnWildAttack">👾 WILD ATTACK</button>
+                    <button class="battle-btn" id="btnReset">🔄 NEW BATTLE</button>
+                </div>
+                
+                <div style="margin-top:1rem; background:#1a1a2e; padding:0.8rem; border-radius:1.5rem; color:#b8c9ff; font-size:0.5rem;">
+                    <strong>FSM:</strong> BATTLE → (win/lose/run/catch) → VICTORY/DEFEAT/CAUGHT/RUN_AWAY
+                </div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <span>⚔️ BATTLE</span>
+            <span>🏆 VICTORY</span>
+            <span>💔 DEFEAT</span>
+            <span>🏃 RUN AWAY</span>
+            <span>⚾ CAUGHT</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- POKÉMON BATTLE FSM ----------
+            const BattleFSM = {
+                states: {
+                    BATTLE: 'BATTLE',
+                    VICTORY: 'VICTORY',
+                    DEFEAT: 'DEFEAT',
+                    RUN_AWAY: 'RUN AWAY',
+                    CAUGHT: 'CAUGHT'
+                },
+                
+                current: 'BATTLE',
+                
+                // Player and enemy stats
+                player: {
+                    name: 'SQUIRTLE',
+                    type: 'water',
+                    hp: 100,
+                    maxHp: 100,
+                    attack: 15,
+                    defense: 12
+                },
+                
+                enemy: {
+                    name: 'WILD CHARMANDER',
+                    type: 'fire',
+                    hp: 100,
+                    maxHp: 100,
+                    attack: 14,
+                    defense: 10
+                },
+                
+                // Turn tracking
+                turn: 'player', // 'player' or 'enemy'
+                
+                // Type effectiveness chart
+                typeEffectiveness: {
+                    'water_fire': 2.0,    // water vs fire = super effective
+                    'fire_water': 0.5,     // fire vs water = not very effective
+                    'water_water': 1.0,
+                    'fire_fire': 1.0
+                },
+                
+                // Transition table
+                transitions: {
+                    'BATTLE_PLAYER_MOVE': 'BATTLE',      // stay in battle, process move
+                    'BATTLE_ENEMY_MOVE': 'BATTLE',        // enemy turn
+                    'BATTLE_PLAYER_WIN': 'VICTORY',       // enemy fainted
+                    'BATTLE_PLAYER_LOSE': 'DEFEAT',       // player fainted
+                    'BATTLE_RUN_SUCCESS': 'RUN_AWAY',     // successfully ran
+                    'BATTLE_CATCH_SUCCESS': 'CAUGHT',     // caught pokemon
+                    'BATTLE_CATCH_FAIL': 'BATTLE',        // failed catch
+                    
+                    'VICTORY_ANY': 'VICTORY',              // terminal state
+                    'DEFEAT_ANY': 'DEFEAT',
+                    'RUN_AWAY_ANY': 'RUN AWAY',
+                    'CAUGHT_ANY': 'CAUGHT'
+                },
+                
+                dispatch(event, data = null) {
+                    const from = this.current;
+                    const key = `${from}_${event}`;
+                    
+                    if (this.transitions.hasOwnProperty(key)) {
+                        return this.transitions[key];
+                    }
+                    return from; // invalid
+                },
+                
+                send(event, data = null) {
+                    const before = this.current;
+                    const after = this.dispatch(event, data);
+                    const changed = before !== after;
+                    
+                    this.current = after;
+                    
+                    return { changed, from: before, to: after };
+                },
+                
+                // Calculate damage
+                calculateDamage(attacker, defender, movePower = 10) {
+                    let typeKey = `${attacker.type}_${defender.type}`;
+                    let effectiveness = this.typeEffectiveness[typeKey] || 1.0;
+                    
+                    let attack = attacker.attack || 10;
+                    let defense = defender.defense || 10;
+                    
+                    let baseDamage = Math.max(1, Math.floor((attack / defense) * movePower * (Math.random() * 0.3 + 0.85)));
+                    let finalDamage = Math.floor(baseDamage * effectiveness);
+                    
+                    return {
+                        damage: finalDamage,
+                        effectiveness: effectiveness,
+                        critical: Math.random() < 0.1 // 10% crit chance
+                    };
+                },
+                
+                // Player move
+                playerMove(move) {
+                    if (this.current !== 'BATTLE' || this.turn !== 'player') return false;
+                    
+                    let logMessage = '';
+                    let damageResult = null;
+                    
+                    switch(move) {
+                        case 'tackle':
+                            damageResult = this.calculateDamage(this.player, this.enemy, 12);
+                            this.enemy.hp = Math.max(0, this.enemy.hp - damageResult.damage);
+                            logMessage = `${this.player.name} used TACKLE! `;
+                            break;
+                        case 'waterGun':
+                            damageResult = this.calculateDamage(this.player, this.enemy, 18);
+                            this.enemy.hp = Math.max(0, this.enemy.hp - damageResult.damage);
+                            logMessage = `${this.player.name} used WATER GUN! `;
+                            break;
+                        case 'growl':
+                            // Lower enemy attack
+                            this.enemy.attack = Math.max(5, this.enemy.attack - 2);
+                            logMessage = `${this.player.name} used GROWL! Enemy attack fell! `;
+                            damageResult = { effectiveness: 1.0, critical: false };
+                            break;
+                        case 'potion':
+                            this.player.hp = Math.min(this.player.maxHp, this.player.hp + 30);
+                            logMessage = `${this.player.name} used POTION! Restored 30 HP! `;
+                            damageResult = { effectiveness: 1.0, critical: false };
+                            break;
+                        default:
+                            return false;
+                    }
+                    
+                    // Add effectiveness message
+                    if (damageResult && damageResult.effectiveness > 1.0) {
+                        logMessage += 'It\'s super effective! ';
+                    } else if (damageResult && damageResult.effectiveness < 1.0) {
+                        logMessage += 'It\'s not very effective... ';
+                    }
+                    
+                    if (damageResult && damageResult.critical) {
+                        logMessage += 'Critical hit! ';
+                    }
+                    
+                    if (damageResult && damageResult.damage) {
+                        logMessage += `Dealt ${damageResult.damage} damage. `;
+                    }
+                    
+                    // Check if enemy fainted
+                    if (this.enemy.hp <= 0) {
+                        this.send('PLAYER_WIN');
+                        logMessage += 'The wild Charmander fainted! You win!';
+                        this.turn = 'player';
+                        this.addLog(logMessage);
+                        return true;
+                    }
+                    
+                    // Switch turn to enemy
+                    this.turn = 'enemy';
+                    this.addLog(logMessage);
+                    
+                    // Auto-trigger enemy move after short delay
+                    setTimeout(() => {
+                        if (this.current === 'BATTLE' && this.turn === 'enemy') {
+                            this.enemyMove();
+                        }
+                    }, 800);
+                    
+                    return true;
+                },
+                
+                // Enemy move
+                enemyMove() {
+                    if (this.current !== 'BATTLE' || this.turn !== 'enemy') return;
+                    
+                    // Random enemy move
+                    const moves = ['ember', 'scratch', 'growl'];
+                    const move = moves[Math.floor(Math.random() * moves.length)];
+                    
+                    let logMessage = '';
+                    let damageResult = null;
+                    
+                    switch(move) {
+                        case 'ember':
+                            damageResult = this.calculateDamage(this.enemy, this.player, 16);
+                            this.player.hp = Math.max(0, this.player.hp - damageResult.damage);
+                            logMessage = `${this.enemy.name} used EMBER! `;
+                            break;
+                        case 'scratch':
+                            damageResult = this.calculateDamage(this.enemy, this.player, 10);
+                            this.player.hp = Math.max(0, this.player.hp - damageResult.damage);
+                            logMessage = `${this.enemy.name} used SCRATCH! `;
+                            break;
+                        case 'growl':
+                            // Lower player attack
+                            this.player.attack = Math.max(5, this.player.attack - 2);
+                            logMessage = `${this.enemy.name} used GROWL! Your attack fell! `;
+                            damageResult = { effectiveness: 1.0, critical: false };
+                            break;
+                    }
+                    
+                    // Add effectiveness message
+                    if (damageResult && damageResult.effectiveness > 1.0) {
+                        logMessage += 'It\'s super effective! ';
+                    } else if (damageResult && damageResult.effectiveness < 1.0) {
+                        logMessage += 'It\'s not very effective... ';
+                    }
+                    
+                    if (damageResult && damageResult.critical) {
+                        logMessage += 'Critical hit! ';
+                    }
+                    
+                    if (damageResult && damageResult.damage) {
+                        logMessage += `Dealt ${damageResult.damage} damage. `;
+                    }
+                    
+                    // Check if player fainted
+                    if (this.player.hp <= 0) {
+                        this.send('PLAYER_LOSE');
+                        logMessage += 'Squirtle fainted! You lose...';
+                        this.turn = 'enemy';
+                        this.addLog(logMessage);
+                        return;
+                    }
+                    
+                    // Switch turn back to player
+                    this.turn = 'player';
+                    this.addLog(logMessage);
+                },
+                
+                // Run away
+                attemptRun() {
+                    if (this.current !== 'BATTLE' || this.turn !== 'player') return false;
+                    
+                    // 50% chance to run
+                    const success = Math.random() < 0.5;
+                    
+                    if (success) {
+                        this.send('RUN_SUCCESS');
+                        this.addLog('Got away safely!');
+                    } else {
+                        this.addLog('Can\'t escape!');
+                        // Enemy gets free turn
+                        this.turn = 'enemy';
+                        setTimeout(() => {
+                            if (this.current === 'BATTLE' && this.turn === 'enemy') {
+                                this.enemyMove();
+                            }
+                        }, 500);
+                    }
+                    
+                    return success;
+                },
+                
+                // Attempt catch
+                attemptCatch() {
+                    if (this.current !== 'BATTLE' || this.turn !== 'player') return false;
+                    
+                    // Catch chance based on enemy HP
+                    const catchRate = 0.3 * (1 - (this.enemy.hp / this.enemy.maxHp)) + 0.1;
+                    const success = Math.random() < catchRate;
+                    
+                    if (success) {
+                        this.send('CATCH_SUCCESS');
+                        this.addLog(`Gotcha! ${this.enemy.name} was caught!`);
+                    } else {
+                        this.send('CATCH_FAIL');
+                        this.addLog('Aww! It broke free!');
+                        // Enemy gets free turn
+                        this.turn = 'enemy';
+                        setTimeout(() => {
+                            if (this.current === 'BATTLE' && this.turn === 'enemy') {
+                                this.enemyMove();
+                            }
+                        }, 500);
+                    }
+                    
+                    return success;
+                },
+                
+                // Reset battle
+                resetBattle() {
+                    this.current = 'BATTLE';
+                    this.turn = 'player';
+                    
+                    this.player.hp = this.player.maxHp;
+                    this.player.attack = 15;
+                    
+                    this.enemy.hp = this.enemy.maxHp;
+                    this.enemy.attack = 14;
+                    
+                    this.addLog('A new battle begins!');
+                },
+                
+                // Logging
+                log: [],
+                addLog(message) {
+                    this.log.unshift('> ' + message);
+                    if (this.log.length > 5) this.log.pop();
+                }
+            };
+
+            // ---------- DOM Elements ----------
+            const enemySprite = document.getElementById('enemySprite');
+            const enemyName = document.getElementById('enemyName');
+            const enemyHPFill = document.getElementById('enemyHPFill');
+            const enemyHPText = document.getElementById('enemyHPText');
+            
+            const playerSprite = document.getElementById('playerSprite');
+            const playerName = document.getElementById('playerName');
+            const playerHPFill = document.getElementById('playerHPFill');
+            const playerHPText = document.getElementById('playerHPText');
+            
+            const battleLog = document.getElementById('battleLog');
+            const turnIndicator = document.getElementById('turnIndicator');
+            const battleState = document.getElementById('battleState');
+            
+            // Buttons
+            const btnTackle = document.getElementById('btnTackle');
+            const btnWaterGun = document.getElementById('btnWaterGun');
+            const btnGrowl = document.getElementById('btnGrowl');
+            const btnPotion = document.getElementById('btnPotion');
+            const btnRun = document.getElementById('btnRun');
+            const btnCatch = document.getElementById('btnCatch');
+            const btnWildAttack = document.getElementById('btnWildAttack');
+            const btnReset = document.getElementById('btnReset');
+
+            // Update UI
+            function updateUI() {
+                const state = BattleFSM.current;
+                const player = BattleFSM.player;
+                const enemy = BattleFSM.enemy;
+                const turn = BattleFSM.turn;
+                
+                // Update HP bars and text
+                const playerPercent = (player.hp / player.maxHp) * 100;
+                const enemyPercent = (enemy.hp / enemy.maxHp) * 100;
+                
+                playerHPFill.style.width = playerPercent + '%';
+                enemyHPFill.style.width = enemyPercent + '%';
+                
+                playerHPText.innerText = `HP: ${player.hp}/${player.maxHp}`;
+                enemyHPText.innerText = `HP: ${enemy.hp}/${enemy.maxHp}`;
+                
+                // Update turn indicator
+                if (state === 'BATTLE') {
+                    turnIndicator.innerText = turn === 'player' ? '▶ YOUR TURN' : '⏳ ENEMY TURN';
+                    turnIndicator.style.color = turn === 'player' ? '#ffd966' : '#ff9f9f';
+                } else {
+                    turnIndicator.innerText = '⚡ ' + state;
+                    turnIndicator.style.color = '#b0e0ff';
+                }
+                
+                // Update battle state
+                battleState.innerText = state;
+                
+                // Update log
+                battleLog.innerHTML = BattleFSM.log.join('<br>');
+                
+                // Update button states
+                updateButtons();
+            }
+            
+            function updateButtons() {
+                const state = BattleFSM.current;
+                const turn = BattleFSM.turn;
+                
+                const playerTurn = (state === 'BATTLE' && turn === 'player');
+                
+                btnTackle.disabled = !playerTurn;
+                btnWaterGun.disabled = !playerTurn;
+                btnGrowl.disabled = !playerTurn;
+                btnPotion.disabled = !playerTurn;
+                btnRun.disabled = !playerTurn;
+                btnCatch.disabled = !playerTurn;
+                
+                // Wild attack button (for simulation) - only in BATTLE
+                btnWildAttack.disabled = state !== 'BATTLE';
+                
+                // Reset always enabled
+                btnReset.disabled = false;
+            }
+            
+            // Event handlers
+            function handleTackle() {
+                if (BattleFSM.playerMove('tackle')) {
+                    updateUI();
+                }
+            }
+            
+            function handleWaterGun() {
+                if (BattleFSM.playerMove('waterGun')) {
+                    updateUI();
+                }
+            }
+            
+            function handleGrowl() {
+                if (BattleFSM.playerMove('growl')) {
+                    updateUI();
+                }
+            }
+            
+            function handlePotion() {
+                if (BattleFSM.playerMove('potion')) {
+                    updateUI();
+                }
+            }
+            
+            function handleRun() {
+                BattleFSM.attemptRun();
+                updateUI();
+            }
+            
+            function handleCatch() {
+                BattleFSM.attemptCatch();
+                updateUI();
+            }
+            
+            function handleWildAttack() {
+                // Force enemy turn
+                if (BattleFSM.current === 'BATTLE' && BattleFSM.turn === 'player') {
+                    BattleFSM.turn = 'enemy';
+                    BattleFSM.enemyMove();
+                    updateUI();
+                } else if (BattleFSM.current === 'BATTLE' && BattleFSM.turn === 'enemy') {
+                    BattleFSM.enemyMove();
+                    updateUI();
+                }
+            }
+            
+            function handleReset() {
+                BattleFSM.resetBattle();
+                updateUI();
+            }
+            
+            // Initialize
+            function init() {
+                BattleFSM.resetBattle();
+                updateUI();
+                
+                btnTackle.addEventListener('click', handleTackle);
+                btnWaterGun.addEventListener('click', handleWaterGun);
+                btnGrowl.addEventListener('click', handleGrowl);
+                btnPotion.addEventListener('click', handlePotion);
+                btnRun.addEventListener('click', handleRun);
+                btnCatch.addEventListener('click', handleCatch);
+                btnWildAttack.addEventListener('click', handleWildAttack);
+                btnReset.addEventListener('click', handleReset);
+            }
+            
+            init();
+        })();
+    </script>
+</body>
+</html>

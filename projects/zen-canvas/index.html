@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 ZEN CANVAS · generative art maker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a2629;
+            background: radial-gradient(circle at 30% 30%, #2d3f44, #0e1a1c);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            padding: 20px;
+        }
+
+        .zen-container {
+            max-width: 1300px;
+            width: 100%;
+            background: #dae4dd;
+            background: linear-gradient(135deg, #e1efe7, #c2d3cb);
+            border-radius: 70px 70px 50px 50px;
+            box-shadow: 0 40px 50px -15px #020c0e, 0 0 0 3px #b9cdc1 inset, 0 0 0 8px #6d8b7f inset;
+            padding: 2rem 2rem 2.2rem;
+        }
+
+        /* header */
+        .zen-header {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px 25px;
+            margin-bottom: 25px;
+            padding: 0 15px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 2.4rem;
+            font-weight: 600;
+            color: #1b4238;
+            text-shadow: 3px 3px 0 #aac7b9;
+        }
+
+        .logo span {
+            background: #578275;
+            color: #edffe7;
+            font-size: 1.1rem;
+            padding: 0.4rem 2rem;
+            border-radius: 50px;
+            font-weight: 400;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .btn {
+            background: #b3cfc2;
+            border: none;
+            color: #16322b;
+            font-weight: 600;
+            font-size: 1.2rem;
+            padding: 12px 28px;
+            border-radius: 60px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 7px 0 #588072, 0 6px 14px #0e2a24;
+            transition: 0.07s ease;
+            border: 2px solid #e5ffe8;
+            cursor: pointer;
+        }
+
+        .btn:active {
+            transform: translateY(7px);
+            box-shadow: 0 1px 0 #427a68, 0 6px 12px #04120f;
+        }
+
+        .btn.small {
+            font-size: 1rem;
+            padding: 8px 18px;
+        }
+
+        /* main row: canvas + sliders */
+        .art-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .canvas-area {
+            flex: 3;
+            min-width: 550px;
+            background: #aac0b3;
+            border-radius: 50px;
+            padding: 20px;
+            border: 6px solid #638674;
+            box-shadow: inset 0 -8px 0 #3f604f, 0 18px 25px #1c2c26;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #f6fbf5;
+            border-radius: 40px;
+            box-shadow: 0 0 0 3px #bdd3c2, 0 14px 18px #14221d;
+            cursor: crosshair;
+            transition: box-shadow 0.2s;
+        }
+
+        .inspector-panel {
+            flex: 1;
+            min-width: 260px;
+            background: #d1e2d4;
+            border-radius: 50px;
+            padding: 25px 20px;
+            border: 5px solid #84a38b;
+            box-shadow: inset 0 -5px 0 #527a62, 0 10px 18px #1a2d26;
+        }
+
+        .panel-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1f4d3b;
+            margin-bottom: 20px;
+            border-bottom: 4px dotted #688d79;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slider-group {
+            margin-bottom: 30px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            color: #17382b;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 12px;
+            background: #bdd6c0;
+            border-radius: 30px;
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+            box-shadow: inset 0 2px 6px #2e5b47;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            background: #f1ffe7;
+            border-radius: 50%;
+            border: 3px solid #26503f;
+            box-shadow: 0 4px 6px #142a20;
+            cursor: grab;
+        }
+
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 25px 0;
+            background: #afcbbb;
+            padding: 15px 18px;
+            border-radius: 40px;
+            border: 3px solid #538267;
+        }
+
+        .color-box {
+            width: 55px;
+            height: 55px;
+            border-radius: 20px;
+            background: #bc8f8f;
+            border: 4px solid #fffedc;
+            box-shadow: 0 5px 0 #3c644c;
+        }
+
+        input[type=color] {
+            width: 80px;
+            height: 55px;
+            border: 3px solid white;
+            border-radius: 25px;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .seed-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .seed-input {
+            flex: 2;
+            background: #d8eedb;
+            border: none;
+            border-radius: 40px;
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            border: 3px solid #598068;
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        /* footer */
+        .footer-zen {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 25px;
+            padding: 15px 25px;
+            background: #b4cfbe;
+            border-radius: 60px;
+            border: 3px solid #608d73;
+            color: #1e4235;
+            font-weight: 500;
+        }
+
+        .download-btn {
+            background: #466b59;
+            color: #f0ffe6;
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            display: flex;
+            gap: 10px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #264432;
+            border: 2px solid #b9f0cf;
+        }
+    </style>
+</head>
+<body>
+<div class="zen-container">
+    <div class="zen-header">
+        <div class="logo">
+            🎨 ZEN CANVAS <span>generative</span>
+        </div>
+        <div class="control-group">
+            <button class="btn small" id="randomizeBtn">🌀 RANDOM</button>
+            <button class="btn small" id="resetCanvasBtn">⟲ RESET</button>
+        </div>
+    </div>
+
+    <!-- main row -->
+    <div class="art-row">
+        <div class="canvas-area">
+            <canvas id="zenCanvas" width="700" height="500"></canvas>
+        </div>
+
+        <!-- right controls -->
+        <div class="inspector-panel">
+            <div class="panel-title">
+                <span>⚙️</span> parameters
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label"><span>⫸ complexity</span> <span id="complexityVal">42</span></div>
+                <input type="range" id="complexity" min="5" max="120" value="42" step="1">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>◍ density</span> <span id="densityVal">30</span></div>
+                <input type="range" id="density" min="2" max="80" value="30" step="1">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>◌ softness</span> <span id="softnessVal">6</span></div>
+                <input type="range" id="softness" min="0" max="20" value="6" step="0.5">
+            </div>
+
+            <div class="color-row">
+                <div class="color-box" id="primaryColorBox" style="background-color: #d8786a;"></div>
+                <input type="color" id="primaryColor" value="#d8786a">
+                <span style="margin-left: auto;">primary</span>
+            </div>
+            <div class="color-row">
+                <div class="color-box" id="secondaryColorBox" style="background-color: #5ba37e;"></div>
+                <input type="color" id="secondaryColor" value="#5ba37e">
+                <span>secondary</span>
+            </div>
+
+            <div class="seed-row">
+                <input type="text" id="seedInput" class="seed-input" value="zen42" placeholder="seed">
+                <button class="btn small" id="applySeed">🌱 apply</button>
+            </div>
+            <div style="margin-top: 20px; text-align: center; opacity: 0.8;">⬇️ click canvas to regenerate</div>
+        </div>
+    </div>
+
+    <!-- footer -->
+    <div class="footer-zen">
+        <span id="generationTag">🌀 seed: zen42 · 238 shapes</span>
+        <div class="download-btn" id="downloadBtn">
+            ⬇️ SAVE AS PNG
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const canvas = document.getElementById('zenCanvas');
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width, h = canvas.height;
+
+        // DOM elements
+        const complexitySlider = document.getElementById('complexity');
+        const complexityVal = document.getElementById('complexityVal');
+        const densitySlider = document.getElementById('density');
+        const densityVal = document.getElementById('densityVal');
+        const softnessSlider = document.getElementById('softness');
+        const softnessVal = document.getElementById('softnessVal');
+        const primaryColorInput = document.getElementById('primaryColor');
+        const secondaryColorInput = document.getElementById('secondaryColor');
+        const primaryBox = document.getElementById('primaryColorBox');
+        const secondaryBox = document.getElementById('secondaryColorBox');
+        const seedInput = document.getElementById('seedInput');
+        const applySeedBtn = document.getElementById('applySeed');
+        const randomizeBtn = document.getElementById('randomizeBtn');
+        const resetCanvasBtn = document.getElementById('resetCanvasBtn');
+        const generationTag = document.getElementById('generationTag');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // state
+        let seed = 42;          // numeric seed
+        let seedString = 'zen42';
+
+        // pseudo-random number generator with seed (mulberry32)
+        let rng = () => { seed = (seed + 0x9e3779b9) & 0xffffffff; let t = seed; t = Math.imul(t, 0x6c8e9cf7) ^ (t >>> 16); t = Math.imul(t, 0x9d38b3c3) ^ (t >>> 16); return (t >>> 0) / 0x100000000; };
+
+        // set seed from string
+        function setSeed(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+            }
+            seed = hash >>> 0;
+            seedString = str;
+            rng(); // advance once
+        }
+
+        // generate art based on current params and seed
+        function generateArt() {
+            // read sliders
+            const complexity = parseFloat(complexitySlider.value);   // number of "elements"
+            const density = parseFloat(densitySlider.value);         // density factor (strokes per element)
+            const softness = parseFloat(softnessSlider.value);       // blur/softness influence
+            const col1 = primaryColorInput.value;
+            const col2 = secondaryColorInput.value;
+
+            // update display boxes
+            primaryBox.style.backgroundColor = col1;
+            secondaryBox.style.backgroundColor = col2;
+
+            // reset canvas with light gradient background
+            ctx.clearRect(0, 0, w, h);
+            const grad = ctx.createLinearGradient(0, 0, w*0.6, h*0.8);
+            grad.addColorStop(0, '#f4f1e6');
+            grad.addColorStop(1, '#e4dfcd');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+
+            // draw soft layered circles / organic shapes
+            const primaryRgb = hexToRgb(col1);
+            const secondaryRgb = hexToRgb(col2);
+
+            // number of main forms (complexity)
+            const mainShapes = Math.floor(complexity / 2) + 8;
+            let shapeCount = 0;
+
+            for (let i = 0; i < mainShapes; i++) {
+                // random properties using seeded rng
+                const x = rng() * w;
+                const y = rng() * h;
+                const radiusBase = 30 + rng() * 120;
+                // use density to modulate secondary shapes
+                const subCount = Math.floor(density / 6) + 2 + Math.floor(rng() * 5);
+
+                for (let j = 0; j < subCount; j++) {
+                    const offsetX = (rng() - 0.5) * radiusBase * 0.9;
+                    const offsetY = (rng() - 0.5) * radiusBase * 0.9;
+                    const rad = radiusBase * (0.3 + rng() * 0.7);
+                    const mix = rng();
+                    // interpolate between primary and secondary
+                    const r = Math.floor(primaryRgb.r * (1 - mix) + secondaryRgb.r * mix);
+                    const g = Math.floor(primaryRgb.g * (1 - mix) + secondaryRgb.g * mix);
+                    const b = Math.floor(primaryRgb.b * (1 - mix) + secondaryRgb.b * mix);
+
+                    ctx.beginPath();
+                    ctx.arc(x + offsetX, y + offsetY, rad, 0, 2 * Math.PI);
+                    // set fill with opacity based on softness
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.2 + (softness/40)})`; // softness influence transparency
+                    ctx.filter = `blur(${softness * 0.6}px)`;
+                    ctx.fill();
+                    shapeCount++;
+
+                    // extra tiny dots if density high
+                    if (density > 40 && rng() > 0.6) {
+                        ctx.beginPath();
+                        ctx.arc(x + offsetX + (rng()-0.5)*25, y + offsetY + (rng()-0.5)*25, rad * 0.2, 0, 2*Math.PI);
+                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.5)`;
+                        ctx.filter = `blur(${softness * 0.3}px)`;
+                        ctx.fill();
+                        shapeCount++;
+                    }
+                }
+            }
+
+            // add some light flowing lines (zen)
+            ctx.filter = `blur(${softness * 0.5}px)`;
+            for (let k = 0; k < 6 + Math.floor(complexity/10); k++) {
+                ctx.beginPath();
+                const startX = rng() * w;
+                const startY = rng() * h;
+                const cp1x = startX + (rng()-0.5) * 150;
+                const cp1y = startY + (rng()-0.5) * 120;
+                const cp2x = startX + (rng()-0.5) * 200;
+                const cp2y = startY + (rng()-0.5) * 180;
+                const endX = rng() * w;
+                const endY = rng() * h;
+                ctx.moveTo(startX, startY);
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
+                ctx.strokeStyle = `rgba(80, 90, 100, 0.25)`;
+                ctx.lineWidth = 1.5 + rng() * 4;
+                ctx.stroke();
+                shapeCount++;
+            }
+
+            // reset filter
+            ctx.filter = 'none';
+
+            // update tag
+            generationTag.innerText = `🌀 seed: ${seedString} · ${shapeCount} gestalts`;
+        }
+
+        // utility: hex to rgb
+        function hexToRgb(hex) {
+            const shorthand = hex.length === 4;
+            let r = parseInt(shorthand ? hex[1]+hex[1] : hex.substring(1,3), 16);
+            let g = parseInt(shorthand ? hex[2]+hex[2] : hex.substring(3,5), 16);
+            let b = parseInt(shorthand ? hex[3]+hex[3] : hex.substring(5,7), 16);
+            return {r, g, b};
+        }
+
+        // update sliders labels
+        function updateLabels() {
+            complexityVal.textContent = complexitySlider.value;
+            densityVal.textContent = densitySlider.value;
+            softnessVal.textContent = parseFloat(softnessSlider.value).toFixed(1);
+        }
+
+        // attach events
+        complexitySlider.addEventListener('input', () => {
+            updateLabels();
+            generateArt();
+        });
+        densitySlider.addEventListener('input', () => {
+            updateLabels();
+            generateArt();
+        });
+        softnessSlider.addEventListener('input', () => {
+            updateLabels();
+            generateArt();
+        });
+
+        primaryColorInput.addEventListener('input', () => {
+            primaryBox.style.backgroundColor = primaryColorInput.value;
+            generateArt();
+        });
+        secondaryColorInput.addEventListener('input', () => {
+            secondaryBox.style.backgroundColor = secondaryColorInput.value;
+            generateArt();
+        });
+
+        // randomize all parameters & seed
+        randomizeBtn.addEventListener('click', () => {
+            // generate random seed string
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            let newSeed = '';
+            for (let i = 0; i < 6; i++) newSeed += chars[Math.floor(Math.random() * chars.length)];
+            seedInput.value = newSeed;
+            setSeed(newSeed);
+
+            complexitySlider.value = Math.floor(15 + Math.random() * 90);
+            densitySlider.value = Math.floor(8 + Math.random() * 60);
+            softnessSlider.value = (Math.random() * 14).toFixed(1);
+
+            // random colors
+            const randomColor1 = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            const randomColor2 = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            primaryColorInput.value = randomColor1;
+            secondaryColorInput.value = randomColor2;
+            primaryBox.style.backgroundColor = randomColor1;
+            secondaryBox.style.backgroundColor = randomColor2;
+
+            updateLabels();
+            generateArt();
+        });
+
+        applySeedBtn.addEventListener('click', () => {
+            const str = seedInput.value.trim() || 'seed';
+            setSeed(str);
+            generateArt();
+        });
+
+        resetCanvasBtn.addEventListener('click', () => {
+            // reset to default parameters
+            complexitySlider.value = 42;
+            densitySlider.value = 30;
+            softnessSlider.value = 6;
+            primaryColorInput.value = '#d8786a';
+            secondaryColorInput.value = '#5ba37e';
+            seedInput.value = 'zen42';
+            setSeed('zen42');
+            updateLabels();
+            generateArt();
+        });
+
+        // click canvas to regenerate (re-roll with same seed but adds variation)
+        canvas.addEventListener('click', () => {
+            // advance seed slightly to get new but deterministic variation
+            seed = (seed + 97) & 0xffffffff;  // shift
+            generateArt();
+        });
+
+        // download as PNG
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `zen-${seedString}-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // initial set seed and generate
+        setSeed('zen42');
+        updateLabels();
+        generateArt();
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☕ Coffee Vending Machine FSM</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #3e2723 0%, #5d4037 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .coffee-card {
+            background: #795548;
+            background-image: radial-gradient(circle at 20% 30%, #8b6b61, #4e3e36);
+            border-radius: 3rem 3rem 2rem 2rem;
+            padding: 2rem 2rem;
+            box-shadow: 0 40px 60px rgba(0,0,0,0.8), inset 0 2px 15px #fff3e0;
+            border: 4px solid #d7b89c;
+            max-width: 1100px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            margin: 0 0 1.5rem 0;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #ffecb3;
+            text-shadow: 0 5px 0 #8d6e63, 0 10px 20px #00000099;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        h1 span {
+            font-size: 3.2rem;
+            filter: drop-shadow(0 5px 2px #3e2723);
+        }
+        .machine-layout {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: stretch;
+            gap: 2rem;
+        }
+        /* Coffee machine display panel */
+        .machine-panel {
+            background: #2c221c;
+            border-radius: 2.5rem;
+            padding: 2rem 1.8rem;
+            box-shadow: inset 0 -5px 10px #0a0a0a, 0 20px 30px #00000099;
+            border: 3px solid #bcaaa4;
+            min-width: 280px;
+            flex: 1;
+        }
+        .screen {
+            background: #a1887f;
+            border-radius: 2rem;
+            padding: 1.5rem 1rem;
+            margin-bottom: 2rem;
+            border: 4px solid #5d4037;
+            box-shadow: inset 0 0 15px #3e2723;
+            text-align: center;
+        }
+        .status-icon {
+            font-size: 3.5rem;
+            line-height: 1;
+            filter: drop-shadow(0 4px 2px black);
+        }
+        .status-text {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ffd54f;
+            text-shadow: 0 3px 0 #bf360c;
+            background: #263238;
+            padding: 0.5rem 1rem;
+            border-radius: 3rem;
+            display: inline-block;
+            margin-top: 0.5rem;
+            letter-spacing: 1px;
+        }
+        .message-box {
+            background: #37474f;
+            color: #ffe0b2;
+            padding: 1rem;
+            border-radius: 2rem;
+            font-weight: 500;
+            font-size: 1.1rem;
+            border: 2px solid #ffb74d;
+            margin: 1.5rem 0;
+            text-align: center;
+            min-height: 4.5rem;
+        }
+        .coin-slot {
+            background: #455a64;
+            padding: 1rem;
+            border-radius: 2rem;
+            margin: 1rem 0;
+            border: 2px solid #ffb74d;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+        .coin-display {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 2px 0 #b8860b;
+        }
+        .progress-brew {
+            background: #263238;
+            height: 30px;
+            border-radius: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+            border: 2px solid #ffa726;
+        }
+        .brew-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #8d6e63, #d7ccc8);
+            transition: width 0.2s;
+            border-radius: 20px;
+        }
+        /* Coffee cups visual */
+        .coffee-cups {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .cup {
+            width: 60px;
+            height: 70px;
+            background: #efebe9;
+            border-radius: 0 0 30px 30px;
+            border: 4px solid #bcaaa4;
+            position: relative;
+            opacity: 0.5;
+            transition: all 0.2s;
+            box-shadow: 0 10px 10px rgba(0,0,0,0.3);
+        }
+        .cup:before {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 20px;
+            border: 4px solid #bcaaa4;
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            right: -20px;
+            top: 15px;
+            background: #d7ccc8;
+        }
+        .cup.available {
+            opacity: 1;
+            background: #ffe0b2;
+            border-color: #ffb74d;
+            box-shadow: 0 0 20px #ffb74d;
+        }
+        .cup.available:before {
+            background: #ffd180;
+            border-color: #ffb74d;
+        }
+        .cup.selected {
+            transform: scale(1.1);
+            border-color: #ffa726;
+            box-shadow: 0 0 30px #ffa726;
+        }
+        .control-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        .vm-btn {
+            background: #5d4037;
+            border: none;
+            border-radius: 2rem;
+            padding: 1rem 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ffe0b2;
+            box-shadow: 0 6px 0 #321f1a, 0 8px 15px black;
+            cursor: pointer;
+            transition: 0.05s linear;
+            border: 2px solid #d7a86e;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .vm-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 1px 0 #321f1a, 0 8px 15px black;
+        }
+        .vm-btn:disabled {
+            opacity: 0.4;
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #321f1a;
+            pointer-events: none;
+        }
+        .vm-btn.large {
+            grid-column: span 2;
+            background: #bf8f6b;
+            color: #2c221c;
+            font-size: 1.5rem;
+        }
+        .reset-btn {
+            background: #607d8b;
+            border-color: #b0bec5;
+            color: white;
+            margin-top: 1rem;
+            width: 100%;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            color: #ffe0b2;
+            background: #3e2723b0;
+            padding: 0.8rem;
+            border-radius: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="coffee-card">
+        <h1>
+            <span>☕</span> COFFEE VENDING FSM <span>🧋</span>
+        </h1>
+        
+        <div class="machine-layout">
+            <!-- Machine panel -->
+            <div class="machine-panel">
+                <div class="screen">
+                    <div class="status-icon" id="statusEmoji">⏳</div>
+                    <div class="status-text" id="stateName">IDLE</div>
+                </div>
+                
+                <div class="coin-slot">
+                    <span>💰 COINS:</span>
+                    <span class="coin-display" id="coinDisplay">$0.00</span>
+                </div>
+                
+                <div class="message-box" id="messageBox">
+                    Insert coin to start
+                </div>
+                
+                <div class="progress-brew">
+                    <div class="brew-fill" id="brewProgress"></div>
+                </div>
+                
+                <div class="coffee-cups">
+                    <div class="cup" id="cupEspresso" title="Espresso"></div>
+                    <div class="cup" id="cupLatte" title="Latte"></div>
+                    <div class="cup" id="cupCappuccino" title="Cappuccino"></div>
+                </div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="machine-panel">
+                <div style="text-align: center; color: #ffd180; font-size: 1.5rem; margin-bottom: 1rem;">⬇️ SELECTIONS ⬇️</div>
+                
+                <div class="control-buttons">
+                    <button class="vm-btn" id="btnCoin25">💰 +$0.25</button>
+                    <button class="vm-btn" id="btnCoin1">💰 +$1.00</button>
+                    <button class="vm-btn" id="btnEspresso" style="background:#8d6e63;">☕ ESPRESSO</button>
+                    <button class="vm-btn" id="btnLatte" style="background:#8d6e63;">🥛 LATTE</button>
+                    <button class="vm-btn" id="btnCappuccino" style="background:#8d6e63;">🍮 CAPPUCCINO</button>
+                    <button class="vm-btn" id="btnBrew">⚙️ BREW</button>
+                    <button class="vm-btn" id="btnCancel">✖️ CANCEL</button>
+                    <button class="vm-btn large" id="btnDispense">🥤 DISPENSE</button>
+                </div>
+                
+                <button class="vm-btn reset-btn" id="btnReset">↻ RESET MACHINE</button>
+                
+                <div style="margin-top: 1.5rem; background: #321f1a; padding: 0.8rem; border-radius: 2rem; color: #d7ccc8; font-size: 0.9rem; text-align: center;">
+                    <strong>FSM:</strong> IDLE → (coin) → SELECT → (choose) → BREWING → (brew complete) → READY → (dispense) → IDLE<br>
+                    CANCEL returns to IDLE (refund)
+                </div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <span>🟤 IDLE</span>
+            <span>🟡 SELECT</span>
+            <span>🔵 BREWING</span>
+            <span>🟢 READY</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- COFFEE VENDING MACHINE FSM ----------
+            const CoffeeFSM = {
+                states: {
+                    IDLE: 'IDLE',           // waiting for coins
+                    SELECT: 'SELECT',        // coin inserted, waiting for selection
+                    BREWING: 'BREWING',       // coffee brewing
+                    READY: 'READY'           // brewed, ready to dispense
+                },
+                
+                current: 'IDLE',
+                coins: 0.0,
+                selectedDrink: null,         // 'espresso', 'latte', 'cappuccino'
+                
+                // Drink prices
+                prices: {
+                    espresso: 1.50,
+                    latte: 2.25,
+                    cappuccino: 2.50
+                },
+                
+                // Transition table: currentState + event -> nextState
+                // Events: INSERT_COIN, SELECT_DRINK, START_BREW, BREW_COMPLETE, DISPENSE, CANCEL
+                transitions: {
+                    'IDLE_INSERT_COIN': 'SELECT',
+                    'IDLE_CANCEL': 'IDLE',      // cancel in idle does nothing (but we'll handle refund)
+                    
+                    'SELECT_INSERT_COIN': 'SELECT',   // can add more coins
+                    'SELECT_SELECT_DRINK': 'SELECT',   // stays in select, updates selection
+                    'SELECT_START_BREW': 'BREWING',    // only if drink selected and enough coins
+                    'SELECT_CANCEL': 'IDLE',           // refund, back to idle
+                    
+                    'BREWING_BREW_COMPLETE': 'READY',   // brewing finished
+                    'BREWING_CANCEL': 'BREWING',        // can't cancel during brewing
+                    
+                    'READY_DISPENSE': 'IDLE',           // dispense drink, back to idle
+                    'READY_CANCEL': 'IDLE',              // cancel also back to idle (but no refund? we'll handle)
+                    'READY_INSERT_COIN': 'READY'         // ignore coins when ready
+                },
+                
+                dispatch(event, data = null) {
+                    const from = this.current;
+                    const key = `${from}_${event}`;
+                    
+                    if (this.transitions.hasOwnProperty(key)) {
+                        return this.transitions[key];
+                    }
+                    return from; // invalid
+                },
+                
+                send(event, data = null) {
+                    const before = this.current;
+                    const after = this.dispatch(event, data);
+                    const changed = before !== after;
+                    
+                    this.current = after;
+                    
+                    return { changed, from: before, to: after };
+                },
+                
+                addCoin(amount) {
+                    this.coins = Math.round((this.coins + amount) * 100) / 100;
+                },
+                
+                refund() {
+                    const refundAmount = this.coins;
+                    this.coins = 0;
+                    return refundAmount;
+                },
+                
+                selectDrink(drink) {
+                    if (this.prices.hasOwnProperty(drink)) {
+                        this.selectedDrink = drink;
+                        return true;
+                    }
+                    return false;
+                },
+                
+                hasEnoughCoins() {
+                    if (!this.selectedDrink) return false;
+                    return this.coins >= this.prices[this.selectedDrink];
+                },
+                
+                deductPrice() {
+                    if (!this.selectedDrink) return false;
+                    const price = this.prices[this.selectedDrink];
+                    if (this.coins >= price) {
+                        this.coins = Math.round((this.coins - price) * 100) / 100;
+                        return true;
+                    }
+                    return false;
+                },
+                
+                reset(keepCoins = false) {
+                    this.current = 'IDLE';
+                    if (!keepCoins) this.coins = 0;
+                    this.selectedDrink = null;
+                }
+            };
+
+            // ---------- DOM Elements ----------
+            const statusEmoji = document.getElementById('statusEmoji');
+            const stateName = document.getElementById('stateName');
+            const coinDisplay = document.getElementById('coinDisplay');
+            const messageBox = document.getElementById('messageBox');
+            const brewProgress = document.getElementById('brewProgress');
+            
+            const cupEspresso = document.getElementById('cupEspresso');
+            const cupLatte = document.getElementById('cupLatte');
+            const cupCappuccino = document.getElementById('cupCappuccino');
+            
+            const btnCoin25 = document.getElementById('btnCoin25');
+            const btnCoin1 = document.getElementById('btnCoin1');
+            const btnEspresso = document.getElementById('btnEspresso');
+            const btnLatte = document.getElementById('btnLatte');
+            const btnCappuccino = document.getElementById('btnCappuccino');
+            const btnBrew = document.getElementById('btnBrew');
+            const btnCancel = document.getElementById('btnCancel');
+            const btnDispense = document.getElementById('btnDispense');
+            const btnReset = document.getElementById('btnReset');
+            
+            // Brewing simulation
+            let brewingInterval = null;
+            let brewTimeRemaining = 0;
+            const BREW_TIME = 3; // seconds
+            
+            // Helper: update UI based on current state
+            function updateUI() {
+                const state = CoffeeFSM.current;
+                const coins = CoffeeFSM.coins;
+                const drink = CoffeeFSM.selectedDrink;
+                
+                // Update coin display
+                coinDisplay.innerText = `$${coins.toFixed(2)}`;
+                
+                // Update state name and emoji
+                stateName.innerText = state;
+                
+                // Update emoji and message
+                switch(state) {
+                    case 'IDLE':
+                        statusEmoji.innerText = '⏳';
+                        messageBox.innerText = 'Insert coin to start';
+                        break;
+                    case 'SELECT':
+                        statusEmoji.innerText = '🪙';
+                        if (drink) {
+                            const price = CoffeeFSM.prices[drink].toFixed(2);
+                            const hasEnough = CoffeeFSM.hasEnoughCoins();
+                            messageBox.innerText = `Selected: ${drink} ($${price}) - ${hasEnough ? 'Ready to brew' : 'Need more coins'}`;
+                        } else {
+                            messageBox.innerText = 'Select your coffee';
+                        }
+                        break;
+                    case 'BREWING':
+                        statusEmoji.innerText = '⚙️';
+                        messageBox.innerText = `Brewing ${drink}... ${brewTimeRemaining.toFixed(1)}s`;
+                        break;
+                    case 'READY':
+                        statusEmoji.innerText = '✅';
+                        messageBox.innerText = `${drink} ready! Dispense now.`;
+                        break;
+                }
+                
+                // Update cup highlights
+                cupEspresso.classList.remove('available', 'selected');
+                cupLatte.classList.remove('available', 'selected');
+                cupCappuccino.classList.remove('available', 'selected');
+                
+                if (drink === 'espresso') cupEspresso.classList.add('selected');
+                if (drink === 'latte') cupLatte.classList.add('selected');
+                if (drink === 'cappuccino') cupCappuccino.classList.add('selected');
+                
+                // Show available drinks based on coins (in SELECT state)
+                if (state === 'SELECT') {
+                    if (CoffeeFSM.coins >= CoffeeFSM.prices.espresso) cupEspresso.classList.add('available');
+                    if (CoffeeFSM.coins >= CoffeeFSM.prices.latte) cupLatte.classList.add('available');
+                    if (CoffeeFSM.coins >= CoffeeFSM.prices.cappuccino) cupCappuccino.classList.add('available');
+                }
+                
+                // Update button states
+                updateButtons();
+            }
+            
+            function updateButtons() {
+                const state = CoffeeFSM.current;
+                
+                // Coins always enabled in IDLE and SELECT
+                btnCoin25.disabled = !(state === 'IDLE' || state === 'SELECT');
+                btnCoin1.disabled = !(state === 'IDLE' || state === 'SELECT');
+                
+                // Drink selection only in SELECT
+                btnEspresso.disabled = !(state === 'SELECT');
+                btnLatte.disabled = !(state === 'SELECT');
+                btnCappuccino.disabled = !(state === 'SELECT');
+                
+                // Brew enabled only in SELECT with drink selected and enough coins
+                btnBrew.disabled = !(state === 'SELECT' && CoffeeFSM.selectedDrink && CoffeeFSM.hasEnoughCoins());
+                
+                // Cancel enabled in SELECT and READY (and IDLE but does nothing)
+                btnCancel.disabled = !(state === 'SELECT' || state === 'READY' || state === 'IDLE');
+                
+                // Dispense only in READY
+                btnDispense.disabled = !(state === 'READY');
+            }
+            
+            // Brew simulation
+            function startBrewing() {
+                if (brewingInterval) clearInterval(brewingInterval);
+                
+                brewTimeRemaining = BREW_TIME;
+                brewProgress.style.width = '0%';
+                
+                brewingInterval = setInterval(() => {
+                    brewTimeRemaining -= 0.1;
+                    const percent = ((BREW_TIME - brewTimeRemaining) / BREW_TIME) * 100;
+                    brewProgress.style.width = `${Math.min(100, percent)}%`;
+                    
+                    if (brewTimeRemaining <= 0) {
+                        // Brew complete
+                        clearInterval(brewingInterval);
+                        brewingInterval = null;
+                        CoffeeFSM.send('BREW_COMPLETE');
+                        updateUI();
+                    } else {
+                        // Update message with remaining time
+                        if (CoffeeFSM.current === 'BREWING') {
+                            messageBox.innerText = `Brewing ${CoffeeFSM.selectedDrink}... ${brewTimeRemaining.toFixed(1)}s`;
+                        }
+                    }
+                }, 100);
+            }
+            
+            // Event handler
+            function handleEvent(eventType, data = null) {
+                const prevState = CoffeeFSM.current;
+                
+                // Special handling for coins
+                if (eventType === 'INSERT_COIN') {
+                    CoffeeFSM.addCoin(data);
+                    const result = CoffeeFSM.send('INSERT_COIN');
+                    
+                    // If we were in IDLE and moved to SELECT, UI updates
+                    if (result.changed || prevState === 'IDLE') {
+                        updateUI();
+                    } else {
+                        // Just update coins
+                        updateUI();
+                    }
+                    return;
+                }
+                
+                // Select drink
+                if (eventType === 'SELECT_DRINK') {
+                    if (CoffeeFSM.current === 'SELECT') {
+                        CoffeeFSM.selectDrink(data);
+                        const result = CoffeeFSM.send('SELECT_DRINK');
+                        updateUI();
+                    }
+                    return;
+                }
+                
+                // Start brew
+                if (eventType === 'START_BREW') {
+                    if (CoffeeFSM.current === 'SELECT' && CoffeeFSM.selectedDrink && CoffeeFSM.hasEnoughCoins()) {
+                        // Deduct price
+                        CoffeeFSM.deductPrice();
+                        const result = CoffeeFSM.send('START_BREW');
+                        updateUI();
+                        startBrewing();
+                    }
+                    return;
+                }
+                
+                // Dispense
+                if (eventType === 'DISPENSE') {
+                    if (CoffeeFSM.current === 'READY') {
+                        const result = CoffeeFSM.send('DISPENSE');
+                        CoffeeFSM.selectedDrink = null;
+                        updateUI();
+                    }
+                    return;
+                }
+                
+                // Cancel
+                if (eventType === 'CANCEL') {
+                    const result = CoffeeFSM.send('CANCEL');
+                    
+                    // Refund coins if leaving SELECT
+                    if (prevState === 'SELECT' && CoffeeFSM.current === 'IDLE') {
+                        const refund = CoffeeFSM.refund();
+                        messageBox.innerText = `Refunded $${refund.toFixed(2)}`;
+                    }
+                    
+                    // Clear selection
+                    CoffeeFSM.selectedDrink = null;
+                    
+                    // If brewing, stop
+                    if (brewingInterval) {
+                        clearInterval(brewingInterval);
+                        brewingInterval = null;
+                        brewProgress.style.width = '0%';
+                    }
+                    
+                    updateUI();
+                    return;
+                }
+                
+                // Default send
+                const result = CoffeeFSM.send(eventType);
+                updateUI();
+            }
+            
+            // Reset machine
+            function resetMachine() {
+                if (brewingInterval) {
+                    clearInterval(brewingInterval);
+                    brewingInterval = null;
+                }
+                CoffeeFSM.reset();
+                CoffeeFSM.selectedDrink = null;
+                brewProgress.style.width = '0%';
+                updateUI();
+                messageBox.innerText = 'Machine reset';
+            }
+            
+            // Initialize
+            function init() {
+                CoffeeFSM.reset();
+                updateUI();
+                
+                // Event listeners
+                btnCoin25.addEventListener('click', () => handleEvent('INSERT_COIN', 0.25));
+                btnCoin1.addEventListener('click', () => handleEvent('INSERT_COIN', 1.00));
+                btnEspresso.addEventListener('click', () => handleEvent('SELECT_DRINK', 'espresso'));
+                btnLatte.addEventListener('click', () => handleEvent('SELECT_DRINK', 'latte'));
+                btnCappuccino.addEventListener('click', () => handleEvent('SELECT_DRINK', 'cappuccino'));
+                btnBrew.addEventListener('click', () => handleEvent('START_BREW'));
+                btnCancel.addEventListener('click', () => handleEvent('CANCEL'));
+                btnDispense.addEventListener('click', () => handleEvent('DISPENSE'));
+                btnReset.addEventListener('click', resetMachine);
+            }
+            
+            init();
+        })();
+    </script>
+</body>
+</html>

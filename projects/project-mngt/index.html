@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowBoard · project suite</title>
+    <!-- google fonts & font awesome icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f4f7fc;
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* main dashboard card */
+        .dashboard {
+            width: 1440px;
+            max-width: 100%;
+            height: 100%;
+            max-height: 960px;
+            background: white;
+            border-radius: 36px;
+            box-shadow: 0 30px 60px rgba(0,20,40,0.20), 0 0 0 1px rgba(0,0,0,0.02) inset;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+        }
+
+        /* header with project title & actions */
+        .dashboard-header {
+            padding: 20px 30px;
+            background: #ffffffdd;
+            border-bottom: 1px solid #e9edf4;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .project-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .project-title i {
+            font-size: 2rem;
+            color: #3b7cff;
+            background: #e9efff;
+            padding: 10px;
+            border-radius: 18px;
+        }
+
+        .title-text h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .title-text span {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-left: 6px;
+        }
+
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-box {
+            background: #f1f5f9;
+            border-radius: 40px;
+            padding: 8px 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #5f6c86;
+        }
+
+        .search-box i {
+            font-size: 1rem;
+            color: #7c8ba0;
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            width: 200px;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: #1e2b48;
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 10px 22px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 5px 12px rgba(30,43,72,0.2);
+        }
+
+        .btn-primary:hover {
+            background: #2c3d62;
+            transform: scale(1.02);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid #cdd9e6;
+            color: #29435c;
+            padding: 10px 18px;
+            border-radius: 40px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.1s;
+        }
+
+        .btn-outline:hover {
+            background: #f0f7ff;
+            border-color: #7c9fd9;
+        }
+
+        /* main content grid */
+        .dashboard-main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            padding: 24px 30px 20px 30px;
+            gap: 28px;
+            background: #f9fcff;
+        }
+
+        /* left sidebar — projects list & team */
+        .left-panel {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .panel-card {
+            background: white;
+            border-radius: 26px;
+            padding: 20px 18px;
+            box-shadow: 0 8px 26px rgba(0, 20, 30, 0.06);
+            border: 1px solid #eef3f9;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #4b5a73;
+            margin-bottom: 18px;
+        }
+
+        .panel-title i {
+            color: #3b7cff;
+            font-size: 1.1rem;
+        }
+
+        .project-list {
+            list-style: none;
+        }
+
+        .project-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 4px;
+            border-radius: 14px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            transition: 0.1s;
+            color: #2f3c55;
+        }
+
+        .project-list li:hover {
+            background: #f1f7fe;
+        }
+
+        .project-list .active {
+            background: #e8f0fe;
+            font-weight: 600;
+            color: #1e3c7a;
+        }
+
+        .project-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+
+        .project-badge {
+            margin-left: auto;
+            background: #d9e2ef;
+            padding: 2px 8px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .team-members {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .member {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .member-avatar {
+            width: 38px;
+            height: 38px;
+            background: #cbdffc;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #17345c;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .member-role {
+            font-size: 0.75rem;
+            color: #677b9c;
+        }
+
+        .member-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 10px;
+            background: #2fc46b;
+        }
+
+        /* center column — KANBAN / TASK BOARD */
+        .board-panel {
+            flex: 1;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.02);
+            border: 1px solid #eef3f9;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .board-header {
+            padding: 22px 24px 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .board-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .board-header h2 i {
+            color: #3b7cff;
+            background: #edf3ff;
+            padding: 6px;
+            border-radius: 12px;
+        }
+
+        .add-task-btn {
+            background: #f0f4fe;
+            border: none;
+            color: #1e2b48;
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        /* columns container */
+        .columns {
+            display: flex;
+            gap: 16px;
+            padding: 16px 20px 20px 20px;
+            flex: 1;
+            overflow-x: auto;
+            align-items: flex-start;
+        }
+
+        .column {
+            background: #f8fafd;
+            border-radius: 24px;
+            min-width: 270px;
+            width: 270px;
+            display: flex;
+            flex-direction: column;
+            max-height: 100%;
+            border: 1px solid #e1eaf2;
+        }
+
+        .column-header {
+            padding: 18px 18px 10px 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .column-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .column-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 10px;
+            background: #3b7cff;
+        }
+
+        .column-count {
+            background: #dde5f0;
+            color: #2d405b;
+            padding: 3px 8px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .task-list {
+            padding: 6px 12px 16px 12px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px 14px;
+            box-shadow: 0 5px 14px rgba(0,0,0,0.02), 0 0 0 1px #e6ecf5 inset;
+            cursor: grab;
+            transition: 0.1s;
+            border-left: 4px solid transparent;
+        }
+
+        .task-card:hover {
+            box-shadow: 0 12px 22px rgba(0, 30, 60, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .task-card.high { border-left-color: #f97373; }
+        .task-card.medium { border-left-color: #f9b43a; }
+        .task-card.low { border-left-color: #6fc96f; }
+
+        .task-tags {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: #e6edf8;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #28456c;
+        }
+
+        .tag.blue { background: #d9e9ff; color: #1f509e; }
+        .tag.purple { background: #ede2ff; color: #5e3c9e; }
+
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .task-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #59748f;
+            font-size: 0.8rem;
+        }
+
+        .task-assignees {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .assignee-avatar {
+            width: 24px;
+            height: 24px;
+            background: #c9dffc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #122b4a;
+        }
+
+        /* right panel — activity & details */
+        .right-panel {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            background: #f0f5fe;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2a4e9e;
+        }
+
+        .activity-desc {
+            font-size: 0.9rem;
+        }
+
+        .activity-time {
+            font-size: 0.7rem;
+            color: #7792b0;
+            margin-top: 4px;
+        }
+
+        .progress-item {
+            margin-bottom: 18px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e5ecf5;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3b7cff;
+            width: 65%;
+            border-radius: 12px;
+        }
+
+        /* modal (hidden by default) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,10,30,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.15s;
+        }
+
+        .modal-overlay.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-card {
+            background: white;
+            width: 460px;
+            border-radius: 42px;
+            padding: 36px 40px;
+            box-shadow: 0 40px 70px rgba(0,0,0,0.4);
+        }
+
+        .modal-card h3 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 28px;
+        }
+
+        .modal-field {
+            margin-bottom: 22px;
+        }
+
+        .modal-field label {
+            font-weight: 500;
+            display: block;
+            margin-bottom: 6px;
+            color: #3f5170;
+        }
+
+        .modal-field input, .modal-field select {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #dee9f2;
+            border-radius: 24px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+
+        .modal-field input:focus {
+            border-color: #3b7cff;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background: #eef3fc;
+        }
+
+        .btn-create {
+            background: #1e2b48;
+            color: white;
+        }
+
+        /* drag visual (will be used by JS) */
+        .dragging {
+            opacity: 0.4;
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- header -->
+        <div class="dashboard-header">
+            <div class="project-title">
+                <i class="fas fa-square-poll-vertical"></i>
+                <div class="title-text">
+                    <h1>flowboard <span>· workspace</span></h1>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search tasks...">
+                </div>
+                <button class="btn-outline"><i class="fas fa-share-alt"></i> share</button>
+                <button class="btn-primary" id="newProjectBtn"><i class="fas fa-plus"></i> new project</button>
+            </div>
+        </div>
+        <!-- main area -->
+        <div class="dashboard-main">
+            <!-- left panel: projects & team -->
+            <div class="left-panel">
+                <div class="panel-card">
+                    <div class="panel-title"><i class="fas fa-layer-group"></i> my projects</div>
+                    <ul class="project-list">
+                        <li class="active"><span class="project-color" style="background:#3b7cff;"></span> Product launch <span class="project-badge">8</span></li>
+                        <li><span class="project-color" style="background:#f9b43a;"></span> Mobile app <span class="project-badge">12</span></li>
+                        <li><span class="project-color" style="background:#6fc96f;"></span> Marketing site <span class="project-badge">5</span></li>
+                        <li><span class="project-color" style="background:#b986f2;"></span> Q2 planning <span class="project-badge">3</span></li>
+                    </ul>
+                </div>
+                <div class="panel-card">
+                    <div class="panel-title"><i class="fas fa-users"></i> team</div>
+                    <div class="team-members">
+                        <div class="member">
+                            <div class="member-avatar">JD</div>
+                            <div class="member-info">
+                                <div class="member-name">Jessie Du</div>
+                                <div class="member-role">product lead</div>
+                            </div>
+                            <div class="member-status" style="background:#2fc46b;"></div>
+                        </div>
+                        <div class="member">
+                            <div class="member-avatar">MC</div>
+                            <div class="member-info">
+                                <div class="member-name">Marcus Chen</div>
+                                <div class="member-role">developer</div>
+                            </div>
+                            <div class="member-status" style="background:#f9b43a;"></div>
+                        </div>
+                        <div class="member">
+                            <div class="member-avatar">SR</div>
+                            <div class="member-info">
+                                <div class="member-name">Samira Roy</div>
+                                <div class="member-role">designer</div>
+                            </div>
+                            <div class="member-status" style="background:#2fc46b;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-card">
+                    <div class="panel-title"><i class="fas fa-clock"></i> upcoming</div>
+                    <div style="font-size:0.9rem; margin-bottom:6px;">Sprint 12 ends Fri</div>
+                    <div class="progress-bar" style="margin:8px 0 12px;"><div class="progress-fill" style="width:70%"></div></div>
+                    <div style="font-size:0.8rem; color:#596f8f;">4 tasks remaining</div>
+                </div>
+            </div>
+            <!-- center board (KANBAN) -->
+            <div class="board-panel" id="boardPanel">
+                <div class="board-header">
+                    <h2><i class="fas fa-list-check"></i> product launch · tasks</h2>
+                    <button class="add-task-btn" id="showAddTaskModalBtn"><i class="fas fa-plus"></i> add task</button>
+                </div>
+                <div class="columns" id="columnsContainer">
+                    <!-- column 1: To do -->
+                    <div class="column" data-status="todo">
+                        <div class="column-header">
+                            <div class="column-header-left"><span class="column-dot" style="background:#7b8ba0;"></span> to do</div>
+                            <span class="column-count" id="todoCount">3</span>
+                        </div>
+                        <div class="task-list" id="todoList">
+                            <div class="task-card high" draggable="true" data-id="task1" data-priority="high">
+                                <div class="task-tags"><span class="tag">design</span></div>
+                                <div class="task-title">Finalize landing page mockup</div>
+                                <div class="task-meta"><span><i class="far fa-calendar"></i> Apr 12</span><div class="task-assignees"><span class="assignee-avatar">SR</span></div></div>
+                            </div>
+                            <div class="task-card medium" draggable="true" data-id="task2">
+                                <div class="task-tags"><span class="tag purple">research</span></div>
+                                <div class="task-title">User testing recruitment</div>
+                                <div class="task-meta"><span><i class="far fa-calendar"></i> Apr 14</span><div class="task-assignees"><span class="assignee-avatar">MC</span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- column 2: In Progress -->
+                    <div class="column" data-status="progress">
+                        <div class="column-header">
+                            <div class="column-header-left"><span class="column-dot" style="background:#f9b43a;"></span> in progress</div>
+                            <span class="column-count" id="progressCount">2</span>
+                        </div>
+                        <div class="task-list" id="progressList">
+                            <div class="task-card high" draggable="true" data-id="task3">
+                                <div class="task-tags"><span class="tag blue">frontend</span></div>
+                                <div class="task-title">Implement analytics dashboard</div>
+                                <div class="task-meta"><span><i class="far fa-calendar"></i> Apr 10</span><div class="task-assignees"><span class="assignee-avatar">JD</span><span class="assignee-avatar">MC</span></div></div>
+                            </div>
+                            <div class="task-card low" draggable="true" data-id="task4">
+                                <div class="task-tags"><span class="tag">copy</span></div>
+                                <div class="task-title">Write release notes</div>
+                                <div class="task-meta"><span><i class="far fa-calendar"></i> Apr 15</span><div class="task-assignees"><span class="assignee-avatar">SR</span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- column 3: Review -->
+                    <div class="column" data-status="review">
+                        <div class="column-header">
+                            <div class="column-header-left"><span class="column-dot" style="background:#b986f2;"></span> review</div>
+                            <span class="column-count" id="reviewCount">1</span>
+                        </div>
+                        <div class="task-list" id="reviewList">
+                            <div class="task-card medium" draggable="true" data-id="task5">
+                                <div class="task-tags"><span class="tag">QA</span></div>
+                                <div class="task-title">Cross-browser testing</div>
+                                <div class="task-meta"><span><i class="far fa-calendar"></i> Apr 9</span><div class="task-assignees"><span class="assignee-avatar">MC</span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- column 4: Done -->
+                    <div class="column" data-status="done">
+                        <div class="column-header">
+                            <div class="column-header-left"><span class="column-dot" style="background:#6fc96f;"></span> done</div>
+                            <span class="column-count" id="doneCount">2</span>
+                        </div>
+                        <div class="task-list" id="doneList">
+                            <div class="task-card low" draggable="true" data-id="task6">
+                                <div class="task-tags"><span class="tag">brand</span></div>
+                                <div class="task-title">Logo assets pack</div>
+                                <div class="task-meta"><span><i class="far fa-calendar"></i> Apr 5</span><div class="task-assignees"><span class="assignee-avatar">SR</span></div></div>
+                            </div>
+                            <div class="task-card low" draggable="true" data-id="task7">
+                                <div class="task-tags"><span class="tag">plan</span></div>
+                                <div class="task-title">Sprint 11 retro</div>
+                                <div class="task-meta"><span><i class="far fa-calendar"></i> Apr 4</span><div class="task-assignees"><span class="assignee-avatar">JD</span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- right panel: activity + progress -->
+            <div class="right-panel">
+                <div class="panel-card">
+                    <div class="panel-title"><i class="fas fa-bolt"></i> recent activity</div>
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="fas fa-check"></i></div>
+                        <div><div class="activity-desc">Jessie completed "Logo assets"</div><div class="activity-time">1h ago</div></div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="fas fa-comment"></i></div>
+                        <div><div class="activity-desc">Marcus commented on #42</div><div class="activity-time">3h ago</div></div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="fas fa-plus"></i></div>
+                        <div><div class="activity-desc">Samira added "cross-browser test"</div><div class="activity-time">5h ago</div></div>
+                    </div>
+                </div>
+                <div class="panel-card">
+                    <div class="panel-title"><i class="fas fa-chart-simple"></i> milestones</div>
+                    <div class="progress-item">
+                        <div class="progress-label"><span>Design review</span><span>80%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-label"><span>Dev complete</span><span>45%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- modal for new task (hidden) -->
+        <div class="modal-overlay" id="taskModal">
+            <div class="modal-card">
+                <h3>create task</h3>
+                <div class="modal-field"><label>title</label><input type="text" id="taskTitleInput" placeholder="e.g., update homepage"></div>
+                <div class="modal-field"><label>priority</label><select id="taskPrioritySelect"><option value="low">low</option><option value="medium" selected>medium</option><option value="high">high</option></select></div>
+                <div class="modal-field"><label>status</label><select id="taskStatusSelect"><option value="todo">to do</option><option value="progress">in progress</option><option value="review">review</option><option value="done">done</option></select></div>
+                <div class="modal-actions"><button class="btn-cancel" id="cancelModalBtn">cancel</button><button class="btn-create" id="createTaskBtn">add task</button></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            // DOM references
+            const modal = document.getElementById('taskModal');
+            const addBtn = document.getElementById('showAddTaskModalBtn');
+            const cancelBtn = document.getElementById('cancelModalBtn');
+            const createBtn = document.getElementById('createTaskBtn');
+            const taskTitle = document.getElementById('taskTitleInput');
+            const taskPriority = document.getElementById('taskPrioritySelect');
+            const taskStatus = document.getElementById('taskStatusSelect');
+            const columns = {
+                todo: document.getElementById('todoList'),
+                progress: document.getElementById('progressList'),
+                review: document.getElementById('reviewList'),
+                done: document.getElementById('doneList')
+            };
+            const countSpans = {
+                todo: document.getElementById('todoCount'),
+                progress: document.getElementById('progressCount'),
+                review: document.getElementById('reviewCount'),
+                done: document.getElementById('doneCount')
+            };
+
+            // helper to update column counts
+            function updateCounts() {
+                for (let [status, list] of Object.entries(columns)) {
+                    if (list) {
+                        const cards = list.querySelectorAll('.task-card:not(.dragging)'); // ignore dragging duplicates
+                        countSpans[status].innerText = cards.length;
+                    }
+                }
+            }
+
+            // drag & drop (simple vanilla)
+            const allTasks = document.querySelectorAll('.task-card');
+            allTasks.forEach(task => {
+                task.addEventListener('dragstart', handleDragStart);
+                task.addEventListener('dragend', handleDragEnd);
+            });
+
+            function handleDragStart(e) {
+                e.dataTransfer.setData('text/plain', e.target.dataset.id);
+                e.target.classList.add('dragging');
+            }
+
+            function handleDragEnd(e) {
+                e.target.classList.remove('dragging');
+            }
+
+            // allow drop on column task-lists
+            for (let list of Object.values(columns)) {
+                list.addEventListener('dragover', (e) => e.preventDefault());
+                list.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const id = e.dataTransfer.getData('text/plain');
+                    const draggedElement = document.querySelector(`[data-id="${id}"]`);
+                    if (!draggedElement) return;
+
+                    // which column?
+                    const targetList = e.currentTarget;
+                    // remove from old parent
+                    draggedElement.remove();
+                    targetList.appendChild(draggedElement);
+                    // re-attach listeners? already have.
+                    updateCounts();
+                });
+            }
+
+            // modal toggle
+            function showModal() { modal.classList.add('show'); }
+            function hideModal() { modal.classList.remove('show'); }
+
+            addBtn.addEventListener('click', showModal);
+            cancelBtn.addEventListener('click', hideModal);
+
+            // create new task from modal
+            createBtn.addEventListener('click', () => {
+                const title = taskTitle.value.trim();
+                if (!title) return;
+                const priority = taskPriority.value; // low, medium, high
+                const status = taskStatus.value; // todo, progress, review, done
+
+                const newId = 'task_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+                const taskCard = document.createElement('div');
+                taskCard.className = `task-card ${priority}`;
+                taskCard.setAttribute('draggable', 'true');
+                taskCard.dataset.id = newId;
+                taskCard.innerHTML = `
+                    <div class="task-tags"><span class="tag">new</span></div>
+                    <div class="task-title">${escapeHtml(title)}</div>
+                    <div class="task-meta"><span><i class="far fa-calendar"></i> today</span><div class="task-assignees"><span class="assignee-avatar">JD</span></div></div>
+                `;
+                // drag events
+                taskCard.addEventListener('dragstart', handleDragStart);
+                taskCard.addEventListener('dragend', handleDragEnd);
+
+                // append to appropriate column list
+                if (columns[status]) {
+                    columns[status].appendChild(taskCard);
+                } else {
+                    columns.todo.appendChild(taskCard);
+                }
+
+                updateCounts();
+                hideModal();
+                taskTitle.value = ''; // reset
+            });
+
+            function escapeHtml(unsafe) {
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            // initial counts
+            updateCounts();
+
+            // optional: new project btn just hides for demo (vibe)
+            document.getElementById('newProjectBtn').addEventListener('click', ()=>{
+                alert('✨ project creation modal – demo flow');
+            });
+        })();
+    </script>
+</body>
+</html>

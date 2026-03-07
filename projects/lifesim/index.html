@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeSim · Conway's Game of Life</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #f4f9fe;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            color: #1c3849;
+        }
+
+        .game-card {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 70px;
+            box-shadow: 0 30px 60px -30px rgba(0,0,0,0.2), 0 0 0 1px #d0e3f2 inset;
+            padding: 2.5rem 2.5rem;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .title h1 {
+            font-size: 2.6rem;
+            font-weight: 500;
+            background: linear-gradient(145deg, #2e5a7a, #558bb5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title p {
+            color: #5d7e9c;
+            margin-top: 0.2rem;
+        }
+
+        .stats-panel {
+            display: flex;
+            gap: 1.5rem;
+            background: white;
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            border: 2px solid #cde0f0;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #6b8faf;
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1b5377;
+        }
+
+        /* grid container */
+        .grid-container {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+            background: white;
+            padding: 2rem;
+            border-radius: 50px;
+            border: 2px solid #cde0f0;
+            box-shadow: 0 15px 25px -20px rgba(0,0,0,0.1);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(30, 20px);
+            gap: 2px;
+            background: #d9e5f0;
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .cell {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.1s;
+            border: 1px solid #c0d2e3;
+        }
+
+        .cell.alive {
+            background: #2f6d97;
+            border-color: #1d4a6b;
+        }
+
+        .cell:hover {
+            background: #b8d3ec;
+        }
+
+        /* controls */
+        .control-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+
+        .btn {
+            background: white;
+            border: 3px solid #cde0f0;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            color: #2b6286;
+            cursor: pointer;
+            transition: 0.1s;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            background: #e1effa;
+            border-color: #7fa9cc;
+        }
+
+        .btn.primary {
+            background: #2f6d97;
+            border-color: #2f6d97;
+            color: white;
+        }
+
+        .btn.primary:hover {
+            background: #1e567b;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: white;
+            padding: 0.3rem 1.8rem;
+            border-radius: 50px;
+            border: 3px solid #cde0f0;
+        }
+
+        .speed-control label {
+            font-weight: 500;
+            color: #34678a;
+        }
+
+        .speed-control input {
+            width: 120px;
+        }
+
+        .footer {
+            text-align: center;
+            color: #6f91af;
+            margin-top: 2rem;
+        }
+
+        .pattern-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .pattern-chip {
+            background: white;
+            border: 2px solid #c1d9f0;
+            border-radius: 40px;
+            padding: 0.4rem 1.4rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #2d668b;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-card">
+        <div class="header">
+            <div class="title">
+                <h1>🧬 LifeSim</h1>
+                <p>Conway's Game of Life · interactive</p>
+            </div>
+            <div class="stats-panel">
+                <div class="stat-item">
+                    <span class="stat-label">generation</span>
+                    <span class="stat-value" id="genCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">alive</span>
+                    <span class="stat-value" id="aliveCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- grid -->
+        <div class="grid-container">
+            <div class="grid" id="grid"></div>
+        </div>
+
+        <!-- main controls -->
+        <div class="control-bar">
+            <button class="btn primary" id="startBtn">▶ start</button>
+            <button class="btn" id="pauseBtn">⏸ pause</button>
+            <button class="btn" id="clearBtn">✕ clear</button>
+            <button class="btn" id="randomBtn">🎲 random</button>
+            <button class="btn" id="stepBtn">⏩ step</button>
+        </div>
+
+        <!-- speed slider -->
+        <div class="speed-control">
+            <label>speed</label>
+            <input type="range" id="speedSlider" min="50" max="1000" value="200" step="10">
+            <span id="speedValue">200 ms</span>
+        </div>
+
+        <!-- preset patterns -->
+        <div class="pattern-bar">
+            <span class="pattern-chip" id="gliderBtn">glider</span>
+            <span class="pattern-chip" id="blinkerBtn">blinker</span>
+            <span class="pattern-chip" id="blockBtn">block</span>
+            <span class="pattern-chip" id="beaconBtn">beacon</span>
+            <span class="pattern-chip" id="gliderGunBtn">gosper gun</span>
+        </div>
+
+        <div class="footer">
+            ⚡ click cells to toggle · watch evolution
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ----- CONFIG -----
+            const ROWS = 20;
+            const COLS = 30;
+
+            // state
+            let grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            let generation = 0;
+            let isRunning = false;
+            let intervalId = null;
+            let speed = 200; // ms
+
+            // DOM elements
+            const gridEl = document.getElementById('grid');
+            const genSpan = document.getElementById('genCount');
+            const aliveSpan = document.getElementById('aliveCount');
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const randomBtn = document.getElementById('randomBtn');
+            const stepBtn = document.getElementById('stepBtn');
+            const speedSlider = document.getElementById('speedSlider');
+            const speedValue = document.getElementById('speedValue');
+
+            // pattern buttons
+            const gliderBtn = document.getElementById('gliderBtn');
+            const blinkerBtn = document.getElementById('blinkerBtn');
+            const blockBtn = document.getElementById('blockBtn');
+            const beaconBtn = document.getElementById('beaconBtn');
+            const gliderGunBtn = document.getElementById('gliderGunBtn');
+
+            // render grid
+            function renderGrid() {
+                let html = '';
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        const aliveClass = grid[r][c] ? 'alive' : '';
+                        html += `<div class="cell ${aliveClass}" data-row="${r}" data-col="${c}"></div>`;
+                    }
+                }
+                gridEl.innerHTML = html;
+
+                // update stats
+                const alive = grid.flat().filter(v => v === 1).length;
+                aliveSpan.innerText = alive;
+                genSpan.innerText = generation;
+            }
+
+            // count live neighbors
+            function countNeighbors(row, col) {
+                let count = 0;
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        const nr = (row + dr + ROWS) % ROWS;
+                        const nc = (col + dc + COLS) % COLS;
+                        count += grid[nr][nc];
+                    }
+                }
+                return count;
+            }
+
+            // compute next generation
+            function nextGeneration() {
+                const newGrid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        const neighbors = countNeighbors(r, c);
+                        if (grid[r][c] === 1) {
+                            // cell alive
+                            if (neighbors === 2 || neighbors === 3) {
+                                newGrid[r][c] = 1;
+                            } else {
+                                newGrid[r][c] = 0;
+                            }
+                        } else {
+                            // cell dead
+                            if (neighbors === 3) {
+                                newGrid[r][c] = 1;
+                            }
+                        }
+                    }
+                }
+                grid = newGrid;
+                generation++;
+                renderGrid();
+            }
+
+            // start simulation
+            function startSim() {
+                if (isRunning) return;
+                isRunning = true;
+                if (intervalId) clearInterval(intervalId);
+                intervalId = setInterval(() => {
+                    nextGeneration();
+                }, speed);
+            }
+
+            // pause simulation
+            function pauseSim() {
+                isRunning = false;
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+            }
+
+            // clear grid
+            function clearGrid() {
+                pauseSim();
+                grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+                generation = 0;
+                renderGrid();
+            }
+
+            // randomize grid
+            function randomGrid() {
+                pauseSim();
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        grid[r][c] = Math.random() > 0.7 ? 1 : 0;
+                    }
+                }
+                generation = 0;
+                renderGrid();
+            }
+
+            // toggle cell on click (delegation)
+            gridEl.addEventListener('click', (e) => {
+                const cell = e.target.closest('.cell');
+                if (!cell) return;
+                if (isRunning) pauseSim();
+                const row = parseInt(cell.getAttribute('data-row'));
+                const col = parseInt(cell.getAttribute('data-col'));
+                grid[row][col] = grid[row][col] ? 0 : 1;
+                renderGrid();
+            });
+
+            // speed slider
+            speedSlider.addEventListener('input', (e) => {
+                speed = parseInt(e.target.value);
+                speedValue.innerText = speed + ' ms';
+                if (isRunning) {
+                    // restart interval with new speed
+                    pauseSim();
+                    startSim();
+                }
+            });
+
+            // button listeners
+            startBtn.addEventListener('click', startSim);
+            pauseBtn.addEventListener('click', pauseSim);
+            clearBtn.addEventListener('click', clearGrid);
+            randomBtn.addEventListener('click', randomGrid);
+            stepBtn.addEventListener('click', () => {
+                if (isRunning) pauseSim();
+                nextGeneration();
+            });
+
+            // patterns
+            gliderBtn.addEventListener('click', () => {
+                clearGrid();
+                // glider pattern
+                const pattern = [
+                    [1, 2], [2, 3], [3, 1], [3, 2], [3, 3]
+                ];
+                pattern.forEach(([r, c]) => {
+                    if (r < ROWS && c < COLS) grid[r][c] = 1;
+                });
+                renderGrid();
+            });
+
+            blinkerBtn.addEventListener('click', () => {
+                clearGrid();
+                // blinker (period 2 oscillator)
+                const r = 10, c = 15;
+                grid[r][c] = 1;
+                grid[r][c+1] = 1;
+                grid[r][c+2] = 1;
+                renderGrid();
+            });
+
+            blockBtn.addEventListener('click', () => {
+                clearGrid();
+                // block (still life)
+                const r = 10, c = 15;
+                grid[r][c] = 1;
+                grid[r][c+1] = 1;
+                grid[r+1][c] = 1;
+                grid[r+1][c+1] = 1;
+                renderGrid();
+            });
+
+            beaconBtn.addEventListener('click', () => {
+                clearGrid();
+                // beacon (period 2 oscillator)
+                const r = 8, c = 12;
+                grid[r][c] = 1;
+                grid[r][c+1] = 1;
+                grid[r+1][c] = 1;
+                grid[r+1][c+1] = 1;
+                grid[r+2][c+2] = 1;
+                grid[r+2][c+3] = 1;
+                grid[r+3][c+2] = 1;
+                grid[r+3][c+3] = 1;
+                renderGrid();
+            });
+
+            gliderGunBtn.addEventListener('click', () => {
+                clearGrid();
+                // simplified gosper glider gun (smaller version fits in 20x30)
+                const gun = [
+                    [5,1], [5,2], [6,1], [6,2],
+                    [5,11], [6,11], [7,11], [4,12], [8,12], [3,13], [9,13], [3,14], [9,14], [6,15], [4,16], [8,16], [5,17], [6,17], [7,17], [6,18],
+                    [3,21], [4,21], [5,21], [3,22], [4,22], [5,22], [2,23], [6,23], [1,25], [2,25], [6,25], [7,25]
+                ];
+                gun.forEach(([r, c]) => {
+                    if (r < ROWS && c < COLS) grid[r][c] = 1;
+                });
+                renderGrid();
+            });
+
+            // initial random
+            randomGrid();
+        })();
+    </script>
+</body>
+</html>

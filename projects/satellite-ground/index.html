@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Ground Track · Live Geo-Location from Space</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: black;
+        }
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(8, 15, 30, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 18px 28px;
+            border-radius: 50px;
+            border: 1px solid rgba(100, 180, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(0,20,80,0.6);
+            z-index: 20;
+            pointer-events: none;
+            letter-spacing: 0.3px;
+        }
+        #sat-name {
+            font-weight: 600;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #aaccff, #88ddff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: 12px;
+        }
+        #coord-box {
+            background: rgba(0, 40, 80, 0.6);
+            padding: 6px 16px;
+            border-radius: 40px;
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 1.2rem;
+            border-left: 3px solid #3eb0ff;
+            font-weight: 500;
+        }
+        #live-badge {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #33ff99;
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 15px #00ff80;
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); background: #88ffaa; }
+            100% { opacity: 0.8; transform: scale(1); }
+        }
+        .bottom-stats {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            color: #ccddee;
+            background: rgba(10, 10, 25, 0.7);
+            backdrop-filter: blur(5px);
+            padding: 14px 24px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            border: 1px solid #336699;
+            z-index: 20;
+            font-family: monospace;
+            line-height: 1.6;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+        }
+        .bottom-stats span {
+            color: #88ddff;
+            font-weight: 600;
+        }
+        .status-light {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #3eb0ff;
+            margin-right: 6px;
+            box-shadow: 0 0 12px #3eb0ff;
+        }
+        .legend {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            color: #aaa;
+            font-size: 12px;
+            background: rgba(0,0,0,0.4);
+            padding: 6px 15px;
+            border-radius: 20px;
+            border: 1px solid #2a4a6a;
+            z-index: 20;
+        }
+    </style>
+    <!-- Import Three.js and add-ons -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="info-panel">
+        <span id="sat-name">🛰️ ISS (SIMULATED TRACK)</span>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span id="live-badge"></span>
+            <span style="color:#b0d0ff;">current sub-satellite point</span>
+        </div>
+        <div id="coord-box">
+            <span id="lat-display">0.00° N</span> · 
+            <span id="lon-display">0.00° E</span>
+        </div>
+    </div>
+    
+    <div class="bottom-stats">
+        <div><span class="status-light"></span> GROUND TRACK (last 2 orbits)</div>
+        <div style="display: flex; justify-content: space-between; gap: 30px; margin-top: 8px;">
+            <div>🜨 altitude <span id="alt-value">408</span> km</div>
+            <div>⏱️ period <span id="period-value">92.7</span> min</div>
+        </div>
+        <div style="margin-top: 8px; color:#88aadd;">↓ next passes: Nairobi · Perth · Santiago</div>
+    </div>
+    
+    <div class="legend">
+        ⚡ yellow dot: satellite · white dashed line: ground track · cyan circle: communication horizon
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        
+        // --- setup scene ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x03030f);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(10, 5, 15);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+        
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+        
+        // --- controls ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = false;
+        controls.enableZoom = true;
+        controls.maxDistance = 30;
+        controls.minDistance = 8;
+        controls.enablePan = true;
+        
+        // --- lighting ---
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+        
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.3);
+        sunLight.position.set(10, 15, 10);
+        scene.add(sunLight);
+        
+        const backLight = new THREE.DirectionalLight(0x446688, 0.5);
+        backLight.position.set(-10, -5, -10);
+        scene.add(backLight);
+        
+        // --- stars (simple particle field) ---
+        const starsGeo = new THREE.BufferGeometry();
+        const starsCount = 2500;
+        const starsPos = new Float32Array(starsCount * 3);
+        for (let i = 0; i < starsCount * 3; i += 3) {
+            const r = 70 + Math.random() * 60;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            starsPos[i] = Math.sin(phi) * Math.cos(theta) * r;
+            starsPos[i+1] = Math.sin(phi) * Math.sin(theta) * r;
+            starsPos[i+2] = Math.cos(phi) * r;
+        }
+        starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos, 3));
+        const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.2, transparent: true });
+        const stars = new THREE.Points(starsGeo, starsMat);
+        scene.add(stars);
+        
+        // --- Earth sphere (high-res) ---
+        const earthGeo = new THREE.SphereGeometry(5, 80, 80);
+        const texLoader = new THREE.TextureLoader();
+        const earthMap = texLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
+        const earthSpec = texLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg');
+        const earthNorm = texLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg');
+        const cloudMap = texLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png');
+        
+        const earthMat = new THREE.MeshPhongMaterial({
+            map: earthMap,
+            specularMap: earthSpec,
+            specular: new THREE.Color(0x333333),
+            shininess: 5,
+            normalMap: earthNorm
+        });
+        const earth = new THREE.Mesh(earthGeo, earthMat);
+        earth.rotation.y = 4.2;
+        scene.add(earth);
+        
+        // clouds
+        const cloudGeo = new THREE.SphereGeometry(5.03, 80, 80);
+        const cloudMat = new THREE.MeshPhongMaterial({
+            map: cloudMap,
+            transparent: true,
+            opacity: 0.2,
+            blending: THREE.AdditiveBlending,
+            side: THREE.DoubleSide
+        });
+        const clouds = new THREE.Mesh(cloudGeo, cloudMat);
+        clouds.rotation.y = 4.2;
+        scene.add(clouds);
+        
+        // --- Atmosphere glow ---
+        const atmosGeo = new THREE.SphereGeometry(5.15, 64, 64);
+        const atmosMat = new THREE.MeshPhongMaterial({
+            color: 0x2266aa,
+            transparent: true,
+            opacity: 0.07,
+            side: THREE.BackSide
+        });
+        const atmos = new THREE.Mesh(atmosGeo, atmosMat);
+        scene.add(atmos);
+        
+        // --- Satellite marker (small yellow sphere) and its position label ---
+        const satGroup = new THREE.Group();
+        const satDotGeo = new THREE.SphereGeometry(0.25, 16, 16);
+        const satDotMat = new THREE.MeshStandardMaterial({ color: 0xffcc00, emissive: 0xaa5500 });
+        const satDot = new THREE.Mesh(satDotGeo, satDotMat);
+        satGroup.add(satDot);
+        
+        // Add a glow sprite (tiny point light effect)
+        const satGlowGeo = new THREE.SphereGeometry(0.4, 8, 8);
+        const satGlowMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.3 });
+        const satGlow = new THREE.Mesh(satGlowGeo, satGlowMat);
+        satGroup.add(satGlow);
+        
+        scene.add(satGroup);
+        
+        // CSS2D label for satellite
+        const satLabelDiv = document.createElement('div');
+        satLabelDiv.textContent = '🛰️ SATELLITE';
+        satLabelDiv.style.color = '#ffdd88';
+        satLabelDiv.style.background = '#1a2639';
+        satLabelDiv.style.border = '2px solid #ffaa33';
+        satLabelDiv.style.borderRadius = '20px';
+        satLabelDiv.style.padding = '4px 14px';
+        satLabelDiv.style.fontWeight = 'bold';
+        satLabelDiv.style.fontSize = '14px';
+        satLabelDiv.style.boxShadow = '0 0 25px #ffaa00';
+        satLabelDiv.style.backdropFilter = 'blur(4px)';
+        satLabelDiv.style.whiteSpace = 'nowrap';
+        const satLabel = new CSS2DObject(satLabelDiv);
+        satGroup.add(satLabel); // label moves with group
+        
+        // --- Ground track (line of past/future positions) ---
+        const trackPoints = [];
+        const trackLength = 180; // number of samples
+        for (let i = 0; i < trackLength; i++) {
+            trackPoints.push(new THREE.Vector3(0,0,0));
+        }
+        const trackGeo = new THREE.BufferGeometry().setFromPoints(trackPoints);
+        const trackMat = new THREE.LineBasicMaterial({ color: 0x88ccff, opacity: 0.7, transparent: true });
+        const trackLine = new THREE.Line(trackGeo, trackMat);
+        scene.add(trackLine);
+        
+        // --- Communication footprint (circle on ground) ---
+        const footprintPoints = [];
+        const segments = 64;
+        for (let i = 0; i <= segments; i++) {
+            footprintPoints.push(new THREE.Vector3(0,0,0));
+        }
+        const footprintGeo = new THREE.BufferGeometry().setFromPoints(footprintPoints);
+        const footprintMat = new THREE.LineBasicMaterial({ color: 0x33ccff, opacity: 0.35, transparent: true });
+        const footprintLine = new THREE.LineLoop(footprintGeo, footprintMat);
+        scene.add(footprintLine);
+        
+        // Also a filled semicircle? no, line is cleaner.
+        
+        // --- ground station markers (static cities for context) ---
+        function createCityLabel(name, lat, lon, color = '#66ccff') {
+            const phi = (90 - lat) * Math.PI / 180;
+            const theta = lon * Math.PI / 180;
+            const r = 5.1;
+            const pos = new THREE.Vector3(
+                r * Math.sin(phi) * Math.cos(theta),
+                r * Math.cos(phi),
+                r * Math.sin(phi) * Math.sin(theta)
+            );
+            
+            const div = document.createElement('div');
+            div.textContent = name;
+            div.style.color = 'white';
+            div.style.background = 'rgba(10,20,40,0.8)';
+            div.style.border = `1px solid ${color}`;
+            div.style.borderRadius = '16px';
+            div.style.padding = '2px 12px';
+            div.style.fontSize = '12px';
+            div.style.fontWeight = '500';
+            div.style.backdropFilter = 'blur(2px)';
+            const label = new CSS2DObject(div);
+            label.position.copy(pos);
+            scene.add(label);
+            
+            // tiny dot
+            const dotGeo = new THREE.SphereGeometry(0.06, 6);
+            const dotMat = new THREE.MeshStandardMaterial({ color: color, emissive: color });
+            const dot = new THREE.Mesh(dotGeo, dotMat);
+            dot.position.copy(pos.clone().normalize().multiplyScalar(5.06));
+            scene.add(dot);
+        }
+        
+        // Add a few cities
+        createCityLabel('NYC', 40.7, -74.0, '#88aaff');
+        createCityLabel('LONDON', 51.5, -0.1, '#ffaa88');
+        createCityLabel('TOKYO', 35.7, 139.7, '#88ffaa');
+        createCityLabel('SYDNEY', -33.9, 151.2, '#ff88cc');
+        createCityLabel('NAIROBI', -1.28, 36.82, '#ffdd44');
+        createCityLabel('SANTIAGO', -33.45, -70.67, '#44ddff');
+        
+        // --- Utility: convert lat/lon (deg) to position on sphere radius R ---
+        function latLonToPos(lat, lon, R) {
+            const phi = (90 - lat) * Math.PI / 180;
+            const theta = lon * Math.PI / 180;
+            return new THREE.Vector3(
+                R * Math.sin(phi) * Math.cos(theta),
+                R * Math.cos(phi),
+                R * Math.sin(phi) * Math.sin(theta)
+            );
+        }
+        
+        // --- Satellite orbit parameters (simplified low inclination) ---
+        let orbitTime = 0;
+        const speed = 0.005; // orbit speed
+        const altitude = 0.85; // distance from surface: earth radius 5, so total radius ~5.85
+        const satRadius = 5 + 0.85; // ~5.85
+        const inclination = 0.5; // radians (~28 deg)
+        
+        // Ascending node offset
+        const nodeLongitude = 1.2;
+        
+        // Arrays to store historical positions for ground track (relative to earth's rotation)
+        const history = [];
+        const maxHistory = 180;
+        
+        // To handle earth rotation, we need to rotate positions back by earth's rotation.
+        // We'll keep a static earth (no rotation) and move the satellite in a fixed orbit,
+        // then rotate the whole scene's earth to simulate rotation? Actually easier:
+        // We simulate satellite motion in an inertial frame, then apply earth rotation to the ground track.
+        // But for simplicity, we'll make satellite orbit fixed and earth rotate under it.
+        // That means we rotate earth slowly, and compute ground track in earth-fixed coordinates.
+        
+        // Let's do: earth rotates at constant speed. Satellite orbit is fixed in inertial space.
+        // Ground track = intersection of vector (satPosition) with earth surface, then rotate by earth rotation.
+        // But for visual simplicity, we will move the satellite in a path that already includes earth rotation?
+        // Better for demo: make a pretty pattern: we manually adjust to get a repeating ground track.
+        
+        // We'll implement a simple circular orbit with fixed inclination, and earth rotation speed = 0.004.
+        // Satellite angular speed = 0.02 (faster than earth).
+        
+        let earthRotationAngle = 4.2; // initial
+        
+        // --- Update loop ---
+        function updateSatellite() {
+            orbitTime += speed;
+            
+            // Satellite position in orbit (inclined)
+            const satX = satRadius * Math.cos(orbitTime);
+            const satY = satRadius * Math.sin(orbitTime) * Math.sin(inclination);
+            const satZ = satRadius * Math.sin(orbitTime) * Math.cos(inclination);
+            
+            // Rotate by node longitude (so ground track crosses different longitudes)
+            const rotNode = new THREE.Matrix4().makeRotationY(nodeLongitude);
+            const satPos = new THREE.Vector3(satX, satY, satZ).applyMatrix4(rotNode);
+            
+            // Update satellite group position
+            satGroup.position.copy(satPos);
+            
+            // Compute sub-satellite point (lat/lon) in earth-fixed coordinates, accounting for earth rotation.
+            // First, get vector from earth center to satellite.
+            const vec = satPos.clone().normalize();
+            
+            // Convert to lat/lon (inertial frame)
+            const latRad = Math.asin(vec.y);
+            const lonInertial = Math.atan2(vec.z, vec.x);
+            
+            // Apply earth rotation: earth rotates positively eastwards, so longitude decreases if earth rotates under satellite.
+            // We'll simulate earth rotation by subtracting a time-varying angle from the inertial longitude.
+            const earthRotationSpeed = 0.003;
+            earthRotationAngle += earthRotationSpeed; // earth rotates eastward
+            
+            // Ground track longitude in earth-fixed frame: 
+            let lonFixed = lonInertial - earthRotationAngle;
+            
+            // Normalize to -PI .. PI
+            lonFixed = ((lonFixed + Math.PI) % (2*Math.PI)) - Math.PI;
+            
+            const latDeg = latRad * 180 / Math.PI;
+            const lonDeg = lonFixed * 180 / Math.PI;
+            
+            // Update HTML displays
+            document.getElementById('lat-display').innerHTML = `${Math.abs(latDeg).toFixed(2)}° ${latDeg>=0?'N':'S'}`;
+            document.getElementById('lon-display').innerHTML = `${Math.abs(lonDeg).toFixed(2)}° ${lonDeg>=0?'E':'W'}`;
+            
+            // --- Update ground track history (earth-fixed coordinates) ---
+            // Store position on earth surface (radius 5) in earth-fixed frame.
+            // But we need to visualize track on the earth sphere. Since earth rotates, we need to draw track relative to earth.
+            // Easiest: we rotate the track points inversely to earth rotation? Or we update track points in earth-fixed coords each frame.
+            // We'll maintain an array of lat/lon in earth-fixed frame, then convert to world positions each frame.
+            
+            const surfacePos = latLonToPos(latDeg, lonDeg, 5.1); // slightly above surface
+            
+            // Add to history (cyclic buffer)
+            history.push(surfacePos.clone());
+            if (history.length > maxHistory) history.shift();
+            
+            // Update track line geometry
+            const points = history.map(p => p.clone()); // already world positions? careful: earth rotation moves them.
+            // But our surfacePos is computed in world coordinates (earth rotated). However earth itself is rotated by earth.rotation.y.
+            // We must match earth's rotation. Our earth.rotation.y is set to 4.2 initially and we are incrementing earthRotationAngle separately.
+            // For consistency, we should rotate earth object by earthRotationAngle.
+            earth.rotation.y = earthRotationAngle + 4.2; // offset for initial look
+            clouds.rotation.y = earth.rotation.y;
+            atmos.rotation.y = earth.rotation.y;
+            
+            // Now, the ground track points need to be rotated with earth? Actually they are already in earth-fixed coordinates, 
+            // but if we rotate earth, the track points (which are positioned in world space) would need to rotate with earth to stay aligned.
+            // Since we are rotating earth, we need to rotate the track points by the same amount around Y.
+            // Let's store points in an earth-fixed frame relative to a reference, then apply earth rotation.
+            // Simpler: don't rotate earth object automatically; instead rotate the whole scene? No.
+            // To avoid complexity, we'll keep earth static and rotate the satellite orbit to simulate earth rotation. That's what we did: we adjusted lonFixed.
+            // But then track points need to be placed on a static earth. So earth object should NOT rotate. We'll set earth.rotation.y = constant.
+            
+            // Reset earth rotation to constant (we won't rotate the earth object, we rotate the orbit's longitude).
+            earth.rotation.y = 4.2;
+            clouds.rotation.y = 4.2;
+            atmos.rotation.y = 4.2;
+            
+            // Now track points are in world coordinates relative to static earth, correct.
+            // Update track line with history points (already world coords on surface)
+            if (history.length > 1) {
+                const trackGeo = new THREE.BufferGeometry().setFromPoints(history);
+                trackLine.geometry.dispose();
+                trackLine.geometry = trackGeo;
+            }
+            
+            // --- Communication footprint ---
+            // Calculate horizon distance: for altitude ~0.85, earth radius 5, angular radius = acos(5/5.85) ≈ 0.54 rad ≈ 31°.
+            const angleHoriz = Math.acos(5 / satRadius); // ~0.54 rad
+            const footprintRadius = 5 * Math.sin(angleHoriz); // radius of circle on surface
+            const centerVec = satPos.clone().normalize().multiplyScalar(5); // point on surface directly below
+            
+            // Build a circle in the plane perpendicular to radial direction
+            const circlePoints = [];
+            const ortho1 = new THREE.Vector3(1,0,0).cross(satPos).normalize();
+            const ortho2 = satPos.clone().cross(ortho1).normalize();
+            
+            for (let i = 0; i <= segments; i++) {
+                const theta = (i / segments) * Math.PI * 2;
+                const offset = ortho1.clone().multiplyScalar(Math.cos(theta) * footprintRadius)
+                               .add(ortho2.clone().multiplyScalar(Math.sin(theta) * footprintRadius));
+                const pos = centerVec.clone().add(offset);
+                // project onto sphere (normalize to radius 5)
+                pos.normalize().multiplyScalar(5);
+                circlePoints.push(pos);
+            }
+            const footprintGeo = new THREE.BufferGeometry().setFromPoints(circlePoints);
+            footprintLine.geometry.dispose();
+            footprintLine.geometry = footprintGeo;
+            
+            // Position the satellite label offset
+            satLabel.position.set(0, 0.6, 0); // above the dot
+        }
+        
+        // --- Animation loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            updateSatellite();
+            
+            controls.update();
+            
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // --- resize handler ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Initial history seeding (optional)
+        for (let i = 0; i < 30; i++) {
+            orbitTime = i * 0.2;
+            updateSatellite(); // this will push to history but also advance time; we reset time later
+        }
+        orbitTime = 0;
+        history.length = 0; // clear and refill with proper initial
+        for (let i = 0; i < 60; i++) {
+            orbitTime = i * 0.15;
+            updateSatellite();
+        }
+        orbitTime = 60 * 0.15; // continue from there
+        
+        // Some dummy altitude display
+        setInterval(() => {
+            // randomize a bit for effect
+            document.getElementById('alt-value').innerHTML = (408 + Math.floor(Math.random()*20 - 10)).toString();
+        }, 4000);
+    </script>
+</body>
+</html>

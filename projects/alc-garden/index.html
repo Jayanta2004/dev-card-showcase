@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌿 The Alchemist's Garden</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1d3b1a;
+            background-image: linear-gradient(45deg, #2b5a2b 25%, transparent 25%),
+                              linear-gradient(-45deg, #2b5a2b 25%, transparent 25%);
+            background-size: 60px 60px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Cormorant Garamond', 'Georgia', serif;
+        }
+        
+        .greenhouse {
+            width: 1000px;
+            background: #e8f0e0;
+            background: linear-gradient(145deg, #c0d8b0, #e0f0d0);
+            border-radius: 80px 80px 40px 40px;
+            padding: 40px;
+            box-shadow: 0 30px 40px #0f2b0f, inset 0 0 0 8px #b8c8a8, inset 0 0 0 12px #8fa87f;
+            border: 4px solid #6b8e4c;
+            position: relative;
+        }
+        
+        .greenhouse::before {
+            content: "🌱";
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 60px;
+            filter: drop-shadow(0 10px 5px #1a3a1a);
+        }
+        
+        .garden-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .plot {
+            aspect-ratio: 1;
+            background: #7c5e3a;
+            background: radial-gradient(circle at 30% 30%, #8b6b45, #5a4025);
+            border-radius: 60% 60% 30% 30%;
+            border: 8px solid #4a3520;
+            box-shadow: inset 0 -20px 0 #3a2a18, 0 15px 0 #2a1e10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .plot:hover {
+            transform: translateY(-5px);
+            box-shadow: inset 0 -20px 0 #3a2a18, 0 20px 0 #2a1e10;
+        }
+        
+        .plant {
+            font-size: 64px;
+            filter: drop-shadow(0 10px 10px #1f4a1f);
+            animation: sway 3s ease-in-out infinite;
+            transform-origin: bottom;
+        }
+        @keyframes sway {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+        
+        .plot-stage {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #f0f0d0;
+            font-size: 14px;
+            text-shadow: 2px 2px 0 #2a4a2a;
+        }
+        
+        .watering-can {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .water-btn {
+            background: #4a7a9a;
+            border: none;
+            color: white;
+            font-size: 32px;
+            padding: 20px 60px;
+            border-radius: 100px 100px 30px 30px;
+            cursor: pointer;
+            border-bottom: 10px solid #1e4a6a;
+            transition: 0.05s linear;
+            font-family: 'Cormorant Garamond', serif;
+            letter-spacing: 4px;
+        }
+        .water-btn:active {
+            border-bottom-width: 4px;
+            transform: translateY(6px);
+        }
+        
+        .sunlight-meter {
+            background: #8fa87f;
+            border-radius: 60px;
+            padding: 20px;
+            border: 4px solid #5a7342;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .sun-bar {
+            flex: 1;
+            height: 30px;
+            background: #4a6232;
+            border-radius: 30px;
+            overflow: hidden;
+        }
+        .sun-fill {
+            height: 100%;
+            width: 70%;
+            background: linear-gradient(90deg, #ffd966, #ffaa00);
+            border-radius: 30px;
+            transition: width 0.3s;
+        }
+        
+        .seed-inventory {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+            color: #2a4a1a;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="greenhouse">
+        <div class="seed-inventory">
+            <span>🌰 ACORN</span>
+            <span>🌻 SUNFLOWER</span>
+            <span>🍄 MUSHROOM</span>
+            <span>🌿 HERB</span>
+        </div>
+        
+        <div class="garden-grid" id="gardenGrid">
+            <!-- Generated by JS -->
+        </div>
+        
+        <div class="watering-can">
+            <button class="water-btn" id="waterBtn">💧 WATER ALL</button>
+            <button class="water-btn" id="sunBtn">☀️ ADD SUN</button>
+        </div>
+        
+        <div class="sunlight-meter">
+            <div>SUNLIGHT:</div>
+            <div class="sun-bar">
+                <div class="sun-fill" id="sunFill" style="width: 70%;"></div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px; color: #2a4a1a;">
+            click plots to plant seeds • water and sunlight help them grow
+        </div>
+    </div>
+
+    <script>
+        const gardenGrid = document.getElementById('gardenGrid');
+        const sunFill = document.getElementById('sunFill');
+        
+        // Garden plots
+        const plants = [
+            { seed: '🌰', stages: ['🌰', '🌱', '🌿', '🌳'], name: 'Oak' },
+            { seed: '🌻', stages: ['🌻', '🌱', '🌿', '🌻'], name: 'Sunflower' },
+            { seed: '🍄', stages: ['🍄', '🌱', '🍄', '🍄'], name: 'Mushroom' },
+            { seed: '🌿', stages: ['🌿', '🌱', '🌿', '🌿'], name: 'Herb' }
+        ];
+        
+        let plots = [];
+        let sunlight = 70;
+        let selectedSeed = 0; // index of plants array
+        
+        function initGarden() {
+            plots = [];
+            for (let i = 0; i < 9; i++) {
+                plots.push({
+                    plantIndex: null,
+                    stage: 0,
+                    waterLevel: 0
+                });
+            }
+            renderGarden();
+        }
+        
+        function renderGarden() {
+            gardenGrid.innerHTML = '';
+            
+            plots.forEach((plot, index) => {
+                const plotDiv = document.createElement('div');
+                plotDiv.className = 'plot';
+                plotDiv.dataset.index = index;
+                
+                if (plot.plantIndex !== null) {
+                    const plant = plants[plot.plantIndex];
+                    const plantSpan = document.createElement('div');
+                    plantSpan.className = 'plant';
+                    plantSpan.textContent = plant.stages[plot.stage];
+                    plotDiv.appendChild(plantSpan);
+                    
+                    const stageDiv = document.createElement('div');
+                    stageDiv.className = 'plot-stage';
+                    stageDiv.textContent = `stage ${plot.stage + 1}/4`;
+                    plotDiv.appendChild(stageDiv);
+                } else {
+                    const emptySpan = document.createElement('div');
+                    emptySpan.className = 'plant';
+                    emptySpan.textContent = '🕳️';
+                    plotDiv.appendChild(emptySpan);
+                    
+                    const stageDiv = document.createElement('div');
+                    stageDiv.className = 'plot-stage';
+                    stageDiv.textContent = 'empty';
+                    plotDiv.appendChild(stageDiv);
+                }
+                
+                plotDiv.addEventListener('click', () => handlePlotClick(index));
+                gardenGrid.appendChild(plotDiv);
+            });
+        }
+        
+        function handlePlotClick(index) {
+            if (plots[index].plantIndex === null) {
+                // Plant seed
+                plots[index].plantIndex = selectedSeed;
+                plots[index].stage = 0;
+                plots[index].waterLevel = 2;
+            } else {
+                // Try to harvest if fully grown
+                if (plots[index].stage === 3) {
+                    plots[index].plantIndex = null;
+                    plots[index].stage = 0;
+                }
+            }
+            renderGarden();
+        }
+        
+        function waterAll() {
+            plots.forEach(plot => {
+                if (plot.plantIndex !== null) {
+                    plot.waterLevel = Math.min(5, plot.waterLevel + 2);
+                    
+                    // Growth check
+                    if (plot.waterLevel >= 3 && sunlight > 30) {
+                        if (plot.stage < 3) {
+                            plot.stage++;
+                            plot.waterLevel = 1;
+                        }
+                    }
+                }
+            });
+            renderGarden();
+        }
+        
+        function addSun() {
+            sunlight = Math.min(100, sunlight + 15);
+            sunFill.style.width = sunlight + '%';
+            
+            // Growth boost
+            plots.forEach(plot => {
+                if (plot.plantIndex !== null && plot.waterLevel >= 2 && Math.random() > 0.3) {
+                    if (plot.stage < 3) {
+                        plot.stage++;
+                        plot.waterLevel = 1;
+                    }
+                }
+            });
+            renderGarden();
+        }
+        
+        // Seed selection via clicking seed inventory
+        document.querySelectorAll('.seed-inventory span').forEach((span, index) => {
+            span.addEventListener('click', () => {
+                selectedSeed = index;
+                // Visual feedback
+                document.querySelectorAll('.seed-inventory span').forEach(s => s.style.background = 'none');
+                span.style.background = '#b8d0a8';
+                span.style.borderRadius = '30px';
+                span.style.padding = '5px 15px';
+            });
+        });
+        
+        document.getElementById('waterBtn').addEventListener('click', waterAll);
+        document.getElementById('sunBtn').addEventListener('click', addSun);
+        
+        // Daily cycle simulation
+        setInterval(() => {
+            sunlight = Math.max(20, sunlight - 2);
+            sunFill.style.width = sunlight + '%';
+        }, 5000);
+        
+        initGarden();
+    </script>
+</body>
+</html>

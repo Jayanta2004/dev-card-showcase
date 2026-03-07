@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poetica · Generative Poetry Engine</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #f5efe6;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            color: #2c3e4f;
+        }
+
+        .poetry-card {
+            max-width: 900px;
+            width: 100%;
+            background: #fffaf2;
+            border-radius: 70px;
+            box-shadow: 0 30px 50px -20px rgba(0,0,0,0.2), 0 0 0 2px #e8d9c5 inset;
+            padding: 2.5rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2d2bc;
+            padding-bottom: 1rem;
+        }
+
+        .title h1 {
+            font-size: 2.5rem;
+            font-weight: 400;
+            background: linear-gradient(135deg, #6b4f3f, #9b7e6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title p {
+            color: #7a6856;
+            font-style: italic;
+        }
+
+        .poem-display {
+            background: #fffcf7;
+            border-radius: 50px;
+            padding: 2.5rem;
+            border: 2px solid #e8d9c5;
+            margin: 2rem 0;
+            font-size: 1.3rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            font-family: 'Georgia', serif;
+            color: #2c3e4f;
+            min-height: 250px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+        }
+
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .control-group {
+            background: #f5efe6;
+            border-radius: 30px;
+            padding: 1.2rem 1.5rem;
+            border: 2px solid #d9c6b0;
+        }
+
+        .control-group h3 {
+            color: #6b4f3f;
+            font-weight: 400;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            border-bottom: 1px solid #d9c6b0;
+            padding-bottom: 0.5rem;
+        }
+
+        .slider-item {
+            margin-bottom: 1rem;
+        }
+
+        .slider-item label {
+            display: flex;
+            justify-content: space-between;
+            color: #7a6856;
+            font-size: 0.9rem;
+        }
+
+        .slider-item input {
+            width: 100%;
+            margin-top: 0.2rem;
+        }
+
+        .theme-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .theme-btn {
+            background: #fffaf2;
+            border: 2px solid #d9c6b0;
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: #6b4f3f;
+            transition: 0.1s;
+        }
+
+        .theme-btn.active {
+            background: #6b4f3f;
+            border-color: #6b4f3f;
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            background: #fffaf2;
+            border: 2px solid #b8a48e;
+            border-radius: 40px;
+            padding: 0.8rem 1.8rem;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #4a3a2c;
+            transition: 0.1s;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .btn:hover {
+            background: #f2e6d8;
+        }
+
+        .btn.primary {
+            background: #6b4f3f;
+            border-color: #6b4f3f;
+            color: white;
+        }
+
+        .btn.primary:hover {
+            background: #5a4133;
+        }
+
+        .word-bank {
+            background: #f5efe6;
+            border-radius: 40px;
+            padding: 1.2rem;
+            border: 2px solid #d9c6b0;
+            margin-top: 1rem;
+        }
+
+        .word-bank h4 {
+            color: #6b4f3f;
+            font-weight: 400;
+            margin-bottom: 0.8rem;
+        }
+
+        .word-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .word-tag {
+            background: #fffaf2;
+            border: 2px solid #d9c6b0;
+            border-radius: 30px;
+            padding: 0.3rem 1rem;
+            font-size: 0.8rem;
+            color: #7a6856;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .word-tag:hover {
+            background: #e8d9c5;
+        }
+
+        .footer {
+            text-align: center;
+            color: #9b8a78;
+            margin-top: 2rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="poetry-card">
+        <div class="header">
+            <div class="title">
+                <h1>📜 Poetica</h1>
+                <p>generative poetry engine</p>
+            </div>
+        </div>
+
+        <!-- poem display -->
+        <div class="poem-display" id="poemDisplay">
+            The silent forest waits<br>
+            beneath the silver moon<br>
+            where shadows dance and fade<br>
+            and dreams are born too soon.
+        </div>
+
+        <!-- theme selector -->
+        <div class="theme-selector" id="themeSelector">
+            <button class="theme-btn active" data-theme="nature">🌿 nature</button>
+            <button class="theme-btn" data-theme="love">❤️ love</button>
+            <button class="theme-btn" data-theme="space">🌌 space</button>
+            <button class="theme-btn" data-theme="urban">🏙️ urban</button>
+            <button class="theme-btn" data-theme="fantasy">🧚 fantasy</button>
+        </div>
+
+        <!-- control panel -->
+        <div class="control-panel">
+            <div class="control-group">
+                <h3>📏 structure</h3>
+                <div class="slider-item">
+                    <label>lines <span id="linesVal">4</span></label>
+                    <input type="range" id="linesSlider" min="2" max="12" value="4" step="1">
+                </div>
+                <div class="slider-item">
+                    <label>words per line <span id="wordsVal">5</span></label>
+                    <input type="range" id="wordsSlider" min="3" max="9" value="5" step="1">
+                </div>
+                <div class="slider-item">
+                    <label>rhyme probability <span id="rhymeVal">0.5</span></label>
+                    <input type="range" id="rhymeSlider" min="0" max="1" value="0.5" step="0.1">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🎨 style</h3>
+                <div class="slider-item">
+                    <label>imagery <span id="imageryVal">0.5</span></label>
+                    <input type="range" id="imagerySlider" min="0" max="1" value="0.5" step="0.1">
+                </div>
+                <div class="slider-item">
+                    <label>mood <span id="moodVal">0.5</span></label>
+                    <input type="range" id="moodSlider" min="0" max="1" value="0.5" step="0.1">
+                </div>
+                <div class="slider-item">
+                    <label>abstraction <span id="abstractionVal">0.3</span></label>
+                    <input type="range" id="abstractionSlider" min="0" max="1" value="0.3" step="0.1">
+                </div>
+            </div>
+        </div>
+
+        <!-- word bank (editable) -->
+        <div class="word-bank">
+            <h4>📖 word bank (click to add)</h4>
+            <div class="word-tags" id="wordTags">
+                <span class="word-tag">forest</span>
+                <span class="word-tag">moon</span>
+                <span class="word-tag">shadow</span>
+                <span class="word-tag">dream</span>
+                <span class="word-tag">whisper</span>
+                <span class="word-tag">silver</span>
+                <span class="word-tag">dance</span>
+                <span class="word-tag">fade</span>
+            </div>
+        </div>
+
+        <!-- action buttons -->
+        <div class="button-group">
+            <button class="btn" id="generateBtn">✨ generate</button>
+            <button class="btn" id="copyBtn">📋 copy</button>
+            <button class="btn primary" id="surpriseBtn">🎲 surprise me</button>
+        </div>
+
+        <div class="footer">
+            ⚡ click words to add them to the current theme
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ----- word banks by theme -----
+            const wordBanks = {
+                nature: [
+                    'forest', 'moon', 'shadow', 'dream', 'whisper', 'silver', 'dance', 'fade',
+                    'wind', 'river', 'leaf', 'star', 'night', 'dawn', 'mist', 'petal',
+                    'ocean', 'wave', 'stone', 'moss', 'fern', 'frost', 'sunrise', 'meadow'
+                ],
+                love: [
+                    'heart', 'kiss', 'embrace', 'forever', 'passion', 'sweet', 'tender', 'flame',
+                    'desire', 'soul', 'cherish', 'blush', 'yearn', 'gentle', 'warmth', 'promise',
+                    'eternal', 'touch', 'gaze', 'whisper', 'dream', 'rhythm', 'spark', 'bloom'
+                ],
+                space: [
+                    'star', 'galaxy', 'nebula', 'cosmos', 'orbit', 'void', 'light', 'gravity',
+                    'quantum', 'infinity', 'silence', 'dust', 'supernova', 'black hole', 'comet', 'eclipse',
+                    'aurora', 'photon', 'matter', 'dimension', 'vacuum', 'singularity', 'pulsar', 'quasar'
+                ],
+                urban: [
+                    'city', 'street', 'neon', 'traffic', 'concrete', 'skyline', 'siren', 'shadow',
+                    'alley', 'rooftop', 'subway', 'crowd', 'hustle', 'pavement', 'graffiti', 'lantern',
+                    'midnight', 'echo', 'window', 'balcony', 'station', 'tunnel', 'bridge', 'boulevard'
+                ],
+                fantasy: [
+                    'dragon', 'wizard', 'spell', 'crystal', 'portal', 'myth', 'legend', 'quest',
+                    'magic', 'sword', 'castle', 'potion', 'prophecy', 'oracle', 'phantom', 'realm',
+                    'elf', 'dwarf', 'goblin', 'unicorn', 'phoenix', 'griffin', 'talisman', 'rune'
+                ]
+            };
+
+            // default bank
+            let currentTheme = 'nature';
+            let currentWords = [...wordBanks.nature];
+            
+            // state
+            let lines = 4;
+            let wordsPerLine = 5;
+            let rhymeProb = 0.5;
+            let imagery = 0.5;
+            let mood = 0.5;
+            let abstraction = 0.3;
+
+            // DOM elements
+            const poemDisplay = document.getElementById('poemDisplay');
+            const themeBtns = document.querySelectorAll('.theme-btn');
+            const wordTags = document.getElementById('wordTags');
+            
+            const linesSlider = document.getElementById('linesSlider');
+            const linesVal = document.getElementById('linesVal');
+            const wordsSlider = document.getElementById('wordsSlider');
+            const wordsVal = document.getElementById('wordsVal');
+            const rhymeSlider = document.getElementById('rhymeSlider');
+            const rhymeVal = document.getElementById('rhymeVal');
+            const imagerySlider = document.getElementById('imagerySlider');
+            const imageryVal = document.getElementById('imageryVal');
+            const moodSlider = document.getElementById('moodSlider');
+            const moodVal = document.getElementById('moodVal');
+            const abstractionSlider = document.getElementById('abstractionSlider');
+            const abstractionVal = document.getElementById('abstractionVal');
+            
+            const generateBtn = document.getElementById('generateBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const surpriseBtn = document.getElementById('surpriseBtn');
+
+            // update word tags display
+            function updateWordTags() {
+                let html = '';
+                currentWords.forEach(word => {
+                    html += `<span class="word-tag">${word}</span>`;
+                });
+                wordTags.innerHTML = html;
+
+                // attach click listeners to add words to current theme
+                document.querySelectorAll('.word-tag').forEach(tag => {
+                    tag.addEventListener('click', () => {
+                        // add word to current theme's bank (simple implementation)
+                        const word = tag.innerText;
+                        if (!wordBanks[currentTheme].includes(word)) {
+                            wordBanks[currentTheme].push(word);
+                            currentWords = [...wordBanks[currentTheme]];
+                            updateWordTags();
+                        }
+                    });
+                });
+            }
+
+            // change theme
+            function setTheme(theme) {
+                currentTheme = theme;
+                currentWords = [...wordBanks[theme]];
+                updateWordTags();
+
+                // update active button
+                themeBtns.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.getAttribute('data-theme') === theme) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            // generate poem
+            function generatePoem() {
+                const linesArray = [];
+                
+                for (let l = 0; l < lines; l++) {
+                    let line = '';
+                    for (let w = 0; w < wordsPerLine; w++) {
+                        // pick a word based on imagery/mood/abstraction
+                        let wordIndex = Math.floor(Math.random() * currentWords.length);
+                        let word = currentWords[wordIndex];
+                        
+                        // add some randomness based on parameters
+                        if (Math.random() < imagery) {
+                            // add an adjective from a small set
+                            const adjectives = ['silent', 'gentle', 'bright', 'dark', 'soft', 'cold', 'warm', 'wild'];
+                            word = adjectives[Math.floor(Math.random() * adjectives.length)] + ' ' + word;
+                        }
+                        
+                        if (Math.random() < mood) {
+                            // maybe capitalize for emphasis
+                            word = word.charAt(0).toUpperCase() + word.slice(1);
+                        }
+                        
+                        if (Math.random() < abstraction) {
+                            // add a metaphorical connector
+                            const connectors = ['of', 'like', 'as', 'beyond', 'within', 'through'];
+                            word = word + ' ' + connectors[Math.floor(Math.random() * connectors.length)];
+                        }
+                        
+                        line += word + ' ';
+                    }
+                    
+                    // trim and add punctuation
+                    line = line.trim();
+                    if (Math.random() < 0.3) {
+                        line += ',';
+                    } else if (Math.random() < 0.2) {
+                        line += ';';
+                    } else {
+                        line += '';
+                    }
+                    
+                    linesArray.push(line);
+                }
+
+                // attempt simple rhyming (last words of lines)
+                if (Math.random() < rhymeProb && linesArray.length >= 2) {
+                    const lastLine = linesArray[linesArray.length - 1];
+                    const lastWords = lastLine.split(' ');
+                    const lastWord = lastWords[lastWords.length - 1].replace(/[^a-zA-Z]/g, '');
+                    
+                    // find a word that rhymes (simple sound-alike)
+                    const rhymingWords = currentWords.filter(w => {
+                        return w.length > 2 && w.slice(-2) === lastWord.slice(-2);
+                    });
+                    
+                    if (rhymingWords.length > 0) {
+                        const rhymeWord = rhymingWords[Math.floor(Math.random() * rhymingWords.length)];
+                        linesArray[linesArray.length - 2] += ' ' + rhymeWord;
+                    }
+                }
+
+                poemDisplay.innerText = linesArray.join('\n');
+            }
+
+            // surprise me
+            function surprise() {
+                const themes = ['nature', 'love', 'space', 'urban', 'fantasy'];
+                const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+                setTheme(randomTheme);
+                
+                lines = Math.floor(Math.random() * 8) + 3;
+                wordsPerLine = Math.floor(Math.random() * 5) + 4;
+                rhymeProb = Math.random();
+                imagery = Math.random();
+                mood = Math.random();
+                abstraction = Math.random();
+                
+                linesSlider.value = lines;
+                wordsSlider.value = wordsPerLine;
+                rhymeSlider.value = rhymeProb;
+                imagerySlider.value = imagery;
+                moodSlider.value = mood;
+                abstractionSlider.value = abstraction;
+                
+                linesVal.innerText = lines;
+                wordsVal.innerText = wordsPerLine;
+                rhymeVal.innerText = rhymeProb.toFixed(1);
+                imageryVal.innerText = imagery.toFixed(1);
+                moodVal.innerText = mood.toFixed(1);
+                abstractionVal.innerText = abstraction.toFixed(1);
+                
+                generatePoem();
+            }
+
+            // event listeners
+            themeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setTheme(btn.getAttribute('data-theme'));
+                });
+            });
+
+            linesSlider.addEventListener('input', () => {
+                lines = parseInt(linesSlider.value);
+                linesVal.innerText = lines;
+            });
+
+            wordsSlider.addEventListener('input', () => {
+                wordsPerLine = parseInt(wordsSlider.value);
+                wordsVal.innerText = wordsPerLine;
+            });
+
+            rhymeSlider.addEventListener('input', () => {
+                rhymeProb = parseFloat(rhymeSlider.value);
+                rhymeVal.innerText = rhymeProb.toFixed(1);
+            });
+
+            imagerySlider.addEventListener('input', () => {
+                imagery = parseFloat(imagerySlider.value);
+                imageryVal.innerText = imagery.toFixed(1);
+            });
+
+            moodSlider.addEventListener('input', () => {
+                mood = parseFloat(moodSlider.value);
+                moodVal.innerText = mood.toFixed(1);
+            });
+
+            abstractionSlider.addEventListener('input', () => {
+                abstraction = parseFloat(abstractionSlider.value);
+                abstractionVal.innerText = abstraction.toFixed(1);
+            });
+
+            generateBtn.addEventListener('click', generatePoem);
+
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(poemDisplay.innerText).then(() => {
+                    alert('poem copied to clipboard');
+                });
+            });
+
+            surpriseBtn.addEventListener('click', surprise);
+
+            // initial
+            setTheme('nature');
+            generatePoem();
+        })();
+    </script>
+</body>
+</html>

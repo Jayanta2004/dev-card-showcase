@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚦 Traffic Light FSM · Interactive</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Arial', system-ui, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #1e3c4f 0%, #0b2a3a 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .traffic-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 3rem;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 40px 60px rgba(0, 0, 0, 0.6), inset 0 2px 10px rgba(255, 255, 200, 0.3);
+            max-width: 1100px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            margin: 0 0 1rem 0;
+            font-size: 2.5rem;
+            letter-spacing: 3px;
+            color: #ffe484;
+            text-shadow: 0 4px 0 #7f4f00, 0 10px 20px #00000080;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        h1 span {
+            font-size: 2.8rem;
+            filter: drop-shadow(0 4px 2px black);
+        }
+        .fsm-layout {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: stretch;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        /* Traffic light visualization */
+        .traffic-pole {
+            background: #2c3e50;
+            border-radius: 4rem 4rem 2rem 2rem;
+            padding: 2rem 1.8rem;
+            box-shadow: 0 20px 30px #00000070, inset 0 -3px 5px #95a5a6;
+            border: 2px solid #bdc3c7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.2rem;
+            min-width: 180px;
+        }
+        .light {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: #2d2d2d;
+            box-shadow: inset 0 -8px 8px #00000099, 0 10px 20px black;
+            border: 4px solid #7f8c8d;
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffffffcc;
+            text-shadow: 0 2px 5px black;
+        }
+        .light.red.active {
+            background: #e74c3c;
+            box-shadow: 0 0 50px #ff5e5e, inset 0 -5px 10px #450000;
+            border-color: #ffb8b8;
+        }
+        .light.yellow.active {
+            background: #f1c40f;
+            box-shadow: 0 0 60px #ffe165, inset 0 -5px 10px #7d5d00;
+            border-color: #fff2b5;
+        }
+        .light.green.active {
+            background: #2ecc71;
+            box-shadow: 0 0 55px #86ffae, inset 0 -5px 10px #006b29;
+            border-color: #c0ffd0;
+        }
+        .light.pedestrian.active {
+            background: #3498db;
+            box-shadow: 0 0 50px #6bb9ff, inset 0 -5px 10px #003366;
+            border-color: #b8e2ff;
+        }
+        .light .symbol {
+            font-size: 2.8rem;
+            opacity: 0.9;
+            filter: drop-shadow(0 2px 2px black);
+        }
+        .light-label {
+            color: #ecf0f1;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+            margin-top: -0.5rem;
+            background: #1e2b38;
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+        }
+        /* Control panel */
+        .control-tower {
+            background: #1c2b36f0;
+            backdrop-filter: blur(5px);
+            border-radius: 2.5rem;
+            padding: 2rem 2rem;
+            flex: 1;
+            min-width: 280px;
+            border: 2px solid #ffb347;
+            box-shadow: 0 30px 40px -10px black;
+        }
+        .status-board {
+            background: #0b1a22;
+            border-radius: 3rem;
+            padding: 1.5rem 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            border: 2px solid #f39c12;
+        }
+        .status-label {
+            color: #f7dc6f;
+            text-transform: uppercase;
+            font-size: 1rem;
+            letter-spacing: 3px;
+        }
+        .state-display {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: #ffd966;
+            text-shadow: 0 0 20px #ffae00;
+            line-height: 1.2;
+        }
+        .timer-bar {
+            background: #152a33;
+            height: 16px;
+            border-radius: 20px;
+            margin: 20px 0 30px;
+            overflow: hidden;
+            border: 1px solid #ffa500;
+        }
+        .timer-progress {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #f1c40f, #e67e22);
+            transition: width 0.2s linear;
+            border-radius: 20px;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .traffic-btn {
+            background: #2b404e;
+            border: none;
+            border-radius: 3rem;
+            padding: 1.2rem 0.5rem;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #ecf0f1;
+            box-shadow: 0 8px 0 #0f1f2b, 0 10px 20px black;
+            cursor: pointer;
+            transition: 0.06s linear;
+            border: 2px solid #5f8aa7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+        }
+        .traffic-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #0f1f2b, 0 10px 20px black;
+        }
+        .traffic-btn:disabled {
+            opacity: 0.4;
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #0f1f2b;
+            pointer-events: none;
+        }
+        .pedestrian-btn {
+            grid-column: span 2;
+            background: #2980b9;
+            border-color: #a6d0fa;
+            font-size: 1.8rem;
+            padding: 1.5rem 0.5rem;
+        }
+        .reset-btn {
+            background: #7f4f24;
+            border-color: #e6b87e;
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.4rem;
+            margin-top: 1rem;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            color: #ffe4bc;
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+        .legend-dot {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="traffic-card">
+        <h1>
+            <span>🚥</span> TRAFFIC LIGHT FSM <span>🚶</span>
+        </h1>
+        
+        <div class="fsm-layout">
+            <!-- Traffic light display -->
+            <div class="traffic-pole">
+                <div class="light red" id="lightRed">
+                    <span class="symbol">🔴</span>
+                </div>
+                <div class="light yellow" id="lightYellow">
+                    <span class="symbol">🟡</span>
+                </div>
+                <div class="light green" id="lightGreen">
+                    <span class="symbol">🟢</span>
+                </div>
+                <div class="light pedestrian" id="lightPed">
+                    <span class="symbol">🚶</span>
+                </div>
+                <div class="light-label">traffic lights</div>
+            </div>
+
+            <!-- Controller -->
+            <div class="control-tower">
+                <div class="status-board">
+                    <div class="status-label">current phase</div>
+                    <div class="state-display" id="phaseDisplay">GREEN</div>
+                    <div class="timer-bar">
+                        <div class="timer-progress" id="timerProgress" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="button-grid">
+                    <button class="traffic-btn" id="btnTimer" title="Simulate timer expiration">⏱️ TIMER</button>
+                    <button class="traffic-btn" id="btnEmergency" title="Emergency override">🚨 EMERG</button>
+                    <button class="traffic-btn pedestrian-btn" id="btnPedestrian" title="Pedestrian crossing request">🚶 PEDESTRIAN</button>
+                </div>
+                
+                <button class="traffic-btn reset-btn" id="btnReset">↺ RESET to GREEN</button>
+
+                <div class="legend">
+                    <span><span class="legend-dot" style="background:#e74c3c;"></span> Red (stop)</span>
+                    <span><span class="legend-dot" style="background:#f1c40f;"></span> Yellow (caution)</span>
+                    <span><span class="legend-dot" style="background:#2ecc71;"></span> Green (go)</span>
+                    <span><span class="legend-dot" style="background:#3498db;"></span> Pedestrian</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; color: #ffd9a3; margin-top: 1rem; font-size: 1rem; background: #00000040; padding: 0.8rem; border-radius: 3rem;">
+            ⚡ FSM: GREEN →(timer) YELLOW →(timer) RED →(timer) GREEN · PEDESTRIAN request → PEDESTRIAN (only from GREEN) · EMERGENCY → RED from any state
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- TRAFFIC LIGHT FSM ----------
+            const TrafficFSM = {
+                // States
+                states: {
+                    GREEN: 'GREEN',
+                    YELLOW: 'YELLOW',
+                    RED: 'RED',
+                    PEDESTRIAN: 'PEDESTRIAN'  // pedestrian crossing phase
+                },
+                
+                current: 'GREEN',
+                
+                // Transition table
+                transitions: {
+                    // Normal flow
+                    'GREEN_TIMER': 'YELLOW',
+                    'YELLOW_TIMER': 'RED',
+                    'RED_TIMER': 'GREEN',
+                    
+                    // Pedestrian request (only from GREEN)
+                    'GREEN_PEDESTRIAN': 'PEDESTRIAN',
+                    
+                    // From PEDESTRIAN, timer goes to RED (then normal cycle)
+                    'PEDESTRIAN_TIMER': 'RED',
+                    
+                    // Emergency override: from any state to RED
+                    'GREEN_EMERGENCY': 'RED',
+                    'YELLOW_EMERGENCY': 'RED',
+                    'RED_EMERGENCY': 'RED',
+                    'PEDESTRIAN_EMERGENCY': 'RED',
+                    
+                    // Additional: pedestrian can't be requested during pedestrian phase (but we can ignore or go nowhere)
+                    // Also, pedestrian from YELLOW/RED invalid -> stay
+                },
+                
+                dispatch(event) {
+                    const from = this.current;
+                    const key = `${from}_${event}`;
+                    
+                    if (this.transitions.hasOwnProperty(key)) {
+                        return this.transitions[key];
+                    }
+                    return from; // invalid transition
+                },
+                
+                send(event) {
+                    const before = this.current;
+                    const after = this.dispatch(event);
+                    this.current = after;
+                    
+                    // For animation: if changed, return true
+                    return { changed: before !== after, from: before, to: after };
+                },
+                
+                reset() {
+                    this.current = 'GREEN';
+                    return this.current;
+                }
+            };
+
+            // ---------- DOM elements ----------
+            const redLight = document.getElementById('lightRed');
+            const yellowLight = document.getElementById('lightYellow');
+            const greenLight = document.getElementById('lightGreen');
+            const pedLight = document.getElementById('lightPed');
+            const phaseDisplay = document.getElementById('phaseDisplay');
+            const timerProgress = document.getElementById('timerProgress');
+            
+            const btnTimer = document.getElementById('btnTimer');
+            const btnPedestrian = document.getElementById('btnPedestrian');
+            const btnEmergency = document.getElementById('btnEmergency');
+            const btnReset = document.getElementById('btnReset');
+
+            // Timer simulation (auto progress bar)
+            let timerInterval = null;
+            let timeRemaining = 0;        // seconds
+            const MAX_TIME = 5;            // 5 seconds per phase (except pedestrian shorter)
+            let currentPhaseDuration = MAX_TIME;
+
+            // Helper: map state to active light
+            function updateLights() {
+                const state = TrafficFSM.current;
+                
+                // Remove all active classes
+                redLight.classList.remove('active');
+                yellowLight.classList.remove('active');
+                greenLight.classList.remove('active');
+                pedLight.classList.remove('active');
+                
+                // Add active class based on state
+                switch(state) {
+                    case 'GREEN':
+                        greenLight.classList.add('active');
+                        phaseDisplay.innerText = 'GREEN';
+                        currentPhaseDuration = 5;
+                        break;
+                    case 'YELLOW':
+                        yellowLight.classList.add('active');
+                        phaseDisplay.innerText = 'YELLOW';
+                        currentPhaseDuration = 3; // yellow shorter
+                        break;
+                    case 'RED':
+                        redLight.classList.add('active');
+                        phaseDisplay.innerText = 'RED';
+                        currentPhaseDuration = 4;
+                        break;
+                    case 'PEDESTRIAN':
+                        pedLight.classList.add('active');
+                        phaseDisplay.innerText = 'PEDESTRIAN';
+                        currentPhaseDuration = 4;
+                        break;
+                    default: break;
+                }
+                
+                // Reset timer progress bar
+                timeRemaining = currentPhaseDuration;
+                updateTimerBar();
+                
+                // Update button enabled states based on valid transitions
+                updateButtons();
+            }
+
+            // Timer bar update
+            function updateTimerBar() {
+                const percent = (timeRemaining / currentPhaseDuration) * 100;
+                timerProgress.style.width = `${Math.max(0, percent)}%`;
+                
+                // Color code timer based on phase
+                if (TrafficFSM.current === 'GREEN') timerProgress.style.background = 'linear-gradient(90deg, #2ecc71, #27ae60)';
+                else if (TrafficFSM.current === 'YELLOW') timerProgress.style.background = 'linear-gradient(90deg, #f1c40f, #e67e22)';
+                else if (TrafficFSM.current === 'RED') timerProgress.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+                else timerProgress.style.background = 'linear-gradient(90deg, #3498db, #2980b9)';
+            }
+
+            // Timer countdown
+            function startTimer() {
+                if (timerInterval) clearInterval(timerInterval);
+                
+                timerInterval = setInterval(() => {
+                    timeRemaining -= 0.1;
+                    
+                    if (timeRemaining <= 0) {
+                        // Time's up: send TIMER event
+                        handleEvent('TIMER');
+                    } else {
+                        updateTimerBar();
+                    }
+                }, 100);
+            }
+
+            // Stop timer (reset or state change)
+            function stopTimer() {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            }
+
+            // Handle FSM events
+            function handleEvent(eventType) {
+                // Store previous state
+                const prevState = TrafficFSM.current;
+                
+                // Send event to FSM
+                const result = TrafficFSM.send(eventType);
+                
+                // If state changed, update lights and restart timer
+                if (result.changed || eventType === 'TIMER') {  // TIMER might stay same if invalid but we check changed
+                    updateLights();
+                    
+                    // Restart timer with new phase duration
+                    stopTimer();
+                    startTimer();
+                    
+                    // Optional flash feedback if transition invalid (no change) but we already handle via change
+                } else {
+                    // Invalid transition: flash current light red
+                    const activeLight = getActiveLightElement(prevState);
+                    if (activeLight) {
+                        activeLight.style.transition = 'background 0.1s, box-shadow 0.1s';
+                        activeLight.style.background = '#ff6b6b';
+                        activeLight.style.boxShadow = '0 0 60px red';
+                        setTimeout(() => {
+                            // revert based on actual state
+                            updateLights();  // resets to correct colors
+                        }, 200);
+                    }
+                }
+            }
+
+            function getActiveLightElement(state) {
+                switch(state) {
+                    case 'GREEN': return greenLight;
+                    case 'YELLOW': return yellowLight;
+                    case 'RED': return redLight;
+                    case 'PEDESTRIAN': return pedLight;
+                    default: return null;
+                }
+            }
+
+            // Dynamic button disabling (based on valid transitions)
+            function updateButtons() {
+                const cur = TrafficFSM.current;
+                
+                // Timer button: enabled if there's a TIMER transition from current state
+                const timerValid = TrafficFSM.transitions.hasOwnProperty(`${cur}_TIMER`);
+                btnTimer.disabled = !timerValid;
+                
+                // Pedestrian: only valid from GREEN
+                btnPedestrian.disabled = (cur !== 'GREEN');
+                
+                // Emergency: always enabled (from all states)
+                btnEmergency.disabled = false;
+            }
+
+            // Reset everything
+            function resetToGreen() {
+                stopTimer();
+                TrafficFSM.reset();
+                updateLights();
+                startTimer();
+            }
+
+            // Initialize
+            function init() {
+                // Set initial state
+                TrafficFSM.current = 'GREEN';
+                updateLights();
+                startTimer();
+                
+                // Event listeners
+                btnTimer.addEventListener('click', () => handleEvent('TIMER'));
+                btnPedestrian.addEventListener('click', () => handleEvent('PEDESTRIAN'));
+                btnEmergency.addEventListener('click', () => handleEvent('EMERGENCY'));
+                btnReset.addEventListener('click', resetToGreen);
+            }
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => stopTimer());
+
+            // Start everything
+            init();
+
+            // Add extra safety: if pedestrian active, timer leads to RED, etc.
+            // Also handle emergency properly
+            // For better UX, we may tweak durations
+        })();
+    </script>
+
+    <style>
+        /* Additional micro-interactions */
+        .light {
+            transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
+            cursor: pointer;
+        }
+        .light:hover {
+            filter: brightness(1.2);
+        }
+        #timerProgress {
+            transition: width 0.1s linear;
+        }
+        .traffic-btn {
+            transition: transform 0.06s, box-shadow 0.1s, background 0.2s;
+        }
+        .traffic-btn:hover {
+            background: #3a5770;
+        }
+        .pedestrian-btn:hover {
+            background: #3a93d0;
+        }
+    </style>
+</body>
+</html>

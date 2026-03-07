@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏠 Smart Home Security FSM</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #0b1a2e 0%, #1a2f3f 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .security-card {
+            background: #1e3a5f;
+            background-image: radial-gradient(circle at 30% 40%, #2b5278, #0a1c2f);
+            border-radius: 3rem;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 40px 60px #000000cc, inset 0 2px 10px #8db9ff;
+            border: 3px solid #7aa5c2;
+            max-width: 1200px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            margin: 0 0 1.5rem 0;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #e2f0ff;
+            text-shadow: 0 5px 0 #003b6f, 0 10px 20px black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        h1 span {
+            font-size: 3rem;
+            filter: drop-shadow(0 4px 2px #001d3d);
+        }
+        .security-layout {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+        }
+        /* House visualization */
+        .house-panel {
+            background: #132e48;
+            border-radius: 2.5rem;
+            padding: 2rem;
+            box-shadow: inset 0 -5px 10px #02121f, 0 25px 35px black;
+            border: 3px solid #84b3d6;
+            min-width: 300px;
+            flex: 1;
+        }
+        .house-roof {
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-bottom: 80px solid #bfd8ff;
+            margin: 0 auto 1rem;
+            filter: drop-shadow(0 10px 8px #00000080);
+        }
+        .house-base {
+            background: #a5c8e4;
+            border-radius: 2rem 2rem 1rem 1rem;
+            padding: 1.5rem;
+            border: 4px solid #e1f0ff;
+            box-shadow: inset 0 -8px 0 #5f7f9e;
+        }
+        .sensor-row {
+            display: flex;
+            justify-content: space-around;
+            margin: 1rem 0;
+        }
+        .sensor {
+            background: #2c3e50;
+            border-radius: 1.5rem;
+            padding: 1rem;
+            text-align: center;
+            border: 3px solid #95a5a6;
+            transition: all 0.2s;
+            min-width: 100px;
+        }
+        .sensor.door {
+            background: #8b6b4d;
+        }
+        .sensor.window {
+            background: #4a6b8a;
+        }
+        .sensor.motion {
+            background: #5d3f3f;
+        }
+        .sensor.active {
+            border-color: #ffaa33;
+            box-shadow: 0 0 25px #ff9900;
+            transform: scale(1.05);
+        }
+        .sensor.triggered {
+            border-color: #ff4444;
+            box-shadow: 0 0 30px #ff0000;
+            background: #a54444;
+        }
+        .sensor-icon {
+            font-size: 2.5rem;
+        }
+        .sensor-label {
+            color: white;
+            font-weight: 600;
+            margin-top: 0.3rem;
+        }
+        .sensor-status {
+            font-size: 0.8rem;
+            color: #ecf0f1;
+            background: #00000060;
+            border-radius: 1rem;
+            padding: 0.2rem;
+        }
+        .status-panel {
+            background: #0b212f;
+            border-radius: 2rem;
+            padding: 1.5rem;
+            border: 3px solid #ffb347;
+            flex: 1;
+            min-width: 280px;
+        }
+        .security-status {
+            background: #1b3649;
+            border-radius: 2rem;
+            padding: 1.5rem;
+            text-align: center;
+            border: 3px solid #f39c12;
+            margin-bottom: 1.5rem;
+        }
+        .status-shield {
+            font-size: 4rem;
+            filter: drop-shadow(0 4px 4px black);
+        }
+        .system-state {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #ffd966;
+            text-shadow: 0 3px 0 #b45400;
+            background: #002b44;
+            padding: 0.5rem 1rem;
+            border-radius: 3rem;
+            display: inline-block;
+            margin: 0.5rem 0;
+        }
+        .alarm-box {
+            background: #2c0f0f;
+            border-radius: 1.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 3px solid #ff6b6b;
+            color: #ffb8b8;
+            font-weight: bold;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+        .alarm-box.active {
+            background: #a12222;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; box-shadow: 0 0 40px red; }
+            100% { opacity: 1; }
+        }
+        .timer-display {
+            background: #1a3a4a;
+            border-radius: 2rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 2px solid #3498db;
+        }
+        .exit-timer {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffe68f;
+            text-shadow: 0 2px 0 #b45300;
+        }
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .security-btn {
+            background: #2c5778;
+            border: none;
+            border-radius: 2rem;
+            padding: 1rem 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #e7f3ff;
+            box-shadow: 0 6px 0 #123456, 0 8px 15px black;
+            cursor: pointer;
+            transition: 0.05s linear;
+            border: 2px solid #9bc5e6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .security-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 1px 0 #123456, 0 8px 15px black;
+        }
+        .security-btn:disabled {
+            opacity: 0.4;
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #123456;
+            pointer-events: none;
+        }
+        .security-btn.arm {
+            background: #27ae60;
+            border-color: #a3e4b3;
+        }
+        .security-btn.disarm {
+            background: #e67e22;
+            border-color: #ffcd94;
+        }
+        .security-btn.danger {
+            background: #c0392b;
+            border-color: #ffaaaa;
+        }
+        .sensor-events {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin: 1.5rem 0;
+        }
+        .sensor-trigger-btn {
+            background: #34495e;
+            border: none;
+            border-radius: 1.5rem;
+            padding: 0.8rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid #7f8c8d;
+        }
+        .sensor-trigger-btn:hover {
+            background: #3e5a70;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            color: #d0e4ff;
+            margin-top: 2rem;
+            background: #001d33b0;
+            padding: 0.8rem;
+            border-radius: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="security-card">
+        <h1>
+            <span>🏰</span> SECURITY SYSTEM FSM <span>🔒</span>
+        </h1>
+        
+        <div class="security-layout">
+            <!-- House with sensors -->
+            <div class="house-panel">
+                <div class="house-roof"></div>
+                <div class="house-base">
+                    <div class="sensor-row">
+                        <div class="sensor door" id="sensorFrontDoor">
+                            <div class="sensor-icon">🚪</div>
+                            <div class="sensor-label">Front Door</div>
+                            <div class="sensor-status" id="doorStatus">Closed</div>
+                        </div>
+                        <div class="sensor door" id="sensorBackDoor">
+                            <div class="sensor-icon">🚪</div>
+                            <div class="sensor-label">Back Door</div>
+                            <div class="sensor-status" id="backDoorStatus">Closed</div>
+                        </div>
+                    </div>
+                    <div class="sensor-row">
+                        <div class="sensor window" id="sensorWindow">
+                            <div class="sensor-icon">🪟</div>
+                            <div class="sensor-label">Window</div>
+                            <div class="sensor-status" id="windowStatus">Closed</div>
+                        </div>
+                        <div class="sensor motion" id="sensorMotion">
+                            <div class="sensor-icon">👤</div>
+                            <div class="sensor-label">Motion</div>
+                            <div class="sensor-status" id="motionStatus">Clear</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Control panel -->
+            <div class="status-panel">
+                <div class="security-status">
+                    <div class="status-shield" id="shieldEmoji">🛡️</div>
+                    <div class="system-state" id="systemState">DISARMED</div>
+                    <div class="alarm-box" id="alarmIndicator">
+                        <span>🔕</span> ALARM OFF <span>🔕</span>
+                    </div>
+                </div>
+                
+                <div class="timer-display">
+                    <div style="color:#b3d9ff; font-size:1rem;">EXIT/ENTRY DELAY</div>
+                    <div class="exit-timer" id="timerDisplay">--</div>
+                </div>
+                
+                <div class="control-grid">
+                    <button class="security-btn arm" id="btnArmStay">🏠 ARM (STAY)</button>
+                    <button class="security-btn arm" id="btnArmAway">🌙 ARM (AWAY)</button>
+                    <button class="security-btn disarm" id="btnDisarm">🔓 DISARM</button>
+                    <button class="security-btn" id="btnPanic">🚨 PANIC</button>
+                </div>
+                
+                <div style="margin: 1.5rem 0; color: #ffd966; font-weight:600;">TRIGGER SENSORS:</div>
+                <div class="sensor-events">
+                    <button class="sensor-trigger-btn" id="triggerDoor">🚪 Door Open</button>
+                    <button class="sensor-trigger-btn" id="triggerBackDoor">🚪 Back Door</button>
+                    <button class="sensor-trigger-btn" id="triggerWindow">🪟 Window</button>
+                    <button class="sensor-trigger-btn" id="triggerMotion">👤 Motion</button>
+                    <button class="sensor-trigger-btn" id="closeAll">🔒 Close All</button>
+                    <button class="sensor-trigger-btn" id="resetAlarm">⏹️ Reset Alarm</button>
+                </div>
+                
+                <button class="security-btn danger" id="btnReset">🔄 RESET SYSTEM</button>
+                
+                <div style="margin-top: 1rem; background: #001a28; padding: 0.8rem; border-radius: 1.5rem; color: #b8d9f0; font-size:0.9rem; text-align:center;">
+                    <strong>FSM:</strong> DISARMED → (arm) → ARMING → (timer) → ARMED → (sensor) → ALARM → (disarm/reset) → DISARMED
+                </div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <span>🟢 DISARMED</span>
+            <span>🟡 ARMING</span>
+            <span>🔴 ARMED</span>
+            <span>⛔ ALARM</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- SECURITY SYSTEM FSM ----------
+            const SecurityFSM = {
+                states: {
+                    DISARMED: 'DISARMED',
+                    ARMING: 'ARMING',       // exit delay
+                    ARMED: 'ARMED',
+                    ALARM: 'ALARM'
+                },
+                
+                current: 'DISARMED',
+                armingMode: null,            // 'stay' or 'away'
+                
+                // Sensor states
+                sensors: {
+                    frontDoor: { type: 'door', status: 'closed', triggered: false },
+                    backDoor: { type: 'door', status: 'closed', triggered: false },
+                    window: { type: 'window', status: 'closed', triggered: false },
+                    motion: { type: 'motion', status: 'clear', triggered: false }
+                },
+                
+                // Transition table
+                transitions: {
+                    'DISARMED_ARM_STAY': 'ARMING',
+                    'DISARMED_ARM_AWAY': 'ARMING',
+                    'DISARMED_PANIC': 'ALARM',
+                    
+                    'ARMING_ARM_COMPLETE': 'ARMED',
+                    'ARMING_DISARM': 'DISARMED',
+                    'ARMING_SENSOR_TRIGGER': 'ALARM',   // sensor triggers during arming -> alarm
+                    'ARMING_PANIC': 'ALARM',
+                    
+                    'ARMED_SENSOR_TRIGGER': 'ALARM',
+                    'ARMED_DISARM': 'DISARMED',
+                    'ARMED_PANIC': 'ALARM',
+                    
+                    'ALARM_DISARM': 'DISARMED',
+                    'ALARM_RESET': 'DISARMED',
+                    'ALARM_PANIC': 'ALARM'    // stays in alarm
+                },
+                
+                dispatch(event, data = null) {
+                    const from = this.current;
+                    const key = `${from}_${event}`;
+                    
+                    if (this.transitions.hasOwnProperty(key)) {
+                        return this.transitions[key];
+                    }
+                    return from;
+                },
+                
+                send(event, data = null) {
+                    const before = this.current;
+                    const after = this.dispatch(event, data);
+                    const changed = before !== after;
+                    
+                    this.current = after;
+                    
+                    return { changed, from: before, to: after };
+                },
+                
+                triggerSensor(sensorId, isOpen = true) {
+                    if (!this.sensors.hasOwnProperty(sensorId)) return false;
+                    
+                    const sensor = this.sensors[sensorId];
+                    const previousStatus = sensor.status;
+                    
+                    if (sensor.type === 'motion') {
+                        sensor.status = isOpen ? 'motion' : 'clear';
+                        sensor.triggered = isOpen;
+                    } else {
+                        sensor.status = isOpen ? 'open' : 'closed';
+                        sensor.triggered = isOpen;
+                    }
+                    
+                    // If sensor becomes open/triggered and system is ARMED -> trigger alarm
+                    if (isOpen && this.current === 'ARMED') {
+                        this.send('SENSOR_TRIGGER');
+                    }
+                    
+                    // If sensor becomes open/triggered and system is ARMING -> trigger alarm
+                    if (isOpen && this.current === 'ARMING') {
+                        this.send('SENSOR_TRIGGER');
+                    }
+                    
+                    return true;
+                },
+                
+                closeAllSensors() {
+                    for (let id in this.sensors) {
+                        const sensor = this.sensors[id];
+                        if (sensor.type === 'motion') {
+                            sensor.status = 'clear';
+                            sensor.triggered = false;
+                        } else {
+                            sensor.status = 'closed';
+                            sensor.triggered = false;
+                        }
+                    }
+                },
+                
+                reset() {
+                    this.current = 'DISARMED';
+                    this.armingMode = null;
+                    this.closeAllSensors();
+                }
+            };
+
+            // ---------- DOM Elements ----------
+            const systemState = document.getElementById('systemState');
+            const shieldEmoji = document.getElementById('shieldEmoji');
+            const alarmIndicator = document.getElementById('alarmIndicator');
+            const timerDisplay = document.getElementById('timerDisplay');
+            
+            // Sensor elements
+            const sensorFront = document.getElementById('sensorFrontDoor');
+            const sensorBack = document.getElementById('sensorBackDoor');
+            const sensorWindow = document.getElementById('sensorWindow');
+            const sensorMotion = document.getElementById('sensorMotion');
+            
+            const doorStatus = document.getElementById('doorStatus');
+            const backDoorStatus = document.getElementById('backDoorStatus');
+            const windowStatus = document.getElementById('windowStatus');
+            const motionStatus = document.getElementById('motionStatus');
+            
+            // Buttons
+            const btnArmStay = document.getElementById('btnArmStay');
+            const btnArmAway = document.getElementById('btnArmAway');
+            const btnDisarm = document.getElementById('btnDisarm');
+            const btnPanic = document.getElementById('btnPanic');
+            const btnReset = document.getElementById('btnReset');
+            
+            const triggerDoor = document.getElementById('triggerDoor');
+            const triggerBackDoor = document.getElementById('triggerBackDoor');
+            const triggerWindow = document.getElementById('triggerWindow');
+            const triggerMotion = document.getElementById('triggerMotion');
+            const closeAll = document.getElementById('closeAll');
+            const resetAlarm = document.getElementById('resetAlarm');
+            
+            // Timer variables
+            let armingTimer = null;
+            let timerSeconds = 0;
+            const EXIT_DELAY = 5; // seconds
+            
+            // Update UI based on FSM state and sensors
+            function updateUI() {
+                const state = SecurityFSM.current;
+                const sensors = SecurityFSM.sensors;
+                
+                // Update system state display
+                systemState.innerText = state;
+                
+                // Update emoji and alarm indicator
+                switch(state) {
+                    case 'DISARMED':
+                        shieldEmoji.innerText = '🛡️🔓';
+                        alarmIndicator.innerHTML = '<span>🔕</span> ALARM OFF <span>🔕</span>';
+                        alarmIndicator.classList.remove('active');
+                        break;
+                    case 'ARMING':
+                        shieldEmoji.innerText = '⏳🔒';
+                        alarmIndicator.innerHTML = '<span>⏱️</span> ARMING <span>⏱️</span>';
+                        alarmIndicator.classList.remove('active');
+                        break;
+                    case 'ARMED':
+                        shieldEmoji.innerText = '🛡️🔒';
+                        alarmIndicator.innerHTML = '<span>🔒</span> ARMED <span>🔒</span>';
+                        alarmIndicator.classList.remove('active');
+                        break;
+                    case 'ALARM':
+                        shieldEmoji.innerText = '🚨⚠️';
+                        alarmIndicator.innerHTML = '<span>🚨</span> ALARM TRIGGERED <span>🚨</span>';
+                        alarmIndicator.classList.add('active');
+                        break;
+                }
+                
+                // Update sensor displays
+                doorStatus.innerText = sensors.frontDoor.status === 'open' ? 'OPEN' : 'Closed';
+                backDoorStatus.innerText = sensors.backDoor.status === 'open' ? 'OPEN' : 'Closed';
+                windowStatus.innerText = sensors.window.status === 'open' ? 'OPEN' : 'Closed';
+                motionStatus.innerText = sensors.motion.status === 'motion' ? 'MOTION!' : 'Clear';
+                
+                // Update sensor visual states
+                sensorFront.classList.remove('triggered', 'active');
+                sensorBack.classList.remove('triggered', 'active');
+                sensorWindow.classList.remove('triggered', 'active');
+                sensorMotion.classList.remove('triggered', 'active');
+                
+                if (sensors.frontDoor.triggered) sensorFront.classList.add('triggered');
+                if (sensors.backDoor.triggered) sensorBack.classList.add('triggered');
+                if (sensors.window.triggered) sensorWindow.classList.add('triggered');
+                if (sensors.motion.triggered) sensorMotion.classList.add('triggered');
+                
+                // Update button states
+                updateButtons();
+            }
+            
+            function updateButtons() {
+                const state = SecurityFSM.current;
+                
+                // Arm buttons only in DISARMED
+                btnArmStay.disabled = state !== 'DISARMED';
+                btnArmAway.disabled = state !== 'DISARMED';
+                
+                // Disarm enabled in ARMING, ARMED, ALARM
+                btnDisarm.disabled = !(state === 'ARMING' || state === 'ARMED' || state === 'ALARM');
+                
+                // Panic always enabled
+                btnPanic.disabled = false;
+                
+                // Sensor triggers always available (for simulation)
+                // But we'll disable them in ALARM? No, keep them for realism
+            }
+            
+            // Timer for arming
+            function startArmingTimer(mode) {
+                if (armingTimer) clearInterval(armingTimer);
+                
+                timerSeconds = EXIT_DELAY;
+                timerDisplay.innerText = timerSeconds + 's';
+                SecurityFSM.armingMode = mode;
+                
+                armingTimer = setInterval(() => {
+                    timerSeconds -= 1;
+                    timerDisplay.innerText = timerSeconds + 's';
+                    
+                    if (timerSeconds <= 0) {
+                        // Time's up, move to ARMED
+                        clearInterval(armingTimer);
+                        armingTimer = null;
+                        SecurityFSM.send('ARM_COMPLETE');
+                        timerDisplay.innerText = '--';
+                        updateUI();
+                    }
+                }, 1000);
+            }
+            
+            // Stop timer
+            function stopTimer() {
+                if (armingTimer) {
+                    clearInterval(armingTimer);
+                    armingTimer = null;
+                }
+                timerDisplay.innerText = '--';
+            }
+            
+            // Event handlers
+            function handleArmStay() {
+                if (SecurityFSM.current === 'DISARMED') {
+                    SecurityFSM.send('ARM_STAY');
+                    startArmingTimer('stay');
+                    updateUI();
+                }
+            }
+            
+            function handleArmAway() {
+                if (SecurityFSM.current === 'DISARMED') {
+                    SecurityFSM.send('ARM_AWAY');
+                    startArmingTimer('away');
+                    updateUI();
+                }
+            }
+            
+            function handleDisarm() {
+                const prevState = SecurityFSM.current;
+                SecurityFSM.send('DISARM');
+                stopTimer();
+                SecurityFSM.armingMode = null;
+                updateUI();
+            }
+            
+            function handlePanic() {
+                SecurityFSM.send('PANIC');
+                stopTimer();
+                updateUI();
+            }
+            
+            function handleTriggerDoor() {
+                SecurityFSM.triggerSensor('frontDoor', true);
+                updateUI();
+            }
+            
+            function handleTriggerBackDoor() {
+                SecurityFSM.triggerSensor('backDoor', true);
+                updateUI();
+            }
+            
+            function handleTriggerWindow() {
+                SecurityFSM.triggerSensor('window', true);
+                updateUI();
+            }
+            
+            function handleTriggerMotion() {
+                SecurityFSM.triggerSensor('motion', true);
+                updateUI();
+            }
+            
+            function handleCloseAll() {
+                SecurityFSM.closeAllSensors();
+                updateUI();
+            }
+            
+            function handleResetAlarm() {
+                if (SecurityFSM.current === 'ALARM') {
+                    SecurityFSM.send('RESET');
+                    stopTimer();
+                    SecurityFSM.closeAllSensors();
+                    updateUI();
+                } else {
+                    // Just close sensors
+                    SecurityFSM.closeAllSensors();
+                    updateUI();
+                }
+            }
+            
+            function handleSystemReset() {
+                stopTimer();
+                SecurityFSM.reset();
+                updateUI();
+            }
+            
+            // Initialize
+            function init() {
+                SecurityFSM.reset();
+                updateUI();
+                
+                // Add listeners
+                btnArmStay.addEventListener('click', handleArmStay);
+                btnArmAway.addEventListener('click', handleArmAway);
+                btnDisarm.addEventListener('click', handleDisarm);
+                btnPanic.addEventListener('click', handlePanic);
+                btnReset.addEventListener('click', handleSystemReset);
+                
+                triggerDoor.addEventListener('click', handleTriggerDoor);
+                triggerBackDoor.addEventListener('click', handleTriggerBackDoor);
+                triggerWindow.addEventListener('click', handleTriggerWindow);
+                triggerMotion.addEventListener('click', handleTriggerMotion);
+                closeAll.addEventListener('click', handleCloseAll);
+                resetAlarm.addEventListener('click', handleResetAlarm);
+            }
+            
+            init();
+        })();
+    </script>
+</body>
+</html>

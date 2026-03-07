@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neo Tokyo · Air Traffic Management</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+            background-color: #0a0c1a;
+            color: #e0f0ff;
+        }
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            background: rgba(0, 15, 30, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid #00ccff;
+            border-radius: 40px;
+            padding: 12px 32px;
+            display: flex;
+            gap: 40px;
+            box-shadow: 0 0 40px rgba(0, 200, 255, 0.2);
+            border-left: 6px solid #00e0ff;
+        }
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .hud-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #88ddff;
+            letter-spacing: 2px;
+        }
+        .hud-value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fff, #aaffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        #airspace-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(8, 12, 28, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid #ffaa44;
+            border-radius: 48px;
+            padding: 22px 32px;
+            z-index: 50;
+            border-right: 6px solid #ffaa44;
+            min-width: 260px;
+            box-shadow: 0 15px 35px rgba(200,80,0,0.3);
+        }
+        .flight-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1rem;
+            border-bottom: 1px solid #335577;
+            padding-bottom: 5px;
+        }
+        .flight-code {
+            color: #ffbb77;
+            font-weight: 600;
+        }
+        .flight-alt {
+            color: #88ddff;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .green { background: #2ecc71; box-shadow: 0 0 15px #2ecc71; }
+        .yellow { background: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
+        .cyan { background: #00d4ff; box-shadow: 0 0 15px #00d4ff; }
+        
+        #city-legend {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            background: rgba(0, 10, 20, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid #00aaff;
+            border-radius: 40px;
+            padding: 12px 28px;
+            z-index: 50;
+            font-size: 0.9rem;
+            border-left: 4px solid #00aaff;
+        }
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        #weather-stats {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(20, 15, 30, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid #88aaff;
+            border-radius: 40px;
+            padding: 16px 28px;
+            z-index: 50;
+            text-align: right;
+            border-bottom: 4px solid #5a9eff;
+        }
+        .glow-number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #c8e8ff, #5ac8fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .pulse-radar {
+            width: 16px;
+            height: 16px;
+            background: #00ffaa;
+            border-radius: 50%;
+            box-shadow: 0 0 25px #00ffaa;
+            animation: radar-pulse 1.5s infinite;
+        }
+        @keyframes radar-pulse {
+            0% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); background: #88ffcc; }
+            100% { opacity: 0.7; transform: scale(1); }
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="hud">
+        <div class="hud-item">
+            <span class="hud-label">airspace</span>
+            <span class="hud-value" id="craft-count">187</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">routes</span>
+            <span class="hud-value">23</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">delay</span>
+            <span class="hud-value" id="delay-val">2.3</span><span style="font-size:1rem;">min</span>
+        </div>
+    </div>
+
+    <div id="airspace-panel">
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
+            <span class="pulse-radar"></span>
+            <span style="font-weight: 600; font-size: 1.3rem;">🛸 ACTIVE FLIGHTS</span>
+        </div>
+        <div class="flight-row">
+            <span><span class="status-indicator green"></span> <span class="flight-code">NEO-742</span></span>
+            <span class="flight-alt">FL280</span>
+        </div>
+        <div class="flight-row">
+            <span><span class="status-indicator green"></span> <span class="flight-code">ARK-103</span></span>
+            <span class="flight-alt">FL310</span>
+        </div>
+        <div class="flight-row">
+            <span><span class="status-indicator yellow"></span> <span class="flight-code">CYB-89</span></span>
+            <span class="flight-alt">FL190</span>
+        </div>
+        <div class="flight-row">
+            <span><span class="status-indicator cyan"></span> <span class="flight-code">ZEP-256</span></span>
+            <span class="flight-alt">FL410</span>
+        </div>
+        <div class="flight-row">
+            <span><span class="status-indicator green"></span> <span class="flight-code">NEO-901</span></span>
+            <span class="flight-alt">FL350</span>
+        </div>
+        <div style="margin-top: 12px; color:#88aadd; font-size:0.85rem; text-align:center;">+ 182 more in sector</div>
+    </div>
+
+    <div id="city-legend">
+        <span><span class="legend-dot" style="background:#4a90e2;"></span> Commercial</span>
+        <span style="margin-left:20px;"><span class="legend-dot" style="background:#ffaa44;"></span> Cargo</span>
+        <span style="margin-left:20px;"><span class="legend-dot" style="background:#aa88ff;"></span> Emergency</span>
+        <span style="margin-left:20px;"><span class="legend-dot" style="background:#2ecc71;"></span> Autonomous</span>
+    </div>
+
+    <div id="weather-stats">
+        <div style="font-size:1rem;">🌆 NEO TOKYO METRO</div>
+        <div class="glow-number" id="weather-temp">24 °C</div>
+        <div style="font-size:0.9rem;">wind calm · visibility 10km</div>
+        <div style="margin-top:8px; color:#aaccff;">🔄 handover: 12/sec</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        
+        // --- Scene setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0c1a);
+        scene.fog = new THREE.Fog(0x0a0c1a, 30, 100);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(25, 18, 35);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+        
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0';
+        labelRenderer.domElement.style.left = '0';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+        
+        // --- Controls ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.8;
+        controls.maxPolarAngle = Math.PI / 2.2;
+        controls.minDistance = 20;
+        controls.maxDistance = 80;
+        
+        // --- Lighting ---
+        const ambient = new THREE.AmbientLight(0x404060);
+        scene.add(ambient);
+        
+        const dirLight = new THREE.DirectionalLight(0xfff5e6, 1.2);
+        dirLight.position.set(10, 30, 15);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        const d = 30;
+        dirLight.shadow.camera.left = -d;
+        dirLight.shadow.camera.right = d;
+        dirLight.shadow.camera.top = d;
+        dirLight.shadow.camera.bottom = -d;
+        dirLight.shadow.camera.near = 1;
+        dirLight.shadow.camera.far = 50;
+        scene.add(dirLight);
+        
+        const fillLight = new THREE.PointLight(0x446688, 0.5);
+        fillLight.position.set(-10, 10, 20);
+        scene.add(fillLight);
+        
+        // --- Ground grid (city base) ---
+        const gridHelper = new THREE.GridHelper(60, 40, 0x88aaff, 0x335588);
+        gridHelper.position.y = -0.01;
+        scene.add(gridHelper);
+        
+        // --- City buildings ---
+        const buildingCount = 300;
+        const buildingColors = [0x4a90e2, 0x5a6fa5, 0x3a5f8a, 0x6b8cff, 0x2a4a7a];
+        
+        for (let i = 0; i < buildingCount; i++) {
+            const x = (Math.random() - 0.5) * 50;
+            const z = (Math.random() - 0.5) * 50;
+            
+            // Clump buildings near center
+            const dist = Math.sqrt(x*x + z*z);
+            if (dist > 28) continue;
+            
+            const height = 0.5 + Math.random() * 3.5;
+            const width = 0.3 + Math.random() * 0.5;
+            const depth = 0.3 + Math.random() * 0.5;
+            
+            const geo = new THREE.BoxGeometry(width, height, depth);
+            const mat = new THREE.MeshStandardMaterial({ color: buildingColors[Math.floor(Math.random() * buildingColors.length)], emissive: 0x111122 });
+            const building = new THREE.Mesh(geo, mat);
+            building.position.set(x, height/2, z);
+            building.castShadow = true;
+            building.receiveShadow = true;
+            scene.add(building);
+            
+            // Add windows (small lights)
+            if (Math.random() > 0.3) {
+                const windowGeo = new THREE.BoxGeometry(0.05, 0.05, 0.05);
+                const windowMat = new THREE.MeshStandardMaterial({ color: 0xffdd99, emissive: 0x442200 });
+                for (let w = 0; w < 3; w++) {
+                    const windowLight = new THREE.Mesh(windowGeo, windowMat);
+                    windowLight.position.set(x + (Math.random()-0.5)*width*0.8, height * (0.2 + Math.random()*0.6), z + depth/2 + 0.02);
+                    scene.add(windowLight);
+                }
+            }
+        }
+        
+        // --- Central tower (landmark) ---
+        const towerGeo = new THREE.CylinderGeometry(0.8, 1.2, 8, 8);
+        const towerMat = new THREE.MeshStandardMaterial({ color: 0xaaccff, emissive: 0x113355 });
+        const tower = new THREE.Mesh(towerGeo, towerMat);
+        tower.position.set(0, 4, 0);
+        tower.castShadow = true;
+        tower.receiveShadow = true;
+        scene.add(tower);
+        
+        // Tower top
+        const topGeo = new THREE.SphereGeometry(0.5);
+        const topMat = new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0x442200 });
+        const top = new THREE.Mesh(topGeo, topMat);
+        top.position.set(0, 8.2, 0);
+        scene.add(top);
+        
+        // --- Flying vehicles (drones/air taxis) ---
+        const vehicles = [];
+        const vehicleCount = 40;
+        
+        function createVehicle(color = 0x88aaff, type = 'commercial') {
+            const group = new THREE.Group();
+            
+            // Body
+            const bodyGeo = new THREE.BoxGeometry(0.4, 0.1, 0.8);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: color });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+            
+            // Wings/rotors
+            const rotorGeo = new THREE.BoxGeometry(0.2, 0.05, 1.2);
+            const rotorMat = new THREE.MeshStandardMaterial({ color: 0xccccdd });
+            const rotor = new THREE.Mesh(rotorGeo, rotorMat);
+            rotor.position.y = 0.1;
+            rotor.castShadow = true;
+            group.add(rotor);
+            
+            // Tail
+            const tailGeo = new THREE.BoxGeometry(0.1, 0.2, 0.2);
+            const tailMat = new THREE.MeshStandardMaterial({ color: 0xccccdd });
+            const tail = new THREE.Mesh(tailGeo, tailMat);
+            tail.position.z = -0.5;
+            tail.position.y = 0.1;
+            group.add(tail);
+            
+            // Light
+            const lightGeo = new THREE.SphereGeometry(0.05);
+            const lightMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0x442200 });
+            const light = new THREE.Mesh(lightGeo, lightMat);
+            light.position.z = 0.5;
+            light.position.y = 0.1;
+            group.add(light);
+            
+            return group;
+        }
+        
+        // Create vehicles with random paths
+        for (let i = 0; i < vehicleCount; i++) {
+            const type = Math.random();
+            let color;
+            if (type < 0.6) color = 0x4a90e2; // commercial
+            else if (type < 0.85) color = 0xffaa44; // cargo
+            else color = 0xaa88ff; // emergency
+            
+            const vehicle = createVehicle(color);
+            
+            // Random initial position (in air)
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 10 + Math.random() * 15;
+            const height = 5 + Math.random() * 8;
+            vehicle.position.set(
+                Math.cos(angle) * radius,
+                height,
+                Math.sin(angle) * radius
+            );
+            
+            // Store path parameters
+            vehicle.userData = {
+                angle: angle,
+                radius: radius,
+                height: height,
+                speed: 0.002 + Math.random() * 0.003,
+                verticalOsc: Math.random() * 2,
+                phase: Math.random() * Math.PI * 2
+            };
+            
+            scene.add(vehicle);
+            vehicles.push(vehicle);
+            
+            // Add a label for some
+            if (i % 8 === 0) {
+                const div = document.createElement('div');
+                div.textContent = `VTOL-${1000 + i}`;
+                div.style.color = '#aaddff';
+                div.style.fontSize = '10px';
+                div.style.background = 'rgba(0,0,0,0.5)';
+                div.style.padding = '2px 6px';
+                div.style.borderRadius = '10px';
+                div.style.border = '1px solid #4a90e2';
+                const label = new CSS2DObject(div);
+                label.position.set(0, 0.8, 0);
+                vehicle.add(label);
+            }
+        }
+        
+        // --- Traffic routes (invisible paths, but we can draw some lines) ---
+        const routeMaterial = new THREE.LineBasicMaterial({ color: 0x335588, transparent: true, opacity: 0.15 });
+        for (let r = 0; r < 5; r++) {
+            const radius = 12 + r * 4;
+            const points = [];
+            for (let i = 0; i <= 32; i++) {
+                const angle = (i / 32) * Math.PI * 2;
+                points.push(new THREE.Vector3(radius * Math.cos(angle), 6 + r * 2, radius * Math.sin(angle)));
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.LineLoop(geo, routeMaterial);
+            scene.add(line);
+        }
+        
+        // --- Animate vehicles ---
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            vehicles.forEach(v => {
+                const data = v.userData;
+                data.angle += data.speed;
+                
+                // Circular motion with slight vertical variation
+                v.position.x = Math.cos(data.angle) * data.radius;
+                v.position.z = Math.sin(data.angle) * data.radius;
+                v.position.y = data.height + Math.sin(data.angle * 2 + data.phase) * data.verticalOsc;
+                
+                // Orient vehicle along direction of motion
+                const dir = new THREE.Vector3(
+                    -Math.sin(data.angle) * data.radius,
+                    Math.cos(data.angle * 2 + data.phase) * data.verticalOsc * 0.5,
+                    Math.cos(data.angle) * data.radius
+                ).normalize();
+                v.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), dir);
+            });
+            
+            // Update HUD numbers
+            document.getElementById('craft-count').innerText = 187 + Math.floor(Math.sin(Date.now()*0.001)*5);
+            document.getElementById('delay-val').innerText = (2.3 + Math.sin(Date.now()*0.002)*0.5).toFixed(1);
+            
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

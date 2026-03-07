@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌿 The Fractal Botanist</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a3f1a;
+            background: linear-gradient(145deg, #2a5f2a, #0a2f0a);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .fractal-garden {
+            width: 1000px;
+            background: #4a7a4a;
+            background: linear-gradient(145deg, #6b9f6b, #3a6f3a);
+            border-radius: 120px 120px 60px 60px;
+            padding: 40px;
+            box-shadow: 0 40px 60px #1a2f1a, inset 0 0 0 15px #8fbc8f, inset 0 0 0 30px #6b8e6b;
+            border: 12px solid #2f4f2f;
+        }
+        
+        .garden-canvas {
+            width: 600px;
+            height: 400px;
+            margin: 0 auto 40px;
+            background: #2f4f2f;
+            border-radius: 60px;
+            border: 12px solid #1f3f1f;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #fractalCanvas {
+            width: 100%;
+            height: 100%;
+            background: #1f3f1f;
+        }
+        
+        .growth-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .growth-btn {
+            background: #2f4f2f;
+            border: none;
+            color: #8fbc8f;
+            font-size: 24px;
+            padding: 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            border-bottom: 8px solid #1f3f1f;
+            transition: 0.05s linear;
+        }
+        .growth-btn:active {
+            border-bottom-width: 2px;
+            transform: translateY(6px);
+        }
+        
+        .plant-stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px 0;
+            color: #8fbc8f;
+        }
+        
+        .stat-box {
+            background: #1f3f1f;
+            padding: 20px 40px;
+            border-radius: 40px;
+            font-size: 20px;
+            border: 4px solid #2f4f2f;
+        }
+        
+        .seed-bank {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .seed {
+            width: 80px;
+            height: 80px;
+            background: #8b5a2a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 4px solid #5a3a1a;
+        }
+        .seed:hover {
+            transform: scale(1.2);
+        }
+        .seed.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 50px gold;
+        }
+    </style>
+</head>
+<body>
+    <div class="fractal-garden">
+        <div class="garden-canvas">
+            <canvas id="fractalCanvas" width="600" height="400"></canvas>
+        </div>
+        
+        <div class="plant-stats">
+            <div class="stat-box">🌱 GENERATIONS: <span id="generations">1</span></div>
+            <div class="stat-box">🌿 BRANCHES: <span id="branches">3</span></div>
+            <div class="stat-box">🍃 LEAVES: <span id="leaves">12</span></div>
+        </div>
+        
+        <div class="growth-controls">
+            <button class="growth-btn" id="growBtn">🌱 GROW</button>
+            <button class="growth-btn" id="pruneBtn">✂️ PRUNE</button>
+            <button class="growth-btn" id="mutateBtn">🧬 MUTATE</button>
+            <button class="growth-btn" id="resetBtn">🔄 RESET</button>
+        </div>
+        
+        <div class="seed-bank">
+            <div class="seed" data-type="oak">🌰</div>
+            <div class="seed" data-type="willow">🌿</div>
+            <div class="seed" data-type="fern">🍃</div>
+            <div class="seed" data-type="cactus">🌵</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('fractalCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const generationsSpan = document.getElementById('generations');
+        const branchesSpan = document.getElementById('branches');
+        const leavesSpan = document.getElementById('leaves');
+        
+        let plantType = 'oak';
+        let generation = 1;
+        let branchCount = 3;
+        let leafCount = 12;
+        
+        function drawPlant() {
+            ctx.clearRect(0, 0, 600, 400);
+            
+            // Draw ground
+            ctx.fillStyle = '#2f4f2f';
+            ctx.fillRect(0, 350, 600, 50);
+            
+            // Draw plant based on type
+            ctx.save();
+            ctx.translate(300, 350);
+            
+            if (plantType === 'oak') drawOak(0, 0, 80, generation);
+            else if (plantType === 'willow') drawWillow(0, 0, 60, generation);
+            else if (plantType === 'fern') drawFern(0, 0, 50, generation);
+            else if (plantType === 'cactus') drawCactus(0, 0, 40, generation);
+            
+            ctx.restore();
+        }
+        
+        function drawOak(x, y, length, depth) {
+            if (depth === 0) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y - length);
+            ctx.strokeStyle = '#8b5a2b';
+            ctx.lineWidth = depth * 2;
+            ctx.stroke();
+            
+            // Branches
+            const newY = y - length;
+            const branchLength = length * 0.7;
+            
+            // Left branch
+            ctx.save();
+            ctx.translate(x, newY);
+            ctx.rotate(-0.3);
+            drawOak(0, 0, branchLength, depth - 1);
+            ctx.restore();
+            
+            // Right branch
+            ctx.save();
+            ctx.translate(x, newY);
+            ctx.rotate(0.3);
+            drawOak(0, 0, branchLength, depth - 1);
+            ctx.restore();
+            
+            // Draw leaves at ends
+            if (depth === 1) {
+                ctx.fillStyle = '#3f9f3f';
+                ctx.beginPath();
+                ctx.arc(x, newY - 10, 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function drawWillow(x, y, length, depth) {
+            if (depth === 0) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y - length);
+            ctx.strokeStyle = '#6b8e6b';
+            ctx.lineWidth = depth;
+            ctx.stroke();
+            
+            const newY = y - length;
+            
+            for (let i = -2; i <= 2; i++) {
+                ctx.save();
+                ctx.translate(x + i * 10, newY);
+                ctx.rotate(0.1 * i);
+                ctx.strokeStyle = '#8fbc8f';
+                ctx.lineWidth = depth * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, length * 0.5);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+        
+        function drawFern(x, y, length, depth) {
+            if (depth === 0) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y - length);
+            ctx.strokeStyle = '#3f9f3f';
+            ctx.lineWidth = depth;
+            ctx.stroke();
+            
+            const newY = y - length;
+            
+            for (let i = -1; i <= 1; i+=2) {
+                ctx.save();
+                ctx.translate(x, newY);
+                ctx.rotate(i * 0.5);
+                ctx.strokeStyle = '#3f9f3f';
+                ctx.lineWidth = depth * 0.7;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(length * 0.5, -length * 0.3);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+        
+        function drawCactus(x, y, length, depth) {
+            ctx.fillStyle = '#2f8f2f';
+            ctx.fillRect(x - 15, y - length, 30, length);
+            
+            // Arms
+            if (depth > 1) {
+                ctx.fillRect(x - 40, y - length * 0.6, 25, length * 0.4);
+                ctx.fillRect(x + 15, y - length * 0.8, 25, length * 0.4);
+            }
+        }
+        
+        function grow() {
+            generation = Math.min(5, generation + 1);
+            generationsSpan.textContent = generation;
+            branchCount += 2;
+            leafCount += 5;
+            branchesSpan.textContent = branchCount;
+            leavesSpan.textContent = leafCount;
+            drawPlant();
+        }
+        
+        function prune() {
+            generation = Math.max(1, generation - 1);
+            generationsSpan.textContent = generation;
+            branchCount = Math.max(1, branchCount - 2);
+            leafCount = Math.max(3, leafCount - 5);
+            branchesSpan.textContent = branchCount;
+            leavesSpan.textContent = leafCount;
+            drawPlant();
+        }
+        
+        function mutate() {
+            const types = ['oak', 'willow', 'fern', 'cactus'];
+            const currentIndex = types.indexOf(plantType);
+            plantType = types[(currentIndex + 1) % types.length];
+            
+            // Update seed selection
+            document.querySelectorAll('.seed').forEach(s => s.classList.remove('selected'));
+            document.querySelector(`[data-type="${plantType}"]`).classList.add('selected');
+            
+            drawPlant();
+        }
+        
+        function reset() {
+            generation = 1;
+            branchCount = 3;
+            leafCount = 12;
+            plantType = 'oak';
+            
+            generationsSpan.textContent = generation;
+            branchesSpan.textContent = branchCount;
+            leavesSpan.textContent = leafCount;
+            
+            document.querySelectorAll('.seed').forEach(s => s.classList.remove('selected'));
+            document.querySelector('[data-type="oak"]').classList.add('selected');
+            
+            drawPlant();
+        }
+        
+        document.querySelectorAll('.seed').forEach(seed => {
+            seed.addEventListener('click', () => {
+                document.querySelectorAll('.seed').forEach(s => s.classList.remove('selected'));
+                seed.classList.add('selected');
+                plantType = seed.dataset.type;
+                drawPlant();
+            });
+        });
+        
+        document.getElementById('growBtn').addEventListener('click', grow);
+        document.getElementById('pruneBtn').addEventListener('click', prune);
+        document.getElementById('mutateBtn').addEventListener('click', mutate);
+        document.getElementById('resetBtn').addEventListener('click', reset);
+        
+        reset();
+    </script>
+</body>
+</html>

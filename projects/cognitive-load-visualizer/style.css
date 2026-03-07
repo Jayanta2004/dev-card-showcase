@@ -1,101 +1,497 @@
 * {
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: linear-gradient(180deg, #e0f2fe, #bae6fd);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 16px;
+}
+
+.app {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  width: 500px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+h1 {
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+.meter {
+  position: relative;
+  height: 20px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.meter-fill {
+  height: 100%;
+  width: 0%;
+  background: #22c55e;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.threshold {
+  position: absolute;
+  right: 10%;
+  top: -18px;
+  font-size: 10px;
+  color: #64748b;
+}
+
+/* Task Queue Styles */
+.task-queue-container {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.task-queue-container h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #475569;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.queue-stats {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: normal;
+}
+
+.task-queue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 8px;
+}
+
+.task-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+  position: relative;
+  animation: taskAppear 0.3s ease-out;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.task-dot.processing {
+  animation: pulse 1s infinite;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.task-dot.light { background: #22c55e; }
+.task-dot.medium { background: #eab308; }
+.task-dot.heavy { background: #ef4444; }
+.task-dot.interrupt { background: #f97316; }
+
+.task-timer {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #1e293b;
+  color: white;
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  min-width: 24px;
+  text-align: center;
+}
+
+@keyframes taskAppear {
+  from {
+    transform: scale(0);
+    opacity: 0;
   }
-  
-  body {
-    background: linear-gradient(180deg, #e0f2fe, #bae6fd);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  to {
+    transform: scale(1);
+    opacity: 1;
   }
-  
-  .app {
-    background: white;
-    padding: 25px;
-    border-radius: 16px;
-    width: 380px;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes taskComplete {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+.task-dot.completing {
+  animation: taskComplete 0.3s ease-out forwards;
+}
+
+.task-queue-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.queue-time {
+  font-weight: bold;
+  color: #3b82f6;
+}
+
+.graph-container {
+  margin: 20px 0 15px 0;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+#loadGraph {
+  width: 100%;
+  height: 100px;
+  display: block;
+  background: white;
+  border-radius: 4px;
+}
+
+.graph-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 10px;
+  color: #64748b;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+  position: relative;
+}
+
+button {
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #3b82f6;
+  color: white;
+  font-size: 13px;
+  transition: background 0.2s ease;
+  position: relative;
+}
+
+button:hover {
+  background: #2563eb;
+}
+
+button.secondary {
+  background: #e5e7eb;
+  color: #020617;
+}
+
+button.secondary:hover {
+  background: #cbd5f1;
+}
+
+.tooltip {
+  position: relative;
+}
+
+.tooltip:before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: #1e293b;
+  color: white;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 100;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  font-weight: normal;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.tooltip:after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 2px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: #1e293b transparent transparent transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 100;
+}
+
+.tooltip:hover:before,
+.tooltip:hover:after {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0.5s;
+}
+
+@media (max-width: 480px) {
+  .tooltip:before {
+    white-space: normal;
+    width: 150px;
     text-align: center;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
-    transition: filter 0.3s ease, transform 0.3s ease;
   }
-  
-  h1 {
-    margin-bottom: 15px;
-    font-size: 18px;
-  }
-  
-  .meter {
-    position: relative;
-    height: 20px;
-    background: #e5e7eb;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 8px;
-  }
-  
-  .meter-fill {
-    height: 100%;
-    width: 0%;
-    background: #22c55e;
-    transition: width 0.3s ease, background 0.3s ease;
-  }
-  
-  .threshold {
-    position: absolute;
-    right: 10%;
-    top: -18px;
-    font-size: 10px;
-    color: #64748b;
-  }
-  
-  .controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  
-  button {
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #3b82f6;
-    color: white;
-    font-size: 13px;
-  }
-  
-  button:hover {
-    background: #2563eb;
-  }
-  
-  button.secondary {
-    background: #e5e7eb;
-    color: #020617;
-  }
-  
-  button.secondary:hover {
-    background: #cbd5f5;
-  }
-  
-  #status {
-    margin-top: 12px;
-    font-size: 13px;
-  }
-  
-  /* Overload Effects */
-  .overloaded {
-    filter: blur(1.5px);
-    animation: shake 0.4s infinite;
-  }
-  
-  @keyframes shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-2px); }
-    50% { transform: translateX(2px); }
-    75% { transform: translateX(-2px); }
-    100% { transform: translateX(0); }
-  }
-  
+}
+
+#status {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.shortcuts-hint {
+  margin-top: 20px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.shortcuts-hint p {
+  margin: 0;
+}
+
+.overloaded {
+  filter: blur(1.5px);
+  animation: shake 0.4s infinite;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+.key-press {
+  transform: scale(0.98);
+  opacity: 0.8;
+}
+
+.settings-panel {
+  margin: 20px 0;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.settings-toggle {
+  width: 100%;
+  padding: 12px;
+  background: #f1f5f9;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s ease;
+}
+
+.settings-toggle:hover {
+  background: #e2e8f0;
+}
+
+.settings-content {
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.settings-content.hidden {
+  display: none;
+}
+
+.settings-content h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: #1e293b;
+  text-align: left;
+}
+
+.settings-content h4 {
+  margin: 15px 0 10px 0;
+  font-size: 14px;
+  color: #475569;
+  text-align: left;
+}
+
+.setting-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.setting-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.zones-config {
+  background: white;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.zone-config {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.zone-config:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.zone-config label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.zone-slider {
+  margin-bottom: 8px;
+}
+
+.color-preview {
+  width: 100%;
+  height: 30px;
+  border-radius: 4px;
+  margin-top: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.settings-actions button {
+  flex: 1;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.settings-actions button.primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.settings-actions button.primary:hover {
+  background: #2563eb;
+}
+
+.settings-actions button.secondary {
+  background: #e5e7eb;
+  color: #020617;
+}
+
+.settings-actions button.secondary:hover {
+  background: #cbd5f1;
+}

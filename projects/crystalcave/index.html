@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crystal Cave · 3D Exploration</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(10, 15, 25, 0.7);
+            backdrop-filter: blur(8px);
+            color: #b0d8ff;
+            padding: 12px 28px;
+            border-radius: 50px;
+            border: 1px solid #5a8fbb;
+            pointer-events: none;
+            box-shadow: 0 10px 25px -10px rgba(0,0,0,0.5);
+            font-size: 0.95rem;
+        }
+        #info span {
+            color: #ffd966;
+            font-weight: 600;
+        }
+        #controls-note {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            color: #ccc;
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: 1px solid #5f7f9f;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        ✦ <span>CRYSTAL CAVE</span> · drag to explore · glowing crystals
+    </div>
+    <div id="controls-note">
+        🖱️ drag to rotate · scroll to zoom
+    </div>
+
+    <!-- Import Three.js and add-ons -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // --- setup scene ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a1030); // deep dark blue
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(12, 6, 18);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.body.appendChild(renderer.domElement);
+        
+        // --- CSS2 renderer for labels (optional) ---
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+        
+        // --- controls ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.8;
+        controls.maxPolarAngle = Math.PI / 2; // prevent going underground
+        controls.minDistance = 5;
+        controls.maxDistance = 35;
+        
+        // --- lighting ---
+        // ambient
+        const ambient = new THREE.AmbientLight(0x404060);
+        scene.add(ambient);
+        
+        // main directional light (moonlight from above)
+        const dirLight = new THREE.DirectionalLight(0xaaccff, 1.2);
+        dirLight.position.set(5, 20, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        const d = 20;
+        dirLight.shadow.camera.left = -d;
+        dirLight.shadow.camera.right = d;
+        dirLight.shadow.camera.top = d;
+        dirLight.shadow.camera.bottom = -d;
+        dirLight.shadow.camera.near = 1;
+        dirLight.shadow.camera.far = 30;
+        scene.add(dirLight);
+        
+        // colored point lights for crystals
+        const colors = [0x88aaff, 0xff88aa, 0xaaff88, 0xffaa88, 0xaa88ff];
+        for (let i = 0; i < 12; i++) {
+            const light = new THREE.PointLight(colors[Math.floor(Math.random() * colors.length)], 1.2, 15);
+            light.position.set(
+                (Math.random() - 0.5) * 18,
+                2 + Math.random() * 8,
+                (Math.random() - 0.5) * 18
+            );
+            scene.add(light);
+        }
+        
+        // --- cave walls / ground (rock) ---
+        // ground plane with texture
+        const groundGeo = new THREE.CircleGeometry(30, 32);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x4a5a6a, roughness: 0.8, emissive: 0x111122 });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -1;
+        ground.receiveShadow = true;
+        scene.add(ground);
+        
+        // random rock formations
+        for (let i = 0; i < 40; i++) {
+            const rockGeo = new THREE.DodecahedronGeometry(0.5 + Math.random() * 1.2);
+            const rockMat = new THREE.MeshStandardMaterial({ color: 0x5a6b7a, roughness: 0.9, emissive: 0x111122 });
+            const rock = new THREE.Mesh(rockGeo, rockMat);
+            rock.position.set(
+                (Math.random() - 0.5) * 22,
+                -0.8 + Math.random() * 2,
+                (Math.random() - 0.5) * 22
+            );
+            rock.castShadow = true;
+            rock.receiveShadow = true;
+            scene.add(rock);
+        }
+        
+        // --- crystals (glowing, glass-like) ---
+        function createCrystal(x, y, z, color, size = 1.0) {
+            const group = new THREE.Group();
+            
+            // main crystal (octahedron)
+            const geo = new THREE.OctahedronGeometry(0.7 * size, 0);
+            const mat = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.6,
+                transparent: true,
+                opacity: 0.85,
+                roughness: 0.2,
+                metalness: 0.1
+            });
+            const crystal = new THREE.Mesh(geo, mat);
+            crystal.castShadow = true;
+            crystal.receiveShadow = true;
+            group.add(crystal);
+            
+            // smaller crystal on top
+            const topGeo = new THREE.OctahedronGeometry(0.4 * size, 0);
+            const top = new THREE.Mesh(topGeo, mat);
+            top.position.y = 1.0 * size;
+            top.castShadow = true;
+            group.add(top);
+            
+            // tiny floating shards
+            for (let i = 0; i < 3; i++) {
+                const shardGeo = new THREE.OctahedronGeometry(0.15 * size, 0);
+                const shardMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.8 });
+                const shard = new THREE.Mesh(shardGeo, shardMat);
+                shard.position.set(
+                    (Math.random() - 0.5) * 1.2,
+                    1.3 + Math.random() * 0.8,
+                    (Math.random() - 0.5) * 1.2
+                );
+                group.add(shard);
+            }
+            
+            group.position.set(x, y, z);
+            return group;
+        }
+        
+        // place crystals around the cave
+        const crystalColors = [0x88aaff, 0xff88aa, 0xaaff88, 0xffaa88, 0xaa88ff];
+        for (let i = 0; i < 18; i++) {
+            const angle = (i / 18) * Math.PI * 2;
+            const radius = 6 + Math.random() * 5;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            const y = 0.5 + Math.random() * 3;
+            const color = crystalColors[Math.floor(Math.random() * crystalColors.length)];
+            const size = 0.8 + Math.random() * 1.2;
+            const crystal = createCrystal(x, y, z, color, size);
+            scene.add(crystal);
+        }
+        
+        // add a cluster in the center
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const radius = 2.5;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            const color = crystalColors[i % crystalColors.length];
+            const crystal = createCrystal(x, 0.8, z, color, 1.1);
+            scene.add(crystal);
+        }
+        
+        // --- floating glow orbs (ambient) ---
+        const orbGeo = new THREE.SphereGeometry(0.2, 6);
+        for (let i = 0; i < 20; i++) {
+            const color = crystalColors[Math.floor(Math.random() * crystalColors.length)];
+            const orbMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 1.5 });
+            const orb = new THREE.Mesh(orbGeo, orbMat);
+            orb.position.set(
+                (Math.random() - 0.5) * 20,
+                1 + Math.random() * 8,
+                (Math.random() - 0.5) * 20
+            );
+            scene.add(orb);
+        }
+        
+        // --- small particles (sparkles) ---
+        const particleCount = 800;
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePos = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            particlePos[i] = (Math.random() - 0.5) * 30;
+            particlePos[i+1] = (Math.random() - 0.5) * 15;
+            particlePos[i+2] = (Math.random() - 0.5) * 30;
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+        const particleMat = new THREE.PointsMaterial({ color: 0xaaccff, size: 0.05, transparent: true, blending: THREE.AdditiveBlending });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+        
+        // --- crystal labels (CSS2D) for some crystals ---
+        const crystalNames = ['amethyst', 'sapphire', 'emerald', 'topaz', 'quartz'];
+        scene.children.forEach((child, index) => {
+            // only label some random crystals
+            if (child.isGroup && index % 3 === 0) {
+                const div = document.createElement('div');
+                div.textContent = crystalNames[Math.floor(Math.random() * crystalNames.length)];
+                div.style.color = '#ffd966';
+                div.style.background = 'rgba(10,15,30,0.7)';
+                div.style.border = '1px solid #88aaff';
+                div.style.borderRadius = '30px';
+                div.style.padding = '2px 14px';
+                div.style.fontSize = '12px';
+                div.style.backdropFilter = 'blur(4px)';
+                const label = new CSS2DObject(div);
+                label.position.set(0, 2.5, 0);
+                child.add(label);
+            }
+        });
+        
+        // --- subtle fog ---
+        scene.fog = new THREE.FogExp2(0x0a1030, 0.02);
+        
+        // --- animation loop ---
+        let time = 0;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.005;
+            
+            // rotate particles slowly
+            particles.rotation.y += 0.0002;
+            
+            // animate crystal lights (pulse intensity)
+            // not implemented for performance, but we could.
+            
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // --- resize handler ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

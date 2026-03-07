@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Underwater · Coral Reef 3D</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(10, 30, 45, 0.7);
+            backdrop-filter: blur(8px);
+            color: #aae0ff;
+            padding: 12px 28px;
+            border-radius: 50px;
+            border: 1px solid #4fa0c0;
+            pointer-events: none;
+            box-shadow: 0 10px 25px -10px rgba(0,0,0,0.5);
+            font-size: 0.95rem;
+        }
+        #info span {
+            color: #ffd966;
+            font-weight: 600;
+        }
+        #controls-note {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0,20,30,0.4);
+            backdrop-filter: blur(4px);
+            color: #cce;
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: 1px solid #3f8faf;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        🌊 <span>CORAL REEF</span> · tropical 3D scene · fish & anemones
+    </div>
+    <div id="controls-note">
+        🖱️ drag to rotate · scroll to zoom
+    </div>
+
+    <!-- Import Three.js and add-ons -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // --- setup scene ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a4a7a); // deep blue water
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(12, 6, 18);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.body.appendChild(renderer.domElement);
+        
+        // optional CSS2 renderer for labels
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+        
+        // --- controls ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.6;
+        controls.maxPolarAngle = Math.PI / 2;
+        controls.minDistance = 6;
+        controls.maxDistance = 30;
+        
+        // --- lighting ---
+        // ambient light
+        const ambient = new THREE.AmbientLight(0x406080);
+        scene.add(ambient);
+        
+        // sunlight (penetrating water)
+        const sunLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+        sunLight.position.set(10, 20, 10);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 1024;
+        sunLight.shadow.mapSize.height = 1024;
+        const d = 15;
+        sunLight.shadow.camera.left = -d;
+        sunLight.shadow.camera.right = d;
+        sunLight.shadow.camera.top = d;
+        sunLight.shadow.camera.bottom = -d;
+        sunLight.shadow.camera.near = 1;
+        sunLight.shadow.camera.far = 30;
+        scene.add(sunLight);
+        
+        // blueish fill light
+        const fillLight = new THREE.PointLight(0x88aaff, 0.8, 30);
+        fillLight.position.set(-5, 5, 10);
+        scene.add(fillLight);
+        
+        // extra colored lights for coral
+        const coralColors = [0xffaa88, 0xff88aa, 0x88ffaa, 0xaaccff];
+        for (let i = 0; i < 6; i++) {
+            const light = new THREE.PointLight(coralColors[i % coralColors.length], 0.7, 15);
+            light.position.set(
+                (Math.random() - 0.5) * 15,
+                2 + Math.random() * 5,
+                (Math.random() - 0.5) * 15
+            );
+            scene.add(light);
+        }
+        
+        // --- sea floor (sand) ---
+        const sandGeo = new THREE.CircleGeometry(25, 32);
+        const sandMat = new THREE.MeshStandardMaterial({ color: 0xddbb88, roughness: 0.7, emissive: 0x221100 });
+        const sand = new THREE.Mesh(sandGeo, sandMat);
+        sand.rotation.x = -Math.PI / 2;
+        sand.position.y = -1;
+        sand.receiveShadow = true;
+        scene.add(sand);
+        
+        // --- coral formations (procedural) ---
+        function createCoral(x, z, color, size = 1.0) {
+            const group = new THREE.Group();
+            
+            // base
+            const baseGeo = new THREE.CylinderGeometry(0.6 * size, 0.8 * size, 1.0 * size, 5);
+            const baseMat = new THREE.MeshStandardMaterial({ color: color, emissive: 0x221100 });
+            const base = new THREE.Mesh(baseGeo, baseMat);
+            base.position.y = 0.5 * size;
+            base.castShadow = true;
+            base.receiveShadow = true;
+            group.add(base);
+            
+            // branches
+            for (let i = 0; i < 4; i++) {
+                const branchGeo = new THREE.CylinderGeometry(0.2 * size, 0.3 * size, 1.2 * size, 4);
+                const branchMat = new THREE.MeshStandardMaterial({ color: color, emissive: 0x331100 });
+                const branch = new THREE.Mesh(branchGeo, branchMat);
+                const angle = (i / 4) * Math.PI * 2;
+                branch.position.set(
+                    Math.cos(angle) * 0.8 * size,
+                    1.0 * size,
+                    Math.sin(angle) * 0.8 * size
+                );
+                branch.rotation.z = 0.2;
+                branch.castShadow = true;
+                group.add(branch);
+            }
+            
+            group.position.set(x, -1, z);
+            return group;
+        }
+        
+        const coralColorsArray = [0xffaa88, 0xff88aa, 0x88aaff, 0xaaff88, 0xffcc88];
+        for (let i = 0; i < 20; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 4 + Math.random() * 8;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            const color = coralColorsArray[Math.floor(Math.random() * coralColorsArray.length)];
+            const size = 0.8 + Math.random() * 1.2;
+            const coral = createCoral(x, z, color, size);
+            scene.add(coral);
+        }
+        
+        // --- sea anemones (glowing) ---
+        for (let i = 0; i < 12; i++) {
+            const x = (Math.random() - 0.5) * 15;
+            const z = (Math.random() - 0.5) * 15;
+            
+            const anemoneGroup = new THREE.Group();
+            anemoneGroup.position.set(x, -1, z);
+            
+            const stemGeo = new THREE.ConeGeometry(0.4, 1.2, 5);
+            const stemMat = new THREE.MeshStandardMaterial({ color: 0xff88aa, emissive: 0x331122 });
+            const stem = new THREE.Mesh(stemGeo, stemMat);
+            stem.position.y = 0.6;
+            stem.castShadow = true;
+            anemoneGroup.add(stem);
+            
+            // tentacles
+            for (let j = 0; j < 6; j++) {
+                const tentGeo = new THREE.ConeGeometry(0.1, 0.8, 4);
+                const tentMat = new THREE.MeshStandardMaterial({ color: 0xffaa88, emissive: 0x442200 });
+                const tent = new THREE.Mesh(tentGeo, tentMat);
+                const angle = (j / 6) * Math.PI * 2;
+                tent.position.set(
+                    Math.cos(angle) * 0.5,
+                    1.2,
+                    Math.sin(angle) * 0.5
+                );
+                tent.rotation.x = 0.3;
+                tent.rotation.z = angle;
+                anemoneGroup.add(tent);
+            }
+            
+            scene.add(anemoneGroup);
+        }
+        
+        // --- fish (simple animated) ---
+        function createFish(color) {
+            const group = new THREE.Group();
+            
+            const bodyGeo = new THREE.ConeGeometry(0.3, 0.6, 4);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: color });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.rotation.x = Math.PI / 2;
+            body.castShadow = true;
+            group.add(body);
+            
+            return group;
+        }
+        
+        const fishColors = [0xffaa44, 0x44aaff, 0xff44aa, 0xaaff44];
+        const fishes = [];
+        for (let i = 0; i < 25; i++) {
+            const fish = createFish(fishColors[i % fishColors.length]);
+            fish.position.set(
+                (Math.random() - 0.5) * 18,
+                2 + Math.random() * 6,
+                (Math.random() - 0.5) * 18
+            );
+            fish.userData = {
+                angle: Math.random() * Math.PI * 2,
+                speed: 0.01 + Math.random() * 0.02,
+                radius: 1 + Math.random() * 3,
+                height: fish.position.y
+            };
+            scene.add(fish);
+            fishes.push(fish);
+        }
+        
+        // --- seaweed (swaying) ---
+        const seaweedGroup = new THREE.Group();
+        for (let i = 0; i < 30; i++) {
+            const x = (Math.random() - 0.5) * 20;
+            const z = (Math.random() - 0.5) * 20;
+            
+            const stalkGeo = new THREE.CylinderGeometry(0.05, 0.1, 1.5, 4);
+            const stalkMat = new THREE.MeshStandardMaterial({ color: 0x3a8a3a });
+            const stalk = new THREE.Mesh(stalkGeo, stalkMat);
+            stalk.position.set(x, -0.25, z);
+            stalk.castShadow = true;
+            seaweedGroup.add(stalk);
+            
+            const leafGeo = new THREE.ConeGeometry(0.2, 0.6, 4);
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x4a9a4a });
+            const leaf = new THREE.Mesh(leafGeo, leafMat);
+            leaf.position.set(x, 0.6, z);
+            leaf.castShadow = true;
+            seaweedGroup.add(leaf);
+        }
+        scene.add(seaweedGroup);
+        
+        // --- bubbles (particle system) ---
+        const bubbleGeo = new THREE.BufferGeometry();
+        const bubbleCount = 300;
+        const bubblePos = new Float32Array(bubbleCount * 3);
+        for (let i = 0; i < bubbleCount * 3; i += 3) {
+            bubblePos[i] = (Math.random() - 0.5) * 25;
+            bubblePos[i+1] = Math.random() * 12;
+            bubblePos[i+2] = (Math.random() - 0.5) * 25;
+        }
+        bubbleGeo.setAttribute('position', new THREE.BufferAttribute(bubblePos, 3));
+        const bubbleMat = new THREE.PointsMaterial({ color: 0xaaccff, size: 0.1, transparent: true, blending: THREE.AdditiveBlending });
+        const bubbles = new THREE.Points(bubbleGeo, bubbleMat);
+        scene.add(bubbles);
+        
+        // --- fog (underwater haze) ---
+        scene.fog = new THREE.FogExp2(0x1a4a7a, 0.015);
+        
+        // --- animation loop ---
+        let time = 0;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.01;
+            
+            // animate fish
+            fishes.forEach(fish => {
+                fish.userData.angle += fish.userData.speed;
+                fish.position.x += Math.cos(fish.userData.angle) * 0.02;
+                fish.position.z += Math.sin(fish.userData.angle) * 0.02;
+                fish.position.y = fish.userData.height + Math.sin(time * 2 + fish.userData.angle) * 0.5;
+                fish.rotation.y = fish.userData.angle;
+            });
+            
+            // animate seaweed (gentle sway)
+            seaweedGroup.children.forEach((child, idx) => {
+                if (idx % 2 === 0) {
+                    child.rotation.z = Math.sin(time * 2 + idx) * 0.1;
+                }
+            });
+            
+            // bubbles rise
+            const positions = bubbles.geometry.attributes.position.array;
+            for (let i = 1; i < positions.length; i += 3) {
+                positions[i] += 0.01;
+                if (positions[i] > 12) positions[i] = 0;
+            }
+            bubbles.geometry.attributes.position.needsUpdate = true;
+            
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // --- resize handler ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

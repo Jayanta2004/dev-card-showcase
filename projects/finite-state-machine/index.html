@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive ✦ Finite State Machine</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #1a2639 0%, #0d1b2a 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 3rem;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.7), inset 0 2px 2px rgba(255,255,255,0.1);
+            width: fit-content;
+            max-width: 1000px;
+        }
+        h1 {
+            text-align: center;
+            margin: 0 0 0.5rem 0;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #bfd7ff;
+            text-shadow: 0 2px 5px #001d3d;
+            font-size: 2.2rem;
+            word-break: keep-all;
+        }
+        h1 span {
+            font-weight: 700;
+            color: #b6e1ff;
+            background: linear-gradient(135deg, #98c1ff, #6c9eff);
+            -webkit-background-text: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .fsm-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 2.5rem;
+            margin: 2rem 0 1rem;
+        }
+        /* canvas container + SVG */
+        .graph-box {
+            background: #0f1a2b;
+            border-radius: 2.5rem;
+            padding: 1.8rem 1.2rem 1.2rem 1.2rem;
+            box-shadow: inset 0 -3px 8px #00000055, 0 20px 30px -10px black;
+            border: 1px solid #2d3b54;
+        }
+        svg {
+            display: block;
+            width: 380px;
+            height: auto;
+            filter: drop-shadow(0 8px 12px #00000050);
+        }
+        /* state legend + controls */
+        .control-panel {
+            background: #0e1a29e0;
+            border-radius: 2.2rem;
+            padding: 2rem 1.8rem;
+            min-width: 260px;
+            backdrop-filter: blur(8px);
+            border: 1px solid #4f628e;
+            box-shadow: 0 25px 35px -8px black;
+        }
+        .status {
+            background: #030c16;
+            border-radius: 4rem;
+            padding: 0.6rem 1.6rem;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            border: 1px solid #567d9a;
+            box-shadow: inset 0 2px 5px #00000099;
+        }
+        .status-label {
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: #9bbad0;
+        }
+        .state-name {
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #b3e4ff;
+            text-shadow: 0 0 20px #0099ff;
+        }
+        .transition-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .btn-trigger {
+            background: #1e3349;
+            border: none;
+            border-radius: 3rem;
+            padding: 1rem 0;
+            font-size: 1.7rem;
+            font-weight: 600;
+            color: #d1eaff;
+            box-shadow: 0 10px 0 #0a121f, 0 6px 20px #00000099;
+            cursor: pointer;
+            transition: all 0.07s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: 1px solid #4477aa;
+        }
+        .btn-trigger:active {
+            transform: translateY(7px);
+            box-shadow: 0 3px 0 #0a121f, 0 10px 20px #00000099;
+        }
+        .btn-trigger:disabled {
+            opacity: 0.3;
+            transform: translateY(5px);
+            box-shadow: 0 5px 0 #0a121f;
+            pointer-events: none;
+            filter: grayscale(0.6);
+        }
+        .btn-reset {
+            background: #2f455f;
+            border: none;
+            border-radius: 3rem;
+            padding: 0.9rem 1.2rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #eef6ff;
+            box-shadow: 0 5px 0 #121d2b, 0 6px 15px black;
+            cursor: pointer;
+            transition: 0.07s ease;
+            margin-top: 2.2rem;
+            border: 1px solid #628bb4;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+        }
+        .btn-reset:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #121d2b, 0 6px 15px black;
+        }
+        .note {
+            color: #afc9e7;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 1.8rem;
+            border-top: 1px dashed #2e4b70;
+            padding-top: 1.2rem;
+            font-weight: 300;
+        }
+        .note strong {
+            color: #ffd966;
+            font-weight: 600;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #c1d9f0;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .circle-legend {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #2e5f8e;
+            border: 2px solid #96c0ff;
+        }
+        .circle-legend.active {
+            background: #ffc107;
+            border-color: #fff5c4;
+            box-shadow: 0 0 15px #f9d849;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>⚡ <span>FSM</span> · finite state machine ⚡</h1>
+    <!-- main interactive area -->
+    <div class="fsm-container">
+        <!-- graph SVG (states as circles, transitions) -->
+        <div class="graph-box">
+            <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- define arrow marker -->
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+                        <polygon points="0 0, 10 5, 0 10" fill="#aad0ff" stroke="#3f6da0" stroke-width="0.8"/>
+                    </marker>
+                </defs>
+                <!-- transition lines (static) -->
+                <line x1="80" y1="50" x2="140" y2="90" stroke="#5f8bb3" stroke-width="2.5" marker-end="url(#arrowhead)" stroke-dasharray="3 2" opacity="0.9"/>
+                <line x1="160" y1="110" x2="220" y2="70" stroke="#5f8bb3" stroke-width="2.5" marker-end="url(#arrowhead)" stroke-dasharray="3 2" opacity="0.9"/>
+                <line x1="240" y1="50" x2="200" y2="120" stroke="#5f8bb3" stroke-width="2.5" marker-end="url(#arrowhead)" stroke-dasharray="3 2" opacity="0.9"/>
+                <!-- self-loop on state C (manually drawn arc) -->
+                <path d="M240 140 Q 280 110, 260 170" stroke="#5f8bb3" stroke-width="2.5" fill="none" marker-end="url(#arrowhead)" stroke-dasharray="4 3" opacity="0.8"/>
+
+                <!-- state A (idle) -->
+                <circle id="stateA" cx="80" cy="50" r="26" fill="#1b3d5e" stroke="#aad0ff" stroke-width="4" style="transition: stroke 0.2s, filter 0.2s;"/>
+                <text x="80" y="55" text-anchor="middle" fill="#e7f2ff" font-weight="bold" font-size="14">A · idle</text>
+                <!-- state B (active) -->
+                <circle id="stateB" cx="220" cy="70" r="26" fill="#1b3d5e" stroke="#aad0ff" stroke-width="4" style="transition: stroke 0.2s, filter 0.2s;"/>
+                <text x="220" y="75" text-anchor="middle" fill="#e7f2ff" font-weight="bold" font-size="14">B · active</text>
+                <!-- state C (completed) -->
+                <circle id="stateC" cx="200" cy="140" r="26" fill="#1b3d5e" stroke="#aad0ff" stroke-width="4" style="transition: stroke 0.2s, filter 0.2s;"/>
+                <text x="200" y="145" text-anchor="middle" fill="#e7f2ff" font-weight="bold" font-size="14">C · done</text>
+
+                <!-- small labels for transitions (optional) -->
+                <text x="110" y="40" fill="#c6e2ff" font-size="10" font-weight="500">ev start</text>
+                <text x="180" y="50" fill="#c6e2ff" font-size="10" font-weight="500">ev reset</text>
+                <text x="210" y="110" fill="#c6e2ff" font-size="10" font-weight="500">ev finish</text>
+                <text x="260" y="140" fill="#c6e2ff" font-size="10" font-weight="500">ev self</text>
+            </svg>
+        </div>
+
+        <!-- controller -->
+        <div class="control-panel">
+            <div class="status">
+                <div class="status-label">current state</div>
+                <div class="state-name" id="currentStateLabel">A</div>
+            </div>
+            <div class="transition-buttons">
+                <button class="btn-trigger" id="evStart" data-event="START">▶ START</button>
+                <button class="btn-trigger" id="evFinish" data-event="FINISH">⏹ FINISH</button>
+                <button class="btn-trigger" id="evReset" data-event="RESET">⟲ RESET</button>
+                <button class="btn-trigger" id="evSelf" data-event="SELF">↻ SELF</button>
+            </div>
+            <button class="btn-reset" id="resetFSM">↺ RESET ALL</button>
+            <div class="note">
+                <strong>⚙️ FSM:</strong> A →(start) B →(finish) C<br> C →(self) C · B/ C →(reset) A
+            </div>
+        </div>
+    </div>
+    <!-- legend -->
+    <div class="legend">
+        <div class="legend-item"><span class="circle-legend"></span> inactive</div>
+        <div class="legend-item"><span class="circle-legend active"></span> active state</div>
+        <div class="legend-item"><span style="color:#aad0ff;">⭢</span> transition</div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- Finite State Machine definition ----------
+        const FSM = {
+            // possible states
+            states: {
+                A: 'A',   // idle
+                B: 'B',   // active
+                C: 'C'    // done
+            },
+            // current state
+            current: 'A',
+            // transition table: [fromState, event] -> toState (if undefined -> invalid, stay)
+            transitions: {
+                'A_START':  'B',     // from A, event START → B
+                'B_FINISH': 'C',     // from B, event FINISH → C
+                'B_RESET':  'A',     // from B, event RESET → A
+                'C_RESET':  'A',     // from C, event RESET → A
+                'C_SELF':   'C',     // from C, event SELF → C (self loop)
+                // also from A, a direct FINISH? not defined -> invalid (stays)
+                // from A, SELF? not defined -> invalid
+                // from B, START? not defined -> invalid
+                // (you can add more if needed)
+            },
+            // dispatch event -> returns new state (same if invalid)
+            dispatch(event) {
+                const from = this.current;
+                const key = `${from}_${event}`;
+                if (this.transitions.hasOwnProperty(key)) {
+                    return this.transitions[key];
+                }
+                // invalid transition: stay in current
+                console.log(`invalid transition from ${from} via ${event}`);
+                return from;
+            },
+            // send event (mutates current)
+            send(event) {
+                const newState = this.dispatch(event);
+                this.current = newState;
+                return this.current;
+            },
+            // reset manually
+            resetToA() {
+                this.current = 'A';
+                return this.current;
+            }
+        };
+
+        // ---------- DOM references ----------
+        const stateCircles = {
+            A: document.getElementById('stateA'),
+            B: document.getElementById('stateB'),
+            C: document.getElementById('stateC')
+        };
+        const currentLabel = document.getElementById('currentStateLabel');
+
+        // Buttons
+        const btnStart = document.getElementById('evStart');
+        const btnFinish = document.getElementById('evFinish');
+        const btnReset = document.getElementById('evReset');
+        const btnSelf = document.getElementById('evSelf');
+        const btnResetAll = document.getElementById('resetFSM');
+
+        // Helper: update UI (active circle highlight & label)
+        function updateUI() {
+            const activeState = FSM.current;
+
+            // update label
+            currentLabel.innerText = activeState;
+
+            // reset all circle strokes to default
+            Object.values(stateCircles).forEach(circle => {
+                if (circle) {
+                    circle.setAttribute('stroke', '#aad0ff');
+                    circle.setAttribute('stroke-width', '4');
+                    circle.setAttribute('filter', '');
+                    // remove any inner glow effect (simple)
+                }
+            });
+
+            // highlight active circle
+            const activeCircle = stateCircles[activeState];
+            if (activeCircle) {
+                activeCircle.setAttribute('stroke', '#ffc107');
+                activeCircle.setAttribute('stroke-width', '6');
+                activeCircle.setAttribute('filter', 'url(#glow)'); // but we haven't defined glow, but we add simple style alternative
+                // fallback bright stroke: already set. also add a manual shadow via style?
+                activeCircle.style.filter = 'drop-shadow(0 0 12px #ffbb33)';
+            }
+
+            // optional: update button disable? none disabled for clarity, but could, but we don't.
+        }
+
+        // helper to add SVG filter if not present (quick inline for glow) — we just use drop-shadow via style on circle.
+        // updateUI handles style filter.
+
+        // attach event handlers
+        function handleEvent(eventType) {
+            return function() {
+                FSM.send(eventType);
+                updateUI();
+            };
+        }
+
+        // reset all (back to A)
+        function resetMachine() {
+            FSM.resetToA();
+            updateUI();
+        }
+
+        // initial sync
+        updateUI();
+
+        // add listeners
+        btnStart.addEventListener('click', handleEvent('START'));
+        btnFinish.addEventListener('click', handleEvent('FINISH'));
+        btnReset.addEventListener('click', handleEvent('RESET'));
+        btnSelf.addEventListener('click', handleEvent('SELF'));
+        btnResetAll.addEventListener('click', resetMachine);
+
+        // tiny bonus: disable some events logically? not necessary, but we can reflect if transition exists.
+        // but we want interactive — keep it free, invalid just does nothing.
+        // For a smoother experience, we could disable buttons if transition invalid, but it's optional.
+        // Let's add a small dynamic disable based on current state? optional, but to make it cleaner:
+        function updateButtonsSensitivity() {
+            // we can disable buttons that would have no effect (no transition) but user can still click = no change.
+            // It's ok to keep them active. but if we want: 
+            const cur = FSM.current;
+            // start is valid only from A
+            btnStart.disabled = (cur !== 'A');   // start only from A
+            // finish valid only from B
+            btnFinish.disabled = (cur !== 'B');   // finish leads B->C
+            // reset valid from B or C
+            btnReset.disabled = !(cur === 'B' || cur === 'C');
+            // self valid only from C
+            btnSelf.disabled = (cur !== 'C');
+        }
+
+        // override updateUI to also adjust button disable states
+        const originalUpdate = updateUI;
+        updateUI = function() {
+            originalUpdate();
+            updateButtonsSensitivity();
+        };
+        // re-run to set initial button states
+        updateUI();
+
+        // fix for filter/glitch - ensure style filter is not overridden by attribute
+        // we used circle.style.filter, good.
+        // also add a very small marker for self loop C
+
+        // Edge: for fun, add transition feedback when invalid (click but stays)
+        // We can add a little shake on invalid? simple: if state not changed, briefly flash
+        const oldSend = FSM.send.bind(FSM);
+        FSM.send = function(event) {
+            const before = this.current;
+            const after = oldSend(event);  // uses dispatch inside
+            if (before === after && event !== 'INIT') {
+                // invalid transition: quick red flash on circles
+                Object.values(stateCircles).forEach(c => {
+                    if (c) c.style.transition = 'stroke 0.15s, filter 0.2s';
+                });
+                const activeCircle = stateCircles[after];
+                if (activeCircle) {
+                    activeCircle.style.stroke = '#ff8888';
+                    setTimeout(() => {
+                        activeCircle.style.stroke = '#ffc107'; // back to active colour
+                    }, 200);
+                }
+            }
+            return after;
+        };
+
+        // rebind to preserve this, but we also need to updateUI after send.
+        // we already call send in handler, which now uses new FSM.send, then updateUI.
+        // but FSM.send inside handleEvent uses the overridden version? yes, because we replaced method.
+        // However, to be safe: store reference.
+        // Also ensure reset method works with overrides? FSM.resetToA uses this.current = 'A' directly, so we keep that.
+        // We override send only for event dispatch.
+
+        // resetMachine uses resetToA, so we need to update UI after. fine.
+
+        // final adjustment: in handleEvent we call FSM.send, which triggers our override, then updateUI.
+        // done.
+        // ensure resetAll also triggers updateUI.
+
+        console.log('FSM ready. Current state: ', FSM.current);
+    })();
+</script>
+<!-- tiny extra style for active state glow -->
+<style>
+    /* ensure svg text stays readable */
+    svg text { user-select: none; }
+    .btn-trigger:focus-visible, .btn-reset:focus-visible { outline: 2px solid white; }
+    #currentStateLabel {
+        transition: color 0.2s, text-shadow 0.2s;
+    }
+    /* small transition for circles */
+    circle {
+        transition: stroke 0.2s, stroke-width 0.2s, filter 0.2s;
+    }
+</style>
+</body>
+</html>

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo‑Location in Space · 3D Earth</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Teleram, 'Helvetica Neue', sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 24px;
+            border-radius: 40px;
+            backdrop-filter: blur(5px);
+            pointer-events: none;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+        #info span {
+            color: #ffaa00;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .controls-note {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+            background: rgba(20,20,30,0.5);
+            padding: 6px 14px;
+            border-radius: 20px;
+            backdrop-filter: blur(3px);
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 10;
+        }
+        .pulse {
+            animation: pulseGlow 2s infinite;
+        }
+        @keyframes pulseGlow {
+            0% { text-shadow: 0 0 5px #ffaa00; }
+            50% { text-shadow: 0 0 20px #ffaa00, 0 0 30px #ff5500; }
+            100% { text-shadow: 0 0 5px #ffaa00; }
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        🌍 GEO LOCATIONS FROM SPACE <span id="coord-display">40.6892° N, 74.0445° W</span>
+    </div>
+    <div class="controls-note">🪐 Drag to rotate · Scroll to zoom · Markers: NYC · London · Tokyo · Sydney · Cape Town</div>
+
+    <!-- Import Three.js core and add-ons -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // --- Setup scene, camera, renderers ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050510); // deep space
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 15); // offset a bit to see markers nicely
+
+        // WebGL renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = false; // not needed
+        document.body.appendChild(renderer.domElement);
+
+        // CSS2 renderer for labels
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none'; // allow clicking through to canvas if needed
+        document.body.appendChild(labelRenderer.domElement);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.8;
+        controls.enableZoom = true;
+        controls.maxDistance = 25;
+        controls.minDistance = 7;
+        controls.enablePan = false;
+
+        // --- Lighting ---
+        // Ambient base
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+
+        // Sun directional light
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        sunLight.position.set(10, 10, 10);
+        sunLight.castShadow = false;
+        scene.add(sunLight);
+
+        // Fill light from opposite side
+        const fillLight = new THREE.DirectionalLight(0xccddff, 0.5);
+        fillLight.position.set(-10, 0, -5);
+        scene.add(fillLight);
+
+        // Slight back rim light
+        const rimLight = new THREE.DirectionalLight(0x88aaff, 0.4);
+        rimLight.position.set(0, 5, -15);
+        scene.add(rimLight);
+
+        // --- Starfield background (particle system) ---
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsCount = 3000;
+        const starsPositions = new Float32Array(starsCount * 3);
+        for (let i = 0; i < starsCount * 3; i += 3) {
+            // Random sphere distribution for more immersive space
+            const r = 80 + Math.random() * 40; // radius range
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1); // spherical distribution
+            
+            starsPositions[i] = Math.sin(phi) * Math.cos(theta) * r;
+            starsPositions[i+1] = Math.sin(phi) * Math.sin(theta) * r;
+            starsPositions[i+2] = Math.cos(phi) * r;
+        }
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(starsPositions, 3));
+        
+        const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.8 });
+        const stars = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(stars);
+
+        // A few bigger "twinkling" stars? Not necessary but add some variety
+        const bigStarsGeo = new THREE.BufferGeometry();
+        const bigStarsPos = new Float32Array(200 * 3);
+        for (let i = 0; i < 200 * 3; i += 3) {
+            const r = 100 + Math.random() * 30;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            bigStarsPos[i] = Math.sin(phi) * Math.cos(theta) * r;
+            bigStarsPos[i+1] = Math.sin(phi) * Math.sin(theta) * r;
+            bigStarsPos[i+2] = Math.cos(phi) * r;
+        }
+        bigStarsGeo.setAttribute('position', new THREE.BufferAttribute(bigStarsPos, 3));
+        const bigStarsMat = new THREE.PointsMaterial({ color: 0xaaccff, size: 0.4 });
+        const bigStars = new THREE.Points(bigStarsGeo, bigStarsMat);
+        scene.add(bigStars);
+
+        // --- Earth sphere ---
+        const earthGeometry = new THREE.SphereGeometry(5, 64, 64);
+        
+        // Load Earth texture (high-res from Three.js examples)
+        const textureLoader = new THREE.TextureLoader();
+        const earthMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
+        const earthSpecularMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg');
+        const earthNormalMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg');
+        const cloudMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png');
+        
+        // Main earth material
+        const earthMaterial = new THREE.MeshPhongMaterial({
+            map: earthMap,
+            specularMap: earthSpecularMap,
+            specular: new THREE.Color('grey'),
+            shininess: 5,
+            normalMap: earthNormalMap,
+            normalScale: new THREE.Vector2(0.8, 0.8)
+        });
+        
+        const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+        earth.rotation.y = 4.5; // rotate to show Atlantic region nicely
+        scene.add(earth);
+
+        // --- Clouds layer (transparent, slightly larger) ---
+        const cloudGeometry = new THREE.SphereGeometry(5.02, 64, 64);
+        const cloudMaterial = new THREE.MeshPhongMaterial({
+            map: cloudMap,
+            transparent: true,
+            opacity: 0.25,
+            blending: THREE.AdditiveBlending,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        });
+        const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        clouds.rotation.y = 4.5;
+        scene.add(clouds);
+
+        // --- Atmosphere glow (optional, simple) ---
+        const atmosGeometry = new THREE.SphereGeometry(5.1, 64, 64);
+        const atmosMaterial = new THREE.MeshPhongMaterial({
+            color: 0x3399ff,
+            transparent: true,
+            opacity: 0.08,
+            side: THREE.BackSide
+        });
+        const atmosphere = new THREE.Mesh(atmosGeometry, atmosMaterial);
+        scene.add(atmosphere);
+
+        // --- Helper: convert lat/lon to 3D position on sphere (radius = 5.15 to be slightly above surface) ---
+        function latLonToPosition(lat, lon, radius = 5.2) {
+            const phi = (90 - lat) * Math.PI / 180;
+            const theta = lon * Math.PI / 180;
+            return new THREE.Vector3(
+                radius * Math.sin(phi) * Math.cos(theta),
+                radius * Math.cos(phi),
+                radius * Math.sin(phi) * Math.sin(theta)
+            );
+        }
+
+        // --- Create marker elements (CSS2D labels with custom design) ---
+        function createMarkerElement(name, coords, color = '#ffaa00') {
+            const div = document.createElement('div');
+            div.textContent = name;
+            div.style.color = 'white';
+            div.style.fontFamily = 'Segoe UI, sans-serif';
+            div.style.fontSize = '16px';
+            div.style.fontWeight = 'bold';
+            div.style.background = 'rgba(20,20,40,0.8)';
+            div.style.border = `2px solid ${color}`;
+            div.style.borderRadius = '30px';
+            div.style.padding = '6px 16px';
+            div.style.boxShadow = '0 0 20px rgba(0,160,255,0.5)';
+            div.style.backdropFilter = 'blur(4px)';
+            div.style.letterSpacing = '0.5px';
+            div.style.whiteSpace = 'nowrap';
+            div.style.transition = 'transform 0.2s';
+            div.style.pointerEvents = 'none';
+            
+            // Small coordinate sub-label
+            const sub = document.createElement('div');
+            sub.textContent = coords;
+            sub.style.fontSize = '10px';
+            sub.style.opacity = '0.8';
+            sub.style.color = '#ccc';
+            sub.style.marginTop = '2px';
+            sub.style.fontWeight = 'normal';
+            sub.style.textAlign = 'center';
+            div.appendChild(sub);
+            
+            return div;
+        }
+
+        // Define locations: name, lat, lon, color
+        const locations = [
+            { name: 'NEW YORK', lat: 40.6892, lon: -74.0445, color: '#ffaa00' },  // actually Liberty Island, NYC
+            { name: 'LONDON', lat: 51.5074, lon: -0.1278, color: '#ff66aa' },
+            { name: 'TOKYO', lat: 35.6895, lon: 139.6917, color: '#66ccff' },
+            { name: 'SYDNEY', lat: -33.8688, lon: 151.2093, color: '#88ff88' },
+            { name: 'CAPE TOWN', lat: -33.9249, lon: 18.4241, color: '#ff9966' }
+        ];
+
+        // Store markers for interaction (optional)
+        const markers = [];
+
+        locations.forEach(loc => {
+            const pos = latLonToPosition(loc.lat, loc.lon, 5.25); // slightly above clouds
+            
+            // Create CSS2D element
+            const labelDiv = createMarkerElement(loc.name, `${Math.abs(loc.lat).toFixed(1)}° ${loc.lat>=0?'N':'S'}, ${Math.abs(loc.lon).toFixed(1)}° ${loc.lon>=0?'E':'W'}`, loc.color);
+            const label = new CSS2DObject(labelDiv);
+            label.position.copy(pos);
+            scene.add(label);
+            markers.push(label);
+
+            // Also add a small glowing sphere at the exact location (for visual depth)
+            const dotGeometry = new THREE.SphereGeometry(0.12, 8, 8);
+            const dotMaterial = new THREE.MeshStandardMaterial({
+                color: loc.color,
+                emissive: loc.color,
+                emissiveIntensity: 1.2
+            });
+            const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+            dot.position.copy(pos.clone().normalize().multiplyScalar(5.15)); // slightly inside label
+            scene.add(dot);
+        });
+
+        // --- Add some extra "satellite" or "orbiting" dots for effect (just for fun) ---
+        const orbitDotsGeometry = new THREE.BufferGeometry();
+        const orbitCount = 60;
+        const orbitPositions = new Float32Array(orbitCount * 3);
+        for (let i = 0; i < orbitCount; i++) {
+            const angle = (i / orbitCount) * Math.PI * 2;
+            const radius = 6.0;
+            // inclined orbit
+            const x = radius * Math.cos(angle) * 0.8;
+            const y = radius * Math.sin(angle) * 0.5;
+            const z = radius * Math.sin(angle) * 0.7;
+            orbitPositions[i*3] = x;
+            orbitPositions[i*3+1] = y;
+            orbitPositions[i*3+2] = z;
+        }
+        orbitDotsGeometry.setAttribute('position', new THREE.BufferAttribute(orbitPositions, 3));
+        const orbitDotsMat = new THREE.PointsMaterial({ color: 0x88aaff, size: 0.1 });
+        const orbitDots = new THREE.Points(orbitDotsGeometry, orbitDotsMat);
+        scene.add(orbitDots);
+
+        // Add faint orbit path line
+        const orbitLinePoints = [];
+        for (let i = 0; i <= 64; i++) {
+            const angle = (i / 64) * Math.PI * 2;
+            const radius = 6.0;
+            const x = radius * Math.cos(angle) * 0.8;
+            const y = radius * Math.sin(angle) * 0.5;
+            const z = radius * Math.sin(angle) * 0.7;
+            orbitLinePoints.push(new THREE.Vector3(x, y, z));
+        }
+        const orbitLineGeo = new THREE.BufferGeometry().setFromPoints(orbitLinePoints);
+        const orbitLineMat = new THREE.LineBasicMaterial({ color: 0x335588, transparent: true, opacity: 0.15 });
+        const orbitLine = new THREE.LineLoop(orbitLineGeo, orbitLineMat);
+        scene.add(orbitLine);
+
+        // --- Animation loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate clouds slightly faster than earth for a drifting effect
+            clouds.rotation.y += 0.0001;
+            // Earth rotates with auto-rotate from controls? Actually we use autoRotate on controls, but earth itself is static relative to camera? 
+            // For correct effect, we want earth to rotate on its axis while camera looks. But OrbitControls autoRotate rotates camera around target.
+            // That's fine for showcasing. Alternatively we could rotate earth and keep camera still? But then markers move. 
+            // With markers attached to earth, we want earth to rotate so markers move with it. 
+            // However our markers are positioned statically in world space? They are placed at absolute positions relative to earth center.
+            // If we rotate earth, markers must rotate with earth. But we haven't grouped them. 
+            // Simpler: rotate earth object, and markers are children of scene, not earth, so they would need to be updated manually.
+            // Let's instead group earth and markers? But markers are CSS2DObjects and cannot be nested easily with different coordinate systems? 
+            // Actually we can rotate earth and keep markers fixed relative to earth by updating their positions every frame? 
+            // Better: create a group 'earthGroup' and put earth, clouds, atmosphere, and markers inside? But CSS2DRenderer works with world coordinates, 
+            // and if we rotate a group, children (CSS2D objects) would need to be transformed. CSS2D objects are just divs with 3D transforms applied by the renderer.
+            // It's simpler: we rotate the earth sphere and clouds, and we also rotate the marker positions manually around Y axis? That would be messy.
+            // Given time, the most elegant: disable autoRotate of controls, and instead rotate the entire scene group (earth + markers) around Y.
+            // But that would rotate stars too, which we don't want. So let's keep controls autoRotate (camera moves), which gives a nice space feeling, 
+            // and markers stay fixed on earth because they are positioned in world space at earth-fixed positions. This works as long as earth itself does NOT rotate.
+            // Since we are not rotating earth, the earth texture stays fixed relative to markers. But we want earth to rotate slowly? 
+            // To make it look dynamic, we'll rotate the earth sphere and clouds slightly, and keep markers attached to the same coordinates relative to earth center.
+            // Because markers are positioned at lat/lon in world space, if we rotate earth sphere, they will no longer align. 
+            // So for this demo, we will NOT rotate earth sphere individually; we rely on camera autoRotate to show different angles.
+            // But to give a sense of motion, we rotate clouds slowly, which are a separate sphere with transparency, creating a moving shadow effect.
+            
+            // Clouds rotation (independent of earth, but earth is not rotating, so it's okay)
+            clouds.rotation.y += 0.0002;
+            
+            // Update controls (for damping and autoRotate)
+            controls.update();
+
+            // Update displayed coordinates based on marker? Could pick a random marker and show it, but for simplicity we just show a default.
+            // To make it more interactive, let's update the info panel with closest marker to camera? That's complex.
+            // Instead, we'll rotate through the names on a timer.
+            
+            // Render WebGL and CSS2D
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+
+        animate();
+
+        // --- Handle resize ---
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- Update coordinate display every few seconds to cycle through markers (just for flair) ---
+        const coordDisplay = document.getElementById('coord-display');
+        let index = 0;
+        setInterval(() => {
+            const loc = locations[index % locations.length];
+            let latDir = loc.lat >= 0 ? 'N' : 'S';
+            let lonDir = loc.lon >= 0 ? 'E' : 'W';
+            coordDisplay.innerHTML = `${Math.abs(loc.lat).toFixed(4)}° ${latDir}, ${Math.abs(loc.lon).toFixed(4)}° ${lonDir}  <span style="font-size:14px; color:${loc.color}">●</span>`;
+            index++;
+        }, 3000);
+
+        // Small initial rotation for earth texture alignment (already set)
+        earth.rotation.y = 4.5;
+        clouds.rotation.y = 4.5;
+
+        console.log('Ready — geo locations from space');
+    </script>
+</body>
+</html>

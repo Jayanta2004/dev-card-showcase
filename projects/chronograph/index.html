@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronograph · Generative Clock</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #0a0c14;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            color: #e0eaff;
+        }
+
+        .clock-card {
+            max-width: 1000px;
+            width: 100%;
+            background: #151e2a;
+            border-radius: 60px;
+            box-shadow: 0 30px 50px -20px rgba(0,0,0,0.8), 0 0 0 2px #4a6080 inset;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #4a6080;
+            padding-bottom: 1rem;
+        }
+
+        .title h1 {
+            font-size: 2.2rem;
+            font-weight: 400;
+            background: linear-gradient(135deg, #ffb7c5, #b7c5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title p {
+            color: #9ab8d9;
+            font-size: 0.9rem;
+        }
+
+        .digital-time {
+            font-size: 2.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: #b0d0f0;
+            background: #0f1420;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            border: 2px solid #4a6080;
+        }
+
+        .canvas-container {
+            background: #0f1420;
+            border-radius: 40px;
+            padding: 1rem;
+            border: 2px solid #4a6080;
+            margin: 2rem 0;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #0a0f1a;
+            border-radius: 24px;
+        }
+
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .control-group {
+            background: #1a212e;
+            border-radius: 30px;
+            padding: 1.2rem 1.5rem;
+            border: 2px solid #4a6080;
+        }
+
+        .control-group h3 {
+            color: #c0e0ff;
+            font-weight: 400;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            border-bottom: 1px solid #4a6080;
+            padding-bottom: 0.5rem;
+        }
+
+        .slider-item {
+            margin-bottom: 1rem;
+        }
+
+        .slider-item label {
+            display: flex;
+            justify-content: space-between;
+            color: #9ab8d9;
+            font-size: 0.85rem;
+        }
+
+        .slider-item input {
+            width: 100%;
+            margin-top: 0.2rem;
+        }
+
+        .color-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .color-item label {
+            flex: 1;
+            color: #9ab8d9;
+        }
+
+        .color-item input[type="color"] {
+            width: 60px;
+            height: 40px;
+            border: 2px solid #4a6080;
+            border-radius: 20px;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .mode-bar {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .mode-btn {
+            background: #1a212e;
+            border: 2px solid #4a6080;
+            border-radius: 40px;
+            padding: 0.6rem 1.8rem;
+            cursor: pointer;
+            color: #b0d0f0;
+            transition: 0.1s;
+            font-size: 0.9rem;
+        }
+
+        .mode-btn.active {
+            background: #3f6b9f;
+            border-color: #3f6b9f;
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            background: #1a212e;
+            border: 2px solid #5a7090;
+            border-radius: 40px;
+            padding: 0.8rem 1.8rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #d0e8ff;
+            transition: 0.1s;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .btn:hover {
+            background: #2a3442;
+            border-color: #7a90b0;
+        }
+
+        .btn.primary {
+            background: #3f6b9f;
+            border-color: #3f6b9f;
+            color: white;
+        }
+
+        .footer {
+            text-align: center;
+            color: #7a90b0;
+            margin-top: 2rem;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-card">
+        <div class="header">
+            <div class="title">
+                <h1>⏳ Chronograph</h1>
+                <p>generative time art</p>
+            </div>
+            <div class="digital-time" id="digitalTime">12:34:56</div>
+        </div>
+
+        <!-- canvas -->
+        <div class="canvas-container">
+            <canvas id="clockCanvas" width="800" height="400"></canvas>
+        </div>
+
+        <!-- mode selector -->
+        <div class="mode-bar">
+            <button class="mode-btn active" id="modeParticles">particles</button>
+            <button class="mode-btn" id="modeRings">rings</button>
+            <button class="mode-btn" id="modeWave">wave</button>
+            <button class="mode-btn" id="modeSpiral">spiral</button>
+        </div>
+
+        <!-- controls -->
+        <div class="control-panel">
+            <div class="control-group">
+                <h3>🎨 appearance</h3>
+                <div class="color-item">
+                    <label>primary</label>
+                    <input type="color" id="color1" value="#ff6b6b">
+                </div>
+                <div class="color-item">
+                    <label>secondary</label>
+                    <input type="color" id="color2" value="#4ecdc4">
+                </div>
+                <div class="color-item">
+                    <label>background</label>
+                    <input type="color" id="bgColor" value="#0a0f1a">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>⚙️ parameters</h3>
+                <div class="slider-item">
+                    <label>speed <span id="speedVal">1.0</span></label>
+                    <input type="range" id="speed" min="0.1" max="3.0" value="1.0" step="0.1">
+                </div>
+                <div class="slider-item">
+                    <label>complexity <span id="complexityVal">0.5</span></label>
+                    <input type="range" id="complexity" min="0" max="1" value="0.5" step="0.05">
+                </div>
+                <div class="slider-item">
+                    <label>size <span id="sizeVal">1.0</span></label>
+                    <input type="range" id="size" min="0.5" max="2.0" value="1.0" step="0.1">
+                </div>
+            </div>
+        </div>
+
+        <!-- action buttons -->
+        <div class="button-group">
+            <button class="btn" id="randomizeBtn">🎲 randomize</button>
+            <button class="btn primary" id="resetBtn">↺ reset</button>
+        </div>
+
+        <div class="footer">
+            ⚡ each second transforms the artwork · time as generative art
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // canvas
+            const canvas = document.getElementById('clockCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = 800;
+            const height = 400;
+
+            // time
+            let hours = 0, minutes = 0, seconds = 0;
+            let lastSecond = -1;
+
+            // state
+            let currentMode = 'particles';
+            let speed = 1.0;
+            let complexity = 0.5;
+            let size = 1.0;
+            let color1 = '#ff6b6b';
+            let color2 = '#4ecdc4';
+            let bgColor = '#0a0f1a';
+            
+            // animation offset
+            let offset = 0;
+
+            // DOM elements
+            const digitalTime = document.getElementById('digitalTime');
+            const modeBtns = document.querySelectorAll('.mode-btn');
+            const color1Input = document.getElementById('color1');
+            const color2Input = document.getElementById('color2');
+            const bgColorInput = document.getElementById('bgColor');
+            const speedSlider = document.getElementById('speed');
+            const speedVal = document.getElementById('speedVal');
+            const complexitySlider = document.getElementById('complexity');
+            const complexityVal = document.getElementById('complexityVal');
+            const sizeSlider = document.getElementById('size');
+            const sizeVal = document.getElementById('sizeVal');
+            const randomizeBtn = document.getElementById('randomizeBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            // mode switching
+            modeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modeBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    if (btn.id === 'modeParticles') currentMode = 'particles';
+                    else if (btn.id === 'modeRings') currentMode = 'rings';
+                    else if (btn.id === 'modeWave') currentMode = 'wave';
+                    else if (btn.id === 'modeSpiral') currentMode = 'spiral';
+                });
+            });
+
+            // update time
+            function updateTime() {
+                const now = new Date();
+                hours = now.getHours();
+                minutes = now.getMinutes();
+                seconds = now.getSeconds();
+                
+                digitalTime.innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                return seconds !== lastSecond;
+            }
+
+            // draw functions
+            function drawParticles() {
+                const timeValue = (hours * 3600 + minutes * 60 + seconds) / 86400; // 0-1
+                const particleCount = 20 + Math.floor(complexity * 50);
+                
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, width, height);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const t = (i / particleCount + offset * speed) % 1;
+                    const x = width * t;
+                    const y = height * (0.5 + 0.4 * Math.sin(t * Math.PI * 2 * 3 + timeValue * Math.PI * 2));
+                    
+                    const radius = 2 + Math.sin(t * Math.PI * 2) * 5 * size;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = i % 2 === 0 ? color1 : color2;
+                    ctx.fill();
+                }
+            }
+
+            function drawRings() {
+                const timeValue = (hours * 3600 + minutes * 60 + seconds) / 86400;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const ringCount = 5 + Math.floor(complexity * 10);
+                
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, width, height);
+                
+                for (let i = 0; i < ringCount; i++) {
+                    const radius = 50 + i * 30 * size + Math.sin(offset * speed * 2 + i) * 20;
+                    const rotation = offset * speed + i * 0.5;
+                    
+                    ctx.beginPath();
+                    ctx.ellipse(
+                        centerX + Math.sin(rotation) * 20,
+                        centerY + Math.cos(rotation) * 20,
+                        radius, radius * 0.5,
+                        0, 0, Math.PI * 2
+                    );
+                    ctx.strokeStyle = i % 2 === 0 ? color1 : color2;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+
+            function drawWave() {
+                const timeValue = seconds / 60;
+                
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, width, height);
+                
+                ctx.beginPath();
+                ctx.strokeStyle = color1;
+                ctx.lineWidth = 2;
+                
+                for (let x = 0; x < width; x += 5) {
+                    const t = x / width;
+                    const y = height * (0.5 + 0.4 * Math.sin(t * Math.PI * 2 * complexity * 10 + offset * speed));
+                    
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.strokeStyle = color2;
+                
+                for (let x = 0; x < width; x += 5) {
+                    const t = x / width;
+                    const y = height * (0.5 + 0.4 * Math.cos(t * Math.PI * 2 * complexity * 10 + offset * speed));
+                    
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            function drawSpiral() {
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const turns = 3 + complexity * 5;
+                const points = 200;
+                
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, width, height);
+                
+                for (let i = 0; i < points; i++) {
+                    const t = i / points;
+                    const angle = t * Math.PI * 2 * turns + offset * speed;
+                    const radius = t * 150 * size;
+                    
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2 + t * 5, 0, Math.PI * 2);
+                    ctx.fillStyle = i % 2 === 0 ? color1 : color2;
+                    ctx.fill();
+                }
+            }
+
+            // main draw loop
+            function draw() {
+                const timeChanged = updateTime();
+                
+                if (timeChanged) {
+                    // reset offset on new second for some modes
+                    offset = 0;
+                }
+                
+                offset += 0.01;
+                
+                if (currentMode === 'particles') drawParticles();
+                else if (currentMode === 'rings') drawRings();
+                else if (currentMode === 'wave') drawWave();
+                else if (currentMode === 'spiral') drawSpiral();
+                
+                requestAnimationFrame(draw);
+            }
+
+            // event listeners
+            color1Input.addEventListener('input', () => { color1 = color1Input.value; });
+            color2Input.addEventListener('input', () => { color2 = color2Input.value; });
+            bgColorInput.addEventListener('input', () => { bgColor = bgColorInput.value; });
+
+            speedSlider.addEventListener('input', () => {
+                speed = parseFloat(speedSlider.value);
+                speedVal.innerText = speed.toFixed(1);
+            });
+
+            complexitySlider.addEventListener('input', () => {
+                complexity = parseFloat(complexitySlider.value);
+                complexityVal.innerText = complexity.toFixed(2);
+            });
+
+            sizeSlider.addEventListener('input', () => {
+                size = parseFloat(sizeSlider.value);
+                sizeVal.innerText = size.toFixed(1);
+            });
+
+            randomizeBtn.addEventListener('click', () => {
+                // randomize colors
+                const randomColor = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+                color1 = randomColor();
+                color2 = randomColor();
+                bgColor = randomColor();
+                
+                color1Input.value = color1;
+                color2Input.value = color2;
+                bgColorInput.value = bgColor;
+                
+                // randomize parameters
+                speed = 0.5 + Math.random() * 2.5;
+                complexity = Math.random();
+                size = 0.7 + Math.random() * 1.3;
+                
+                speedSlider.value = speed;
+                complexitySlider.value = complexity;
+                sizeSlider.value = size;
+                
+                speedVal.innerText = speed.toFixed(1);
+                complexityVal.innerText = complexity.toFixed(2);
+                sizeVal.innerText = size.toFixed(1);
+                
+                // random mode
+                const modes = ['particles', 'rings', 'wave', 'spiral'];
+                const randomMode = modes[Math.floor(Math.random() * modes.length)];
+                currentMode = randomMode;
+                
+                modeBtns.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.id === `mode${randomMode.charAt(0).toUpperCase() + randomMode.slice(1)}`) {
+                        btn.classList.add('active');
+                    }
+                });
+            });
+
+            resetBtn.addEventListener('click', () => {
+                color1 = '#ff6b6b';
+                color2 = '#4ecdc4';
+                bgColor = '#0a0f1a';
+                speed = 1.0;
+                complexity = 0.5;
+                size = 1.0;
+                
+                color1Input.value = color1;
+                color2Input.value = color2;
+                bgColorInput.value = bgColor;
+                speedSlider.value = speed;
+                complexitySlider.value = complexity;
+                sizeSlider.value = size;
+                
+                speedVal.innerText = speed.toFixed(1);
+                complexityVal.innerText = complexity.toFixed(2);
+                sizeVal.innerText = size.toFixed(1);
+            });
+
+            // start
+            draw();
+        })();
+    </script>
+</body>
+</html>

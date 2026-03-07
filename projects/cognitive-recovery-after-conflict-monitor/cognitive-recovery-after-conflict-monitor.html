@@ -4,95 +4,192 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cognitive Recovery After Conflict Monitor</title>
-    <link rel="stylesheet" href="../../style.css">
-    <link rel="icon" type="image/png" href="../../Hall of Fame (1).png" />
-    <link rel="icon" href="../../assets/favicon/favicon.ico" type="image/x-icon">
-    <link rel="icon" href="../../assets/favicon/favicon.png" type="image/png">
-    <link rel="apple-touch-icon" href="../../assets/favicon/apple-touch-icon.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="cognitive-recovery-after-conflict-monitor.css">
+    <link rel="icon" type="image/png" href="../../Hall of Fame (1).png" id="primary-favicon" />
+    <link rel="icon" href="../../assets/favicon/favicon.ico" type="image/x-icon" id="fallback-favicon-ico">
+    <link rel="icon" href="../../assets/favicon/favicon.png" type="image/png" id="fallback-favicon-png">
+    <link rel="apple-touch-icon" href="../../assets/favicon/apple-touch-icon.png">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>" type="image/svg+xml" id="emergency-favicon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
 <body>
-    <div id="navbar"></div>
+    <a href="#main-content" class="skip-to-content" id="skipLink">Skip to main content</a>
+    <div class="sr-only" role="status" aria-live="polite" id="announcementRegion"></div>
+    <div class="sr-only" role="alert" aria-live="assertive" id="alertRegion"></div>
 
-    <div class="cognitive-container">
+    <div id="navbar" role="navigation" aria-label="Main navigation"></div>
+
+    <main id="main-content" class="cognitive-container" role="main">
         <h1>🧠 Cognitive Recovery After Conflict Monitor</h1>
         <p>Track your cognitive recovery after conflicts or stressful situations. Take baseline assessments and monitor how quickly you return to optimal cognitive function.</p>
 
-        <div class="baseline-section">
-            <h2>Baseline Assessment</h2>
-            <p>Take this test when you're in a calm state to establish your baseline cognitive performance.</p>
-            <button class="start-baseline-btn" id="startBaselineBtn" onclick="startBaselineTest()">Start Baseline Test</button>
-        </div>
+        <!-- Recovery Time Tracking Section with ARIA landmark -->
+        <section class="recovery-time-section" id="recoveryTimeSection" aria-labelledby="recoveryTimeHeading" role="region">
+            <h2 id="recoveryTimeHeading">⏱️ Recovery Time Tracking</h2>
+            <p>Track how long it takes to return to baseline after each test</p>
+            
+            <div class="recovery-stats" role="list" aria-label="Recovery statistics">
+                <div class="recovery-stat-card" role="listitem">
+                    <h3>Average Recovery Time</h3>
+                    <div class="recovery-stat-value" id="avgRecoveryTime" aria-live="polite">--</div>
+                    <div class="recovery-stat-label">Last 5 tests</div>
+                    <div class="recovery-trend" id="recoveryTimeTrend" role="status"></div>
+                </div>
+                
+                <div class="recovery-stat-card" role="listitem">
+                    <h3>Fastest Recovery</h3>
+                    <div class="recovery-stat-value" id="fastestRecovery" aria-live="polite">--</div>
+                    <div class="recovery-stat-label">Best performance</div>
+                </div>
+                
+                <div class="recovery-stat-card" role="listitem">
+                    <h3>Slowest Recovery</h3>
+                    <div class="recovery-stat-value" id="slowestRecovery" aria-live="polite">--</div>
+                    <div class="recovery-stat-label">Needs improvement</div>
+                </div>
+                
+                <div class="recovery-stat-card" role="listitem">
+                    <h3>Recovery Success Rate</h3>
+                    <div class="recovery-stat-value" id="recoverySuccessRate" aria-live="polite">--</div>
+                    <div class="recovery-stat-label">Returned to baseline</div>
+                </div>
+            </div>
+            
+            <div class="recovery-timeline" id="recoveryTimeline" aria-labelledby="recoveryTimelineHeading">
+                <h3 id="recoveryTimelineHeading">Recent Recovery Times</h3>
+                <!-- Timeline items will be added here dynamically with ARIA attributes -->
+            </div>
+        </section>
 
-        <div class="conflict-section">
-            <h2>Post-Conflict Assessment</h2>
+        <!-- Baseline Assessment Section -->
+        <section class="baseline-section" id="baselineSection" aria-labelledby="baselineHeading" role="region">
+            <h2 id="baselineHeading">Baseline Assessment</h2>
+            <p>Take this test when you're in a calm state to establish your baseline cognitive performance.</p>
+            <button class="start-baseline-btn" id="startBaselineBtn" 
+                    aria-label="Start baseline cognitive test"
+                    aria-describedby="baselineDescription">
+                Start Baseline Test
+            </button>
+            <span id="baselineDescription" class="sr-only">This test measures your reaction time and memory when you're calm</span>
+        </section>
+
+        <!-- Post-Conflict Assessment Section -->
+        <section class="conflict-section" id="conflictSection" aria-labelledby="conflictHeading" role="region">
+            <h2 id="conflictHeading">Post-Conflict Assessment</h2>
             <p>After a conflict, take this test to measure your current cognitive state and track recovery.</p>
             <div class="input-group">
                 <label for="conflictIntensity">Conflict Intensity (1-10):</label>
-                <input type="range" id="conflictIntensity" min="1" max="10" value="5">
-                <span id="intensityValue">5</span>
+                <input type="range" id="conflictIntensity" min="1" max="10" value="5" 
+                       aria-valuemin="1" aria-valuemax="10" aria-valuenow="5"
+                       aria-valuetext="Current intensity: 5 out of 10"
+                       oninput="updateIntensityValue(this.value)">
+                <span id="intensityValue" aria-live="polite">5</span>
             </div>
-            <button class="start-conflict-btn" id="startConflictBtn" onclick="startConflictTest()">Start Post-Conflict Test</button>
-        </div>
+            <button class="start-conflict-btn" id="startConflictBtn" 
+                    aria-label="Start post-conflict cognitive test"
+                    aria-describedby="conflictDescription">
+                Start Post-Conflict Test
+            </button>
+            <span id="conflictDescription" class="sr-only">This test measures your cognitive state after a conflict</span>
+        </section>
 
-        <div class="test-section" id="testSection" style="display: none;">
-            <h2>Cognitive Test</h2>
-            <div class="test-area" id="testArea">
-                <div class="reaction-test" id="reactionTest">
-                    <p>Click the button as soon as it turns green!</p>
-                    <button class="reaction-btn" id="reactionBtn" onclick="recordReaction()">Wait...</button>
+        <!-- Test Section - Hidden by default -->
+        <section class="test-section" id="testSection" style="display: none;" 
+                 aria-labelledby="testHeading" role="region" aria-hidden="true">
+            <h2 id="testHeading">Cognitive Test</h2>
+            <div class="test-area" id="testArea" role="region" aria-live="polite">
+                <div class="reaction-test" id="reactionTest" aria-labelledby="reactionTestHeading">
+                    <h3 id="reactionTestHeading" class="sr-only">Reaction Time Test</h3>
+                    <p id="reactionInstructions">Click the button as soon as it turns green!</p>
+                    <button class="reaction-btn" id="reactionBtn" 
+                            aria-label="Reaction test button"
+                            aria-describedby="reactionInstructions"
+                            aria-live="polite">
+                        Wait...
+                    </button>
                 </div>
-                <div class="memory-test" id="memoryTest" style="display: none;">
-                    <p>Memorize these numbers: <span id="memoryNumbers"></span></p>
-                    <button onclick="showMemoryInput()">I've memorized them</button>
+                <div class="memory-test" id="memoryTest" style="display: none;" aria-labelledby="memoryTestHeading">
+                    <h3 id="memoryTestHeading" class="sr-only">Memory Test</h3>
+                    <p>Memorize these numbers: <span id="memoryNumbers" aria-live="polite"></span></p>
+                    <button onclick="showMemoryInput()" 
+                            aria-label="I have memorized the numbers"
+                            aria-describedby="memoryInstructions">
+                        I've memorized them
+                    </button>
+                    <span id="memoryInstructions" class="sr-only">Click when you have memorized the 5-digit number</span>
                 </div>
-                <div class="memory-input" id="memoryInput" style="display: none;">
+                <div class="memory-input" id="memoryInput" style="display: none;" aria-labelledby="memoryInputHeading">
+                    <h3 id="memoryInputHeading" class="sr-only">Memory Input</h3>
                     <p>Enter the numbers in order:</p>
-                    <input type="text" id="memoryAnswer" placeholder="Enter numbers">
-                    <button onclick="checkMemory()">Submit</button>
+                    <label for="memoryAnswer" class="sr-only">Enter the 5-digit number you memorized</label>
+                    <input type="text" id="memoryAnswer" placeholder="Enter numbers" 
+                           aria-label="Enter the 5-digit number"
+                           pattern="\d{5}" 
+                           title="Please enter exactly 5 digits">
+                    <button onclick="checkMemory()" 
+                            aria-label="Submit memory answer">
+                        Submit
+                    </button>
                 </div>
             </div>
             <div class="test-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="testProgress"></div>
+                <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" 
+                     aria-valuenow="0" aria-valuetext="0% complete" id="progressBar">
+                    <div class="progress-fill" id="testProgress" style="width: 0%;"></div>
                 </div>
-                <p id="testStatus">Test in progress...</p>
+                <p id="testStatus" aria-live="polite">Test in progress...</p>
             </div>
-        </div>
+        </section>
 
-        <div class="results-section" id="resultsSection" style="display: none;">
-            <h2>Test Results</h2>
-            <div class="result-cards">
-                <div class="result-card">
+        <!-- Results Section - Hidden by default -->
+        <section class="results-section" id="resultsSection" style="display: none;" 
+                 aria-labelledby="resultsHeading" role="region" aria-hidden="true">
+            <h2 id="resultsHeading">Test Results</h2>
+            <div class="result-cards" role="list" aria-label="Test results">
+                <div class="result-card" role="listitem">
                     <h3>Reaction Time</h3>
-                    <div class="result-value" id="reactionTimeResult">N/A</div>
+                    <div class="result-value" id="reactionTimeResult" aria-live="polite">N/A</div>
                 </div>
-                <div class="result-card">
+                <div class="result-card" role="listitem">
                     <h3>Memory Score</h3>
-                    <div class="result-value" id="memoryScoreResult">N/A</div>
+                    <div class="result-value" id="memoryScoreResult" aria-live="polite">N/A</div>
                 </div>
-                <div class="result-card">
+                <div class="result-card" role="listitem">
                     <h3>Recovery Status</h3>
-                    <div class="result-value" id="recoveryStatus">N/A</div>
+                    <div class="result-value" id="recoveryStatus" aria-live="polite">N/A</div>
+                </div>
+                <div class="result-card" role="listitem">
+                    <h3>Recovery Time</h3>
+                    <div class="result-value" id="recoveryTimeResult" aria-live="polite">N/A</div>
                 </div>
             </div>
-            <button class="save-result-btn" onclick="saveResult()">Save Result</button>
-        </div>
+            <button class="save-result-btn" onclick="saveResult()" 
+                    aria-label="Save test results">
+                Save Result
+            </button>
+        </section>
 
-        <div class="history-section">
-            <h2>Recovery History</h2>
-            <div id="recoveryHistory"></div>
-        </div>
+        <!-- History Section -->
+        <section class="history-section" id="historySection" aria-labelledby="historyHeading" role="region">
+            <h2 id="historyHeading">Recovery History</h2>
+            <div id="recoveryHistory" role="list" aria-label="Recovery history items" tabindex="0"></div>
+        </section>
 
-        <div class="chart-section">
-            <h2>Recovery Trends</h2>
-            <canvas id="recoveryChart"></canvas>
-        </div>
-    </div>
+        <!-- Chart Section -->
+        <section class="chart-section" id="chartSection" aria-labelledby="chartHeading" role="region">
+            <h2 id="chartHeading">Recovery Trends</h2>
+            <div role="img" aria-label="Line chart showing recovery trends over time">
+                <canvas id="recoveryChart" style="height: 300px;" 
+                        aria-label="Recovery trends chart showing reaction time, memory score, and recovery time over time"
+                        tabindex="0"></canvas>
+            </div>
+            <p class="sr-only" id="chartDescription">The chart shows three metrics: reaction time in milliseconds, memory score out of 5, and recovery time in milliseconds over time.</p>
+        </section>
+    </main>
 
-    <div id="footer"></div>
+    <div id="footer" role="contentinfo" aria-label="Site footer"></div>
 
     <script src="cognitive-recovery-after-conflict-monitor.js"></script>
     <script>

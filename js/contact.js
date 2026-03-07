@@ -54,7 +54,16 @@ document.addEventListener("navbarLoaded", () => {
     function setTheme(theme) {
         body.setAttribute("data-theme", theme);
         localStorage.setItem("theme", theme);
-        themeToggle.textContent = theme === "dark" ? "🌙" : "☀️";
+        const icon = themeToggle.querySelector('.theme-icon') || themeToggle;
+        if (icon.classList.contains('fa-moon')) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        } else if (icon.classList.contains('fa-sun')) {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+        } else {
+            icon.innerHTML = '<i class="fas ' + (theme === "dark" ? "fa-moon" : "fa-sun") + ' theme-icon"></i>';
+        }
     }
 
     function toggleTheme() {

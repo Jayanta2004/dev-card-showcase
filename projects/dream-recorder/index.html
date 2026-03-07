@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 The Dream Recorder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0f1f;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        .dream-lab {
+            width: 1000px;
+            background: #151e30;
+            border-radius: 80px;
+            padding: 40px;
+            box-shadow: 0 30px 60px #000000cc, 0 0 0 4px #00ffff, 0 0 50px #00ffff99;
+            border: 2px solid #7fffd4;
+        }
+        
+        .brain-scan {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .brain-waveform {
+            flex: 2;
+            height: 200px;
+            background: #0a0f1f;
+            border-radius: 40px;
+            border: 3px solid #00ffff;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wave-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: rgba(0,255,255,0.2);
+            top: 50%;
+        }
+        
+        .wave-path {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            fill: none;
+            stroke: #00ffff;
+            stroke-width: 2;
+            filter: drop-shadow(0 0 10px #00ffff);
+        }
+        
+        .dream-stats {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .stat {
+            background: #0a0f1f;
+            border: 2px solid #00ffff;
+            border-radius: 30px;
+            padding: 20px;
+            text-align: center;
+            color: #00ffff;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ff00ff;
+        }
+        
+        .dream-display {
+            background: #0a0f1f;
+            border-radius: 60px;
+            padding: 40px;
+            margin: 30px 0;
+            border: 4px solid #00ffff;
+            min-height: 200px;
+            color: #00ffff;
+            font-size: 24px;
+            line-height: 1.6;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dream-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00ffff;
+            border-radius: 50%;
+            animation: float 3s linear infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(100%); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100%); opacity: 0; }
+        }
+        
+        .dream-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .dream-btn {
+            background: #0a0f1f;
+            border: 3px solid #00ffff;
+            color: #00ffff;
+            font-size: 24px;
+            padding: 20px 50px;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .dream-btn:hover {
+            background: #00ffff;
+            color: #0a0f1f;
+            box-shadow: 0 0 50px #00ffff;
+        }
+        
+        .dream-tag {
+            display: inline-block;
+            background: #ff00ff;
+            color: #0a0f1f;
+            padding: 5px 15px;
+            border-radius: 30px;
+            margin: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dream-lab">
+        <div class="brain-scan">
+            <div class="brain-waveform" id="waveform">
+                <div class="wave-line"></div>
+                <svg width="100%" height="100%" viewBox="0 0 600 200">
+                    <path class="wave-path" id="wavePath" d="M0,100 Q150,50 300,100 T600,100" />
+                </svg>
+            </div>
+            
+            <div class="dream-stats">
+                <div class="stat">
+                    <div>REM</div>
+                    <div class="stat-value" id="remValue">98%</div>
+                </div>
+                <div class="stat">
+                    <div>THETA</div>
+                    <div class="stat-value" id="thetaValue">6.3Hz</div>
+                </div>
+                <div class="stat">
+                    <div>DELTA</div>
+                    <div class="stat-value" id="deltaValue">2.1Hz</div>
+                </div>
+                <div class="stat">
+                    <div>LUCID</div>
+                    <div class="stat-value" id="lucidValue">47%</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dream-display" id="dreamDisplay">
+            <div class="dream-particles" id="dreamParticles"></div>
+            <span id="dreamText">Initializing neural interface... awaiting dreams...</span>
+        </div>
+        
+        <div class="dream-controls">
+            <button class="dream-btn" id="recordDream">⏺️ RECORD</button>
+            <button class="dream-btn" id="playDream">▶️ PLAYBACK</button>
+            <button class="dream-btn" id="clearDream">🧹 CLEAR</button>
+        </div>
+    </div>
+
+    <script>
+        const dreamDisplay = document.getElementById('dreamDisplay');
+        const dreamText = document.getElementById('dreamText');
+        const wavePath = document.getElementById('wavePath');
+        const dreamParticles = document.getElementById('dreamParticles');
+        
+        const remValue = document.getElementById('remValue');
+        const thetaValue = document.getElementById('thetaValue');
+        const deltaValue = document.getElementById('deltaValue');
+        const lucidValue = document.getElementById('lucidValue');
+        
+        let isRecording = false;
+        let dreams = [];
+        let currentDream = '';
+        
+        const dreamFragments = [
+            "flying through clouds of crystal",
+            "dancing with shadow selves",
+            "falling through infinite libraries",
+            "meeting ancestors in starlight",
+            "swimming in oceans of memory",
+            "building castles from light",
+            "conversing with trees",
+            "melting into golden light",
+            "chasing ephemeral butterflies",
+            "unlocking doors to other lives"
+        ];
+        
+        function updateWave() {
+            const t = Date.now() / 1000;
+            const points = [];
+            for (let i = 0; i <= 20; i++) {
+                const x = i * 30;
+                const y = 100 + Math.sin(t + i * 0.5) * 30 + Math.cos(t * 2 + i) * 20;
+                points.push(`${x},${y}`);
+            }
+            const d = "M" + points.join(" Q" + points.map((p, i) => {
+                if (i < points.length - 1) {
+                    const [x1, y1] = points[i].split(',').map(Number);
+                    const [x2, y2] = points[i + 1].split(',').map(Number);
+                    return `${(x1 + x2)/2},${(y1 + y2)/2}`;
+                }
+            }).join(" "));
+            
+            wavePath.setAttribute("d", d);
+            
+            // Update stats
+            remValue.textContent = (70 + Math.sin(t) * 20).toFixed(0) + '%';
+            thetaValue.textContent = (4 + Math.sin(t * 2) * 2).toFixed(1) + 'Hz';
+            deltaValue.textContent = (1 + Math.cos(t) * 1).toFixed(1) + 'Hz';
+            lucidValue.textContent = (30 + Math.sin(t * 3) * 20).toFixed(0) + '%';
+            
+            requestAnimationFrame(updateWave);
+        }
+        
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = (2 + Math.random() * 4) + 's';
+            particle.style.background = `hsl(${Math.random() * 360}, 100%, 70%)`;
+            dreamParticles.appendChild(particle);
+            
+            setTimeout(() => particle.remove(), 3000);
+        }
+        
+        function generateDream() {
+            const numFragments = 3 + Math.floor(Math.random() * 5);
+            let dream = '';
+            for (let i = 0; i < numFragments; i++) {
+                dream += dreamFragments[Math.floor(Math.random() * dreamFragments.length)];
+                if (i < numFragments - 1) {
+                    dream += ' ' + ['then', 'while', 'where', 'as'][Math.floor(Math.random() * 4)] + ' ';
+                }
+            }
+            return dream;
+        }
+        
+        function recordDream() {
+            isRecording = !isRecording;
+            
+            if (isRecording) {
+                document.getElementById('recordDream').style.background = '#ff00ff';
+                document.getElementById('recordDream').style.color = '#0a0f1f';
+                dreamText.innerHTML = '🎙️ Recording dream patterns...';
+                
+                setInterval(() => {
+                    if (isRecording) {
+                        currentDream = generateDream();
+                        dreamText.innerHTML = currentDream;
+                        dreams.push(currentDream);
+                        
+                        // Create particle burst
+                        for (let i = 0; i < 10; i++) {
+                            setTimeout(createParticle, i * 100);
+                        }
+                    }
+                }, 3000);
+            } else {
+                document.getElementById('recordDream').style.background = '#0a0f1f';
+                document.getElementById('recordDream').style.color = '#00ffff';
+                dreamText.innerHTML = '⏸️ Recording paused. ' + dreams.length + ' dreams captured.';
+            }
+        }
+        
+        function playDream() {
+            if (dreams.length === 0) {
+                dreamText.innerHTML = 'No dreams recorded yet...';
+                return;
+            }
+            
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i < dreams.length) {
+                    dreamText.innerHTML = '▶️ ' + dreams[i];
+                    i++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 2000);
+        }
+        
+        function clearDreams() {
+            dreams = [];
+            dreamText.innerHTML = 'Memory buffer cleared. Ready for new dreams.';
+        }
+        
+        document.getElementById('recordDream').addEventListener('click', recordDream);
+        document.getElementById('playDream').addEventListener('click', playDream);
+        document.getElementById('clearDream').addEventListener('click', clearDreams);
+        
+        updateWave();
+        setInterval(createParticle, 500);
+    </script>
+</body>
+</html>

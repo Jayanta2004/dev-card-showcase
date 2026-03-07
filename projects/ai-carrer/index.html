@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI · career path simulator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0b0e1a 0%, #1a1f2f 100%);
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 1.5rem;
+    }
+
+    .simulator-card {
+      max-width: 1000px;
+      width: 100%;
+      background: rgba(18, 22, 36, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(74, 144, 226, 0.25);
+      border-radius: 2.5rem;
+      box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 255, 255, 0.1) inset;
+      padding: 2rem 2rem 2.5rem;
+      transition: all 0.3s ease;
+    }
+
+    /* header — AI glow */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2.2rem;
+      border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+      padding-bottom: 1.2rem;
+    }
+
+    .ai-badge {
+      background: #00c3ff20;
+      border: 1px solid #4af0ff70;
+      border-radius: 60px;
+      padding: 0.4rem 1.2rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      color: #9eeefe;
+      text-transform: uppercase;
+      box-shadow: 0 0 10px #4af0ff30;
+    }
+
+    .header h1 {
+      font-size: 1.9rem;
+      font-weight: 500;
+      color: #ebf5ff;
+      letter-spacing: -0.02em;
+      margin-right: auto;
+    }
+
+    .header h1 span {
+      font-weight: 300;
+      color: #78d0f0;
+    }
+
+    /* profile capsule */
+    .profile-panel {
+      background: #0f1322e0;
+      border-radius: 2rem;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2.5rem;
+      border: 1px solid #2d405b;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem 1.5rem;
+      box-shadow: 0 8px 0 #080b14;
+    }
+
+    .profile-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .profile-label {
+      font-size: 0.8rem;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #90b4d9;
+    }
+
+    .profile-value {
+      background: #1d2a3c;
+      padding: 0.45rem 1.2rem;
+      border-radius: 40px;
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: #d3edff;
+      border: 1px solid #3777b0;
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .influence-meter {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      background: #00000030;
+      padding: 0.3rem 1.2rem 0.3rem 1rem;
+      border-radius: 60px;
+      border: 1px solid #33cccc40;
+    }
+
+    .influence-meter span {
+      color: #b2e6ff;
+      font-size: 0.9rem;
+    }
+
+    .influence-bar-bg {
+      width: 120px;
+      height: 8px;
+      background: #1f3447;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .influence-bar-fill {
+      height: 100%;
+      width: 50%;
+      background: linear-gradient(90deg, #2fe0ff, #a0f0ff);
+      border-radius: 20px;
+      box-shadow: 0 0 10px #00e0ff;
+    }
+
+    /* story / prompt area */
+    .story-container {
+      background: #0b101ec0;
+      border-radius: 2rem;
+      padding: 2rem 2.2rem;
+      border: 1px solid #2e4b6b;
+      margin-bottom: 2.5rem;
+      box-shadow: inset 0 2px 5px #00000060, 0 10px 20px -5px #000000;
+    }
+
+    .ai-pulse {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: #6ef0ff;
+      border-radius: 50%;
+      margin-right: 10px;
+      box-shadow: 0 0 15px #00ccff;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.2); background: #b0f5ff; }
+      100% { opacity: 0.4; transform: scale(1); }
+    }
+
+    .story-text {
+      font-size: 1.35rem;
+      line-height: 1.5;
+      color: #d0ecff;
+      font-weight: 350;
+      margin-top: 0.5rem;
+      text-shadow: 0 2px 5px black;
+    }
+
+    .story-context {
+      font-size: 1rem;
+      color: #7eaccc;
+      margin-top: 1rem;
+      border-left: 3px solid #368fcf;
+      padding-left: 1.3rem;
+    }
+
+    /* choice cards */
+    .choices-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin: 2.5rem 0 2rem;
+    }
+
+    .choice-card {
+      flex: 1 1 250px;
+      background: #151e2c;
+      border: 1px solid #365573;
+      border-radius: 2rem;
+      padding: 1.8rem 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 7px 0 #0a101a;
+    }
+
+    .choice-card:hover {
+      transform: translateY(-4px);
+      border-color: #5ab0ff;
+      box-shadow: 0 12px 0 #0a101a, 0 0 20px #1eb0ff50;
+      background: #1b263b;
+    }
+
+    .choice-card:active {
+      transform: translateY(3px);
+      box-shadow: 0 4px 0 #0a101a;
+    }
+
+    .choice-title {
+      font-size: 1.6rem;
+      font-weight: 500;
+      color: #c2e4ff;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .choice-desc {
+      color: #a0bbd0;
+      font-size: 1rem;
+      line-height: 1.4;
+      margin-bottom: 1.5rem;
+    }
+
+    .chip-impact {
+      display: inline-block;
+      background: #192f41;
+      padding: 0.3rem 1rem;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #83d9ff;
+      border: 1px solid #2f80c0;
+    }
+
+    /* reset & ai suggestion */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .reset-btn {
+      background: transparent;
+      border: 1.5px solid #4a7090;
+      color: #b7d9f0;
+      font-size: 1rem;
+      font-weight: 400;
+      padding: 0.8rem 2rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .reset-btn:hover {
+      border-color: #6dd0ff;
+      color: white;
+      background: #1a324a50;
+      box-shadow: 0 0 15px #00a3ff40;
+    }
+
+    .ai-footnote {
+      font-size: 0.9rem;
+      color: #6b93b5;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .ai-footnote strong {
+      color: #9dd9ff;
+      font-weight: 400;
+    }
+
+    .history-badge {
+      background: #101624;
+      border-radius: 50px;
+      padding: 0.2rem 1.2rem;
+      border: 1px dashed #4b78a1;
+      font-size: 0.85rem;
+      color: #7ca9d6;
+    }
+  </style>
+</head>
+<body>
+  <div class="simulator-card">
+    <!-- header -->
+    <div class="header">
+      <div class="ai-badge">✦ AI CORE v2.3</div>
+      <h1>neural<span>path</span></h1>
+      <div class="ai-footnote">
+        <span class="ai-pulse"></span> <strong>real‑time inference</strong>
+      </div>
+    </div>
+
+    <!-- dynamic profile panel (will be updated by js) -->
+    <div class="profile-panel" id="profilePanel">
+      <div class="profile-item">
+        <span class="profile-label">role</span>
+        <span class="profile-value" id="roleDisplay">associate</span>
+      </div>
+      <div class="profile-item">
+        <span class="profile-label">level</span>
+        <span class="profile-value" id="levelDisplay">L3</span>
+      </div>
+      <div class="profile-item">
+        <span class="profile-label">influence</span>
+        <div class="influence-meter">
+          <span id="influenceValue">50</span>
+          <div class="influence-bar-bg"><div class="influence-bar-fill" id="influenceFill" style="width: 50%;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- main story panel -->
+    <div class="story-container" id="storyContainer">
+      <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 0.5rem;">
+        <span class="ai-pulse" style="animation: pulse 1.8s infinite;"></span>
+        <span style="color:#63b8ff; text-transform: uppercase; letter-spacing: 1px;">AI narrative</span>
+      </div>
+      <div class="story-text" id="storyText">
+        Initializing career simulation...
+      </div>
+      <div class="story-context" id="storyContext">
+        choose a path to shape your future.
+      </div>
+    </div>
+
+    <!-- choice cards injected from js -->
+    <div id="choicesContainer" class="choices-grid">
+      <!-- dynamic cards appear here -->
+    </div>
+
+    <!-- bottom bar with reset and small history -->
+    <div class="action-bar">
+      <button class="reset-btn" id="resetBtn">
+        <span>⟲</span> reset simulation
+      </button>
+      <div class="history-badge" id="historyDisplay">
+        iterations: 0
+      </div>
+      <div class="ai-footnote">
+        <span>⚡</span> <span id="nodeIdDisplay">node: START</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ---------- career graph data (AI style branching) ----------
+      const careerGraph = {
+        start: {
+          story: "You stand at the threshold of your career. The AI observes two dominant paths.",
+          context: "early stage · 0–2 years experience",
+          role: "associate",
+          level: "L3",
+          influence: 50,
+          choices: [
+            { text: "⚡ deep tech", desc: "specialize in AI/ML engineering", next: "specialist", impact: "+15 influence", deltaRole: "ml engineer", deltaLevel: "L4", deltaInf: 15 },
+            { text: "🌐 business bridge", desc: "move into product management", next: "manager", impact: "+5 influence", deltaRole: "product analyst", deltaLevel: "L3", deltaInf: 5 }
+          ]
+        },
+        specialist: {
+          story: "You build neural nets from scratch. The AI recommends publishing research.",
+          context: "technical track · model optimization",
+          role: "ml engineer",
+          level: "L4",
+          influence: 65,
+          choices: [
+            { text: "📄 publish paper", desc: "gain academic reputation", next: "researchScientist", impact: "+20 influence", deltaRole: "research scientist", deltaLevel: "L5", deltaInf: 20 },
+            { text: "🏭 deploy at scale", desc: "move to MLOps / infra", next: "leadEngineer", impact: "+12 influence", deltaRole: "senior ml engineer", deltaLevel: "L5", deltaInf: 12 }
+          ]
+        },
+        manager: {
+          story: "You lead a cross-functional team. Stakeholder alignment becomes your superpower.",
+          context: "product track · OKRs & roadmaps",
+          role: "product analyst",
+          level: "L3",
+          influence: 55,
+          choices: [
+            { text: "📊 product strategy", desc: "become product manager", next: "productManager", impact: "+18 influence", deltaRole: "product manager", deltaLevel: "L4", deltaInf: 18 },
+            { text: "🤝 operations", desc: "optimize delivery & processes", next: "operationsLead", impact: "+10 influence", deltaRole: "project lead", deltaLevel: "L4", deltaInf: 10 }
+          ]
+        },
+        researchScientist: {
+          story: "Your paper is accepted at a top conference. You're now a thought leader.",
+          context: "research · phd level",
+          role: "research scientist",
+          level: "L5",
+          influence: 85,
+          choices: [
+            { text: "🎓 principal research", desc: "lead a lab / team", next: "principal", impact: "+25 influence", deltaRole: "principal scientist", deltaLevel: "L6", deltaInf: 25 },
+            { text: "🚀 startup founder", desc: "commercialize your work", next: "founder", impact: "+30 influence", deltaRole: "cto", deltaLevel: "L7", deltaInf: 30 }
+          ]
+        },
+        leadEngineer: {
+          story: "You design the infrastructure serving millions of requests. Stability and scale.",
+          context: "leadership · tech lead",
+          role: "senior ml engineer",
+          level: "L5",
+          influence: 77,
+          choices: [
+            { text: "🧠 architect", desc: "become principal engineer", next: "principal", impact: "+20 influence", deltaRole: "principal engineer", deltaLevel: "L6", deltaInf: 20 },
+            { text: "👥 engineering manager", desc: "switch to people leadership", next: "em", impact: "+15 influence", deltaRole: "engineering manager", deltaLevel: "L6", deltaInf: 15 }
+          ]
+        },
+        productManager: {
+          story: "You own the product roadmap. The AI notices your user empathy.",
+          context: "product leadership",
+          role: "product manager",
+          level: "L4",
+          influence: 73,
+          choices: [
+            { text: "📈 director PM", desc: "lead product org", next: "directorPm", impact: "+22 influence", deltaRole: "product director", deltaLevel: "L6", deltaInf: 22 },
+            { text: "💡 innovation lab", desc: "incubate new products", next: "innovator", impact: "+18 influence", deltaRole: "innovation lead", deltaLevel: "L5", deltaInf: 18 }
+          ]
+        },
+        operationsLead: {
+          story: "You implement agile at scale. The org ships faster.",
+          context: "program management",
+          role: "project lead",
+          level: "L4",
+          influence: 65,
+          choices: [
+            { text: "⚙️ program director", desc: "oversee portfolios", next: "programDir", impact: "+20 influence", deltaRole: "program director", deltaLevel: "L5", deltaInf: 20 },
+            { text: "🔗 strategic ops", desc: "chief of staff track", next: "chiefStaff", impact: "+15 influence", deltaRole: "strategy lead", deltaLevel: "L5", deltaInf: 15 }
+          ]
+        },
+        // leaf nodes (end with no choices) — but we still show something
+        principal: {
+          story: "You are a principal. Your decisions shape the tech ecosystem.",
+          context: "distinguished individual contributor · fellow",
+          role: "principal engineer",
+          level: "L6",
+          influence: 105,
+          choices: []
+        },
+        founder: {
+          story: "You launch a startup. Venture capital is knocking.",
+          context: "founder · c-level",
+          role: "cto / founder",
+          level: "L7",
+          influence: 115,
+          choices: []
+        },
+        em: {
+          story: "You manage a team of 20 engineers. High impact through people.",
+          context: "director track",
+          role: "engineering manager",
+          level: "L6",
+          influence: 92,
+          choices: []
+        },
+        directorPm: {
+          story: "You define product vision for the whole company.",
+          context: "vp product · executive",
+          role: "product director",
+          level: "L6",
+          influence: 95,
+          choices: []
+        },
+        innovator: {
+          story: "You launched a new product line. The board is impressed.",
+          context: "head of innovation",
+          role: "innovation lead",
+          level: "L5",
+          influence: 91,
+          choices: []
+        },
+        programDir: {
+          story: "You coordinate multiple complex programs across the globe.",
+          context: "program director",
+          role: "program director",
+          level: "L5",
+          influence: 85,
+          choices: []
+        },
+        chiefStaff: {
+          story: "You work directly with the CEO on strategic initiatives.",
+          context: "chief of staff",
+          role: "strategy lead",
+          level: "L5",
+          influence: 80,
+          choices: []
+        }
+      };
+
+      // ---------- simulation state ----------
+      let currentNodeId = "start";
+      let historyCounter = 0;
+
+      // Helper to get current node object
+      function getNode(id) {
+        return careerGraph[id] || careerGraph.start; // fallback
+      }
+
+      // Update UI based on currentNodeId
+      function refreshUI() {
+        const node = getNode(currentNodeId);
+
+        // profile panel
+        document.getElementById("roleDisplay").innerText = node.role || "unknown";
+        document.getElementById("levelDisplay").innerText = node.level || "L?";
+        const inf = node.influence !== undefined ? node.influence : 50;
+        document.getElementById("influenceValue").innerText = inf;
+        document.getElementById("influenceFill").style.width = Math.min(150, Math.max(0, inf)) + "%"; // visual max 150%
+
+        // story
+        document.getElementById("storyText").innerText = node.story || "continue simulation";
+        document.getElementById("storyContext").innerHTML = node.context || " ";
+
+        // bottom node id
+        document.getElementById("nodeIdDisplay").innerHTML = `node: ${currentNodeId}`;
+
+        // render choices
+        const choicesContainer = document.getElementById("choicesContainer");
+        choicesContainer.innerHTML = ""; // clear
+
+        if (!node.choices || node.choices.length === 0) {
+          // end state — show final message
+          const emptyMsg = document.createElement("div");
+          emptyMsg.style.flex = "1 1 100%";
+          emptyMsg.style.textAlign = "center";
+          emptyMsg.style.padding = "2rem";
+          emptyMsg.style.color = "#709bbd";
+          emptyMsg.style.border = "1px dashed #3d688b";
+          emptyMsg.style.borderRadius = "3rem";
+          emptyMsg.innerText = "✨ you reached an endpoint · reset to explore other paths";
+          choicesContainer.appendChild(emptyMsg);
+        } else {
+          node.choices.forEach((choice, index) => {
+            const card = document.createElement("div");
+            card.className = "choice-card";
+            card.setAttribute("data-next", choice.next);
+
+            const titleSpan = document.createElement("div");
+            titleSpan.className = "choice-title";
+            titleSpan.innerHTML = choice.text;
+
+            const descSpan = document.createElement("div");
+            descSpan.className = "choice-desc";
+            descSpan.innerText = choice.desc;
+
+            const impactChip = document.createElement("span");
+            impactChip.className = "chip-impact";
+            impactChip.innerText = choice.impact || "→";
+
+            card.appendChild(titleSpan);
+            card.appendChild(descSpan);
+            card.appendChild(impactChip);
+
+            // attach click handler
+            card.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const nextNodeId = choice.next;
+              if (nextNodeId && careerGraph[nextNodeId]) {
+                // update currentNodeId
+                currentNodeId = nextNodeId;
+                historyCounter++;
+                document.getElementById("historyDisplay").innerText = `iterations: ${historyCounter}`;
+                refreshUI();
+              } else {
+                console.warn("invalid next node");
+              }
+            });
+
+            choicesContainer.appendChild(card);
+          });
+        }
+      }
+
+      // reset to start
+      function resetSimulation() {
+        currentNodeId = "start";
+        historyCounter = 0;
+        document.getElementById("historyDisplay").innerText = "iterations: 0";
+        refreshUI();
+      }
+
+      // wire reset button
+      document.getElementById("resetBtn").addEventListener("click", resetSimulation);
+
+      // initial render
+      refreshUI();
+    })();
+  </script>
+</body>
+</html>

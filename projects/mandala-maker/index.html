@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🕉️ The Mandala Maker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #4a2a1a;
+            background: linear-gradient(145deg, #6b4a2a, #2a1a0a);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Tibetan Machine Uni', 'Times New Roman', serif;
+        }
+        
+        .mandala-temple {
+            width: 1000px;
+            background: #c49a6c;
+            background: linear-gradient(145deg, #e8c5a0, #b88b5a);
+            border-radius: 120px 120px 60px 60px;
+            padding: 40px;
+            box-shadow: 0 40px 60px #2a1a0a, inset 0 0 0 15px #f0d5b0, inset 0 0 0 30px #c4a078;
+            border: 12px solid #8b6b3a;
+            position: relative;
+        }
+        
+        .mandala-canvas {
+            width: 500px;
+            height: 500px;
+            margin: 0 auto 40px;
+            position: relative;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 0 20px #d4a55a, 0 0 0 40px #b88b4a, 0 0 100px #ffd700;
+        }
+        
+        #mandalaCanvas {
+            width: 100%;
+            height: 100%;
+            background: #1a0f0a;
+            display: block;
+        }
+        
+        .mandala-tools {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .mandala-tool {
+            background: #8b6b3a;
+            border: none;
+            color: #f0d5b0;
+            font-size: 24px;
+            padding: 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            border-bottom: 8px solid #5a3a1a;
+            transition: 0.05s linear;
+        }
+        .mandala-tool:active {
+            border-bottom-width: 2px;
+            transform: translateY(6px);
+        }
+        
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .color-dot {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 4px solid transparent;
+        }
+        .color-dot:hover {
+            transform: scale(1.2);
+        }
+        .color-dot.selected {
+            border-color: white;
+            box-shadow: 0 0 30px white;
+        }
+        
+        .symmetry-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            color: #f0d5b0;
+            font-size: 20px;
+        }
+        
+        #symmetryValue {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="mandala-temple">
+        <div class="mandala-canvas">
+            <canvas id="mandalaCanvas" width="500" height="500"></canvas>
+        </div>
+        
+        <div class="symmetry-control">
+            <span>🌀 SYMMETRY</span>
+            <button class="mandala-tool" id="symmetryDown">-</button>
+            <span id="symmetryValue">8</span>
+            <button class="mandala-tool" id="symmetryUp">+</button>
+        </div>
+        
+        <div class="color-palette" id="colorPalette">
+            <div class="color-dot" style="background: #ff4d4d;" data-color="#ff4d4d"></div>
+            <div class="color-dot" style="background: #ffb84d;" data-color="#ffb84d"></div>
+            <div class="color-dot" style="background: #ffff4d;" data-color="#ffff4d"></div>
+            <div class="color-dot" style="background: #4dff4d;" data-color="#4dff4d"></div>
+            <div class="color-dot" style="background: #4dffff;" data-color="#4dffff"></div>
+            <div class="color-dot" style="background: #4d4dff;" data-color="#4d4dff"></div>
+            <div class="color-dot" style="background: #ff4dff;" data-color="#ff4dff"></div>
+            <div class="color-dot" style="background: #ffffff;" data-color="#ffffff"></div>
+        </div>
+        
+        <div class="mandala-tools">
+            <button class="mandala-tool" id="drawBtn">✏️ DRAW</button>
+            <button class="mandala-tool" id="clearBtn">🧹 CLEAR</button>
+            <button class="mandala-tool" id="saveBtn">💾 SAVE</button>
+            <button class="mandala-tool" id="randomBtn">🎲 RANDOM</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mandalaCanvas');
+        const ctx = canvas.getContext('2d');
+        const symmetryValue = document.getElementById('symmetryValue');
+        
+        let symmetry = 8;
+        let currentColor = '#ff4d4d';
+        let isDrawing = false;
+        let lastX, lastY;
+        
+        function drawSymmetrical(x, y, color) {
+            const centerX = 250;
+            const centerY = 250;
+            
+            for (let i = 0; i < symmetry; i++) {
+                const angle = (i / symmetry) * Math.PI * 2;
+                
+                // Rotate point around center
+                const dx = x - centerX;
+                const dy = y - centerY;
+                
+                const rotatedX = centerX + dx * Math.cos(angle) - dy * Math.sin(angle);
+                const rotatedY = centerY + dx * Math.sin(angle) + dy * Math.cos(angle);
+                
+                ctx.beginPath();
+                ctx.arc(rotatedX, rotatedY, 8, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+        }
+        
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            drawSymmetrical(x, y, currentColor);
+            lastX = x;
+            lastY = y;
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Draw line segments for smoother drawing
+            const steps = 5;
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const interpX = lastX + (x - lastX) * t;
+                const interpY = lastY + (y - lastY) * t;
+                drawSymmetrical(interpX, interpY, currentColor);
+            }
+            
+            lastX = x;
+            lastY = y;
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isDrawing = false;
+        });
+        
+        document.getElementById('symmetryUp').addEventListener('click', () => {
+            symmetry = Math.min(24, symmetry + 2);
+            symmetryValue.textContent = symmetry;
+        });
+        
+        document.getElementById('symmetryDown').addEventListener('click', () => {
+            symmetry = Math.max(2, symmetry - 2);
+            symmetryValue.textContent = symmetry;
+        });
+        
+        document.querySelectorAll('.color-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+                dot.classList.add('selected');
+                currentColor = dot.dataset.color;
+            });
+        });
+        
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            ctx.fillStyle = '#1a0f0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        });
+        
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'mandala.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+        
+        document.getElementById('randomBtn').addEventListener('click', () => {
+            ctx.fillStyle = '#1a0f0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw random mandala
+            for (let i = 0; i < 50; i++) {
+                const x = 250 + (Math.random() - 0.5) * 400;
+                const y = 250 + (Math.random() - 0.5) * 400;
+                const colors = ['#ff4d4d', '#ffb84d', '#ffff4d', '#4dff4d', '#4dffff', '#4d4dff', '#ff4dff'];
+                drawSymmetrical(x, y, colors[Math.floor(Math.random() * colors.length)]);
+            }
+        });
+        
+        // Initialize with a simple mandala
+        ctx.fillStyle = '#1a0f0a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw center point
+        ctx.beginPath();
+        ctx.arc(250, 250, 10, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffd700';
+        ctx.fill();
+    </script>
+</body>
+</html>

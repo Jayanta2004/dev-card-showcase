@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>light.arena · multiplayer lobby</title>
+    <!-- Google Fonts + Font Awesome for crisp UI -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f0f4fa;  /* very light blue background */
+            font-family: 'Inter', sans-serif;
+            color: #1c2e42;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        /* main platform card — super light, subtle shadows */
+        .game-hub {
+            width: 1400px;
+            max-width: 100%;
+            height: 100%;
+            max-height: 920px;
+            background: #ffffffdd;
+            backdrop-filter: blur(4px);
+            border-radius: 42px;
+            box-shadow: 0 25px 50px -12px rgba(0, 20, 40, 0.25), 0 0 0 1px rgba(156, 180, 215, 0.3) inset;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #ffffff;
+        }
+
+        /* header – light, airy */
+        .lobby-header {
+            padding: 20px 30px;
+            background: #ffffff / 90%;
+            border-bottom: 1px solid #dde5ed;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand i {
+            font-size: 2.2rem;
+            color: #5f8ec9;
+            background: #e8f0fe;
+            padding: 10px;
+            border-radius: 22px;
+        }
+
+        .brand h1 {
+            font-weight: 650;
+            font-size: 1.9rem;
+            letter-spacing: -0.02em;
+            color: #1d3b61;
+        }
+
+        .brand span {
+            font-weight: 300;
+            color: #5c779e;
+            font-size: 0.95rem;
+            margin-left: 6px;
+        }
+
+        .lobby-search {
+            margin-left: auto;
+            background: #f2f7ff;
+            border-radius: 60px;
+            padding: 8px 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #c9d9ec;
+        }
+
+        .lobby-search i {
+            color: #7f99c0;
+            font-size: 1rem;
+        }
+
+        .lobby-search input {
+            border: none;
+            background: transparent;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            width: 220px;
+            font-size: 0.95rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f2f7ff;
+            padding: 6px 18px 6px 12px;
+            border-radius: 40px;
+            border: 1px solid #cddef2;
+        }
+
+        .avatar {
+            background: #b7d3f8;
+            width: 42px;
+            height: 42px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #1e3f6b;
+        }
+
+        /* main grid — three columns */
+        .lobby-grid {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            padding: 24px 28px 20px 28px;
+            gap: 24px;
+            background: #f5faff; /* very light */
+        }
+
+        /* left column — active players, rooms */
+        .left-col {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            overflow-y: auto;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 32px;
+            padding: 20px 18px;
+            box-shadow: 0 8px 26px rgba(0, 20, 40, 0.04);
+            border: 1px solid #e2ebf5;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #4d6a8f;
+            margin-bottom: 20px;
+        }
+
+        .panel-title i {
+            color: #5f8ec9;
+        }
+
+        .player-list {
+            list-style: none;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .player-avatar {
+            width: 38px;
+            height: 38px;
+            background: #e5efff;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #2a4f7c;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .player-status {
+            font-size: 0.7rem;
+            color: #6b89ae;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 10px;
+            background: #2acf6b;
+        }
+        .status-indicator.idle {
+            background: #f9b43a;
+        }
+
+        .room-item {
+            padding: 14px 0;
+            border-bottom: 1px solid #ecf2f9;
+            display: flex;
+            justify-content: space-between;
+        }
+        .room-item:last-child {
+            border-bottom: none;
+        }
+        .room-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .room-meta {
+            font-size: 0.75rem;
+            color: #6681a5;
+        }
+        .room-join {
+            background: #e9f2ff;
+            border: none;
+            border-radius: 30px;
+            padding: 4px 14px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            color: #1f4880;
+            cursor: pointer;
+        }
+
+        /* center column — game canvas / arena preview */
+        .center-col {
+            flex: 1;
+            background: white;
+            border-radius: 38px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.02);
+            border: 1px solid #dce8f2;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .arena-header {
+            padding: 22px 26px 10px 26px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .arena-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .arena-header h2 i {
+            color: #5f8ec9;
+        }
+
+        .game-canvas {
+            background: #fbfdff;
+            flex: 1;
+            margin: 6px 20px 20px 20px;
+            border-radius: 28px;
+            border: 2px dashed #b9d1ec;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: inset 0 2px 8px #eef3fb;
+        }
+
+        .canvas-message {
+            text-align: center;
+            color: #7d98bc;
+        }
+
+        .canvas-message i {
+            font-size: 3.5rem;
+            opacity: 0.5;
+            margin-bottom: 12px;
+        }
+
+        .live-badge {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            background: #ddedff;
+            border-radius: 40px;
+            padding: 6px 18px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #28609e;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin: 10px 26px 26px 26px;
+        }
+
+        .btn-primary {
+            background: #1e3f6b;
+            color: white;
+            border: none;
+            padding: 16px 26px;
+            border-radius: 48px;
+            font-weight: 600;
+            font-size: 1rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 6px 18px rgba(36, 107, 189, 0.3);
+            cursor: pointer;
+        }
+
+        .btn-outline {
+            background: white;
+            border: 2px solid #c7d9f0;
+            color: #1f3f68;
+            padding: 16px 26px;
+            border-radius: 48px;
+            font-weight: 600;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        /* right column — chat / activity */
+        .right-col {
+            width: 290px;
+            background: white;
+            border-radius: 38px;
+            border: 1px solid #dce8f2;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 24px 22px 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #ecf2fa;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px 18px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #fbfdff;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+        }
+
+        .msg-avatar {
+            width: 32px;
+            height: 32px;
+            background: #deecfd;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .msg-bubble {
+            background: #f0f6ff;
+            padding: 10px 16px;
+            border-radius: 24px;
+            border-bottom-left-radius: 4px;
+            max-width: 180px;
+            font-size: 0.9rem;
+        }
+
+        .msg-bubble.system {
+            background: #eaf0fa;
+            font-style: italic;
+            color: #58749b;
+        }
+
+        .msg-time {
+            font-size: 0.6rem;
+            color: #809bbd;
+            margin-top: 4px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 18px 16px;
+            border-top: 1px solid #dae3f0;
+            background: white;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            background: #f4faff;
+            border: 1px solid #cbd9ed;
+            border-radius: 30px;
+            padding: 14px 18px;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-input-area button {
+            background: #e1edff;
+            border: none;
+            width: 52px;
+            height: 52px;
+            border-radius: 52px;
+            margin-left: 10px;
+            color: #1f4880;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* simple modal for quick match */
+        .modal-overlay {
+            position: fixed;
+            top:0; left:0; width:100%; height:100%;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.15s;
+        }
+
+        .modal-overlay.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .match-modal {
+            background: white;
+            width: 400px;
+            border-radius: 60px;
+            padding: 40px;
+            box-shadow: 0 40px 70px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .match-modal h3 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 16px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background: #ecf3fc;
+        }
+        </style>
+</head>
+<body>
+    <div class="game-hub">
+        <!-- header -->
+        <div class="lobby-header">
+            <div class="brand">
+                <i class="fas fa-gamepad"></i>
+                <h1>light.arena <span>/ multiplayer</span></h1>
+            </div>
+            <div class="lobby-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Find players, rooms...">
+            </div>
+            <div class="user-profile">
+                <div class="avatar">JD</div>
+                <span style="font-weight: 500;">jessie</span>
+                <i class="fas fa-chevron-down" style="color:#869fc4;"></i>
+            </div>
+        </div>
+
+        <!-- main lobby grid -->
+        <div class="lobby-grid">
+            <!-- left column : players & rooms -->
+            <div class="left-col">
+                <div class="panel">
+                    <div class="panel-title"><i class="fas fa-users"></i> online (12)</div>
+                    <ul class="player-list">
+                        <li class="player-item">
+                            <div class="player-avatar">MC</div>
+                            <div class="player-info">
+                                <div class="player-name">marcus</div>
+                                <div class="player-status">in game • pixel war</div>
+                            </div>
+                            <div class="status-indicator"></div>
+                        </li>
+                        <li class="player-item">
+                            <div class="player-avatar">SR</div>
+                            <div class="player-info">
+                                <div class="player-name">samira</div>
+                                <div class="player-status">lobby</div>
+                            </div>
+                            <div class="status-indicator idle"></div>
+                        </li>
+                        <li class="player-item">
+                            <div class="player-avatar">TW</div>
+                            <div class="player-info">
+                                <div class="player-name">taylor</div>
+                                <div class="player-status">in game • race</div>
+                            </div>
+                            <div class="status-indicator"></div>
+                        </li>
+                        <li class="player-item">
+                            <div class="player-avatar">NL</div>
+                            <div class="player-info">
+                                <div class="player-name">noah</div>
+                                <div class="player-status">online</div>
+                            </div>
+                            <div class="status-indicator"></div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><i class="fas fa-door-open"></i> active rooms</div>
+                    <div class="room-item">
+                        <div><div class="room-name">🌙 pixel warriors</div><div class="room-meta">4/6 players</div></div>
+                        <button class="room-join">join</button>
+                    </div>
+                    <div class="room-item">
+                        <div><div class="room-name">🏁 speed circuit</div><div class="room-meta">2/4 players</div></div>
+                        <button class="room-join">join</button>
+                    </div>
+                    <div class="room-item">
+                        <div><div class="room-name">🧠 trivia duel</div><div class="room-meta">1/8 players</div></div>
+                        <button class="room-join">join</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- center: live arena / game preview -->
+            <div class="center-col">
+                <div class="arena-header">
+                    <h2><i class="fas fa-compass"></i> current arena · pixel war</h2>
+                    <span style="background:#e3f0ff; padding:8px 16px; border-radius:30px; font-weight:500;"><i class="fas fa-circle" style="color:#36b37e; font-size:0.6rem;"></i> 47 online</span>
+                </div>
+                <div class="game-canvas">
+                    <div class="canvas-message">
+                        <i class="fas fa-dice-d6"></i>
+                        <p>game preview would be live here<br> <span style="font-size:0.8rem;">(simulated multiplayer environment)</span></p>
+                    </div>
+                    <span class="live-badge"><i class="fas fa-eye"></i> LIVE MATCH</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-primary" id="quickMatchBtn"><i class="fas fa-bolt"></i> quick match</button>
+                    <button class="btn-outline" id="createRoomBtn"><i class="fas fa-plus"></i> create room</button>
+                </div>
+            </div>
+
+            <!-- right column: chat + activity -->
+            <div class="right-col">
+                <div class="chat-header">
+                    <i class="fas fa-comment-dots" style="color:#5f8ec9;"></i> lobby chat
+                    <span style="margin-left: auto; font-size:0.8rem; background:#e9f2fc; padding:4px 12px; border-radius:20px;">12 online</span>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message">
+                        <div class="msg-avatar">MC</div>
+                        <div><div class="msg-bubble">anyone up for pixel war?</div><div class="msg-time">just now</div></div>
+                    </div>
+                    <div class="message">
+                        <div class="msg-avatar">SR</div>
+                        <div><div class="msg-bubble">i'm in, give me 2 min</div><div class="msg-time">1m ago</div></div>
+                    </div>
+                    <div class="message">
+                        <div class="msg-avatar"></div>
+                        <div><div class="msg-bubble system">🎮 taylor joined race room</div><div class="msg-time">3m ago</div></div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" placeholder="message..." id="chatInput">
+                    <button id="sendChatBtn"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal for quick match (light theme) -->
+    <div class="modal-overlay" id="matchModal">
+        <div class="match-modal">
+            <h3>⚡ find match</h3>
+            <p style="color:#405d83; margin-bottom:24px;">searching for opponents in <strong>pixel war</strong></p>
+            <div style="display: flex; justify-content: center; gap:16px; margin-bottom: 28px;">
+                <i class="fas fa-spinner fa-pulse" style="font-size:2rem; color:#4a7ec7;"></i>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="cancelMatchBtn">cancel</button>
+                <button style="background:#1e3f6b; color:white;" id="joinRandomBtn">join random</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // UI interactive demo: quick match modal + chat fake
+            const modal = document.getElementById('matchModal');
+            const quickBtn = document.getElementById('quickMatchBtn');
+            const cancelBtn = document.getElementById('cancelMatchBtn');
+            const joinRandom = document.getElementById('joinRandomBtn');
+            const createRoom = document.getElementById('createRoomBtn');
+            const sendChatBtn = document.getElementById('sendChatBtn');
+            const chatInput = document.getElementById('chatInput');
+            const chatMessages = document.getElementById('chatMessages');
+
+            // show modal
+            quickBtn.addEventListener('click', () => {
+                modal.classList.add('show');
+            });
+
+            function hideModal() {
+                modal.classList.remove('show');
+            }
+
+            cancelBtn.addEventListener('click', hideModal);
+            joinRandom.addEventListener('click', () => {
+                alert('🎮 joining random match (simulated)');
+                hideModal();
+            });
+
+            // create room (simulate)
+            createRoom.addEventListener('click', () => {
+                alert('🛠️ create room dialog – would open in full version');
+            });
+
+            // send chat (add dummy message)
+            function addMessage(text, isSystem = false) {
+                if (!text.trim()) return;
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'message';
+                if (isSystem) {
+                    msgDiv.innerHTML = `<div class="msg-avatar"></div><div><div class="msg-bubble system">💬 ${escapeHtml(text)}</div><div class="msg-time">just now</div></div>`;
+                } else {
+                    msgDiv.innerHTML = `<div class="msg-avatar">JD</div><div><div class="msg-bubble">${escapeHtml(text)}</div><div class="msg-time">just now</div></div>`;
+                }
+                chatMessages.appendChild(msgDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function escapeHtml(unsafe) {
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            sendChatBtn.addEventListener('click', () => {
+                const txt = chatInput.value.trim();
+                if (txt) {
+                    addMessage(txt);
+                    chatInput.value = '';
+                }
+            });
+
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendChatBtn.click();
+                }
+            });
+
+            // join room buttons (simple alert)
+            document.querySelectorAll('.room-join').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    alert('🔁 joining room (multiplayer simulation)');
+                });
+            });
+
+            // optional: background canvas simulation (just ui)
+        })();
+    </script>
+
+    <!-- tiny style for scrollbar (keeps light) -->
+    <style>
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #cbd6e8; border-radius: 12px; }
+        .left-col::-webkit-scrollbar { width: 6px; }
+        .left-col::-webkit-scrollbar-thumb { background: #cbd6e8; border-radius: 12px; }
+        .game-canvas {
+            background: linear-gradient(145deg, #f6faff, #ffffff);
+        }
+    </style>
+</body>
+</html>

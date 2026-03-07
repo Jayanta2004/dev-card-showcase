@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mandala · Generative Symmetry Art</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #0a0c14;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            color: #e0eaff;
+        }
+
+        .mandala-card {
+            max-width: 1200px;
+            width: 100%;
+            background: #151e2a;
+            border-radius: 60px;
+            box-shadow: 0 30px 50px -20px rgba(0,0,0,0.8), 0 0 0 2px #4a6080 inset;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #4a6080;
+            padding-bottom: 1rem;
+        }
+
+        .title h1 {
+            font-size: 2.2rem;
+            font-weight: 400;
+            background: linear-gradient(135deg, #ffb7c5, #b7c5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title p {
+            color: #9ab8d9;
+            font-size: 0.9rem;
+        }
+
+        .canvas-container {
+            background: #0f1420;
+            border-radius: 40px;
+            padding: 1rem;
+            border: 2px solid #4a6080;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        canvas {
+            display: block;
+            width: 600px;
+            height: 600px;
+            border-radius: 24px;
+            background: #0a0f1a;
+            box-shadow: 0 0 0 2px #2f4058;
+        }
+
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .control-group {
+            background: #1a212e;
+            border-radius: 30px;
+            padding: 1.2rem 1.5rem;
+            border: 2px solid #4a6080;
+        }
+
+        .control-group h3 {
+            color: #c0e0ff;
+            font-weight: 400;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            border-bottom: 1px solid #4a6080;
+            padding-bottom: 0.5rem;
+        }
+
+        .slider-item {
+            margin-bottom: 1rem;
+        }
+
+        .slider-item label {
+            display: flex;
+            justify-content: space-between;
+            color: #9ab8d9;
+            font-size: 0.85rem;
+        }
+
+        .slider-item input {
+            width: 100%;
+            margin-top: 0.2rem;
+        }
+
+        .color-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .color-item label {
+            flex: 1;
+            color: #9ab8d9;
+        }
+
+        .color-item input[type="color"] {
+            width: 60px;
+            height: 40px;
+            border: 2px solid #4a6080;
+            border-radius: 20px;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            background: #1a212e;
+            border: 2px solid #5a7090;
+            border-radius: 40px;
+            padding: 0.8rem 1.8rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #d0e8ff;
+            transition: 0.1s;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .btn:hover {
+            background: #2a3442;
+            border-color: #7a90b0;
+        }
+
+        .btn.primary {
+            background: #3f6b9f;
+            border-color: #3f6b9f;
+            color: white;
+        }
+
+        .preset-bar {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .preset-btn {
+            background: #1a212e;
+            border: 2px solid #4a6080;
+            border-radius: 40px;
+            padding: 0.5rem 1.5rem;
+            cursor: pointer;
+            color: #b0d0f0;
+            transition: 0.1s;
+            font-size: 0.85rem;
+        }
+
+        .preset-btn:hover {
+            background: #2a3442;
+        }
+
+        .footer {
+            text-align: center;
+            color: #7a90b0;
+            margin-top: 2rem;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="mandala-card">
+        <div class="header">
+            <div class="title">
+                <h1>🌀 Mandala</h1>
+                <p>generative symmetry art</p>
+            </div>
+        </div>
+
+        <!-- canvas -->
+        <div class="canvas-container">
+            <canvas id="mandalaCanvas" width="600" height="600"></canvas>
+        </div>
+
+        <!-- presets -->
+        <div class="preset-bar">
+            <button class="preset-btn" id="presetFlower">🌸 flower</button>
+            <button class="preset-btn" id="presetGeometric">🔷 geometric</button>
+            <button class="preset-btn" id="presetPsychedelic">🌈 psychedelic</button>
+            <button class="preset-btn" id="presetMinimal">⚪ minimal</button>
+            <button class="preset-btn" id="presetRandom">🎲 random</button>
+        </div>
+
+        <!-- controls -->
+        <div class="control-panel">
+            <div class="control-group">
+                <h3>🎨 colors</h3>
+                <div class="color-item">
+                    <label>primary</label>
+                    <input type="color" id="color1" value="#ff6b6b">
+                </div>
+                <div class="color-item">
+                    <label>secondary</label>
+                    <input type="color" id="color2" value="#4ecdc4">
+                </div>
+                <div class="color-item">
+                    <label>tertiary</label>
+                    <input type="color" id="color3" value="#ffe66d">
+                </div>
+                <div class="color-item">
+                    <label>background</label>
+                    <input type="color" id="bgColor" value="#0a0f1a">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🔧 structure</h3>
+                <div class="slider-item">
+                    <label>symmetry <span id="symmetryVal">8</span></label>
+                    <input type="range" id="symmetry" min="3" max="24" value="8" step="1">
+                </div>
+                <div class="slider-item">
+                    <label>layers <span id="layersVal">5</span></label>
+                    <input type="range" id="layers" min="2" max="12" value="5" step="1">
+                </div>
+                <div class="slider-item">
+                    <label>complexity <span id="complexityVal">0.5</span></label>
+                    <input type="range" id="complexity" min="0" max="1" value="0.5" step="0.05">
+                </div>
+                <div class="slider-item">
+                    <label>radius <span id="radiusVal">200</span></label>
+                    <input type="range" id="radius" min="100" max="280" value="200" step="5">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>⚡ effects</h3>
+                <div class="slider-item">
+                    <label>rotation <span id="rotationVal">0</span></label>
+                    <input type="range" id="rotation" min="0" max="360" value="0" step="5">
+                </div>
+                <div class="slider-item">
+                    <label>thickness <span id="thicknessVal">1.0</span></label>
+                    <input type="range" id="thickness" min="0.5" max="3.0" value="1.0" step="0.1">
+                </div>
+                <div class="slider-item">
+                    <label>blur <span id="blurVal">0</span></label>
+                    <input type="range" id="blur" min="0" max="10" value="0" step="1">
+                </div>
+            </div>
+        </div>
+
+        <!-- action buttons -->
+        <div class="button-group">
+            <button class="btn" id="generateBtn">✨ generate</button>
+            <button class="btn" id="exportBtn">📥 export PNG</button>
+            <button class="btn primary" id="animateBtn">▶ animate</button>
+        </div>
+
+        <div class="footer">
+            ⚡ adjust parameters and click generate · symmetry meets art
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('mandalaCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = 600;
+            const height = 600;
+
+            // state
+            let symmetry = 8;
+            let layers = 5;
+            let complexity = 0.5;
+            let radius = 200;
+            let rotation = 0;
+            let thickness = 1.0;
+            let blur = 0;
+            let color1 = '#ff6b6b';
+            let color2 = '#4ecdc4';
+            let color3 = '#ffe66d';
+            let bgColor = '#0a0f1a';
+            
+            let animationId = null;
+            let angle = 0;
+
+            // DOM elements
+            const symmetrySlider = document.getElementById('symmetry');
+            const symmetryVal = document.getElementById('symmetryVal');
+            const layersSlider = document.getElementById('layers');
+            const layersVal = document.getElementById('layersVal');
+            const complexitySlider = document.getElementById('complexity');
+            const complexityVal = document.getElementById('complexityVal');
+            const radiusSlider = document.getElementById('radius');
+            const radiusVal = document.getElementById('radiusVal');
+            const rotationSlider = document.getElementById('rotation');
+            const rotationVal = document.getElementById('rotationVal');
+            const thicknessSlider = document.getElementById('thickness');
+            const thicknessVal = document.getElementById('thicknessVal');
+            const blurSlider = document.getElementById('blur');
+            const blurVal = document.getElementById('blurVal');
+            
+            const color1Input = document.getElementById('color1');
+            const color2Input = document.getElementById('color2');
+            const color3Input = document.getElementById('color3');
+            const bgColorInput = document.getElementById('bgColor');
+            
+            const generateBtn = document.getElementById('generateBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const animateBtn = document.getElementById('animateBtn');
+            
+            const presetFlower = document.getElementById('presetFlower');
+            const presetGeometric = document.getElementById('presetGeometric');
+            const presetPsychedelic = document.getElementById('presetPsychedelic');
+            const presetMinimal = document.getElementById('presetMinimal');
+            const presetRandom = document.getElementById('presetRandom');
+
+            // draw mandala
+            function drawMandala(rotationOffset = 0) {
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, width, height);
+                
+                if (blur > 0) {
+                    ctx.filter = `blur(${blur}px)`;
+                }
+
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                for (let l = 0; l < layers; l++) {
+                    const layerRadius = radius * (l + 1) / layers;
+                    const pointsPerLayer = 5 + Math.floor(complexity * 20);
+                    
+                    for (let i = 0; i < pointsPerLayer; i++) {
+                        const baseAngle = (i / pointsPerLayer) * Math.PI * 2;
+                        
+                        for (let s = 0; s < symmetry; s++) {
+                            const symmetryAngle = (s / symmetry) * Math.PI * 2 + rotationOffset + rotation * Math.PI / 180;
+                            const angle = baseAngle + symmetryAngle;
+                            
+                            const x = centerX + Math.cos(angle) * layerRadius;
+                            const y = centerY + Math.sin(angle) * layerRadius;
+                            
+                            // choose color based on layer and position
+                            let color;
+                            if (l % 3 === 0) color = color1;
+                            else if (l % 3 === 1) color = color2;
+                            else color = color3;
+                            
+                            // size based on complexity
+                            const size = 2 + Math.sin(baseAngle * 3) * 3 * thickness;
+                            
+                            ctx.beginPath();
+                            ctx.arc(x, y, size, 0, Math.PI * 2);
+                            ctx.fillStyle = color;
+                            ctx.fill();
+                            
+                            // add connecting lines
+                            if (i > 0 && Math.random() < complexity) {
+                                const prevAngle = ((i - 1) / pointsPerLayer) * Math.PI * 2 + symmetryAngle;
+                                const prevX = centerX + Math.cos(prevAngle) * layerRadius;
+                                const prevY = centerY + Math.sin(prevAngle) * layerRadius;
+                                
+                                ctx.beginPath();
+                                ctx.moveTo(x, y);
+                                ctx.lineTo(prevX, prevY);
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 1 * thickness;
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                }
+                
+                // add inner circle
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius * 0.2, 0, Math.PI * 2);
+                ctx.fillStyle = color1;
+                ctx.fill();
+                
+                ctx.filter = 'none';
+            }
+
+            // presets
+            function setPreset(name) {
+                if (name === 'flower') {
+                    symmetry = 12;
+                    layers = 6;
+                    complexity = 0.6;
+                    radius = 220;
+                    thickness = 1.2;
+                    color1 = '#ff8a8a';
+                    color2 = '#ffb56b';
+                    color3 = '#ffd966';
+                } else if (name === 'geometric') {
+                    symmetry = 8;
+                    layers = 4;
+                    complexity = 0.8;
+                    radius = 200;
+                    thickness = 2.0;
+                    color1 = '#4ecdc4';
+                    color2 = '#45b7d1';
+                    color3 = '#96ceb4';
+                } else if (name === 'psychedelic') {
+                    symmetry = 16;
+                    layers = 8;
+                    complexity = 0.9;
+                    radius = 250;
+                    thickness = 1.5;
+                    color1 = '#ff6b6b';
+                    color2 = '#feca57';
+                    color3 = '#48dbfb';
+                } else if (name === 'minimal') {
+                    symmetry = 6;
+                    layers = 3;
+                    complexity = 0.2;
+                    radius = 180;
+                    thickness = 0.8;
+                    color1 = '#ffffff';
+                    color2 = '#cccccc';
+                    color3 = '#999999';
+                }
+                
+                // update sliders
+                symmetrySlider.value = symmetry;
+                layersSlider.value = layers;
+                complexitySlider.value = complexity;
+                radiusSlider.value = radius;
+                thicknessSlider.value = thickness;
+                
+                symmetryVal.innerText = symmetry;
+                layersVal.innerText = layers;
+                complexityVal.innerText = complexity.toFixed(1);
+                radiusVal.innerText = radius;
+                thicknessVal.innerText = thickness.toFixed(1);
+                
+                color1Input.value = color1;
+                color2Input.value = color2;
+                color3Input.value = color3;
+                
+                drawMandala();
+            }
+
+            // event listeners
+            symmetrySlider.addEventListener('input', () => {
+                symmetry = parseInt(symmetrySlider.value);
+                symmetryVal.innerText = symmetry;
+            });
+            
+            layersSlider.addEventListener('input', () => {
+                layers = parseInt(layersSlider.value);
+                layersVal.innerText = layers;
+            });
+            
+            complexitySlider.addEventListener('input', () => {
+                complexity = parseFloat(complexitySlider.value);
+                complexityVal.innerText = complexity.toFixed(2);
+            });
+            
+            radiusSlider.addEventListener('input', () => {
+                radius = parseInt(radiusSlider.value);
+                radiusVal.innerText = radius;
+            });
+            
+            rotationSlider.addEventListener('input', () => {
+                rotation = parseInt(rotationSlider.value);
+                rotationVal.innerText = rotation;
+                drawMandala();
+            });
+            
+            thicknessSlider.addEventListener('input', () => {
+                thickness = parseFloat(thicknessSlider.value);
+                thicknessVal.innerText = thickness.toFixed(1);
+            });
+            
+            blurSlider.addEventListener('input', () => {
+                blur = parseInt(blurSlider.value);
+                blurVal.innerText = blur;
+                drawMandala();
+            });
+            
+            color1Input.addEventListener('input', () => { color1 = color1Input.value; });
+            color2Input.addEventListener('input', () => { color2 = color2Input.value; });
+            color3Input.addEventListener('input', () => { color3 = color3Input.value; });
+            bgColorInput.addEventListener('input', () => { bgColor = bgColorInput.value; });
+            
+            generateBtn.addEventListener('click', () => drawMandala());
+            
+            exportBtn.addEventListener('click', () => {
+                const link = document.createElement('a');
+                link.download = `mandala-${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+            
+            animateBtn.addEventListener('click', () => {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                    animateBtn.innerText = '▶ animate';
+                } else {
+                    animateBtn.innerText = '⏸ pause';
+                    function animate() {
+                        angle += 0.01;
+                        drawMandala(angle);
+                        animationId = requestAnimationFrame(animate);
+                    }
+                    animate();
+                }
+            });
+            
+            presetFlower.addEventListener('click', () => setPreset('flower'));
+            presetGeometric.addEventListener('click', () => setPreset('geometric'));
+            presetPsychedelic.addEventListener('click', () => setPreset('psychedelic'));
+            presetMinimal.addEventListener('click', () => setPreset('minimal'));
+            presetRandom.addEventListener('click', () => {
+                symmetry = Math.floor(Math.random() * 20) + 4;
+                layers = Math.floor(Math.random() * 8) + 3;
+                complexity = Math.random();
+                radius = Math.floor(Math.random() * 150) + 150;
+                thickness = 0.5 + Math.random() * 2.5;
+                
+                const randomColor = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+                color1 = randomColor();
+                color2 = randomColor();
+                color3 = randomColor();
+                
+                symmetrySlider.value = symmetry;
+                layersSlider.value = layers;
+                complexitySlider.value = complexity;
+                radiusSlider.value = radius;
+                thicknessSlider.value = thickness;
+                
+                symmetryVal.innerText = symmetry;
+                layersVal.innerText = layers;
+                complexityVal.innerText = complexity.toFixed(2);
+                radiusVal.innerText = radius;
+                thicknessVal.innerText = thickness.toFixed(1);
+                
+                color1Input.value = color1;
+                color2Input.value = color2;
+                color3Input.value = color3;
+                
+                drawMandala();
+            });
+
+            // initial draw
+            drawMandala();
+        })();
+    </script>
+</body>
+</html>
