@@ -1903,45 +1903,95 @@ function deleteEntry(id) {
     }
 }
 
-// Add character counter functionality
+// Character counter functionality
 function initializeCharacterCounters() {
     const workNotes = document.getElementById('workNotes');
     const sleepNotes = document.getElementById('sleepNotes');
     const workCounter = document.getElementById('workNotesCounter');
     const sleepCounter = document.getElementById('sleepNotesCounter');
+    const workCountSpan = document.getElementById('workNotesCount');
+    const sleepCountSpan = document.getElementById('sleepNotesCount');
     
     const MAX_CHARS = 500;
     
-    function updateCounter(textarea, counterElement) {
-        if (!textarea || !counterElement) return;
+    function updateCounter(textarea, counterElement, countSpan) {
+        if (!textarea || !counterElement || !countSpan) return;
         
         const currentLength = textarea.value.length;
-        counterElement.textContent = `${currentLength}/${MAX_CHARS} characters`;
+        const remaining = MAX_CHARS - currentLength;
         
+        // Update count display
+        countSpan.textContent = currentLength;
+        counterElement.innerHTML = `<i class="fas fa-keyboard"></i> ${currentLength}/${MAX_CHARS} characters`;
+        
+        // Remove existing classes
         counterElement.classList.remove('warning', 'danger');
         
+        // Add appropriate class based on remaining characters
         if (currentLength >= MAX_CHARS) {
             counterElement.classList.add('danger');
-        } else if (currentLength >= MAX_CHARS * 0.8) { 
+            counterElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${currentLength}/${MAX_CHARS} characters (maximum reached)`;
+        } else if (currentLength >= MAX_CHARS * 0.8) {
             counterElement.classList.add('warning');
+            counterElement.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${currentLength}/${MAX_CHARS} characters (${remaining} left)`;
+        } else if (currentLength > 0) {
+            counterElement.innerHTML = `<i class="fas fa-check-circle"></i> ${currentLength}/${MAX_CHARS} characters (${remaining} left)`;
         }
+        
+        // Add title attribute for tooltip
+        counterElement.title = `${remaining} characters remaining`;
     }
     
-    if (workNotes && workCounter) {
+    if (workNotes && workCounter && workCountSpan) {
+        // Add input event listener
         workNotes.addEventListener('input', function() {
-            updateCounter(this, workCounter);
+            updateCounter(this, workCounter, workCountSpan);
         });
-        updateCounter(workNotes, workCounter);
+        
+        // Add paste event to handle large pastes
+        workNotes.addEventListener('paste', function(e) {
+            setTimeout(() => {
+                updateCounter(this, workCounter, workCountSpan);
+            }, 0);
+        });
+        
+        // Add cut event
+        workNotes.addEventListener('cut', function() {
+            setTimeout(() => {
+                updateCounter(this, workCounter, workCountSpan);
+            }, 0);
+        });
+        
+        // Initialize counter
+        updateCounter(workNotes, workCounter, workCountSpan);
     }
     
-    if (sleepNotes && sleepCounter) {
+    if (sleepNotes && sleepCounter && sleepCountSpan) {
+        // Add input event listener
         sleepNotes.addEventListener('input', function() {
-            updateCounter(this, sleepCounter);
+            updateCounter(this, sleepCounter, sleepCountSpan);
         });
-        updateCounter(sleepNotes, sleepCounter);
+        
+        // Add paste event to handle large pastes
+        sleepNotes.addEventListener('paste', function(e) {
+            setTimeout(() => {
+                updateCounter(this, sleepCounter, sleepCountSpan);
+            }, 0);
+        });
+        
+        // Add cut event
+        sleepNotes.addEventListener('cut', function() {
+            setTimeout(() => {
+                updateCounter(this, sleepCounter, sleepCountSpan);
+            }, 0);
+        });
+        
+        // Initialize counter
+        updateCounter(sleepNotes, sleepCounter, sleepCountSpan);
     }
 }
 
+// Enhanced logEntry function with character count validation
 function logEntry() {
     const date = document.getElementById('logDate').value;
     const workHours = parseFloat(document.getElementById('workHours').value);
@@ -1952,23 +2002,40 @@ function logEntry() {
     const sleepNotes = document.getElementById('sleepNotes').value.trim();
     
     const MAX_CHARS = 500;
-    if (workNotes.length > MAX_CHARS || sleepNotes.length > MAX_CHARS) {
-        alert(`Notes cannot exceed ${MAX_CHARS} characters. Please shorten your notes.`);
+    
+    // Validate character limits
+    if (workNotes.length > MAX_CHARS) {
+        showNotificationToast(
+            'Character Limit Exceeded', 
+            `Work notes cannot exceed ${MAX_CHARS} characters. Current: ${workNotes.length}`, 
+            'danger'
+        );
+        document.getElementById('workNotes').focus();
+        return;
+    }
+    
+    if (sleepNotes.length > MAX_CHARS) {
+        showNotificationToast(
+            'Character Limit Exceeded', 
+            `Sleep notes cannot exceed ${MAX_CHARS} characters. Current: ${sleepNotes.length}`, 
+            'danger'
+        );
+        document.getElementById('sleepNotes').focus();
         return;
     }
 
     if (!date) {
-        alert('Please select a date.');
+        showNotificationToast('Missing Information', 'Please select a date.', 'warning');
         return;
     }
 
     if (isNaN(workHours) || workHours < 0 || workHours > 24) {
-        alert('Please enter valid work hours (0-24).');
+        showNotificationToast('Invalid Input', 'Please enter valid work hours (0-24).', 'warning');
         return;
     }
 
     if (isNaN(sleepHours) || sleepHours < 0 || sleepHours > 24) {
-        alert('Please enter valid sleep hours (0-24).');
+        showNotificationToast('Invalid Input', 'Please enter valid sleep hours (0-24).', 'warning');
         return;
     }
 
@@ -2001,6 +2068,9 @@ function logEntry() {
 
     localStorage.setItem('cognitiveLoadSleepEntries', JSON.stringify(entries));
 
+    // Show success notification
+    showNotificationToast('Success', 'Entry logged successfully!', 'success');
+    
     resetForm();
 
     updateStats(); 
@@ -2009,15 +2079,15 @@ function logEntry() {
     updateSleepDebtCalculator();
     renderHeatMap();
     renderCorrelationMatrix();
-    calculateBurnoutRisk(); // Calculate burnout risk for new entry
-    renderRiskHistoryChart(); // Update risk history
+    calculateBurnoutRisk();
+    renderRiskHistoryChart();
     
-    // Check for burnout risk after new entry is added
     setTimeout(() => {
         checkBurnoutRisk();
     }, 500);
 }
 
+// Enhanced resetForm function to reset character counters
 function resetForm() {
     const dateInput = document.getElementById('logDate');
     if (dateInput) {
@@ -2045,10 +2115,23 @@ function resetForm() {
     updateLoadValue();
     updateQualityValue();
     
+    // Reset character counters
     const workCounter = document.getElementById('workNotesCounter');
     const sleepCounter = document.getElementById('sleepNotesCounter');
-    if (workCounter) workCounter.textContent = '0/500 characters';
-    if (sleepCounter) sleepCounter.textContent = '0/500 characters';
+    const workCountSpan = document.getElementById('workNotesCount');
+    const sleepCountSpan = document.getElementById('sleepNotesCount');
+    
+    if (workCounter && workCountSpan) {
+        workCountSpan.textContent = '0';
+        workCounter.innerHTML = '<i class="fas fa-keyboard"></i> 0/500 characters';
+        workCounter.classList.remove('warning', 'danger');
+    }
+    
+    if (sleepCounter && sleepCountSpan) {
+        sleepCountSpan.textContent = '0';
+        sleepCounter.innerHTML = '<i class="fas fa-keyboard"></i> 0/500 characters';
+        sleepCounter.classList.remove('warning', 'danger');
+    }
     
     const resetBtn = document.querySelector('.reset-btn');
     if (resetBtn) {
@@ -2693,3 +2776,4 @@ window.requestNotificationPermission = requestNotificationPermission;
 window.testNotification = testNotification;
 window.checkBurnoutRisk = checkBurnoutRisk;
 window.changeChartType = changeChartType;
+window.initializeCharacterCounters = initializeCharacterCounters;
