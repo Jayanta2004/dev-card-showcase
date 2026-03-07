@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melodica · Generative Music Box</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #1a1e2a;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            color: #e0eaff;
+        }
+
+        .music-card {
+            max-width: 900px;
+            width: 100%;
+            background: #242b3a;
+            border-radius: 60px;
+            box-shadow: 0 30px 50px -20px rgba(0,0,0,0.8), 0 0 0 2px #4a6080 inset;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #4a6080;
+            padding-bottom: 1rem;
+        }
+
+        .title h1 {
+            font-size: 2.2rem;
+            font-weight: 400;
+            background: linear-gradient(135deg, #ffb7c5, #b7c5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title p {
+            color: #9ab8d9;
+            font-size: 0.9rem;
+        }
+
+        .visualization {
+            background: #0f1420;
+            border-radius: 40px;
+            padding: 2rem;
+            border: 2px solid #4a6080;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .note-indicator {
+            display: flex;
+            gap: 4px;
+            height: 120px;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .note-bar {
+            width: 40px;
+            background: linear-gradient(to top, #4ecdc4, #ffe66d);
+            border-radius: 10px 10px 0 0;
+            transition: height 0.1s;
+        }
+
+        .current-note {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #ffb7c5;
+            margin-top: 1rem;
+        }
+
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .control-group {
+            background: #1a212e;
+            border-radius: 30px;
+            padding: 1.2rem 1.5rem;
+            border: 2px solid #4a6080;
+        }
+
+        .control-group h3 {
+            color: #c0e0ff;
+            font-weight: 400;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            border-bottom: 1px solid #4a6080;
+            padding-bottom: 0.5rem;
+        }
+
+        .slider-item {
+            margin-bottom: 1rem;
+        }
+
+        .slider-item label {
+            display: flex;
+            justify-content: space-between;
+            color: #9ab8d9;
+            font-size: 0.85rem;
+        }
+
+        .slider-item input {
+            width: 100%;
+            margin-top: 0.2rem;
+        }
+
+        .scale-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .scale-btn {
+            background: #1a212e;
+            border: 2px solid #4a6080;
+            border-radius: 30px;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: #b0d0f0;
+            transition: 0.1s;
+        }
+
+        .scale-btn.active {
+            background: #3f6b9f;
+            border-color: #3f6b9f;
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            background: #1a212e;
+            border: 2px solid #5a7090;
+            border-radius: 40px;
+            padding: 0.8rem 1.8rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #d0e8ff;
+            transition: 0.1s;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .btn:hover {
+            background: #2a3442;
+            border-color: #7a90b0;
+        }
+
+        .btn.primary {
+            background: #3f6b9f;
+            border-color: #3f6b9f;
+            color: white;
+        }
+
+        .btn.warning {
+            background: #9f4f6b;
+            border-color: #9f4f6b;
+        }
+
+        .pattern-display {
+            background: #0f1420;
+            border-radius: 30px;
+            padding: 1rem;
+            border: 2px solid #4a6080;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: #b0d0f0;
+            text-align: center;
+        }
+
+        .footer {
+            text-align: center;
+            color: #7a90b0;
+            margin-top: 2rem;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="music-card">
+        <div class="header">
+            <div class="title">
+                <h1>🎵 Melodica</h1>
+                <p>generative music box</p>
+            </div>
+        </div>
+
+        <!-- visualization -->
+        <div class="visualization">
+            <div class="note-indicator" id="noteIndicator">
+                <!-- bars generated by js -->
+            </div>
+            <div class="current-note" id="currentNote">♪</div>
+        </div>
+
+        <!-- scale selector -->
+        <div class="scale-selector" id="scaleSelector">
+            <button class="scale-btn active" data-scale="major">major</button>
+            <button class="scale-btn" data-scale="minor">minor</button>
+            <button class="scale-btn" data-scale="pentatonic">pentatonic</button>
+            <button class="scale-btn" data-scale="blues">blues</button>
+            <button class="scale-btn" data-scale="chromatic">chromatic</button>
+        </div>
+
+        <!-- control panel -->
+        <div class="control-panel">
+            <div class="control-group">
+                <h3>🎛️ rhythm</h3>
+                <div class="slider-item">
+                    <label>tempo (BPM) <span id="tempoVal">120</span></label>
+                    <input type="range" id="tempo" min="60" max="240" value="120" step="1">
+                </div>
+                <div class="slider-item">
+                    <label>note density <span id="densityVal">0.5</span></label>
+                    <input type="range" id="density" min="0" max="1" value="0.5" step="0.05">
+                </div>
+                <div class="slider-item">
+                    <label>complexity <span id="complexityVal">0.3</span></label>
+                    <input type="range" id="complexity" min="0" max="1" value="0.3" step="0.05">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🎨 harmony</h3>
+                <div class="slider-item">
+                    <label>arpeggiation <span id="arpeggioVal">0.3</span></label>
+                    <input type="range" id="arpeggio" min="0" max="1" value="0.3" step="0.05">
+                </div>
+                <div class="slider-item">
+                    <label>octave range <span id="octaveVal">2</span></label>
+                    <input type="range" id="octave" min="1" max="4" value="2" step="1">
+                </div>
+                <div class="slider-item">
+                    <label>note length <span id="lengthVal">0.5</span></label>
+                    <input type="range" id="noteLength" min="0.1" max="1" value="0.5" step="0.05">
+                </div>
+            </div>
+        </div>
+
+        <!-- pattern display -->
+        <div class="pattern-display" id="patternDisplay">
+            C4 E4 G4 C5
+        </div>
+
+        <!-- action buttons -->
+        <div class="button-group">
+            <button class="btn primary" id="playBtn">▶ play</button>
+            <button class="btn warning" id="stopBtn">⏹️ stop</button>
+            <button class="btn" id="randomizeBtn">🎲 randomize</button>
+            <button class="btn" id="generateBtn">✨ new pattern</button>
+        </div>
+
+        <div class="footer">
+            ⚡ generative melody · web audio API
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // audio context
+            let audioContext = null;
+            let isPlaying = false;
+            let nextNoteTime = 0;
+            let timerID = null;
+            let currentNoteIndex = 0;
+
+            // scales (note offsets from root)
+            const scales = {
+                major: [0, 2, 4, 5, 7, 9, 11],
+                minor: [0, 2, 3, 5, 7, 8, 10],
+                pentatonic: [0, 2, 4, 7, 9],
+                blues: [0, 3, 5, 6, 7, 10],
+                chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+            };
+
+            // state
+            let currentScale = 'major';
+            let tempo = 120;
+            let density = 0.5;
+            let complexity = 0.3;
+            let arpeggio = 0.3;
+            let octaveRange = 2;
+            let noteLength = 0.5;
+            
+            let pattern = ['C4', 'E4', 'G4', 'C5'];
+            let noteDurations = [0.5, 0.5, 0.5, 0.5];
+
+            // DOM elements
+            const noteIndicator = document.getElementById('noteIndicator');
+            const currentNoteEl = document.getElementById('currentNote');
+            const patternDisplay = document.getElementById('patternDisplay');
+            
+            const scaleBtns = document.querySelectorAll('.scale-btn');
+            const tempoSlider = document.getElementById('tempo');
+            const tempoVal = document.getElementById('tempoVal');
+            const densitySlider = document.getElementById('density');
+            const densityVal = document.getElementById('densityVal');
+            const complexitySlider = document.getElementById('complexity');
+            const complexityVal = document.getElementById('complexityVal');
+            const arpeggioSlider = document.getElementById('arpeggio');
+            const arpeggioVal = document.getElementById('arpeggioVal');
+            const octaveSlider = document.getElementById('octave');
+            const octaveVal = document.getElementById('octaveVal');
+            const noteLengthSlider = document.getElementById('noteLength');
+            const lengthVal = document.getElementById('noteLengthVal');
+            
+            const playBtn = document.getElementById('playBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const randomizeBtn = document.getElementById('randomizeBtn');
+            const generateBtn = document.getElementById('generateBtn');
+
+            // note frequency mapping
+            function noteToFrequency(note) {
+                const notes = {
+                    'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+                    'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+                };
+                const match = note.match(/([A-G]#?)(\d+)/);
+                if (!match) return 440;
+                const noteName = match[1];
+                const octave = parseInt(match[2]);
+                const semitone = notes[noteName];
+                return 440 * Math.pow(2, (octave - 4 + (semitone - 9) / 12));
+            }
+
+            // generate new pattern
+            function generatePattern() {
+                const scale = scales[currentScale];
+                const patternLength = 4 + Math.floor(complexity * 8);
+                const newPattern = [];
+                const newDurations = [];
+                
+                for (let i = 0; i < patternLength; i++) {
+                    // pick a note from scale
+                    const scaleIndex = Math.floor(Math.random() * scale.length);
+                    const semitone = scale[scaleIndex];
+                    
+                    // determine octave
+                    const octaveOffset = Math.floor(Math.random() * octaveRange) - 1;
+                    const octave = 4 + octaveOffset;
+                    
+                    // build note name
+                    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                    const noteName = noteNames[semitone % 12];
+                    const note = `${noteName}${octave}`;
+                    
+                    newPattern.push(note);
+                    
+                    // determine duration based on density and arpeggio
+                    let duration = 0.25 + Math.random() * 0.75;
+                    if (Math.random() < arpeggio) {
+                        duration = 0.125; // shorter for arpeggiated
+                    }
+                    newDurations.push(duration);
+                }
+                
+                pattern = newPattern;
+                noteDurations = newDurations;
+                updateDisplay();
+            }
+
+            // update visual display
+            function updateDisplay() {
+                // update pattern text
+                patternDisplay.innerText = pattern.join(' ');
+                
+                // update note indicator bars
+                let bars = '';
+                for (let i = 0; i < 8; i++) {
+                    const height = i < pattern.length ? 60 + Math.random() * 60 : 20;
+                    bars += `<div class="note-bar" style="height: ${height}px;"></div>`;
+                }
+                noteIndicator.innerHTML = bars;
+            }
+
+            // audio scheduling
+            function scheduleNote() {
+                if (!isPlaying) return;
+                
+                const secondsPerBeat = 60.0 / tempo;
+                const note = pattern[currentNoteIndex];
+                const duration = noteDurations[currentNoteIndex] * secondsPerBeat * 4;
+                
+                // play the note
+                if (audioContext && note) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.value = noteToFrequency(note);
+                    
+                    gain.gain.value = 0.3;
+                    
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    
+                    osc.start(nextNoteTime);
+                    osc.stop(nextNoteTime + duration * noteLength);
+                    
+                    // update current note display
+                    currentNoteEl.innerText = note;
+                }
+                
+                // schedule next note
+                nextNoteTime += secondsPerBeat * 4 / pattern.length;
+                currentNoteIndex = (currentNoteIndex + 1) % pattern.length;
+                
+                timerID = setTimeout(scheduleNote, secondsPerBeat * 1000 * 4 / pattern.length);
+            }
+
+            // start playback
+            function startPlayback() {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                isPlaying = true;
+                nextNoteTime = audioContext.currentTime;
+                currentNoteIndex = 0;
+                
+                scheduleNote();
+            }
+
+            // stop playback
+            function stopPlayback() {
+                isPlaying = false;
+                if (timerID) {
+                    clearTimeout(timerID);
+                    timerID = null;
+                }
+                currentNoteEl.innerText = '♪';
+            }
+
+            // randomize all parameters
+            function randomize() {
+                const scales = ['major', 'minor', 'pentatonic', 'blues', 'chromatic'];
+                currentScale = scales[Math.floor(Math.random() * scales.length)];
+                
+                scaleBtns.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.getAttribute('data-scale') === currentScale) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                tempo = Math.floor(Math.random() * 120) + 80;
+                density = Math.random();
+                complexity = Math.random();
+                arpeggio = Math.random();
+                octaveRange = Math.floor(Math.random() * 3) + 1;
+                noteLength = 0.3 + Math.random() * 0.6;
+                
+                tempoSlider.value = tempo;
+                densitySlider.value = density;
+                complexitySlider.value = complexity;
+                arpeggioSlider.value = arpeggio;
+                octaveSlider.value = octaveRange;
+                noteLengthSlider.value = noteLength;
+                
+                tempoVal.innerText = tempo;
+                densityVal.innerText = density.toFixed(2);
+                complexityVal.innerText = complexity.toFixed(2);
+                arpeggioVal.innerText = arpeggio.toFixed(2);
+                octaveVal.innerText = octaveRange;
+                lengthVal.innerText = noteLength.toFixed(2);
+                
+                generatePattern();
+            }
+
+            // event listeners
+            scaleBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    scaleBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentScale = btn.getAttribute('data-scale');
+                    generatePattern();
+                });
+            });
+
+            tempoSlider.addEventListener('input', () => {
+                tempo = parseInt(tempoSlider.value);
+                tempoVal.innerText = tempo;
+            });
+
+            densitySlider.addEventListener('input', () => {
+                density = parseFloat(densitySlider.value);
+                densityVal.innerText = density.toFixed(2);
+            });
+
+            complexitySlider.addEventListener('input', () => {
+                complexity = parseFloat(complexitySlider.value);
+                complexityVal.innerText = complexity.toFixed(2);
+                generatePattern();
+            });
+
+            arpeggioSlider.addEventListener('input', () => {
+                arpeggio = parseFloat(arpeggioSlider.value);
+                arpeggioVal.innerText = arpeggio.toFixed(2);
+            });
+
+            octaveSlider.addEventListener('input', () => {
+                octaveRange = parseInt(octaveSlider.value);
+                octaveVal.innerText = octaveRange;
+            });
+
+            noteLengthSlider.addEventListener('input', () => {
+                noteLength = parseFloat(noteLengthSlider.value);
+                lengthVal.innerText = noteLength.toFixed(2);
+            });
+
+            playBtn.addEventListener('click', startPlayback);
+            stopBtn.addEventListener('click', stopPlayback);
+            randomizeBtn.addEventListener('click', randomize);
+            generateBtn.addEventListener('click', generatePattern);
+
+            // initial
+            generatePattern();
+        })();
+    </script>
+</body>
+</html>
