@@ -2,15 +2,15 @@ import { useRef, useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Share2, Undo2, Redo2, Save, Users } from 'lucide-react'
 import toast from 'react-hot-toast'
-import useCanvas from '../../hooks/useCanvas'
-import Canvas from '../../components/canvas/Canvas'
-import Toolbar from '../../components/canvas/Toolbar'
-import ShareModal from '../../components/board/ShareModal'
-import ExportMenu from '../../components/board/ExportMenu'
-import Avatar from '../../components/common/Avatar'
-import Loader from '../../components/common/Loader'
-import { useSocket } from '../../context/SocketContext'
-import * as api from '../../lib/api'
+import useCanvas from '../hooks/useCanvas'
+import Canvas from '../components/canvas/Canvas'
+import Toolbar from '../components/canvas/Toolbar'
+import ShareModal from '../components/board/ShareModal'
+import ExportMenu from '../components/board/ExportMenu'
+import Avatar from '../components/common/Avatar'
+import Loader from '../components/common/Loader'
+import { useSocket } from '../context/SocketContext'
+import * as api from '../lib/api'
 
 export default function BoardPage() {
   const { id } = useParams()
@@ -45,7 +45,7 @@ export default function BoardPage() {
 
   // Fetch board metadata
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const { data } = await api.getBoard(id)
         setBoard(data)

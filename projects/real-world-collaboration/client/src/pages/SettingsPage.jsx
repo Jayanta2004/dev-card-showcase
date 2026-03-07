@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useAuth } from '../../context/AuthContext'
-import { useTheme } from '../../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { User, Palette, Lock, Sun, Moon, Monitor } from 'lucide-react'
 import toast from 'react-hot-toast'
-import * as api from '../../lib/api'
+import * as api from '../lib/api'
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth()
@@ -111,11 +111,10 @@ export default function SettingsPage() {
               <button
                 key={value}
                 onClick={() => setTheme(value)}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                  theme === value
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${theme === value
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
                     : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                }`}
+                  }`}
               >
                 <Icon size={22} className={theme === value ? 'text-indigo-500' : 'text-gray-400'} />
                 <span className={`text-sm font-medium ${theme === value ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400'}`}>{label}</span>

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Layers } from 'lucide-react'
 import toast from 'react-hot-toast'
-import * as api from '../../lib/api'
-import Loader from '../../components/common/Loader'
+import * as api from '../lib/api'
+import Loader from '../components/common/Loader'
 
 export default function JoinPage() {
   const { code } = useParams()
@@ -12,7 +12,7 @@ export default function JoinPage() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const { data } = await api.getBoardByCode(code)
         navigate(`/board/${data._id}`, { replace: true })

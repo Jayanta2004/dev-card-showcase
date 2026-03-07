@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, LayoutGrid, List, Layers } from 'lucide-react'
 import toast from 'react-hot-toast'
-import * as api from '../../lib/api'
-import BoardCard from '../../components/board/BoardCard'
-import Loader from '../../components/common/Loader'
-import EmptyState from '../../components/common/EmptyState'
+import * as api from '../lib/api'
+import BoardCard from '../components/board/BoardCard'
+import Loader from '../components/common/Loader'
+import EmptyState from '../components/common/EmptyState'
 
 export default function HomePage() {
   const navigate = useNavigate()

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Sparkles, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
-import * as api from '../../lib/api'
-import Loader from '../../components/common/Loader'
-import EmptyState from '../../components/common/EmptyState'
+import * as api from '../lib/api'
+import Loader from '../components/common/Loader'
+import EmptyState from '../components/common/EmptyState'
 
 const TEMPLATE_ICONS = {
   blank: '📄',
@@ -20,7 +20,7 @@ export default function TemplatesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const { data } = await api.getTemplates()
         setTemplates(data)
