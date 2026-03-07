@@ -1,7 +1,30 @@
 // cognitive-load-sleep-analyzer.js
 
 let entries = JSON.parse(localStorage.getItem('cognitiveLoadSleepEntries')) || [];
+let sleepGoal = parseFloat(localStorage.getItem('sleepGoal')) || 8.0;
 let chartInstance = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const sleepGoalInput = document.getElementById('sleepGoal');
+    if (sleepGoalInput) {
+        sleepGoalInput.value = sleepGoal;
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('logDate');
+    if (dateInput) {
+        dateInput.value = today;
+    }
+
+    updateLoadValue();
+    updateQualityValue();
+    updateStats(); 
+    updateChart();
+    updateEntriesList();
+    updateSleepDebtCalculator();
+    
+    initializeCharacterCounters();
+});
 
 function updateLoadValue() {
     const value = document.getElementById('cognitiveLoad').value;
@@ -349,6 +372,7 @@ function deleteEntry(id) {
         updateStats(); 
         updateChart();
         updateEntriesList();
+        updateSleepDebtCalculator();
     }
 }
 
@@ -455,6 +479,7 @@ function logEntry() {
     updateStats(); 
     updateChart();
     updateEntriesList();
+    updateSleepDebtCalculator();
 }
 
 function resetForm() {
@@ -483,24 +508,195 @@ function resetForm() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const today = new Date().toISOString().split('T')[0];
-    const dateInput = document.getElementById('logDate');
-    if (dateInput) {
-        dateInput.value = today;
-    }
-
-    updateLoadValue();
-    updateQualityValue();
-    updateStats(); 
-    updateChart();
-    updateEntriesList();
+function updateSleepGoal() {
+    const goalInput = document.getElementById('sleepGoal');
+    const newGoal = parseFloat(goalInput.value);
     
-    initializeCharacterCounters();
-});
+    if (isNaN(newGoal) || newGoal < 4 || newGoal > 12) {
+        alert('Please enter a valid sleep goal between 4 and 12 hours.');
+        goalInput.value = sleepGoal;
+        return;
+    }
+    
+    sleepGoal = newGoal;
+    localStorage.setItem('sleepGoal', sleepGoal);
+    
+    goalInput.style.borderColor = '#28a745';
+    setTimeout(() => {
+        goalInput.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+    }, 500);
+    
+    updateSleepDebtCalculator();
+}
+
+function calculateSleepDebt() {
+    if (entries.length === 0) {
+        return {
+            totalDebt: 0,
+            weeklyDebt: 0,
+            avgSleep: 0,
+            dailyDebts: []
+        };
+    }
+    
+    const sortedEntries = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    let totalDebt = 0;
+    const dailyDebts = [];
+    
+    sortedEntries.forEach(entry => {
+        const debt = entry.sleepHours - sleepGoal;
+        totalDebt += debt;
+        dailyDebts.push({
+            date: entry.date,
+            debt: debt,
+            sleepHours: entry.sleepHours
+        });
+    });
+    
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentEntries = sortedEntries.filter(entry => new Date(entry.date) >= sevenDaysAgo);
+    
+    const weeklyDebt = recentEntries.reduce((sum, entry) => sum + (entry.sleepHours - sleepGoal), 0);
+    
+    const avgSleep = entries.reduce((sum, entry) => sum + entry.sleepHours, 0) / entries.length;
+    
+    return {
+        totalDebt: totalDebt,
+        weeklyDebt: weeklyDebt,
+        avgSleep: avgSleep,
+        dailyDebts: dailyDebts.slice(-14) 
+    };
+}
+
+function updateSleepDebtCalculator() {
+    const debtData = calculateSleepDebt();
+    
+    const totalDebtEl = document.getElementById('totalSleepDebt');
+    const avgSleepEl = document.getElementById('avgSleepHours');
+    const avgVsGoalEl = document.getElementById('avgVsGoal');
+    const weeklyDebtEl = document.getElementById('weeklySleepDebt');
+    
+    if (totalDebtEl) {
+        const totalDebtFormatted = debtData.totalDebt.toFixed(1);
+        totalDebtEl.textContent = `${totalDebtFormatted}h`;
+        totalDebtEl.style.color = debtData.totalDebt < 0 ? '#dc3545' : '#28a745';
+    }
+    
+    if (avgSleepEl) {
+        avgSleepEl.textContent = `${debtData.avgSleep.toFixed(1)}h`;
+    }
+    
+    if (avgVsGoalEl) {
+        const diff = (debtData.avgSleep - sleepGoal).toFixed(1);
+        avgVsGoalEl.textContent = `vs ${sleepGoal.toFixed(1)}h goal (${diff > 0 ? '+' : ''}${diff}h)`;
+        avgVsGoalEl.style.color = diff < 0 ? '#dc3545' : '#28a745';
+    }
+    
+    if (weeklyDebtEl) {
+        weeklyDebtEl.textContent = `${debtData.weeklyDebt.toFixed(1)}h`;
+        weeklyDebtEl.style.color = debtData.weeklyDebt < 0 ? '#dc3545' : '#28a745';
+    }
+    
+    updateDebtAlertLevel(debtData);
+    
+    updateDebtHistory(debtData.dailyDebts);
+}
+
+function updateDebtAlertLevel(debtData) {
+    const alertLevelEl = document.getElementById('debtAlertLevel');
+    const progressFillEl = document.getElementById('debtProgressFill');
+    const warningMessageEl = document.getElementById('debtWarningMessage');
+    
+    if (!alertLevelEl || !progressFillEl || !warningMessageEl) return;
+    
+    const totalDebt = debtData.totalDebt;
+    const maxDebtThreshold = 14; 
+    const debtPercentage = Math.min(Math.abs(Math.min(totalDebt, 0)) / maxDebtThreshold * 100, 100);
+    
+    progressFillEl.style.width = `${debtPercentage}%`;
+    
+    let alertLevel = 'Healthy';
+    let alertClass = '';
+    let message = '';
+    
+    if (totalDebt < -10) {
+        alertLevel = 'Severe';
+        alertClass = 'danger';
+        message = '⚠️ Critical: You have accumulated severe sleep debt. Consider taking time to rest and recover.';
+    } else if (totalDebt < -5) {
+        alertLevel = 'High';
+        alertClass = 'danger';
+        message = '⚠️ Warning: Your sleep debt is building up. Try to get extra rest when possible.';
+    } else if (totalDebt < -2) {
+        alertLevel = 'Moderate';
+        alertClass = 'warning';
+        message = '⚡ Moderate sleep debt detected. Aim for a few early nights to catch up.';
+    } else if (totalDebt < 0) {
+        alertLevel = 'Low';
+        alertClass = 'warning';
+        message = '💤 Mild sleep debt. Pay attention to your sleep schedule.';
+    } else {
+        alertLevel = 'Healthy';
+        alertClass = '';
+        message = '✅ Great job! You\'re meeting or exceeding your sleep goal.';
+    }
+    
+    alertLevelEl.textContent = alertLevel;
+    alertLevelEl.className = alertClass;
+    
+    warningMessageEl.textContent = message;
+    warningMessageEl.className = `debt-warning-message ${alertClass}`;
+    
+    if (totalDebt < -10) {
+        progressFillEl.style.background = 'linear-gradient(90deg, #dc3545, #ff6b6b)';
+    } else if (totalDebt < -5) {
+        progressFillEl.style.background = 'linear-gradient(90deg, #ffc107, #dc3545)';
+    } else if (totalDebt < 0) {
+        progressFillEl.style.background = 'linear-gradient(90deg, #28a745, #ffc107)';
+    } else {
+        progressFillEl.style.background = 'linear-gradient(90deg, #28a745, #20c997)';
+    }
+}
+
+function updateDebtHistory(dailyDebts) {
+    const debtHistoryEl = document.getElementById('debtHistory');
+    if (!debtHistoryEl) return;
+    
+    if (dailyDebts.length === 0) {
+        debtHistoryEl.innerHTML = '<div class="debt-history-item">No sleep data available</div>';
+        return;
+    }
+    
+    const recentDebts = dailyDebts.slice(-7).reverse();
+    
+    debtHistoryEl.innerHTML = recentDebts.map(day => {
+        const date = new Date(day.date);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+        
+        const debtValue = day.debt.toFixed(1);
+        const debtClass = day.debt < 0 ? 'debt-history-deficit' : 'debt-history-surplus';
+        const debtSymbol = day.debt < 0 ? '' : '+';
+        
+        return `
+            <div class="debt-history-item">
+                <span class="debt-history-date">${formattedDate}</span>
+                <span class="debt-history-value ${debtClass}">
+                    ${debtSymbol}${debtValue}h (${day.sleepHours.toFixed(1)}h)
+                </span>
+            </div>
+        `;
+    }).join('');
+}
 
 window.updateLoadValue = updateLoadValue;
 window.updateQualityValue = updateQualityValue;
 window.logEntry = logEntry;
 window.deleteEntry = deleteEntry;
 window.resetForm = resetForm;
+window.updateSleepGoal = updateSleepGoal;
