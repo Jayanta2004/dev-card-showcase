@@ -4,6 +4,22 @@ let entries = JSON.parse(localStorage.getItem('cognitiveLoadSleepEntries')) || [
 let sleepGoal = parseFloat(localStorage.getItem('sleepGoal')) || 8.0;
 let chartInstance = null;
 
+// Notification settings
+let notificationSettings = JSON.parse(localStorage.getItem('notificationSettings')) || {
+    reminderEnabled: false,
+    reminderTime: '20:00',
+    burnoutAlertsEnabled: false,
+    cognitiveLoadThreshold: 8,
+    sleepQualityThreshold: 4,
+    sleepHoursThreshold: 6,
+    patternAlertsEnabled: false,
+    consecutiveDaysThreshold: 3,
+    highLoadThreshold: 7
+};
+
+let notificationInterval = null;
+let lastNotificationDate = null;
+
 // Filter state
 let filters = {
     dateFrom: null,
@@ -43,206 +59,375 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeCharacterCounters();
     initializeFilters();
     initializeFilterEventListeners();
+    initializeNotifications();
 });
 
-function initializeFilters() {
-    // Set default values for filter inputs
-    const loadMinInput = document.getElementById('filterLoadMin');
-    const loadMaxInput = document.getElementById('filterLoadMax');
-    const loadMinSlider = document.getElementById('filterLoadMinSlider');
-    const loadMaxSlider = document.getElementById('filterLoadMaxSlider');
+// Initialize notifications
+function initializeNotifications() {
+    loadNotificationSettings();
+    checkNotificationPermission();
+    setupNotificationChecker();
     
-    if (loadMinInput) loadMinInput.value = 1;
-    if (loadMaxInput) loadMaxInput.value = 10;
-    if (loadMinSlider) loadMinSlider.value = 1;
-    if (loadMaxSlider) loadMaxSlider.value = 10;
+    // Check for burnout risk when page loads
+    setTimeout(() => {
+        checkBurnoutRisk();
+    }, 1000);
+}
+
+// Load saved notification settings
+function loadNotificationSettings() {
+    const reminderEnabled = document.getElementById('reminderEnabled');
+    const reminderTime = document.getElementById('reminderTime');
+    const burnoutAlertsEnabled = document.getElementById('burnoutAlertsEnabled');
+    const cognitiveLoadThreshold = document.getElementById('cognitiveLoadThreshold');
+    const sleepQualityThreshold = document.getElementById('sleepQualityThreshold');
+    const sleepHoursThreshold = document.getElementById('sleepHoursThreshold');
+    const patternAlertsEnabled = document.getElementById('patternAlertsEnabled');
+    const consecutiveDaysThreshold = document.getElementById('consecutiveDaysThreshold');
+    const highLoadThreshold = document.getElementById('highLoadThreshold');
+
+    if (reminderEnabled) reminderEnabled.checked = notificationSettings.reminderEnabled;
+    if (reminderTime) reminderTime.value = notificationSettings.reminderTime;
+    if (burnoutAlertsEnabled) burnoutAlertsEnabled.checked = notificationSettings.burnoutAlertsEnabled;
+    if (cognitiveLoadThreshold) cognitiveLoadThreshold.value = notificationSettings.cognitiveLoadThreshold;
+    if (sleepQualityThreshold) sleepQualityThreshold.value = notificationSettings.sleepQualityThreshold;
+    if (sleepHoursThreshold) sleepHoursThreshold.value = notificationSettings.sleepHoursThreshold;
+    if (patternAlertsEnabled) patternAlertsEnabled.checked = notificationSettings.patternAlertsEnabled;
+    if (consecutiveDaysThreshold) consecutiveDaysThreshold.value = notificationSettings.consecutiveDaysThreshold;
+    if (highLoadThreshold) highLoadThreshold.value = notificationSettings.highLoadThreshold;
+}
+
+// Save notification settings
+function saveNotificationSettings() {
+    notificationSettings = {
+        reminderEnabled: document.getElementById('reminderEnabled')?.checked || false,
+        reminderTime: document.getElementById('reminderTime')?.value || '20:00',
+        burnoutAlertsEnabled: document.getElementById('burnoutAlertsEnabled')?.checked || false,
+        cognitiveLoadThreshold: parseInt(document.getElementById('cognitiveLoadThreshold')?.value) || 8,
+        sleepQualityThreshold: parseInt(document.getElementById('sleepQualityThreshold')?.value) || 4,
+        sleepHoursThreshold: parseFloat(document.getElementById('sleepHoursThreshold')?.value) || 6,
+        patternAlertsEnabled: document.getElementById('patternAlertsEnabled')?.checked || false,
+        consecutiveDaysThreshold: parseInt(document.getElementById('consecutiveDaysThreshold')?.value) || 3,
+        highLoadThreshold: parseInt(document.getElementById('highLoadThreshold')?.value) || 7
+    };
     
-    const qualityMinInput = document.getElementById('filterQualityMin');
-    const qualityMaxInput = document.getElementById('filterQualityMax');
-    const qualityMinSlider = document.getElementById('filterQualityMinSlider');
-    const qualityMaxSlider = document.getElementById('filterQualityMaxSlider');
+    localStorage.setItem('notificationSettings', JSON.stringify(notificationSettings));
     
-    if (qualityMinInput) qualityMinInput.value = 1;
-    if (qualityMaxInput) qualityMaxInput.value = 10;
-    if (qualityMinSlider) qualityMinSlider.value = 1;
-    if (qualityMaxSlider) qualityMaxSlider.value = 10;
+    // Show success toast
+    showNotificationToast('Settings Saved', 'Notification preferences have been updated.', 'success');
     
-    const sleepHoursMinInput = document.getElementById('filterSleepHoursMin');
-    const sleepHoursMaxInput = document.getElementById('filterSleepHoursMax');
-    const sleepHoursMinSlider = document.getElementById('filterSleepHoursMinSlider');
-    const sleepHoursMaxSlider = document.getElementById('filterSleepHoursMaxSlider');
+    // Reset notification checker
+    setupNotificationChecker();
+}
+
+// Check notification permission
+function checkNotificationPermission() {
+    const banner = document.getElementById('notificationPermissionBanner');
+    if (!banner) return;
     
-    if (sleepHoursMinInput) sleepHoursMinInput.value = 0;
-    if (sleepHoursMaxInput) sleepHoursMaxInput.value = 24;
-    if (sleepHoursMinSlider) sleepHoursMinSlider.value = 0;
-    if (sleepHoursMaxSlider) sleepHoursMaxSlider.value = 24;
-    
-    const workHoursMinInput = document.getElementById('filterWorkHoursMin');
-    const workHoursMaxInput = document.getElementById('filterWorkHoursMax');
-    const workHoursMinSlider = document.getElementById('filterWorkHoursMinSlider');
-    const workHoursMaxSlider = document.getElementById('filterWorkHoursMaxSlider');
-    
-    if (workHoursMinInput) workHoursMinInput.value = 0;
-    if (workHoursMaxInput) workHoursMaxInput.value = 24;
-    if (workHoursMinSlider) workHoursMinSlider.value = 0;
-    if (workHoursMaxSlider) workHoursMaxSlider.value = 24;
-    
-    // Hide filter section initially
-    const filterSection = document.getElementById('filterSection');
-    if (filterSection) {
-        filterSection.style.display = 'none';
+    if (!("Notification" in window)) {
+        banner.style.display = 'flex';
+        banner.querySelector('p').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Your browser does not support desktop notifications';
+        return;
     }
     
-    // Hide active filter indicator
-    const indicator = document.getElementById('activeFilterIndicator');
-    if (indicator) {
-        indicator.style.display = 'none';
+    if (Notification.permission === 'granted') {
+        banner.style.display = 'none';
+    } else if (Notification.permission === 'denied') {
+        banner.style.display = 'flex';
+        banner.querySelector('p').innerHTML = '<i class="fas fa-exclamation-circle"></i> Notifications are blocked. Please enable them in your browser settings.';
+        const button = banner.querySelector('button');
+        if (button) button.style.display = 'none';
+    } else {
+        banner.style.display = 'flex';
     }
 }
 
-function initializeFilterEventListeners() {
-    // Load min input
-    const filterLoadMin = document.getElementById('filterLoadMin');
-    if (filterLoadMin) {
-        filterLoadMin.addEventListener('input', function() {
-            let value = parseInt(this.value) || 1;
-            value = Math.max(1, Math.min(10, value));
-            const max = parseInt(document.getElementById('filterLoadMax').value);
-            
-            if (value > max) {
-                value = max;
-                this.value = max;
-            }
-            
-            const slider = document.getElementById('filterLoadMinSlider');
-            if (slider) slider.value = value;
-        });
+// Request notification permission
+function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+        alert('Your browser does not support desktop notifications');
+        return;
     }
     
-    // Load max input
-    const filterLoadMax = document.getElementById('filterLoadMax');
-    if (filterLoadMax) {
-        filterLoadMax.addEventListener('input', function() {
-            let value = parseInt(this.value) || 10;
-            value = Math.max(1, Math.min(10, value));
-            const min = parseInt(document.getElementById('filterLoadMin').value);
+    Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+            document.getElementById('notificationPermissionBanner').style.display = 'none';
+            showNotificationToast('Notifications Enabled', 'You will now receive logging reminders and burnout alerts!', 'success');
             
-            if (value < min) {
-                value = min;
-                this.value = min;
-            }
-            
-            const slider = document.getElementById('filterLoadMaxSlider');
-            if (slider) slider.value = value;
-        });
+            // Send a test notification
+            setTimeout(() => {
+                sendBrowserNotification(
+                    '🎉 Notifications Enabled!',
+                    'You\'ll receive daily reminders and alerts when burnout risk is detected.',
+                    'success'
+                );
+            }, 1000);
+        }
+    });
+}
+
+// Send browser notification
+function sendBrowserNotification(title, body, type = 'info') {
+    if (!("Notification" in window) || Notification.permission !== 'granted') {
+        return false;
     }
     
-    // Quality min input
-    const filterQualityMin = document.getElementById('filterQualityMin');
-    if (filterQualityMin) {
-        filterQualityMin.addEventListener('input', function() {
-            let value = parseInt(this.value) || 1;
-            value = Math.max(1, Math.min(10, value));
-            const max = parseInt(document.getElementById('filterQualityMax').value);
-            
-            if (value > max) {
-                value = max;
-                this.value = max;
-            }
-            
-            const slider = document.getElementById('filterQualityMinSlider');
-            if (slider) slider.value = value;
-        });
+    const options = {
+        body: body,
+        icon: '../../Hall of Fame (1).png',
+        badge: '../../Hall of Fame (1).png',
+        vibrate: [200, 100, 200],
+        tag: 'cognitive-load-analyzer',
+        renotify: true,
+        silent: false
+    };
+    
+    try {
+        const notification = new Notification(title, options);
+        
+        notification.onclick = function() {
+            window.focus();
+            this.close();
+        };
+        
+        setTimeout(notification.close.bind(notification), 10000);
+        return true;
+    } catch (error) {
+        console.error('Error sending notification:', error);
+        return false;
+    }
+}
+
+// Show in-app notification toast
+function showNotificationToast(title, message, type = 'info') {
+    // Remove existing toast
+    const existingToast = document.querySelector('.notification-toast');
+    if (existingToast) {
+        existingToast.remove();
     }
     
-    // Quality max input
-    const filterQualityMax = document.getElementById('filterQualityMax');
-    if (filterQualityMax) {
-        filterQualityMax.addEventListener('input', function() {
-            let value = parseInt(this.value) || 10;
-            value = Math.max(1, Math.min(10, value));
-            const min = parseInt(document.getElementById('filterQualityMin').value);
-            
-            if (value < min) {
-                value = min;
-                this.value = min;
-            }
-            
-            const slider = document.getElementById('filterQualityMaxSlider');
-            if (slider) slider.value = value;
-        });
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `notification-toast ${type}`;
+    
+    // Set icon based on type
+    let icon = 'fa-info-circle';
+    if (type === 'warning') icon = 'fa-exclamation-triangle';
+    if (type === 'danger') icon = 'fa-exclamation-circle';
+    if (type === 'success') icon = 'fa-check-circle';
+    
+    toast.innerHTML = `
+        <div class="notification-toast-header">
+            <i class="fas ${icon}"></i>
+            <span class="notification-toast-title">${title}</span>
+            <button class="notification-toast-close" onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="notification-toast-message">${message}</p>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 5000);
+}
+
+// Setup notification checker interval
+function setupNotificationChecker() {
+    if (notificationInterval) {
+        clearInterval(notificationInterval);
     }
     
-    // Sleep hours min input
-    const filterSleepHoursMin = document.getElementById('filterSleepHoursMin');
-    if (filterSleepHoursMin) {
-        filterSleepHoursMin.addEventListener('input', function() {
-            let value = parseFloat(this.value) || 0;
-            value = Math.max(0, Math.min(24, value));
-            const max = parseFloat(document.getElementById('filterSleepHoursMax').value);
-            
-            if (value > max) {
-                value = max;
-                this.value = max;
+    // Check every minute
+    notificationInterval = setInterval(() => {
+        checkReminderTime();
+    }, 60000);
+    
+    // Also check immediately
+    checkReminderTime();
+}
+
+// Check if it's time for a reminder
+function checkReminderTime() {
+    if (!notificationSettings.reminderEnabled) return;
+    
+    const now = new Date();
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    // Check if today's reminder hasn't been sent yet
+    const today = now.toDateString();
+    
+    if (currentTime === notificationSettings.reminderTime && lastNotificationDate !== today) {
+        // Check if user has already logged today
+        const todayStr = now.toISOString().split('T')[0];
+        const hasLoggedToday = entries.some(entry => entry.date === todayStr);
+        
+        if (!hasLoggedToday) {
+            sendBrowserNotification(
+                '📝 Daily Logging Reminder',
+                'Don\'t forget to log your work and sleep data for today!',
+                'info'
+            );
+            showNotificationToast(
+                'Daily Reminder',
+                'Don\'t forget to log your work and sleep data for today!',
+                'info'
+            );
+            lastNotificationDate = today;
+        }
+    }
+}
+
+// Check for burnout risk
+function checkBurnoutRisk() {
+    if (!notificationSettings.burnoutAlertsEnabled && !notificationSettings.patternAlertsEnabled) return;
+    
+    const recentEntries = entries.slice(-7); // Last 7 entries
+    
+    if (recentEntries.length < 2) return;
+    
+    // Check individual entries for risk factors
+    recentEntries.forEach(entry => {
+        const risks = [];
+        
+        if (notificationSettings.burnoutAlertsEnabled) {
+            if (entry.cognitiveLoad >= notificationSettings.cognitiveLoadThreshold) {
+                risks.push('high cognitive load');
             }
-            
-            const slider = document.getElementById('filterSleepHoursMinSlider');
-            if (slider) slider.value = value;
-        });
+            if (entry.sleepQuality <= notificationSettings.sleepQualityThreshold) {
+                risks.push('poor sleep quality');
+            }
+            if (entry.sleepHours <= notificationSettings.sleepHoursThreshold) {
+                risks.push('insufficient sleep');
+            }
+        }
+        
+        if (risks.length >= 2) {
+            const date = new Date(entry.date).toLocaleDateString();
+            showBurnoutAlert(entry, risks, date);
+        }
+    });
+    
+    // Check for patterns
+    if (notificationSettings.patternAlertsEnabled) {
+        checkPatterns(recentEntries);
+    }
+}
+
+// Check for concerning patterns
+function checkPatterns(entries) {
+    // Check for consecutive days of high cognitive load
+    let highLoadDays = 0;
+    let highLoadStart = null;
+    let highestStreak = 0;
+    
+    entries.forEach((entry, index) => {
+        if (entry.cognitiveLoad >= notificationSettings.highLoadThreshold) {
+            highLoadDays++;
+            if (highLoadDays === 1) {
+                highLoadStart = entry.date;
+            }
+            if (highLoadDays > highestStreak) {
+                highestStreak = highLoadDays;
+            }
+        } else {
+            highLoadDays = 0;
+            highLoadStart = null;
+        }
+    });
+    
+    if (highestStreak >= notificationSettings.consecutiveDaysThreshold) {
+        showPatternAlert(highestStreak, highLoadStart);
     }
     
-    // Sleep hours max input
-    const filterSleepHoursMax = document.getElementById('filterSleepHoursMax');
-    if (filterSleepHoursMax) {
-        filterSleepHoursMax.addEventListener('input', function() {
-            let value = parseFloat(this.value) || 24;
-            value = Math.max(0, Math.min(24, value));
-            const min = parseFloat(document.getElementById('filterSleepHoursMin').value);
-            
-            if (value < min) {
-                value = min;
-                this.value = min;
-            }
-            
-            const slider = document.getElementById('filterSleepHoursMaxSlider');
-            if (slider) slider.value = value;
-        });
+    // Check for declining sleep quality trend
+    if (entries.length >= 5) {
+        const recentSleepQuality = entries.slice(-3).map(e => e.sleepQuality);
+        const previousSleepQuality = entries.slice(-5, -3).map(e => e.sleepQuality);
+        
+        const avgRecent = recentSleepQuality.reduce((a, b) => a + b, 0) / recentSleepQuality.length;
+        const avgPrevious = previousSleepQuality.reduce((a, b) => a + b, 0) / previousSleepQuality.length;
+        
+        if (avgRecent < avgPrevious - 2 && avgRecent <= 5) {
+            sendBrowserNotification(
+                '📉 Sleep Quality Declining',
+                'Your sleep quality has been decreasing. This might affect your cognitive performance.',
+                'warning'
+            );
+            showNotificationToast(
+                'Sleep Quality Alert',
+                'Your sleep quality has been decreasing. Consider adjusting your bedtime routine.',
+                'warning'
+            );
+        }
+    }
+}
+
+// Show burnout alert
+function showBurnoutAlert(entry, risks, date) {
+    const riskText = risks.join(' and ');
+    const title = '⚠️ Burnout Risk Detected';
+    const message = `On ${date}, you had ${riskText}. Consider taking a break or adjusting your schedule.`;
+    
+    sendBrowserNotification(title, message, 'danger');
+    showNotificationToast('Burnout Risk Alert', message, 'danger');
+}
+
+// Show pattern alert
+function showPatternAlert(days, startDate) {
+    const start = new Date(startDate).toLocaleDateString();
+    const title = '⚠️ High Workload Pattern';
+    const message = `You've had high cognitive load for ${days} consecutive days (starting ${start}). Take time to rest.`;
+    
+    sendBrowserNotification(title, message, 'warning');
+    showNotificationToast('Workload Pattern Alert', message, 'warning');
+}
+
+// Test notification function
+function testNotification(type) {
+    if (!("Notification" in window)) {
+        alert('Your browser does not support notifications');
+        return;
     }
     
-    // Work hours min input
-    const filterWorkHoursMin = document.getElementById('filterWorkHoursMin');
-    if (filterWorkHoursMin) {
-        filterWorkHoursMin.addEventListener('input', function() {
-            let value = parseFloat(this.value) || 0;
-            value = Math.max(0, Math.min(24, value));
-            const max = parseFloat(document.getElementById('filterWorkHoursMax').value);
-            
-            if (value > max) {
-                value = max;
-                this.value = max;
-            }
-            
-            const slider = document.getElementById('filterWorkHoursMinSlider');
-            if (slider) slider.value = value;
-        });
+    if (Notification.permission !== 'granted') {
+        requestNotificationPermission();
+        return;
     }
     
-    // Work hours max input
-    const filterWorkHoursMax = document.getElementById('filterWorkHoursMax');
-    if (filterWorkHoursMax) {
-        filterWorkHoursMax.addEventListener('input', function() {
-            let value = parseFloat(this.value) || 24;
-            value = Math.max(0, Math.min(24, value));
-            const min = parseFloat(document.getElementById('filterWorkHoursMin').value);
+    switch(type) {
+        case 'reminder':
+            sendBrowserNotification(
+                '📝 Test Reminder',
+                'This is a test of your daily logging reminder. You would normally receive this at your set time.',
+                'info'
+            );
+            showNotificationToast('Test Reminder', 'Daily reminder notification test successful!', 'success');
+            break;
             
-            if (value < min) {
-                value = min;
-                this.value = min;
-            }
+        case 'burnout':
+            sendBrowserNotification(
+                '⚠️ Test Burnout Alert',
+                'This is a test of the burnout risk alert. You would receive this when risk factors are detected.',
+                'warning'
+            );
+            showNotificationToast('Test Burnout Alert', 'Burnout alert test successful!', 'warning');
+            break;
             
-            const slider = document.getElementById('filterWorkHoursMaxSlider');
-            if (slider) slider.value = value;
-        });
+        case 'pattern':
+            sendBrowserNotification(
+                '📊 Test Pattern Alert',
+                'This is a test of the pattern detection alert. You would receive this when concerning patterns are detected.',
+                'warning'
+            );
+            showNotificationToast('Test Pattern Alert', 'Pattern detection test successful!', 'warning');
+            break;
     }
 }
 
@@ -716,6 +901,207 @@ function syncWorkHoursMax() {
     }
     
     input.value = value;
+}
+
+function initializeFilters() {
+    // Set default values for filter inputs
+    const loadMinInput = document.getElementById('filterLoadMin');
+    const loadMaxInput = document.getElementById('filterLoadMax');
+    const loadMinSlider = document.getElementById('filterLoadMinSlider');
+    const loadMaxSlider = document.getElementById('filterLoadMaxSlider');
+    
+    if (loadMinInput) loadMinInput.value = 1;
+    if (loadMaxInput) loadMaxInput.value = 10;
+    if (loadMinSlider) loadMinSlider.value = 1;
+    if (loadMaxSlider) loadMaxSlider.value = 10;
+    
+    const qualityMinInput = document.getElementById('filterQualityMin');
+    const qualityMaxInput = document.getElementById('filterQualityMax');
+    const qualityMinSlider = document.getElementById('filterQualityMinSlider');
+    const qualityMaxSlider = document.getElementById('filterQualityMaxSlider');
+    
+    if (qualityMinInput) qualityMinInput.value = 1;
+    if (qualityMaxInput) qualityMaxInput.value = 10;
+    if (qualityMinSlider) qualityMinSlider.value = 1;
+    if (qualityMaxSlider) qualityMaxSlider.value = 10;
+    
+    const sleepHoursMinInput = document.getElementById('filterSleepHoursMin');
+    const sleepHoursMaxInput = document.getElementById('filterSleepHoursMax');
+    const sleepHoursMinSlider = document.getElementById('filterSleepHoursMinSlider');
+    const sleepHoursMaxSlider = document.getElementById('filterSleepHoursMaxSlider');
+    
+    if (sleepHoursMinInput) sleepHoursMinInput.value = 0;
+    if (sleepHoursMaxInput) sleepHoursMaxInput.value = 24;
+    if (sleepHoursMinSlider) sleepHoursMinSlider.value = 0;
+    if (sleepHoursMaxSlider) sleepHoursMaxSlider.value = 24;
+    
+    const workHoursMinInput = document.getElementById('filterWorkHoursMin');
+    const workHoursMaxInput = document.getElementById('filterWorkHoursMax');
+    const workHoursMinSlider = document.getElementById('filterWorkHoursMinSlider');
+    const workHoursMaxSlider = document.getElementById('filterWorkHoursMaxSlider');
+    
+    if (workHoursMinInput) workHoursMinInput.value = 0;
+    if (workHoursMaxInput) workHoursMaxInput.value = 24;
+    if (workHoursMinSlider) workHoursMinSlider.value = 0;
+    if (workHoursMaxSlider) workHoursMaxSlider.value = 24;
+    
+    // Hide filter section initially
+    const filterSection = document.getElementById('filterSection');
+    if (filterSection) {
+        filterSection.style.display = 'none';
+    }
+    
+    // Hide active filter indicator
+    const indicator = document.getElementById('activeFilterIndicator');
+    if (indicator) {
+        indicator.style.display = 'none';
+    }
+}
+
+function initializeFilterEventListeners() {
+    // Load min input
+    const filterLoadMin = document.getElementById('filterLoadMin');
+    if (filterLoadMin) {
+        filterLoadMin.addEventListener('input', function() {
+            let value = parseInt(this.value) || 1;
+            value = Math.max(1, Math.min(10, value));
+            const max = parseInt(document.getElementById('filterLoadMax').value);
+            
+            if (value > max) {
+                value = max;
+                this.value = max;
+            }
+            
+            const slider = document.getElementById('filterLoadMinSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Load max input
+    const filterLoadMax = document.getElementById('filterLoadMax');
+    if (filterLoadMax) {
+        filterLoadMax.addEventListener('input', function() {
+            let value = parseInt(this.value) || 10;
+            value = Math.max(1, Math.min(10, value));
+            const min = parseInt(document.getElementById('filterLoadMin').value);
+            
+            if (value < min) {
+                value = min;
+                this.value = min;
+            }
+            
+            const slider = document.getElementById('filterLoadMaxSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Quality min input
+    const filterQualityMin = document.getElementById('filterQualityMin');
+    if (filterQualityMin) {
+        filterQualityMin.addEventListener('input', function() {
+            let value = parseInt(this.value) || 1;
+            value = Math.max(1, Math.min(10, value));
+            const max = parseInt(document.getElementById('filterQualityMax').value);
+            
+            if (value > max) {
+                value = max;
+                this.value = max;
+            }
+            
+            const slider = document.getElementById('filterQualityMinSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Quality max input
+    const filterQualityMax = document.getElementById('filterQualityMax');
+    if (filterQualityMax) {
+        filterQualityMax.addEventListener('input', function() {
+            let value = parseInt(this.value) || 10;
+            value = Math.max(1, Math.min(10, value));
+            const min = parseInt(document.getElementById('filterQualityMin').value);
+            
+            if (value < min) {
+                value = min;
+                this.value = min;
+            }
+            
+            const slider = document.getElementById('filterQualityMaxSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Sleep hours min input
+    const filterSleepHoursMin = document.getElementById('filterSleepHoursMin');
+    if (filterSleepHoursMin) {
+        filterSleepHoursMin.addEventListener('input', function() {
+            let value = parseFloat(this.value) || 0;
+            value = Math.max(0, Math.min(24, value));
+            const max = parseFloat(document.getElementById('filterSleepHoursMax').value);
+            
+            if (value > max) {
+                value = max;
+                this.value = max;
+            }
+            
+            const slider = document.getElementById('filterSleepHoursMinSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Sleep hours max input
+    const filterSleepHoursMax = document.getElementById('filterSleepHoursMax');
+    if (filterSleepHoursMax) {
+        filterSleepHoursMax.addEventListener('input', function() {
+            let value = parseFloat(this.value) || 24;
+            value = Math.max(0, Math.min(24, value));
+            const min = parseFloat(document.getElementById('filterSleepHoursMin').value);
+            
+            if (value < min) {
+                value = min;
+                this.value = min;
+            }
+            
+            const slider = document.getElementById('filterSleepHoursMaxSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Work hours min input
+    const filterWorkHoursMin = document.getElementById('filterWorkHoursMin');
+    if (filterWorkHoursMin) {
+        filterWorkHoursMin.addEventListener('input', function() {
+            let value = parseFloat(this.value) || 0;
+            value = Math.max(0, Math.min(24, value));
+            const max = parseFloat(document.getElementById('filterWorkHoursMax').value);
+            
+            if (value > max) {
+                value = max;
+                this.value = max;
+            }
+            
+            const slider = document.getElementById('filterWorkHoursMinSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Work hours max input
+    const filterWorkHoursMax = document.getElementById('filterWorkHoursMax');
+    if (filterWorkHoursMax) {
+        filterWorkHoursMax.addEventListener('input', function() {
+            let value = parseFloat(this.value) || 24;
+            value = Math.max(0, Math.min(24, value));
+            const min = parseFloat(document.getElementById('filterWorkHoursMin').value);
+            
+            if (value < min) {
+                value = min;
+                this.value = min;
+            }
+            
+            const slider = document.getElementById('filterWorkHoursMaxSlider');
+            if (slider) slider.value = value;
+        });
+    }
 }
 
 // Apply filters
@@ -1236,6 +1622,11 @@ function logEntry() {
     updateChart();
     updateEntriesList();
     updateSleepDebtCalculator();
+    
+    // Check for burnout risk after new entry is added
+    setTimeout(() => {
+        checkBurnoutRisk();
+    }, 500);
 }
 
 function resetForm() {
@@ -1467,6 +1858,7 @@ function updateDebtHistory(dailyDebts) {
     }).join('');
 }
 
+// Export functions to window
 window.updateLoadValue = updateLoadValue;
 window.updateQualityValue = updateQualityValue;
 window.logEntry = logEntry;
@@ -1486,3 +1878,7 @@ window.syncWorkHoursMax = syncWorkHoursMax;
 window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;
 window.removeFilter = removeFilter;
+window.saveNotificationSettings = saveNotificationSettings;
+window.requestNotificationPermission = requestNotificationPermission;
+window.testNotification = testNotification;
+window.checkBurnoutRisk = checkBurnoutRisk;
