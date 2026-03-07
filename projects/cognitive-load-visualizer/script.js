@@ -4,6 +4,21 @@ const statusText = document.getElementById("status");
 const app = document.getElementById("app");
 const loadGraph = document.getElementById("loadGraph");
 const ctx = loadGraph.getContext("2d");
+const thresholdLabel = document.getElementById("thresholdLabel");
+const settingsToggle = document.getElementById("settingsToggle");
+const settingsContent = document.getElementById("settingsContent");
+const thresholdSlider = document.getElementById("thresholdSlider");
+const thresholdValue = document.getElementById("thresholdValue");
+const optimalMax = document.getElementById("optimalMax");
+const optimalMaxLabel = document.getElementById("optimalMaxLabel");
+const moderateMin = document.getElementById("moderateMin");
+const moderateMax = document.getElementById("moderateMax");
+const moderateMinLabel = document.getElementById("moderateMinLabel");
+const moderateMaxLabel = document.getElementById("moderateMaxLabel");
+const overloadMin = document.getElementById("overloadMin");
+const overloadMinLabel = document.getElementById("overloadMinLabel");
+const saveSettings = document.getElementById("saveSettings");
+const resetDefaults = document.getElementById("resetDefaults");
 
 const taskButtons = document.querySelectorAll("[data-load]");
 const interruptBtn = document.getElementById("interrupt");
@@ -30,7 +45,137 @@ const queueStats = document.getElementById("queueStats");
 const queueLoad = document.getElementById("queueLoad");
 
 let cognitiveLoad = 0;
-const OVERLOAD_THRESHOLD = 70;
+let OVERLOAD_THRESHOLD = 70;
+
+let zones = {
+  optimal: { max: 50, color: '#22c55e' },
+  moderate: { min: 50, max: 70, color: '#eab308' },
+  overload: { min: 70, color: '#ef4444' }
+};
+
+function loadPreferences() {
+  const saved = localStorage.getItem('cognitiveLoadZones');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      zones = parsed.zones;
+      OVERLOAD_THRESHOLD = parsed.overloadThreshold;
+      
+      thresholdSlider.value = OVERLOAD_THRESHOLD;
+      thresholdValue.textContent = OVERLOAD_THRESHOLD;
+      thresholdLabel.textContent = `Overload Threshold (${OVERLOAD_THRESHOLD}%)`;
+      
+      optimalMax.value = zones.optimal.max;
+      optimalMaxLabel.textContent = zones.optimal.max;
+      
+      moderateMin.value = zones.moderate.min;
+      moderateMax.value = zones.moderate.max;
+      moderateMinLabel.textContent = zones.moderate.min;
+      moderateMaxLabel.textContent = zones.moderate.max;
+      
+      overloadMin.value = zones.overload.min;
+      overloadMinLabel.textContent = zones.overload.min;
+    } catch (e) {
+      console.error('Error loading preferences', e);
+    }
+  }
+}
+
+function savePreferences() {
+  const preferences = {
+    zones: zones,
+    overloadThreshold: OVERLOAD_THRESHOLD
+  };
+  localStorage.setItem('cognitiveLoadZones', JSON.stringify(preferences));
+  
+  statusText.textContent = "✅ Preferences saved!";
+  setTimeout(() => {
+    updateUI();
+  }, 1500);
+}
+
+function resetToDefaults() {
+  zones = {
+    optimal: { max: 50, color: '#22c55e' },
+    moderate: { min: 50, max: 70, color: '#eab308' },
+    overload: { min: 70, color: '#ef4444' }
+  };
+  OVERLOAD_THRESHOLD = 70;
+  
+  thresholdSlider.value = 70;
+  thresholdValue.textContent = 70;
+  thresholdLabel.textContent = `Overload Threshold (70%)`;
+  
+  optimalMax.value = 50;
+  optimalMaxLabel.textContent = 50;
+  
+  moderateMin.value = 50;
+  moderateMax.value = 70;
+  moderateMinLabel.textContent = 50;
+  moderateMaxLabel.textContent = 70;
+  
+  overloadMin.value = 70;
+  overloadMinLabel.textContent = 70;
+  
+  savePreferences();
+  updateUI();
+  statusText.textContent = "🔄 Reset to default settings";
+}
+
+function updateZonesFromSliders() {
+  let optimal = parseInt(optimalMax.value);
+  let modMin = parseInt(moderateMin.value);
+  let modMax = parseInt(moderateMax.value);
+  let overMin = parseInt(overloadMin.value);
+  
+  if (optimal > modMin) {
+    modMin = optimal;
+    moderateMin.value = modMin;
+  }
+  
+  if (modMin > modMax) {
+    modMax = modMin;
+    moderateMax.value = modMax;
+  }
+  
+  if (modMax > overMin) {
+    overMin = modMax;
+    overloadMin.value = overMin;
+  }
+  
+  if (overMin > 100) {
+    overMin = 100;
+    overloadMin.value = 100;
+  }
+  
+  zones.optimal.max = optimal;
+  zones.moderate.min = modMin;
+  zones.moderate.max = modMax;
+  zones.overload.min = overMin;
+  
+  optimalMaxLabel.textContent = optimal;
+  moderateMinLabel.textContent = modMin;
+  moderateMaxLabel.textContent = modMax;
+  overloadMinLabel.textContent = overMin;
+  
+  if (OVERLOAD_THRESHOLD !== overMin) {
+    OVERLOAD_THRESHOLD = overMin;
+    thresholdSlider.value = overMin;
+    thresholdValue.textContent = overMin;
+    thresholdLabel.textContent = `Overload Threshold (${overMin}%)`;
+  }
+}
+
+function getCurrentZone(load) {
+  if (load < zones.optimal.max) return 'optimal';
+  else if (load < zones.moderate.max) return 'moderate';
+  else return 'overload';
+}
+
+function getZoneColor(load) {
+  const zone = getCurrentZone(load);
+  return zones[zone].color;
+}
 
 let loadHistory = new Array(30).fill(0);
 const MAX_HISTORY = 30;
@@ -248,6 +393,18 @@ function drawGraph() {
     ctx.stroke();
   }
   
+  const optimalY = padding + (graphHeight * (1 - zones.optimal.max / 100));
+  const moderateY = padding + (graphHeight * (1 - zones.moderate.max / 100));
+  
+  ctx.fillStyle = 'rgba(34, 197, 94, 0.1)';
+  ctx.fillRect(padding, optimalY, graphWidth, graphHeight - optimalY + padding);
+  
+  ctx.fillStyle = 'rgba(234, 179, 8, 0.1)';
+  ctx.fillRect(padding, moderateY, graphWidth, optimalY - moderateY);
+  
+  ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
+  ctx.fillRect(padding, padding, graphWidth, moderateY - padding);
+  
   const thresholdY = padding + (graphHeight * (1 - OVERLOAD_THRESHOLD / 100));
   ctx.beginPath();
   ctx.moveTo(padding, thresholdY);
@@ -297,20 +454,28 @@ function drawGraph() {
   }
 }
 
-// Update UI
 function updateUI() {
   cognitiveLoad = Math.max(0, Math.min(100, cognitiveLoad));
   meterFill.style.width = `${cognitiveLoad}%`;
   loadValue.textContent = `Load: ${Math.round(cognitiveLoad)}%`;
 
-  if (cognitiveLoad < OVERLOAD_THRESHOLD) {
-    meterFill.style.background = "#22c55e";
-    statusText.textContent = "System stable";
+  const zone = getCurrentZone(cognitiveLoad);
+  const zoneColor = getZoneColor(cognitiveLoad);
+  
+  meterFill.style.background = zoneColor;
+  
+  if (zone === 'optimal') {
+    statusText.textContent = "✅ System optimal";
     app.classList.remove("overloaded");
+    app.classList.remove("moderate");
+  } else if (zone === 'moderate') {
+    statusText.textContent = "⚠️ Moderate load - maintain focus";
+    app.classList.remove("overloaded");
+    app.classList.add("moderate");
   } else {
-    meterFill.style.background = "#ef4444";
-    statusText.textContent = "⚠ Cognitive overload detected";
+    statusText.textContent = "🚨 Cognitive overload detected";
     app.classList.add("overloaded");
+    app.classList.remove("moderate");
   }
   
   updateLoadHistory();
@@ -343,36 +508,37 @@ function handleKeyPress(event) {
   const key = event.key.toLowerCase();
   
   switch(key) {
-    case 'l': // Light task
+    case 'l':
       event.preventDefault();
       addTask('LIGHT');
       showKeyPress('l');
       break;
       
-    case 'm': // Medium task
+    case 'm':
       event.preventDefault();
       addTask('MEDIUM');
       showKeyPress('m');
       break;
       
-    case 'h': // Heavy task
+    case 'h':
       event.preventDefault();
       addTask('HEAVY');
       showKeyPress('h');
       break;
       
-    case 'i': // Interrupt
+    case 'i':
       event.preventDefault();
       addTask('INTERRUPT');
       showKeyPress('i');
       break;
       
-    case 'r': // Reset
+    case 'r':
       event.preventDefault();
       cognitiveLoad = 0;
       tasks = [];
       isProcessing = false;
       app.classList.remove("overloaded");
+      app.classList.remove("moderate");
       statusText.textContent = "🔄 System reset";
       renderTaskQueue();
       updateTotalLoad();
@@ -385,6 +551,7 @@ function handleKeyPress(event) {
   }
 }
 
+// Event Listeners
 taskButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     const load = Number(btn.dataset.load);
@@ -398,12 +565,12 @@ interruptBtn.addEventListener("click", () => {
   addTask('INTERRUPT');
 });
 
-// Reset simulation
 resetBtn.addEventListener("click", () => {
   cognitiveLoad = 0;
   tasks = [];
   isProcessing = false;
   app.classList.remove("overloaded");
+  app.classList.remove("moderate");
   statusText.textContent = "🔄 System reset";
   
   loadHistory = new Array(MAX_HISTORY).fill(0);
@@ -412,9 +579,57 @@ resetBtn.addEventListener("click", () => {
   updateUI();
 });
 
+settingsToggle.addEventListener("click", () => {
+  settingsContent.classList.toggle("hidden");
+});
+
+thresholdSlider.addEventListener("input", (e) => {
+  const val = parseInt(e.target.value);
+  thresholdValue.textContent = val;
+  thresholdLabel.textContent = `Overload Threshold (${val}%)`;
+  OVERLOAD_THRESHOLD = val;
+  overloadMin.value = val;
+  overloadMinLabel.textContent = val;
+  zones.overload.min = val;
+  updateUI();
+});
+
+optimalMax.addEventListener("input", (e) => {
+  optimalMaxLabel.textContent = e.target.value;
+  updateZonesFromSliders();
+  updateUI();
+});
+
+moderateMin.addEventListener("input", (e) => {
+  moderateMinLabel.textContent = e.target.value;
+  updateZonesFromSliders();
+  updateUI();
+});
+
+moderateMax.addEventListener("input", (e) => {
+  moderateMaxLabel.textContent = e.target.value;
+  updateZonesFromSliders();
+  updateUI();
+});
+
+overloadMin.addEventListener("input", (e) => {
+  overloadMinLabel.textContent = e.target.value;
+  updateZonesFromSliders();
+  updateUI();
+});
+
+saveSettings.addEventListener("click", () => {
+  updateZonesFromSliders();
+  savePreferences();
+});
+
+resetDefaults.addEventListener("click", resetToDefaults);
+
 document.addEventListener('keydown', handleKeyPress);
 
-console.log('Task Queue System initialized with keyboard shortcuts');
+loadPreferences();
+
+console.log('Task Queue System initialized with customizable zones');
 console.log('Tasks take 3 seconds to complete');
 console.log('Interrupts jump to front of queue');
 
