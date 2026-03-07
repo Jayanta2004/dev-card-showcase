@@ -4,6 +4,23 @@ let entries = JSON.parse(localStorage.getItem('cognitiveLoadSleepEntries')) || [
 let sleepGoal = parseFloat(localStorage.getItem('sleepGoal')) || 8.0;
 let chartInstance = null;
 
+// Filter state
+let filters = {
+    dateFrom: null,
+    dateTo: null,
+    loadMin: 1,
+    loadMax: 10,
+    qualityMin: 1,
+    qualityMax: 10,
+    sleepHoursMin: 0,
+    sleepHoursMax: 24,
+    workHoursMin: 0,
+    workHoursMax: 24,
+    searchText: ''
+};
+
+let filtersVisible = false;
+
 document.addEventListener('DOMContentLoaded', function() {
     const sleepGoalInput = document.getElementById('sleepGoal');
     if (sleepGoalInput) {
@@ -24,16 +41,221 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSleepDebtCalculator();
     
     initializeCharacterCounters();
+    initializeFilters();
+    initializeFilterEventListeners();
 });
+
+function initializeFilters() {
+    // Set default values for filter inputs
+    const loadMinInput = document.getElementById('filterLoadMin');
+    const loadMaxInput = document.getElementById('filterLoadMax');
+    const loadMinSlider = document.getElementById('filterLoadMinSlider');
+    const loadMaxSlider = document.getElementById('filterLoadMaxSlider');
+    
+    if (loadMinInput) loadMinInput.value = 1;
+    if (loadMaxInput) loadMaxInput.value = 10;
+    if (loadMinSlider) loadMinSlider.value = 1;
+    if (loadMaxSlider) loadMaxSlider.value = 10;
+    
+    const qualityMinInput = document.getElementById('filterQualityMin');
+    const qualityMaxInput = document.getElementById('filterQualityMax');
+    const qualityMinSlider = document.getElementById('filterQualityMinSlider');
+    const qualityMaxSlider = document.getElementById('filterQualityMaxSlider');
+    
+    if (qualityMinInput) qualityMinInput.value = 1;
+    if (qualityMaxInput) qualityMaxInput.value = 10;
+    if (qualityMinSlider) qualityMinSlider.value = 1;
+    if (qualityMaxSlider) qualityMaxSlider.value = 10;
+    
+    const sleepHoursMinInput = document.getElementById('filterSleepHoursMin');
+    const sleepHoursMaxInput = document.getElementById('filterSleepHoursMax');
+    const sleepHoursMinSlider = document.getElementById('filterSleepHoursMinSlider');
+    const sleepHoursMaxSlider = document.getElementById('filterSleepHoursMaxSlider');
+    
+    if (sleepHoursMinInput) sleepHoursMinInput.value = 0;
+    if (sleepHoursMaxInput) sleepHoursMaxInput.value = 24;
+    if (sleepHoursMinSlider) sleepHoursMinSlider.value = 0;
+    if (sleepHoursMaxSlider) sleepHoursMaxSlider.value = 24;
+    
+    const workHoursMinInput = document.getElementById('filterWorkHoursMin');
+    const workHoursMaxInput = document.getElementById('filterWorkHoursMax');
+    const workHoursMinSlider = document.getElementById('filterWorkHoursMinSlider');
+    const workHoursMaxSlider = document.getElementById('filterWorkHoursMaxSlider');
+    
+    if (workHoursMinInput) workHoursMinInput.value = 0;
+    if (workHoursMaxInput) workHoursMaxInput.value = 24;
+    if (workHoursMinSlider) workHoursMinSlider.value = 0;
+    if (workHoursMaxSlider) workHoursMaxSlider.value = 24;
+    
+    // Hide filter section initially
+    const filterSection = document.getElementById('filterSection');
+    if (filterSection) {
+        filterSection.style.display = 'none';
+    }
+    
+    // Hide active filter indicator
+    const indicator = document.getElementById('activeFilterIndicator');
+    if (indicator) {
+        indicator.style.display = 'none';
+    }
+}
+
+function initializeFilterEventListeners() {
+    // Load min input
+    const filterLoadMin = document.getElementById('filterLoadMin');
+    if (filterLoadMin) {
+        filterLoadMin.addEventListener('input', function() {
+            let value = parseInt(this.value) || 1;
+            value = Math.max(1, Math.min(10, value));
+            const max = parseInt(document.getElementById('filterLoadMax').value);
+            
+            if (value > max) {
+                value = max;
+                this.value = max;
+            }
+            
+            const slider = document.getElementById('filterLoadMinSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Load max input
+    const filterLoadMax = document.getElementById('filterLoadMax');
+    if (filterLoadMax) {
+        filterLoadMax.addEventListener('input', function() {
+            let value = parseInt(this.value) || 10;
+            value = Math.max(1, Math.min(10, value));
+            const min = parseInt(document.getElementById('filterLoadMin').value);
+            
+            if (value < min) {
+                value = min;
+                this.value = min;
+            }
+            
+            const slider = document.getElementById('filterLoadMaxSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Quality min input
+    const filterQualityMin = document.getElementById('filterQualityMin');
+    if (filterQualityMin) {
+        filterQualityMin.addEventListener('input', function() {
+            let value = parseInt(this.value) || 1;
+            value = Math.max(1, Math.min(10, value));
+            const max = parseInt(document.getElementById('filterQualityMax').value);
+            
+            if (value > max) {
+                value = max;
+                this.value = max;
+            }
+            
+            const slider = document.getElementById('filterQualityMinSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Quality max input
+    const filterQualityMax = document.getElementById('filterQualityMax');
+    if (filterQualityMax) {
+        filterQualityMax.addEventListener('input', function() {
+            let value = parseInt(this.value) || 10;
+            value = Math.max(1, Math.min(10, value));
+            const min = parseInt(document.getElementById('filterQualityMin').value);
+            
+            if (value < min) {
+                value = min;
+                this.value = min;
+            }
+            
+            const slider = document.getElementById('filterQualityMaxSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Sleep hours min input
+    const filterSleepHoursMin = document.getElementById('filterSleepHoursMin');
+    if (filterSleepHoursMin) {
+        filterSleepHoursMin.addEventListener('input', function() {
+            let value = parseFloat(this.value) || 0;
+            value = Math.max(0, Math.min(24, value));
+            const max = parseFloat(document.getElementById('filterSleepHoursMax').value);
+            
+            if (value > max) {
+                value = max;
+                this.value = max;
+            }
+            
+            const slider = document.getElementById('filterSleepHoursMinSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Sleep hours max input
+    const filterSleepHoursMax = document.getElementById('filterSleepHoursMax');
+    if (filterSleepHoursMax) {
+        filterSleepHoursMax.addEventListener('input', function() {
+            let value = parseFloat(this.value) || 24;
+            value = Math.max(0, Math.min(24, value));
+            const min = parseFloat(document.getElementById('filterSleepHoursMin').value);
+            
+            if (value < min) {
+                value = min;
+                this.value = min;
+            }
+            
+            const slider = document.getElementById('filterSleepHoursMaxSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Work hours min input
+    const filterWorkHoursMin = document.getElementById('filterWorkHoursMin');
+    if (filterWorkHoursMin) {
+        filterWorkHoursMin.addEventListener('input', function() {
+            let value = parseFloat(this.value) || 0;
+            value = Math.max(0, Math.min(24, value));
+            const max = parseFloat(document.getElementById('filterWorkHoursMax').value);
+            
+            if (value > max) {
+                value = max;
+                this.value = max;
+            }
+            
+            const slider = document.getElementById('filterWorkHoursMinSlider');
+            if (slider) slider.value = value;
+        });
+    }
+    
+    // Work hours max input
+    const filterWorkHoursMax = document.getElementById('filterWorkHoursMax');
+    if (filterWorkHoursMax) {
+        filterWorkHoursMax.addEventListener('input', function() {
+            let value = parseFloat(this.value) || 24;
+            value = Math.max(0, Math.min(24, value));
+            const min = parseFloat(document.getElementById('filterWorkHoursMin').value);
+            
+            if (value < min) {
+                value = min;
+                this.value = min;
+            }
+            
+            const slider = document.getElementById('filterWorkHoursMaxSlider');
+            if (slider) slider.value = value;
+        });
+    }
+}
 
 function updateLoadValue() {
     const value = document.getElementById('cognitiveLoad').value;
-    document.getElementById('currentLoadValue').textContent = value;
+    const display = document.getElementById('currentLoadValue');
+    if (display) display.textContent = value;
 }
 
 function updateQualityValue() {
     const value = document.getElementById('sleepQuality').value;
-    document.getElementById('currentQualityValue').textContent = value;
+    const display = document.getElementById('currentQualityValue');
+    if (display) display.textContent = value;
 }
 
 function calculateCorrelation(x, y) {
@@ -58,10 +280,14 @@ function updateStats() {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const recentEntries = entries.filter(entry => new Date(entry.date) >= sevenDaysAgo);
 
+    const correlationEl = document.getElementById('correlation');
+    const avgWorkHoursEl = document.getElementById('avgWorkHours');
+    const avgSleepQualityEl = document.getElementById('avgSleepQuality');
+
     if (recentEntries.length < 2) {
-        document.getElementById('correlation').textContent = 'N/A';
-        document.getElementById('avgWorkHours').textContent = '0.0h';
-        document.getElementById('avgSleepQuality').textContent = '0.0';
+        if (correlationEl) correlationEl.textContent = 'N/A';
+        if (avgWorkHoursEl) avgWorkHoursEl.textContent = '0.0h';
+        if (avgSleepQualityEl) avgSleepQualityEl.textContent = '0.0';
     } else {
         // Calculate correlation between cognitive load and sleep quality
         const workLoads = recentEntries.map(entry => entry.cognitiveLoad);
@@ -72,9 +298,9 @@ function updateStats() {
         const avgWorkHours = (recentEntries.reduce((sum, entry) => sum + entry.workHours, 0) / recentEntries.length).toFixed(1);
         const avgSleepQuality = (recentEntries.reduce((sum, entry) => sum + entry.sleepQuality, 0) / recentEntries.length).toFixed(1);
 
-        document.getElementById('correlation').textContent = correlation;
-        document.getElementById('avgWorkHours').textContent = `${avgWorkHours}h`;
-        document.getElementById('avgSleepQuality').textContent = avgSleepQuality;
+        if (correlationEl) correlationEl.textContent = correlation;
+        if (avgWorkHoursEl) avgWorkHoursEl.textContent = `${avgWorkHours}h`;
+        if (avgSleepQualityEl) avgSleepQualityEl.textContent = avgSleepQuality;
     }
     
     // Update weekly summary
@@ -104,20 +330,20 @@ function updateWeeklySummary() {
         // No data in last 7 days
         if (bestSleepDayEl) {
             bestSleepDayEl.textContent = 'No Data';
-            bestSleepDetailsEl.innerHTML = '<i class="fas fa-info-circle"></i><span>Log entries to see insights</span>';
-            bestSleepDateEl.innerHTML = '<i class="far fa-calendar-alt"></i><span>Last 7 days</span>';
+            if (bestSleepDetailsEl) bestSleepDetailsEl.innerHTML = '<i class="fas fa-info-circle"></i><span>Log entries to see insights</span>';
+            if (bestSleepDateEl) bestSleepDateEl.innerHTML = '<i class="far fa-calendar-alt"></i><span>Last 7 days</span>';
         }
         
         if (highestLoadDayEl) {
             highestLoadDayEl.textContent = 'No Data';
-            highestLoadDetailsEl.innerHTML = '<i class="fas fa-info-circle"></i><span>Log entries to see insights</span>';
-            highestLoadDateEl.innerHTML = '<i class="far fa-calendar-alt"></i><span>Last 7 days</span>';
+            if (highestLoadDetailsEl) highestLoadDetailsEl.innerHTML = '<i class="fas fa-info-circle"></i><span>Log entries to see insights</span>';
+            if (highestLoadDateEl) highestLoadDateEl.innerHTML = '<i class="far fa-calendar-alt"></i><span>Last 7 days</span>';
         }
         
         if (mostProductiveDayEl) {
             mostProductiveDayEl.textContent = 'No Data';
-            mostProductiveDetailsEl.innerHTML = '<i class="fas fa-info-circle"></i><span>Log entries to see insights</span>';
-            mostProductiveDateEl.innerHTML = '<i class="far fa-calendar-alt"></i><span>Last 7 days</span>';
+            if (mostProductiveDetailsEl) mostProductiveDetailsEl.innerHTML = '<i class="fas fa-info-circle"></i><span>Log entries to see insights</span>';
+            if (mostProductiveDateEl) mostProductiveDateEl.innerHTML = '<i class="far fa-calendar-alt"></i><span>Last 7 days</span>';
         }
         return;
     }
@@ -128,15 +354,19 @@ function updateWeeklySummary() {
     }, recentEntries[0]);
     
     const bestSleepDate = new Date(bestSleepEntry.date);
-    bestSleepDayEl.textContent = bestSleepDate.toLocaleDateString('en-US', { weekday: 'long' });
-    bestSleepDetailsEl.innerHTML = `
-        <i class="fas fa-star"></i>
-        <span>Quality: ${bestSleepEntry.sleepQuality}/10 (${bestSleepEntry.sleepHours}h)</span>
-    `;
-    bestSleepDateEl.innerHTML = `
-        <i class="far fa-calendar-alt"></i>
-        <span>${bestSleepDate.toLocaleDateString()}</span>
-    `;
+    if (bestSleepDayEl) bestSleepDayEl.textContent = bestSleepDate.toLocaleDateString('en-US', { weekday: 'long' });
+    if (bestSleepDetailsEl) {
+        bestSleepDetailsEl.innerHTML = `
+            <i class="fas fa-star"></i>
+            <span>Quality: ${bestSleepEntry.sleepQuality}/10 (${bestSleepEntry.sleepHours}h)</span>
+        `;
+    }
+    if (bestSleepDateEl) {
+        bestSleepDateEl.innerHTML = `
+            <i class="far fa-calendar-alt"></i>
+            <span>${bestSleepDate.toLocaleDateString()}</span>
+        `;
+    }
     
     // 2. Highest Cognitive Load Day
     const highestLoadEntry = recentEntries.reduce((highest, current) => {
@@ -144,15 +374,19 @@ function updateWeeklySummary() {
     }, recentEntries[0]);
     
     const highestLoadDate = new Date(highestLoadEntry.date);
-    highestLoadDayEl.textContent = highestLoadDate.toLocaleDateString('en-US', { weekday: 'long' });
-    highestLoadDetailsEl.innerHTML = `
-        <i class="fas fa-tachometer-alt"></i>
-        <span>Load: ${highestLoadEntry.cognitiveLoad}/10 (${highestLoadEntry.workHours}h)</span>
-    `;
-    highestLoadDateEl.innerHTML = `
-        <i class="far fa-calendar-alt"></i>
-        <span>${highestLoadDate.toLocaleDateString()}</span>
-    `;
+    if (highestLoadDayEl) highestLoadDayEl.textContent = highestLoadDate.toLocaleDateString('en-US', { weekday: 'long' });
+    if (highestLoadDetailsEl) {
+        highestLoadDetailsEl.innerHTML = `
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Load: ${highestLoadEntry.cognitiveLoad}/10 (${highestLoadEntry.workHours}h)</span>
+        `;
+    }
+    if (highestLoadDateEl) {
+        highestLoadDateEl.innerHTML = `
+            <i class="far fa-calendar-alt"></i>
+            <span>${highestLoadDate.toLocaleDateString()}</span>
+        `;
+    }
     
     const productiveEntries = recentEntries.map(entry => ({
         ...entry,
@@ -164,15 +398,19 @@ function updateWeeklySummary() {
     }, productiveEntries[0]);
     
     const productiveDate = new Date(mostProductiveEntry.date);
-    mostProductiveDayEl.textContent = productiveDate.toLocaleDateString('en-US', { weekday: 'long' });
-    mostProductiveDetailsEl.innerHTML = `
-        <i class="fas fa-clock"></i>
-        <span>Work: ${mostProductiveEntry.workHours}h (Quality: ${mostProductiveEntry.sleepQuality}/10)</span>
-    `;
-    mostProductiveDateEl.innerHTML = `
-        <i class="far fa-calendar-alt"></i>
-        <span>${productiveDate.toLocaleDateString()}</span>
-    `;
+    if (mostProductiveDayEl) mostProductiveDayEl.textContent = productiveDate.toLocaleDateString('en-US', { weekday: 'long' });
+    if (mostProductiveDetailsEl) {
+        mostProductiveDetailsEl.innerHTML = `
+            <i class="fas fa-clock"></i>
+            <span>Work: ${mostProductiveEntry.workHours}h (Quality: ${mostProductiveEntry.sleepQuality}/10)</span>
+        `;
+    }
+    if (mostProductiveDateEl) {
+        mostProductiveDateEl.innerHTML = `
+            <i class="far fa-calendar-alt"></i>
+            <span>${productiveDate.toLocaleDateString()}</span>
+        `;
+    }
     
     addInsightBadges(recentEntries);
 }
@@ -219,7 +457,10 @@ function addInsightBadges(recentEntries) {
 }
 
 function updateChart() {
-    const ctx = document.getElementById('correlationChart').getContext('2d');
+    const ctx = document.getElementById('correlationChart');
+    if (!ctx) return;
+    
+    const context = ctx.getContext('2d');
     
     if (chartInstance) {
         chartInstance.destroy();
@@ -241,7 +482,7 @@ function updateChart() {
     const sleepQualityData = chartEntries.map(entry => entry.sleepQuality);
     const workHoursData = chartEntries.map(entry => entry.workHours);
 
-    chartInstance = new Chart(ctx, {
+    chartInstance = new Chart(context, {
         type: 'line',
         data: {
             labels: labels,
@@ -306,27 +547,537 @@ function updateChart() {
     });
 }
 
-function updateEntriesList() {
+// Toggle filters visibility
+function toggleFilters() {
+    const filterSection = document.getElementById('filterSection');
+    const toggleBtn = document.querySelector('.toggle-filters-btn');
+    
+    if (!filterSection || !toggleBtn) return;
+    
+    filtersVisible = !filtersVisible;
+    filterSection.style.display = filtersVisible ? 'block' : 'none';
+    toggleBtn.innerHTML = filtersVisible ? 
+        '<i class="fas fa-sliders-h"></i> Hide Filters' : 
+        '<i class="fas fa-sliders-h"></i> Show Filters';
+}
+
+// Toggle filter panel content
+function toggleFilterPanel() {
+    const filterContent = document.getElementById('filterContent');
+    const chevron = document.getElementById('filterChevron');
+    
+    if (!filterContent || !chevron) return;
+    
+    filterContent.classList.toggle('collapsed');
+    chevron.classList.toggle('fa-chevron-up');
+    chevron.classList.toggle('fa-chevron-down');
+}
+
+// Sync functions for range inputs
+function syncLoadMin() {
+    const slider = document.getElementById('filterLoadMinSlider');
+    const input = document.getElementById('filterLoadMin');
+    const maxSlider = document.getElementById('filterLoadMaxSlider');
+    
+    if (!slider || !input || !maxSlider) return;
+    
+    let value = parseInt(slider.value);
+    let max = parseInt(maxSlider.value);
+    
+    if (value > max) {
+        value = max;
+        slider.value = max;
+    }
+    
+    input.value = value;
+}
+
+function syncLoadMax() {
+    const slider = document.getElementById('filterLoadMaxSlider');
+    const input = document.getElementById('filterLoadMax');
+    const minSlider = document.getElementById('filterLoadMinSlider');
+    
+    if (!slider || !input || !minSlider) return;
+    
+    let value = parseInt(slider.value);
+    let min = parseInt(minSlider.value);
+    
+    if (value < min) {
+        value = min;
+        slider.value = min;
+    }
+    
+    input.value = value;
+}
+
+function syncQualityMin() {
+    const slider = document.getElementById('filterQualityMinSlider');
+    const input = document.getElementById('filterQualityMin');
+    const maxSlider = document.getElementById('filterQualityMaxSlider');
+    
+    if (!slider || !input || !maxSlider) return;
+    
+    let value = parseInt(slider.value);
+    let max = parseInt(maxSlider.value);
+    
+    if (value > max) {
+        value = max;
+        slider.value = max;
+    }
+    
+    input.value = value;
+}
+
+function syncQualityMax() {
+    const slider = document.getElementById('filterQualityMaxSlider');
+    const input = document.getElementById('filterQualityMax');
+    const minSlider = document.getElementById('filterQualityMinSlider');
+    
+    if (!slider || !input || !minSlider) return;
+    
+    let value = parseInt(slider.value);
+    let min = parseInt(minSlider.value);
+    
+    if (value < min) {
+        value = min;
+        slider.value = min;
+    }
+    
+    input.value = value;
+}
+
+function syncSleepHoursMin() {
+    const slider = document.getElementById('filterSleepHoursMinSlider');
+    const input = document.getElementById('filterSleepHoursMin');
+    const maxSlider = document.getElementById('filterSleepHoursMaxSlider');
+    
+    if (!slider || !input || !maxSlider) return;
+    
+    let value = parseFloat(slider.value);
+    let max = parseFloat(maxSlider.value);
+    
+    if (value > max) {
+        value = max;
+        slider.value = max;
+    }
+    
+    input.value = value;
+}
+
+function syncSleepHoursMax() {
+    const slider = document.getElementById('filterSleepHoursMaxSlider');
+    const input = document.getElementById('filterSleepHoursMax');
+    const minSlider = document.getElementById('filterSleepHoursMinSlider');
+    
+    if (!slider || !input || !minSlider) return;
+    
+    let value = parseFloat(slider.value);
+    let min = parseFloat(minSlider.value);
+    
+    if (value < min) {
+        value = min;
+        slider.value = min;
+    }
+    
+    input.value = value;
+}
+
+function syncWorkHoursMin() {
+    const slider = document.getElementById('filterWorkHoursMinSlider');
+    const input = document.getElementById('filterWorkHoursMin');
+    const maxSlider = document.getElementById('filterWorkHoursMaxSlider');
+    
+    if (!slider || !input || !maxSlider) return;
+    
+    let value = parseFloat(slider.value);
+    let max = parseFloat(maxSlider.value);
+    
+    if (value > max) {
+        value = max;
+        slider.value = max;
+    }
+    
+    input.value = value;
+}
+
+function syncWorkHoursMax() {
+    const slider = document.getElementById('filterWorkHoursMaxSlider');
+    const input = document.getElementById('filterWorkHoursMax');
+    const minSlider = document.getElementById('filterWorkHoursMinSlider');
+    
+    if (!slider || !input || !minSlider) return;
+    
+    let value = parseFloat(slider.value);
+    let min = parseFloat(minSlider.value);
+    
+    if (value < min) {
+        value = min;
+        slider.value = min;
+    }
+    
+    input.value = value;
+}
+
+// Apply filters
+function applyFilters() {
+    // Get filter values
+    const dateFromInput = document.getElementById('filterDateFrom');
+    const dateToInput = document.getElementById('filterDateTo');
+    const loadMinInput = document.getElementById('filterLoadMin');
+    const loadMaxInput = document.getElementById('filterLoadMax');
+    const qualityMinInput = document.getElementById('filterQualityMin');
+    const qualityMaxInput = document.getElementById('filterQualityMax');
+    const sleepHoursMinInput = document.getElementById('filterSleepHoursMin');
+    const sleepHoursMaxInput = document.getElementById('filterSleepHoursMax');
+    const workHoursMinInput = document.getElementById('filterWorkHoursMin');
+    const workHoursMaxInput = document.getElementById('filterWorkHoursMax');
+    const searchInput = document.getElementById('filterSearch');
+    
+    filters.dateFrom = dateFromInput ? dateFromInput.value || null : null;
+    filters.dateTo = dateToInput ? dateToInput.value || null : null;
+    filters.loadMin = loadMinInput ? parseInt(loadMinInput.value) || 1 : 1;
+    filters.loadMax = loadMaxInput ? parseInt(loadMaxInput.value) || 10 : 10;
+    filters.qualityMin = qualityMinInput ? parseInt(qualityMinInput.value) || 1 : 1;
+    filters.qualityMax = qualityMaxInput ? parseInt(qualityMaxInput.value) || 10 : 10;
+    filters.sleepHoursMin = sleepHoursMinInput ? parseFloat(sleepHoursMinInput.value) || 0 : 0;
+    filters.sleepHoursMax = sleepHoursMaxInput ? parseFloat(sleepHoursMaxInput.value) || 24 : 24;
+    filters.workHoursMin = workHoursMinInput ? parseFloat(workHoursMinInput.value) || 0 : 0;
+    filters.workHoursMax = workHoursMaxInput ? parseFloat(workHoursMaxInput.value) || 24 : 24;
+    filters.searchText = searchInput ? searchInput.value.toLowerCase() : '';
+    
+    // Update active filters display
+    updateActiveFiltersDisplay();
+    
+    // Update entries list with filters
+    updateFilteredEntriesList();
+}
+
+// Reset all filters
+function resetFilters() {
+    // Reset date inputs
+    const dateFromInput = document.getElementById('filterDateFrom');
+    const dateToInput = document.getElementById('filterDateTo');
+    if (dateFromInput) dateFromInput.value = '';
+    if (dateToInput) dateToInput.value = '';
+    
+    // Reset load range
+    const loadMinInput = document.getElementById('filterLoadMin');
+    const loadMaxInput = document.getElementById('filterLoadMax');
+    const loadMinSlider = document.getElementById('filterLoadMinSlider');
+    const loadMaxSlider = document.getElementById('filterLoadMaxSlider');
+    
+    if (loadMinInput) loadMinInput.value = 1;
+    if (loadMaxInput) loadMaxInput.value = 10;
+    if (loadMinSlider) loadMinSlider.value = 1;
+    if (loadMaxSlider) loadMaxSlider.value = 10;
+    
+    // Reset quality range
+    const qualityMinInput = document.getElementById('filterQualityMin');
+    const qualityMaxInput = document.getElementById('filterQualityMax');
+    const qualityMinSlider = document.getElementById('filterQualityMinSlider');
+    const qualityMaxSlider = document.getElementById('filterQualityMaxSlider');
+    
+    if (qualityMinInput) qualityMinInput.value = 1;
+    if (qualityMaxInput) qualityMaxInput.value = 10;
+    if (qualityMinSlider) qualityMinSlider.value = 1;
+    if (qualityMaxSlider) qualityMaxSlider.value = 10;
+    
+    // Reset sleep hours range
+    const sleepHoursMinInput = document.getElementById('filterSleepHoursMin');
+    const sleepHoursMaxInput = document.getElementById('filterSleepHoursMax');
+    const sleepHoursMinSlider = document.getElementById('filterSleepHoursMinSlider');
+    const sleepHoursMaxSlider = document.getElementById('filterSleepHoursMaxSlider');
+    
+    if (sleepHoursMinInput) sleepHoursMinInput.value = 0;
+    if (sleepHoursMaxInput) sleepHoursMaxInput.value = 24;
+    if (sleepHoursMinSlider) sleepHoursMinSlider.value = 0;
+    if (sleepHoursMaxSlider) sleepHoursMaxSlider.value = 24;
+    
+    // Reset work hours range
+    const workHoursMinInput = document.getElementById('filterWorkHoursMin');
+    const workHoursMaxInput = document.getElementById('filterWorkHoursMax');
+    const workHoursMinSlider = document.getElementById('filterWorkHoursMinSlider');
+    const workHoursMaxSlider = document.getElementById('filterWorkHoursMaxSlider');
+    
+    if (workHoursMinInput) workHoursMinInput.value = 0;
+    if (workHoursMaxInput) workHoursMaxInput.value = 24;
+    if (workHoursMinSlider) workHoursMinSlider.value = 0;
+    if (workHoursMaxSlider) workHoursMaxSlider.value = 24;
+    
+    // Reset search
+    const searchInput = document.getElementById('filterSearch');
+    if (searchInput) searchInput.value = '';
+    
+    // Reset filter object
+    filters = {
+        dateFrom: null,
+        dateTo: null,
+        loadMin: 1,
+        loadMax: 10,
+        qualityMin: 1,
+        qualityMax: 10,
+        sleepHoursMin: 0,
+        sleepHoursMax: 24,
+        workHoursMin: 0,
+        workHoursMax: 24,
+        searchText: ''
+    };
+    
+    const indicator = document.getElementById('activeFilterIndicator');
+    if (indicator) indicator.style.display = 'none';
+    
+    const activeFiltersDiv = document.getElementById('activeFilters');
+    if (activeFiltersDiv) activeFiltersDiv.innerHTML = '';
+    
+    updateFilteredEntriesList();
+}
+
+// Update active filters display
+function updateActiveFiltersDisplay() {
+    const activeFiltersDiv = document.getElementById('activeFilters');
+    const indicator = document.getElementById('activeFilterIndicator');
+    
+    if (!activeFiltersDiv || !indicator) return;
+    
+    let activeFiltersHtml = '<i class="fas fa-filter"></i> Active Filters: ';
+    let hasActiveFilters = false;
+    
+    if (filters.dateFrom) {
+        activeFiltersHtml += `<span class="filter-badge">Date from: ${new Date(filters.dateFrom).toLocaleDateString()} <i class="fas fa-times" onclick="removeFilter('dateFrom')"></i></span>`;
+        hasActiveFilters = true;
+    }
+    
+    if (filters.dateTo) {
+        activeFiltersHtml += `<span class="filter-badge">Date to: ${new Date(filters.dateTo).toLocaleDateString()} <i class="fas fa-times" onclick="removeFilter('dateTo')"></i></span>`;
+        hasActiveFilters = true;
+    }
+    
+    if (filters.loadMin > 1 || filters.loadMax < 10) {
+        activeFiltersHtml += `<span class="filter-badge">Load: ${filters.loadMin}-${filters.loadMax} <i class="fas fa-times" onclick="removeFilter('load')"></i></span>`;
+        hasActiveFilters = true;
+    }
+    
+    if (filters.qualityMin > 1 || filters.qualityMax < 10) {
+        activeFiltersHtml += `<span class="filter-badge">Quality: ${filters.qualityMin}-${filters.qualityMax} <i class="fas fa-times" onclick="removeFilter('quality')"></i></span>`;
+        hasActiveFilters = true;
+    }
+    
+    if (filters.sleepHoursMin > 0 || filters.sleepHoursMax < 24) {
+        activeFiltersHtml += `<span class="filter-badge">Sleep Hours: ${filters.sleepHoursMin}-${filters.sleepHoursMax} <i class="fas fa-times" onclick="removeFilter('sleepHours')"></i></span>`;
+        hasActiveFilters = true;
+    }
+    
+    if (filters.workHoursMin > 0 || filters.workHoursMax < 24) {
+        activeFiltersHtml += `<span class="filter-badge">Work Hours: ${filters.workHoursMin}-${filters.workHoursMax} <i class="fas fa-times" onclick="removeFilter('workHours')"></i></span>`;
+        hasActiveFilters = true;
+    }
+    
+    if (filters.searchText) {
+        activeFiltersHtml += `<span class="filter-badge">Search: "${filters.searchText}" <i class="fas fa-times" onclick="removeFilter('search')"></i></span>`;
+        hasActiveFilters = true;
+    }
+    
+    if (hasActiveFilters) {
+        activeFiltersDiv.innerHTML = activeFiltersHtml;
+        indicator.style.display = 'inline-flex';
+    } else {
+        activeFiltersDiv.innerHTML = '<i class="fas fa-info-circle"></i> No active filters';
+        indicator.style.display = 'none';
+    }
+}
+
+// Remove specific filter
+function removeFilter(filterType) {
+    switch(filterType) {
+        case 'dateFrom':
+            const dateFromInput = document.getElementById('filterDateFrom');
+            if (dateFromInput) dateFromInput.value = '';
+            filters.dateFrom = null;
+            break;
+        case 'dateTo':
+            const dateToInput = document.getElementById('filterDateTo');
+            if (dateToInput) dateToInput.value = '';
+            filters.dateTo = null;
+            break;
+        case 'load':
+            const loadMinInput = document.getElementById('filterLoadMin');
+            const loadMaxInput = document.getElementById('filterLoadMax');
+            const loadMinSlider = document.getElementById('filterLoadMinSlider');
+            const loadMaxSlider = document.getElementById('filterLoadMaxSlider');
+            
+            if (loadMinInput) loadMinInput.value = 1;
+            if (loadMaxInput) loadMaxInput.value = 10;
+            if (loadMinSlider) loadMinSlider.value = 1;
+            if (loadMaxSlider) loadMaxSlider.value = 10;
+            
+            filters.loadMin = 1;
+            filters.loadMax = 10;
+            break;
+        case 'quality':
+            const qualityMinInput = document.getElementById('filterQualityMin');
+            const qualityMaxInput = document.getElementById('filterQualityMax');
+            const qualityMinSlider = document.getElementById('filterQualityMinSlider');
+            const qualityMaxSlider = document.getElementById('filterQualityMaxSlider');
+            
+            if (qualityMinInput) qualityMinInput.value = 1;
+            if (qualityMaxInput) qualityMaxInput.value = 10;
+            if (qualityMinSlider) qualityMinSlider.value = 1;
+            if (qualityMaxSlider) qualityMaxSlider.value = 10;
+            
+            filters.qualityMin = 1;
+            filters.qualityMax = 10;
+            break;
+        case 'sleepHours':
+            const sleepHoursMinInput = document.getElementById('filterSleepHoursMin');
+            const sleepHoursMaxInput = document.getElementById('filterSleepHoursMax');
+            const sleepHoursMinSlider = document.getElementById('filterSleepHoursMinSlider');
+            const sleepHoursMaxSlider = document.getElementById('filterSleepHoursMaxSlider');
+            
+            if (sleepHoursMinInput) sleepHoursMinInput.value = 0;
+            if (sleepHoursMaxInput) sleepHoursMaxInput.value = 24;
+            if (sleepHoursMinSlider) sleepHoursMinSlider.value = 0;
+            if (sleepHoursMaxSlider) sleepHoursMaxSlider.value = 24;
+            
+            filters.sleepHoursMin = 0;
+            filters.sleepHoursMax = 24;
+            break;
+        case 'workHours':
+            const workHoursMinInput = document.getElementById('filterWorkHoursMin');
+            const workHoursMaxInput = document.getElementById('filterWorkHoursMax');
+            const workHoursMinSlider = document.getElementById('filterWorkHoursMinSlider');
+            const workHoursMaxSlider = document.getElementById('filterWorkHoursMaxSlider');
+            
+            if (workHoursMinInput) workHoursMinInput.value = 0;
+            if (workHoursMaxInput) workHoursMaxInput.value = 24;
+            if (workHoursMinSlider) workHoursMinSlider.value = 0;
+            if (workHoursMaxSlider) workHoursMaxSlider.value = 24;
+            
+            filters.workHoursMin = 0;
+            filters.workHoursMax = 24;
+            break;
+        case 'search':
+            const searchInput = document.getElementById('filterSearch');
+            if (searchInput) searchInput.value = '';
+            filters.searchText = '';
+            break;
+    }
+    
+    applyFilters();
+}
+
+// Filter entries based on current filters
+function filterEntries(entriesToFilter = entries) {
+    return entriesToFilter.filter(entry => {
+        // Date range filter
+        if (filters.dateFrom && new Date(entry.date) < new Date(filters.dateFrom)) {
+            return false;
+        }
+        if (filters.dateTo) {
+            const entryDate = new Date(entry.date);
+            const filterDateTo = new Date(filters.dateTo);
+            filterDateTo.setHours(23, 59, 59, 999); // Include the entire end date
+            if (entryDate > filterDateTo) {
+                return false;
+            }
+        }
+        
+        // Cognitive load range
+        if (entry.cognitiveLoad < filters.loadMin || entry.cognitiveLoad > filters.loadMax) {
+            return false;
+        }
+        
+        // Sleep quality range
+        if (entry.sleepQuality < filters.qualityMin || entry.sleepQuality > filters.qualityMax) {
+            return false;
+        }
+        
+        // Sleep hours range
+        if (entry.sleepHours < filters.sleepHoursMin || entry.sleepHours > filters.sleepHoursMax) {
+            return false;
+        }
+        
+        // Work hours range
+        if (entry.workHours < filters.workHoursMin || entry.workHours > filters.workHoursMax) {
+            return false;
+        }
+        
+        // Text search in notes
+        if (filters.searchText) {
+            const workNotesMatch = entry.workNotes && entry.workNotes.toLowerCase().includes(filters.searchText);
+            const sleepNotesMatch = entry.sleepNotes && entry.sleepNotes.toLowerCase().includes(filters.searchText);
+            if (!workNotesMatch && !sleepNotesMatch) {
+                return false;
+            }
+        }
+        
+        return true;
+    });
+}
+
+// Update entries list with filters
+function updateFilteredEntriesList() {
     const entriesList = document.getElementById('entriesList');
     if (!entriesList) return;
     
+    const filteredEntries = filterEntries();
+    const filteredCount = filteredEntries.length;
+    const totalCount = entries.length;
+    
+    if (filteredEntries.length === 0) {
+        entriesList.innerHTML = `
+            <div class="no-filter-results">
+                <i class="fas fa-filter"></i>
+                <p>No entries match your filters</p>
+                <button onclick="resetFilters()">Clear Filters</button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show last 7 filtered entries
+    const recentFilteredEntries = filteredEntries.slice(-7).reverse();
+    
     entriesList.innerHTML = '';
-
-    // Show last 7 entries
-    const recentEntries = entries.slice(-7).reverse();
-
-    recentEntries.forEach(entry => {
+    
+    // Add filter summary
+    const summaryDiv = document.createElement('div');
+    summaryDiv.className = 'filter-stats';
+    summaryDiv.innerHTML = `
+        <i class="fas fa-list"></i> Showing ${filteredCount} of ${totalCount} entries
+        ${filteredCount !== totalCount ? '(filtered)' : ''}
+    `;
+    entriesList.appendChild(summaryDiv);
+    
+    recentFilteredEntries.forEach(entry => {
         const entryDiv = document.createElement('div');
         entryDiv.className = 'entry-item';
-
+        
+        // Add highlight class if entry matches search
+        if (filters.searchText && (
+            (entry.workNotes && entry.workNotes.toLowerCase().includes(filters.searchText)) ||
+            (entry.sleepNotes && entry.sleepNotes.toLowerCase().includes(filters.searchText))
+        )) {
+            entryDiv.classList.add('filtered-match');
+        }
+        
         const workLoadClass = entry.cognitiveLoad >= 8 ? 'work-high' :
                             entry.cognitiveLoad >= 5 ? 'work-medium' : 'work-low';
         const sleepQualityClass = entry.sleepQuality >= 8 ? 'sleep-high' :
                                 entry.sleepQuality >= 5 ? 'sleep-medium' : 'sleep-low';
-
+        
+        // Highlight search text in notes
+        let workNotesHtml = entry.workNotes || '';
+        let sleepNotesHtml = entry.sleepNotes || '';
+        
+        if (filters.searchText) {
+            const regex = new RegExp(`(${filters.searchText})`, 'gi');
+            workNotesHtml = workNotesHtml.replace(regex, '<mark>$1</mark>');
+            sleepNotesHtml = sleepNotesHtml.replace(regex, '<mark>$1</mark>');
+        }
+        
         entryDiv.innerHTML = `
             <div class="entry-date">${new Date(entry.date).toLocaleDateString()}</div>
-
+            
             <div class="work-data">
                 <h4>Work</h4>
                 <div class="work-metric">
@@ -338,7 +1089,7 @@ function updateEntriesList() {
                     <span class="metric-value ${workLoadClass}">${entry.cognitiveLoad}/10</span>
                 </div>
             </div>
-
+            
             <div class="sleep-data">
                 <h4>Sleep</h4>
                 <div class="sleep-metric">
@@ -350,19 +1101,24 @@ function updateEntriesList() {
                     <span class="metric-value ${sleepQualityClass}">${entry.sleepQuality}/10</span>
                 </div>
             </div>
-
+            
             ${(entry.workNotes || entry.sleepNotes) ? `
             <div class="entry-notes">
-                ${entry.workNotes ? `<div><strong>Work Notes:</strong> ${entry.workNotes}</div>` : ''}
-                ${entry.sleepNotes ? `<div><strong>Sleep Notes:</strong> ${entry.sleepNotes}</div>` : ''}
+                ${entry.workNotes ? `<div><strong>Work Notes:</strong> ${workNotesHtml}</div>` : ''}
+                ${entry.sleepNotes ? `<div><strong>Sleep Notes:</strong> ${sleepNotesHtml}</div>` : ''}
             </div>
             ` : ''}
-
+            
             <button class="delete-btn" onclick="deleteEntry(${entry.id})">Delete</button>
         `;
-
+        
         entriesList.appendChild(entryDiv);
     });
+}
+
+// Override the original updateEntriesList to use filtered version
+function updateEntriesList() {
+    updateFilteredEntriesList();
 }
 
 function deleteEntry(id) {
@@ -483,13 +1239,28 @@ function logEntry() {
 }
 
 function resetForm() {
-    document.getElementById('logDate').value = '';
-    document.getElementById('workHours').value = '';
-    document.getElementById('cognitiveLoad').value = 5;
-    document.getElementById('sleepHours').value = '';
-    document.getElementById('sleepQuality').value = 7;
-    document.getElementById('workNotes').value = '';
-    document.getElementById('sleepNotes').value = '';
+    const dateInput = document.getElementById('logDate');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+    
+    const workHoursInput = document.getElementById('workHours');
+    if (workHoursInput) workHoursInput.value = '';
+    
+    const cognitiveLoadInput = document.getElementById('cognitiveLoad');
+    if (cognitiveLoadInput) cognitiveLoadInput.value = 5;
+    
+    const sleepHoursInput = document.getElementById('sleepHours');
+    if (sleepHoursInput) sleepHoursInput.value = '';
+    
+    const sleepQualityInput = document.getElementById('sleepQuality');
+    if (sleepQualityInput) sleepQualityInput.value = 7;
+    
+    const workNotes = document.getElementById('workNotes');
+    const sleepNotes = document.getElementById('sleepNotes');
+    if (workNotes) workNotes.value = '';
+    if (sleepNotes) sleepNotes.value = '';
     
     updateLoadValue();
     updateQualityValue();
@@ -510,6 +1281,8 @@ function resetForm() {
 
 function updateSleepGoal() {
     const goalInput = document.getElementById('sleepGoal');
+    if (!goalInput) return;
+    
     const newGoal = parseFloat(goalInput.value);
     
     if (isNaN(newGoal) || newGoal < 4 || newGoal > 12) {
@@ -700,3 +1473,16 @@ window.logEntry = logEntry;
 window.deleteEntry = deleteEntry;
 window.resetForm = resetForm;
 window.updateSleepGoal = updateSleepGoal;
+window.toggleFilters = toggleFilters;
+window.toggleFilterPanel = toggleFilterPanel;
+window.syncLoadMin = syncLoadMin;
+window.syncLoadMax = syncLoadMax;
+window.syncQualityMin = syncQualityMin;
+window.syncQualityMax = syncQualityMax;
+window.syncSleepHoursMin = syncSleepHoursMin;
+window.syncSleepHoursMax = syncSleepHoursMax;
+window.syncWorkHoursMin = syncWorkHoursMin;
+window.syncWorkHoursMax = syncWorkHoursMax;
+window.applyFilters = applyFilters;
+window.resetFilters = resetFilters;
+window.removeFilter = removeFilter;
