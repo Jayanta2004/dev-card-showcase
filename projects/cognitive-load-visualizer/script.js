@@ -47,6 +47,21 @@ const queueLoad = document.getElementById("queueLoad");
 let cognitiveLoad = 0;
 let OVERLOAD_THRESHOLD = 70;
 
+const DECAY_CONFIG = {
+  baseDecayRate: 0.5,
+  logFactor: 2,
+  fatigueRate: 0.1,
+  fatigueDecayRate: 0.01,
+  refractoryPeriod: 5,
+  refractoryPenalty: 0.3
+};
+
+let fatigueFactor = 0;
+let overloadTimestamp = null;
+let taskHistory = [];
+const MAX_TASK_HISTORY = 10;
+let lastUpdateTime = Date.now();
+
 let zones = {
   optimal: { max: 50, color: '#22c55e' },
   moderate: { min: 50, max: 70, color: '#eab308' },
@@ -185,10 +200,10 @@ let isProcessing = false;
 const TASK_DURATION = 3000; 
 
 const TaskTypes = {
-  LIGHT: { load: 10, color: 'light', label: 'L', name: 'Light' },
-  MEDIUM: { load: 20, color: 'medium', label: 'M', name: 'Medium' },
-  HEAVY: { load: 30, color: 'heavy', label: 'H', name: 'Heavy' },
-  INTERRUPT: { load: 25, color: 'interrupt', label: 'I', name: 'Interrupt' }
+  LIGHT: { load: 10, color: 'light', label: 'L', name: 'Light', fatigueMultiplier: 0.8 },
+  MEDIUM: { load: 20, color: 'medium', label: 'M', name: 'Medium', fatigueMultiplier: 1.0 },
+  HEAVY: { load: 30, color: 'heavy', label: 'H', name: 'Heavy', fatigueMultiplier: 1.5 },
+  INTERRUPT: { load: 25, color: 'interrupt', label: 'I', name: 'Interrupt', fatigueMultiplier: 1.3 }
 };
 
 class Task {
@@ -196,6 +211,7 @@ class Task {
     this.id = Date.now() + Math.random();
     this.type = type;
     this.loadValue = loadValue;
+    this.fatigueMultiplier = TaskTypes[type].fatigueMultiplier;
     this.color = this.getColorClass(type);
     this.label = this.getLabel(type);
     this.createdAt = Date.now();
@@ -221,6 +237,67 @@ class Task {
       default: return '?';
     }
   }
+}
+
+function updateCognitiveDecay() {
+  const now = Date.now();
+  const deltaTime = (now - lastUpdateTime) / 1000; 
+  
+  if (deltaTime <= 0) return;
+  
+  const loadFactor = 1 - (cognitiveLoad / 200); 
+  const baseRecovery = DECAY_CONFIG.baseDecayRate * loadFactor * deltaTime;
+  
+  const logRecovery = baseRecovery * (1 + DECAY_CONFIG.logFactor * (1 - cognitiveLoad / 100));
+  
+  let refractoryMultiplier = 1;
+  if (overloadTimestamp) {
+    const timeSinceOverload = (now - overloadTimestamp) / 1000;
+    if (timeSinceOverload < DECAY_CONFIG.refractoryPeriod) {
+      refractoryMultiplier = DECAY_CONFIG.refractoryPenalty;
+    } else {
+      overloadTimestamp = null;
+    }
+  }
+  
+  const fatigueMultiplier = 1 / (1 + fatigueFactor);
+  
+  let recoveryAmount = logRecovery * refractoryMultiplier * fatigueMultiplier;
+  
+  cognitiveLoad = Math.max(0, cognitiveLoad - recoveryAmount);
+  
+  fatigueFactor = Math.max(0, fatigueFactor - DECAY_CONFIG.fatigueDecayRate * deltaTime);
+  
+  lastUpdateTime = now;
+}
+
+function updateTaskHistory(taskType) {
+  taskHistory.push({
+    type: taskType,
+    timestamp: Date.now(),
+    multiplier: TaskTypes[taskType].fatigueMultiplier
+  });
+  
+  if (taskHistory.length > MAX_TASK_HISTORY) {
+    taskHistory.shift();
+  }
+  
+  const now = Date.now();
+  const RECENCY_WINDOW = 60000; 
+  
+  const taskCounts = {};
+  taskHistory.forEach(task => {
+    if (now - task.timestamp < RECENCY_WINDOW) {
+      taskCounts[task.type] = (taskCounts[task.type] || 0) + 1;
+    }
+  });
+  
+  fatigueFactor = 0;
+  Object.values(taskCounts).forEach(count => {
+    fatigueFactor += count * DECAY_CONFIG.fatigueRate;
+  });
+  
+  fatigueFactor = Math.min(2, fatigueFactor);
 }
 
 function addTask(type) {
@@ -279,7 +356,16 @@ function processNextTask() {
     taskElement.classList.add('processing');
   }
 
-  cognitiveLoad += currentTask.loadValue;
+  updateTaskHistory(currentTask.type);
+  
+  const effectiveLoad = currentTask.loadValue * (1 + fatigueFactor * 0.2);
+  cognitiveLoad += effectiveLoad;
+  
+  if (cognitiveLoad >= OVERLOAD_THRESHOLD && !overloadTimestamp) {
+    overloadTimestamp = Date.now();
+    statusText.textContent = "🚨 Cognitive overload! Refractory period started.";
+  }
+  
   updateUI();
 
   let timeLeft = TASK_DURATION / 1000;
@@ -302,7 +388,7 @@ function processNextTask() {
     setTimeout(() => {
       tasks.shift(); 
       
-      cognitiveLoad = Math.max(0, cognitiveLoad - currentTask.loadValue * 0.9);
+      cognitiveLoad = Math.max(0, cognitiveLoad - currentTask.loadValue * 0.7);
       
       renderTaskQueue();
       updateTotalLoad();
@@ -455,9 +541,13 @@ function drawGraph() {
 }
 
 function updateUI() {
+  updateCognitiveDecay();
+  
   cognitiveLoad = Math.max(0, Math.min(100, cognitiveLoad));
   meterFill.style.width = `${cognitiveLoad}%`;
-  loadValue.textContent = `Load: ${Math.round(cognitiveLoad)}%`;
+  
+  const fatiguePercent = Math.round(fatigueFactor * 50);
+  loadValue.textContent = `Load: ${Math.round(cognitiveLoad)}% ${fatigueFactor > 0 ? `(Fatigue: ${fatiguePercent}%)` : ''}`;
 
   const zone = getCurrentZone(cognitiveLoad);
   const zoneColor = getZoneColor(cognitiveLoad);
@@ -465,15 +555,24 @@ function updateUI() {
   meterFill.style.background = zoneColor;
   
   if (zone === 'optimal') {
-    statusText.textContent = "✅ System optimal";
+    if (fatigueFactor > 0.5) {
+      statusText.textContent = "✅ System stable but fatigue accumulating";
+    } else {
+      statusText.textContent = "✅ System optimal";
+    }
     app.classList.remove("overloaded");
     app.classList.remove("moderate");
   } else if (zone === 'moderate') {
-    statusText.textContent = "⚠️ Moderate load - maintain focus";
+    statusText.textContent = `⚠️ Moderate load ${fatigueFactor > 1 ? '- high fatigue' : '- maintain focus'}`;
     app.classList.remove("overloaded");
     app.classList.add("moderate");
   } else {
-    statusText.textContent = "🚨 Cognitive overload detected";
+    if (overloadTimestamp) {
+      const timeLeft = Math.ceil(DECAY_CONFIG.refractoryPeriod - ((Date.now() - overloadTimestamp) / 1000));
+      statusText.textContent = `🚨 Cognitive overload - Refractory: ${timeLeft}s`;
+    } else {
+      statusText.textContent = "🚨 Cognitive overload detected";
+    }
     app.classList.add("overloaded");
     app.classList.remove("moderate");
   }
@@ -537,6 +636,9 @@ function handleKeyPress(event) {
       cognitiveLoad = 0;
       tasks = [];
       isProcessing = false;
+      fatigueFactor = 0;
+      overloadTimestamp = null;
+      taskHistory = [];
       app.classList.remove("overloaded");
       app.classList.remove("moderate");
       statusText.textContent = "🔄 System reset";
@@ -569,6 +671,9 @@ resetBtn.addEventListener("click", () => {
   cognitiveLoad = 0;
   tasks = [];
   isProcessing = false;
+  fatigueFactor = 0;
+  overloadTimestamp = null;
+  taskHistory = [];
   app.classList.remove("overloaded");
   app.classList.remove("moderate");
   statusText.textContent = "🔄 System reset";
@@ -627,12 +732,23 @@ resetDefaults.addEventListener("click", resetToDefaults);
 
 document.addEventListener('keydown', handleKeyPress);
 
-loadPreferences();
+function animationLoop() {
+  updateUI();
+  requestAnimationFrame(animationLoop);
+}
 
-console.log('Task Queue System initialized with customizable zones');
-console.log('Tasks take 3 seconds to complete');
-console.log('Interrupts jump to front of queue');
+loadPreferences();
+lastUpdateTime = Date.now();
+
+console.log('🧠 Cognitive Load Visualizer with Advanced Decay Model');
+console.log('Features:');
+console.log('- Logarithmic recovery curve');
+console.log('- Load-dependent recovery rate');
+console.log('- Mental fatigue accumulation');
+console.log('- Refractory period after overload');
+console.log('- Task history tracking');
 
 // Initial render
 renderTaskQueue();
 updateUI();
+animationLoop();
