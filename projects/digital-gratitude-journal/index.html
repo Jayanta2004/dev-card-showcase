@@ -4,135 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Gratitude Journal</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f7f9fb; margin: 0; }
-        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(126,87,194,0.12); padding: 36px 28px; }
-        h1, h2 { color: #7e57c2; text-align: center; }
-        nav { display: flex; justify-content: center; gap: 16px; margin-bottom: 24px; }
-        nav button { background: linear-gradient(90deg, #7e57c2 60%, #5bc0be 100%); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 1.05rem; cursor: pointer; font-weight: 500; box-shadow: 0 2px 8px rgba(126,87,194,0.08); transition: background 0.2s; }
-        nav button.active, nav button:hover { background: #3a506b; }
-        section { display: none; margin-top: 22px; background: #f3e5f5; border-radius: 12px; padding: 18px 16px; box-shadow: 0 2px 8px rgba(126,87,194,0.07); }
-        section.active { display: block; }
-        .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(126,87,194,0.08); padding: 14px 12px; margin-bottom: 14px; }
-        label { display: block; margin: 8px 0 4px; }
-        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #cfd8dc; border-radius: 6px; font-size: 1rem; margin-bottom: 10px; }
-        button[type="submit"] { background: #7e57c2; color: #fff; border: none; border-radius: 6px; padding: 10px 24px; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; }
-        button[type="submit"]:hover { background: #5e35b1; }
-        .grat-list { list-style: none; padding: 0; }
-        .grat-list li { background: #ede7f6; border-radius: 8px; margin-bottom: 10px; padding: 10px 12px; }
-        .tag { display: inline-block; background: #7e57c2; color: #fff; border-radius: 4px; padding: 2px 8px; font-size: 0.9em; margin-right: 6px; }
-        .success { color: #388e3c; text-align: center; margin: 10px 0; }
-        .error { color: #d32f2f; text-align: center; margin: 10px 0; }
-        .mood { font-size: 1.2em; margin-right: 8px; }
-        .share-btn { background: #5bc0be; color: #fff; border: none; border-radius: 6px; padding: 6px 16px; cursor: pointer; float: right; }
-        .share-btn:hover { background: #3a506b; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <h1>Digital Gratitude Journal</h1>
-        <nav>
-            <button id="navJournal" class="active">Journal</button>
-            <button id="navHistory">History</button>
-            <button id="navPrompts">Prompts</button>
-        </nav>
-        <section id="journalSection" class="active">
-            <h2>Today's Gratitude</h2>
-            <form id="gratForm" class="card">
-                <label>What are you grateful for today?</label>
-                <textarea id="gratText" rows="3" maxlength="300" required></textarea>
-                <label>Your Mood:</label>
-                <select id="gratMood" required>
-                    <option value="">Select Mood</option>
-                    <option value="😊">Happy</option>
-                    <option value="😌">Calm</option>
-                    <option value="😔">Reflective</option>
-                    <option value="😃">Excited</option>
-                    <option value="😢">Sad</option>
-                    <option value="😇">Thankful</option>
-                </select>
-                <button type="submit">Add Entry</button>
-            </form>
-            <div id="gratStatus"></div>
-        </section>
-        <section id="historySection">
-            <h2>Gratitude History</h2>
-            <ul id="gratList" class="grat-list"></ul>
-        </section>
-        <section id="promptsSection">
-            <h2>Gratitude Prompts</h2>
-            <div class="card" id="promptBox"></div>
-            <button id="newPromptBtn" type="button">Show Another Prompt</button>
-        </section>
+        <form id="gratitude-form">
+            <textarea id="entry" placeholder="What are you grateful for today?" required></textarea>
+            <button type="submit">Add Entry</button>
+        </form>
+        <div id="entries">
+            <h2>Your Entries</h2>
+            <ul id="entry-list"></ul>
+        </div>
+        <div id="trend">
+            <h2>Positivity Trend</h2>
+            <canvas id="trend-chart"></canvas>
+        </div>
+        <button id="share-btn">Share Latest Entry</button>
     </div>
-    <script>
-        // Navigation
-        const navJournal = document.getElementById('navJournal');
-        const navHistory = document.getElementById('navHistory');
-        const navPrompts = document.getElementById('navPrompts');
-        const journalSection = document.getElementById('journalSection');
-        const historySection = document.getElementById('historySection');
-        const promptsSection = document.getElementById('promptsSection');
-        function showSection(section) {
-            [journalSection, historySection, promptsSection].forEach(s => s.classList.remove('active'));
-            section.classList.add('active');
-            [navJournal, navHistory, navPrompts].forEach(b => b.classList.remove('active'));
-            if(section===journalSection) navJournal.classList.add('active');
-            if(section===historySection) navHistory.classList.add('active');
-            if(section===promptsSection) navPrompts.classList.add('active');
-        }
-        navJournal.onclick = () => showSection(journalSection);
-        navHistory.onclick = () => showSection(historySection);
-        navPrompts.onclick = () => showSection(promptsSection);
-        // Gratitude logic
-        const gratForm = document.getElementById('gratForm');
-        const gratText = document.getElementById('gratText');
-        const gratMood = document.getElementById('gratMood');
-        const gratStatus = document.getElementById('gratStatus');
-        const gratList = document.getElementById('gratList');
-        let entries = JSON.parse(localStorage.getItem('gratJournalEntries')||'[]');
-        function renderEntries() {
-            gratList.innerHTML = '';
-            entries.slice().reverse().forEach((e,i) => {
-                const li = document.createElement('li');
-                li.innerHTML = `<span class="mood">${e.mood}</span> ${e.text}<br><span class="tag">${e.date}</span> <button class="share-btn" onclick="navigator.clipboard.writeText('Today I am grateful for: '+${JSON.stringify(e.text)})">Share</button>`;
-                gratList.appendChild(li);
-            });
-        }
-        gratForm.onsubmit = e => {
-            e.preventDefault();
-            const text = gratText.value.trim();
-            const mood = gratMood.value;
-            if(!text||!mood) { gratStatus.innerHTML = '<div class="error">Please enter your gratitude and mood.</div>'; return; }
-            const date = new Date().toLocaleDateString();
-            entries.push({text, mood, date});
-            localStorage.setItem('gratJournalEntries',JSON.stringify(entries));
-            gratStatus.innerHTML = '<div class="success">Entry added!</div>';
-            gratForm.reset();
-            renderEntries();
-        };
-        renderEntries();
-        // Prompts
-        const prompts = [
-            "What made you smile today?",
-            "Who is someone you're grateful for?",
-            "Describe a small act of kindness you received.",
-            "What is something beautiful you saw today?",
-            "Recall a challenge you overcame recently.",
-            "What is a favorite memory you cherish?",
-            "Name a skill or talent you appreciate in yourself.",
-            "What comforts you on a tough day?",
-            "What opportunity are you thankful for?",
-            "What is something you often take for granted?"
-        ];
-        const promptBox = document.getElementById('promptBox');
-        const newPromptBtn = document.getElementById('newPromptBtn');
-        function showPrompt() {
-            const idx = Math.floor(Math.random()*prompts.length);
-            promptBox.textContent = prompts[idx];
-        }
-        newPromptBtn.onclick = showPrompt;
-        showPrompt();
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>

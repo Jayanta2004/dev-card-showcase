@@ -2183,11 +2183,17 @@ function createProjectCard(project, index) {
 }
 
 async function loadProjects() {
+    console.log('Loading projects...');
     try {
         const response = await fetch('projects.json');
         let fetchedProjects = [];
         if (response.ok) {
-            fetchedProjects = await response.json();
+            const jsonData = await response.json();
+            // Handle both array format and object with projects property
+            fetchedProjects = Array.isArray(jsonData) ? jsonData : (jsonData.projects || []);
+            console.log('Fetched projects:', fetchedProjects.length);
+        } else {
+            console.log('Failed to fetch projects.json, status:', response.status);
         }
 
         // Combine and deduplicate
@@ -2196,6 +2202,8 @@ async function loadProjects() {
             .filter(p => p && p.title)
             .map(p => [p.title, p]))
             .values());
+
+        console.log('Total projects loaded:', allProjectsData.length);
 
         // Initial set of filtered projects is all projects
         filteredProjects = [...allProjectsData];
@@ -2209,10 +2217,13 @@ async function loadProjects() {
         renderProjects();
     } catch (error) {
         console.error("Error loading projects:", error);
-        const container = document.getElementById("projectsContainer");
-        if (container) {
-            container.innerHTML = '<div class="loading">Error loading projects. Please refresh the page.</div>';
-        }
+        // Fallback to static projects only
+        allProjectsData = [...staticProjects];
+        filteredProjects = [...allProjectsData];
+        console.log('Using static projects only:', allProjectsData.length);
+        populateContributorFilter();
+        sortProjects("az");
+        renderProjects();
     }
 }
 
@@ -2253,8 +2264,12 @@ function populateContributorFilter() {
 
 function renderProjects() {
     const container = document.getElementById("projectsContainer");
-    if (!container) return;
+    if (!container) {
+        console.error('Projects container not found!');
+        return;
+    }
 
+    console.log('Rendering projects:', filteredProjects.length);
     container.innerHTML = "";
     projectCards = [];
 
@@ -2265,6 +2280,7 @@ function renderProjects() {
     if (projectsToShow.length === 0) {
         const emptyState = document.getElementById("noProjectsState");
         if (emptyState) emptyState.classList.add("visible");
+        container.innerHTML = '<div class="loading">No projects found. Please check the console for errors.</div>';
     } else {
         const emptyState = document.getElementById("noProjectsState");
         if (emptyState) emptyState.classList.remove("visible");

@@ -16,7 +16,7 @@ function initializeSliders() {
     sliders.forEach(slider => {
         const element = document.getElementById(slider);
         const valueElement = document.getElementById(slider.replace('Level', 'Value').replace('Quality', 'Value').replace('Symptoms', 'Value'));
-
+        
         element.addEventListener('input', function() {
             valueElement.textContent = this.value;
         });
@@ -25,7 +25,7 @@ function initializeSliders() {
 
 document.getElementById('assessmentForm').addEventListener('submit', function(e) {
     e.preventDefault();
-
+    
     const assessment = {
         id: Date.now(),
         date: new Date().toISOString(),
@@ -37,25 +37,25 @@ document.getElementById('assessmentForm').addEventListener('submit', function(e)
         notes: document.getElementById('notes').value.trim(),
         stabilityScore: calculateStabilityScore()
     };
-
+    
     assessments.push(assessment);
-
+    
     // Keep only last 50 assessments
     if (assessments.length > 50) {
         assessments = assessments.slice(-50);
     }
-
+    
     localStorage.setItem('detoxAssessments', JSON.stringify(assessments));
-
+    
     // Reset form
     document.getElementById('assessmentForm').reset();
     initializeSliders();
-
+    
     updateStats();
     updateChart();
     updateHistory();
     updateCurrentScore();
-
+    
     alert('Assessment logged successfully!');
 });
 
@@ -65,14 +65,14 @@ function calculateStabilityScore() {
     const cravings = parseInt(document.getElementById('cravings').value);
     const sleep = parseInt(document.getElementById('sleepQuality').value);
     const symptoms = parseInt(document.getElementById('physicalSymptoms').value);
-
+    
     // Invert cravings and symptoms (lower is better)
     const invertedCravings = 11 - cravings;
     const invertedSymptoms = 11 - symptoms;
-
+    
     // Calculate weighted average (energy and mood weighted higher)
     const score = Math.round((energy * 0.25 + mood * 0.25 + invertedCravings * 0.2 + sleep * 0.15 + invertedSymptoms * 0.15) * 10);
-
+    
     return Math.min(100, Math.max(0, score));
 }
 
@@ -82,10 +82,10 @@ function updateCurrentScore() {
         document.getElementById('scoreInterpretation').textContent = 'No assessments logged yet';
         return;
     }
-
+    
     const latest = assessments[assessments.length - 1];
     document.getElementById('stabilityScore').textContent = latest.stabilityScore;
-
+    
     let interpretation = '';
     if (latest.stabilityScore >= 80) {
         interpretation = 'Excellent stability - Recovery progressing well!';
@@ -100,7 +100,7 @@ function updateCurrentScore() {
         interpretation = 'Low stability - Consider professional support';
         document.getElementById('stabilityScore').style.background = 'linear-gradient(135deg, #F44336, #C62828)';
     }
-
+    
     document.getElementById('scoreInterpretation').textContent = interpretation;
 }
 
@@ -112,16 +112,16 @@ function updateStats() {
         document.getElementById('recoveryDays').textContent = '0';
         return;
     }
-
+    
     const scores = assessments.map(a => a.stabilityScore);
     const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
     const best = Math.max(...scores);
-
+    
     // Calculate recovery days (consecutive days with assessments)
     const dates = assessments.map(a => new Date(a.date).toDateString());
     const uniqueDates = [...new Set(dates)];
     const recoveryDays = uniqueDates.length;
-
+    
     document.getElementById('avgStability').textContent = avg;
     document.getElementById('bestScore').textContent = best;
     document.getElementById('totalAssessments').textContent = assessments.length;
@@ -130,13 +130,13 @@ function updateStats() {
 
 function updateChart() {
     const ctx = document.getElementById('stabilityChart').getContext('2d');
-
+    
     // Sort assessments by date
     const sortedAssessments = assessments.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-
+    
     const labels = sortedAssessments.map(a => new Date(a.date).toLocaleDateString());
     const data = sortedAssessments.map(a => a.stabilityScore);
-
+    
     new Chart(ctx, {
         type: 'line',
         data: {
@@ -181,16 +181,16 @@ function updateChart() {
 function updateHistory() {
     const history = document.getElementById('assessmentsHistory');
     history.innerHTML = '';
-
+    
     // Show last 10 assessments
     const recentAssessments = assessments.slice(-10).reverse();
-
+    
     recentAssessments.forEach(assessment => {
         const item = document.createElement('div');
         item.className = 'session-entry';
-
+        
         const date = new Date(assessment.date).toLocaleString();
-
+        
         item.innerHTML = `
             <h4>${date}</h4>
             <p><strong>Stability Score:</strong> <span class="duration">${assessment.stabilityScore}/100</span></p>
@@ -198,7 +198,7 @@ function updateHistory() {
             <p><strong>Sleep:</strong> ${assessment.sleepQuality}/10 | <strong>Symptoms:</strong> ${assessment.physicalSymptoms}/10</p>
             ${assessment.notes ? '<p><strong>Notes:</strong> ' + assessment.notes + '</p>' : ''}
         `;
-
+        
         history.appendChild(item);
     });
 }

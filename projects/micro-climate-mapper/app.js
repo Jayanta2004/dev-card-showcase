@@ -1,78 +1,93 @@
-// Micro-Climate Mapper App
-// Stores weather data in localStorage and displays on map
+// Micro-Climate Mapper
+// Author: EWOC Contributors
+// Description: Crowdsource and visualize hyper-local weather and air quality data from users’ neighborhoods
 
-let map;
-let weatherData = [];
+const form = document.getElementById('dataForm');
+const confirmation = document.getElementById('confirmation');
+const mapDiv = document.getElementById('map');
+const submissionsDiv = document.getElementById('submissions');
 
-function loadData() {
-    const data = localStorage.getItem('microClimateData');
-    weatherData = data ? JSON.parse(data) : [];
+const STORAGE_KEY = 'microClimateData';
+
+function getData() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
 }
 
-function saveData() {
-    localStorage.setItem('microClimateData', JSON.stringify(weatherData));
+function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-function addWeatherRecord(record) {
-    weatherData.push(record);
-    saveData();
-    renderDataList();
-    renderMapMarkers();
-}
-
-function renderDataList() {
-    const list = document.getElementById('data-list');
-    list.innerHTML = '';
-    weatherData.forEach((rec, idx) => {
-        const li = document.createElement('li');
-        li.textContent = `Lat: ${rec.lat}, Lng: ${rec.lng}, Temp: ${rec.temp}°C, Humidity: ${rec.humidity}%, AQI: ${rec.aqi}, Time: ${rec.timestamp}`;
-        list.appendChild(li);
+function renderMap() {
+    const data = getData();
+    if (!data.length) {
+        mapDiv.innerHTML = '<em>No data points yet.</em>';
+        return;
+    }
+    // Group by location
+    const grouped = {};
+    data.forEach(d => {
+        if (!grouped[d.location]) grouped[d.location] = [];
+        grouped[d.location].push(d);
     });
+    mapDiv.innerHTML = Object.entries(grouped).map(([loc, arr]) => {
+        const avgTemp = (arr.reduce((s, d) => s + d.temperature, 0) / arr.length).toFixed(1);
+        const avgHum = (arr.reduce((s, d) => s + d.humidity, 0) / arr.length).toFixed(0);
+        const avgAqi = (arr.reduce((s, d) => s + d.aqi, 0) / arr.length).toFixed(0);
+        return `<div class="map-point">
+            <b>${escapeHtml(loc)}</b><br>
+            Temp: ${avgTemp}°C<br>
+            Humidity: ${avgHum}%<br>
+            AQI: ${avgAqi}
+        </div>`;
+    }).join('');
 }
 
-function renderMapMarkers() {
-    if (!map) return;
-    map.eachLayer(layer => {
-        if (layer instanceof L.Marker) map.removeLayer(layer);
-    });
-    weatherData.forEach(rec => {
-        const color = rec.aqi < 50 ? 'green' : rec.aqi < 100 ? 'orange' : 'red';
-        const marker = L.circleMarker([rec.lat, rec.lng], {
-            radius: 10,
-            color: color,
-            fillColor: color,
-            fillOpacity: 0.7
-        }).addTo(map);
-        marker.bindPopup(`Temp: ${rec.temp}°C<br>Humidity: ${rec.humidity}%<br>AQI: ${rec.aqi}<br>Time: ${rec.timestamp}`);
-    });
+function renderSubmissions() {
+    const data = getData();
+    if (!data.length) {
+        submissionsDiv.innerHTML = '<em>No submissions yet.</em>';
+        return;
+    }
+    submissionsDiv.innerHTML = data.slice().reverse().map(d =>
+        `<div class="submission-card">
+            <b>${escapeHtml(d.location)}</b> | ${d.temperature}°C, ${d.humidity}%, AQI ${d.aqi}<br>
+            <span style="color:#888;">${d.notes ? escapeHtml(d.notes) : ''}</span>
+        </div>`
+    ).join('');
 }
 
-function setupMap() {
-    map = L.map('map').setView([20, 77], 5);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-    renderMapMarkers();
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-function setupForm() {
-    const form = document.getElementById('weather-form');
-    form.addEventListener('submit', e => {
-        e.preventDefault();
-        const lat = parseFloat(document.getElementById('lat').value);
-        const lng = parseFloat(document.getElementById('lng').value);
-        const temp = parseFloat(document.getElementById('temp').value);
-        const humidity = parseFloat(document.getElementById('humidity').value);
-        const aqi = parseFloat(document.getElementById('aqi').value);
-        const timestamp = new Date().toLocaleString();
-        addWeatherRecord({ lat, lng, temp, humidity, aqi, timestamp });
-        form.reset();
-    });
-}
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const location = form.location.value.trim();
+    const temperature = parseFloat(form.temperature.value);
+    const humidity = parseFloat(form.humidity.value);
+    const aqi = parseInt(form.aqi.value);
+    const notes = form.notes.value.trim();
+    if (!location || isNaN(temperature) || isNaN(humidity) || isNaN(aqi)) return;
+    const data = getData();
+    data.push({ location, temperature, humidity, aqi, notes });
+    saveData(data);
+    confirmation.textContent = 'Data submitted!';
+    confirmation.classList.remove('hidden');
+    form.reset();
+    renderMap();
+    renderSubmissions();
+    setTimeout(() => confirmation.classList.add('hidden'), 2000);
+});
 
-window.onload = function() {
-    loadData();
-    setupMap();
-    setupForm();
-    renderDataList();
-};
+// Initial load
+renderMap();
+renderSubmissions();

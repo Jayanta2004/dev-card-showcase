@@ -1,95 +1,96 @@
-// Time Capsule Messenger JavaScript
-// Handles message scheduling, delivery, export/import, accessibility, and sharing
+// Virtual Time Capsule Messenger
+// Author: EWOC Contributors
+// Description: Users send messages to their future selves or friends, delivered on a chosen date.
 
-const messageForm = document.getElementById('message-form');
-const scheduledMessages = document.getElementById('scheduled-messages');
-const shareBtn = document.getElementById('share-btn');
-const shareLink = document.getElementById('share-link');
-let messages = [];
-let accessibilityEnabled = false;
+const form = document.getElementById('messageForm');
+const confirmation = document.getElementById('confirmation');
+const scheduledMessagesDiv = document.getElementById('scheduledMessages');
+const deliveredMessagesDiv = document.getElementById('deliveredMessages');
 
-messageForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const recipient = document.getElementById('recipient').value;
-    const content = document.getElementById('message-content').value;
-    const deliveryDate = document.getElementById('delivery-date').value;
-    if (recipient && content && deliveryDate) {
-        messages.push({ recipient, content, deliveryDate, delivered: false });
-        renderMessages();
-        messageForm.reset();
-    }
-});
+const STORAGE_KEY = 'timeCapsuleMessages';
+
+function getMessages() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+}
+
+function saveMessages(messages) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+}
 
 function renderMessages() {
-    scheduledMessages.innerHTML = '';
-    messages.forEach((msg, idx) => {
-        const div = document.createElement('div');
-        div.className = 'message-item';
-        div.innerHTML = `<strong>To:</strong> ${msg.recipient}<br><strong>Delivery:</strong> ${msg.deliveryDate}<br><strong>Message:</strong> ${msg.content}<br><strong>Status:</strong> ${msg.delivered ? 'Delivered' : 'Scheduled'}`;
-        scheduledMessages.appendChild(div);
-    });
-}
-
-function checkDelivery() {
+    const messages = getMessages();
     const today = new Date().toISOString().split('T')[0];
+    let scheduled = '';
+    let delivered = '';
     messages.forEach(msg => {
-        if (!msg.delivered && msg.deliveryDate <= today) {
-            msg.delivered = true;
+        if (msg.deliveryDate > today && !msg.delivered) {
+            scheduled += `<div class="message-card">
+                <div class="meta">To: <b>${escapeHtml(msg.recipient)}</b> | Deliver On: <b>${msg.deliveryDate}</b></div>
+                <div>${escapeHtml(msg.message)}</div>
+            </div>`;
+        } else {
+            delivered += `<div class="message-card">
+                <div class="meta">To: <b>${escapeHtml(msg.recipient)}</b> | Delivered: <span class="delivered">${msg.deliveryDate}</span></div>
+                <div>${escapeHtml(msg.message)}</div>
+            </div>`;
         }
     });
-    renderMessages();
+    scheduledMessagesDiv.innerHTML = scheduled || '<em>No scheduled messages.</em>';
+    deliveredMessagesDiv.innerHTML = delivered || '<em>No delivered messages yet.</em>';
 }
 
-setInterval(checkDelivery, 60000); // Check every minute
-
-// Export/import message data
-function exportMessages() {
-    const dataStr = JSON.stringify(messages);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'messages.json';
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function importMessages(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const imported = JSON.parse(e.target.result);
-            if (Array.isArray(imported)) {
-                messages = imported;
-                renderMessages();
-            }
-        } catch (err) {
-            alert('Invalid messages file.');
-        }
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
     };
-    reader.readAsText(file);
+    return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-// Accessibility features
-function toggleAccessibility() {
-    accessibilityEnabled = !accessibilityEnabled;
-    document.body.style.fontSize = accessibilityEnabled ? '20px' : '16px';
-    document.body.style.background = accessibilityEnabled ? '#fffbe6' : '#f5f7fa';
+function checkAndDeliverMessages() {
+    const messages = getMessages();
+    const today = new Date().toISOString().split('T')[0];
+    let updated = false;
+    messages.forEach(msg => {
+        if (msg.deliveryDate <= today && !msg.delivered) {
+            msg.delivered = true;
+            updated = true;
+        }
+    });
+    if (updated) saveMessages(messages);
 }
 
-// Sharing messenger
-shareBtn.addEventListener('click', function() {
-    const url = window.location.href;
-    shareLink.innerHTML = `<p>Share this link: <a href="${url}">${url}</a></p>`;
-});
-
-// UI event bindings
-document.addEventListener('DOMContentLoaded', () => {
-    const exportBtn = document.getElementById('export-btn');
-    const importInput = document.getElementById('import-input');
-    const accessibilityBtn = document.getElementById('accessibility-btn');
-    if (exportBtn) exportBtn.addEventListener('click', exportMessages);
-    if (importInput) importInput.addEventListener('change', e => importMessages(e.target.files[0]));
-    if (accessibilityBtn) accessibilityBtn.addEventListener('click', toggleAccessibility);
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const recipient = form.recipient.value.trim();
+    const message = form.message.value.trim();
+    const deliveryDate = form.deliveryDate.value;
+    if (!recipient || !message || !deliveryDate) return;
+    const messages = getMessages();
+    messages.push({
+        recipient,
+        message,
+        deliveryDate,
+        delivered: false
+    });
+    saveMessages(messages);
+    confirmation.textContent = `Message scheduled for ${deliveryDate}!`;
+    confirmation.classList.remove('hidden');
+    form.reset();
     renderMessages();
+    setTimeout(() => confirmation.classList.add('hidden'), 2500);
 });
+
+// Initial load
+checkAndDeliverMessages();
+renderMessages();
+
+// Optionally, check for delivery every minute (for demo)
+setInterval(() => {
+    checkAndDeliverMessages();
+    renderMessages();
+}, 60000);

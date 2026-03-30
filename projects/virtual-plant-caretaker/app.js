@@ -1,130 +1,149 @@
-// app.js - Virtual Plant Caretaker
-// LocalStorage keys: plants, lastCare
+// --- Diagnostics Placeholder ---
+if (diagnosticForm) {
+	diagnosticForm.addEventListener('submit', function(e) {
+		e.preventDefault();
+		const fileInput = document.getElementById('plant-photo');
+		if (!fileInput.files || fileInput.files.length === 0) {
+			diagnosticResult.innerHTML = '<em>Please upload a plant photo for analysis.</em>';
+			return;
+		}
+		const file = fileInput.files[0];
+		// Show image preview
+		const reader = new FileReader();
+		reader.onload = function(ev) {
+			diagnosticResult.innerHTML = `<img src="${ev.target.result}" alt="Plant photo" style="max-width:180px;max-height:120px;display:block;margin-bottom:10px;border-radius:8px;" />` +
+				'<em>Analyzing photo with AI...</em>';
+			setTimeout(() => {
+				diagnosticResult.innerHTML = `<img src="${ev.target.result}" alt="Plant photo" style="max-width:180px;max-height:120px;display:block;margin-bottom:10px;border-radius:8px;" />` +
+					'<b>AI Diagnostic Result:</b> Your plant looks healthy! (This is a placeholder. Real AI integration needed.)';
+			}, 2000);
+		};
+		reader.readAsDataURL(file);
+	});
+}
+// Entry point for Virtual Plant Caretaker
+// App logic for plant logging, reminders, and diagnostics
+
+// --- Data Model ---
 let plants = JSON.parse(localStorage.getItem('plants') || '[]');
-let lastCare = JSON.parse(localStorage.getItem('lastCare') || '{}');
 
-const addPlantForm = document.getElementById('add-plant-form');
-const plantNameInput = document.getElementById('plant-name');
-const plantTypeSelect = document.getElementById('plant-type');
-const gardenDiv = document.getElementById('garden');
-const enableRemindersBtn = document.getElementById('enable-reminders');
-const botanyInfoDiv = document.getElementById('botany-info');
+// --- UI Elements ---
+const plantForm = document.getElementById('plant-form');
+const plantsContent = document.getElementById('plants-content');
+const remindersContent = document.getElementById('reminders-content');
+const diagnosticForm = document.getElementById('diagnostic-form');
+const diagnosticResult = document.getElementById('diagnostic-result');
 
-const plantCareInfo = {
-    succulent: { water: 7, tip: 'Water once a week. Needs bright, indirect sunlight.' },
-    fern: { water: 3, tip: 'Keep soil moist. Likes humidity and indirect light.' },
-    cactus: { water: 14, tip: 'Water every 2 weeks. Needs lots of sunlight.' },
-    herb: { water: 2, tip: 'Water every 2 days. Needs 4-6 hours of sunlight.' },
-    flower: { water: 3, tip: 'Water every 3 days. Needs moderate sunlight.' },
-    tree: { water: 7, tip: 'Water once a week. Needs full sun.' }
-};
-
-function saveState() {
-    localStorage.setItem('plants', JSON.stringify(plants));
-    localStorage.setItem('lastCare', JSON.stringify(lastCare));
+// --- Utility Functions ---
+function savePlants() {
+	localStorage.setItem('plants', JSON.stringify(plants));
 }
 
-addPlantForm.onsubmit = e => {
-    e.preventDefault();
-    const name = plantNameInput.value.trim();
-    const type = plantTypeSelect.value;
-    if (!name) return;
-    plants.push({ name, type });
-    lastCare[name] = { watered: null };
-    saveState();
-    renderGarden();
-    renderBotanyInfo();
-    plantNameInput.value = '';
-};
-
-function renderGarden() {
-    gardenDiv.innerHTML = '';
-    plants.forEach(plant => {
-        const card = document.createElement('div');
-        card.className = 'plant-card';
-        card.innerHTML = `
-            <div class="plant-name">${plant.name}</div>
-            <div class="plant-type">${plant.type.charAt(0).toUpperCase() + plant.type.slice(1)}</div>
-        `;
-        const care = lastCare[plant.name] || { watered: null };
-        const daysSince = care.watered ? Math.floor((Date.now() - care.watered) / (1000*60*60*24)) : null;
-        const info = plantCareInfo[plant.type];
-        const status = document.createElement('div');
-        status.className = 'care-status';
-        if (care.watered) {
-            status.textContent = `Last watered: ${daysSince} day(s) ago`;
-        } else {
-            status.textContent = 'Never watered';
-        }
-        card.appendChild(status);
-        const waterBtn = document.createElement('button');
-        waterBtn.className = 'care-btn';
-        waterBtn.textContent = 'Water Plant';
-        waterBtn.onclick = () => {
-            lastCare[plant.name] = { watered: Date.now() };
-            saveState();
-            renderGarden();
-        };
-        card.appendChild(waterBtn);
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'care-btn';
-        removeBtn.textContent = 'Remove Plant';
-        removeBtn.onclick = () => {
-            plants = plants.filter(p => p.name !== plant.name);
-            delete lastCare[plant.name];
-            saveState();
-            renderGarden();
-            renderBotanyInfo();
-        };
-        card.appendChild(removeBtn);
-        const tip = document.createElement('div');
-        tip.style.fontSize = '0.95em';
-        tip.style.color = '#2563eb';
-        tip.textContent = info.tip;
-        card.appendChild(tip);
-        gardenDiv.appendChild(card);
-    });
+function addPlant(name, species, added) {
+	plants.push({ name, species, added, lastWatered: null, lastFertilized: null });
+	savePlants();
+	updatePlants();
+	updateReminders();
 }
 
-enableRemindersBtn.onclick = () => {
-    if (Notification.permission === 'granted') {
-        scheduleReminders();
-    } else {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') scheduleReminders();
-        });
-    }
-};
-
-function scheduleReminders() {
-    setInterval(() => {
-        plants.forEach(plant => {
-            const care = lastCare[plant.name] || { watered: null };
-            const info = plantCareInfo[plant.type];
-            const daysSince = care.watered ? Math.floor((Date.now() - care.watered) / (1000*60*60*24)) : null;
-            if (!care.watered || daysSince >= info.water) {
-                new Notification('Plant Care Reminder', {
-                    body: `Time to water your ${plant.name} (${plant.type})!`
-                });
-            }
-        });
-    }, 24 * 60 * 60 * 1000); // every 24 hours
-    alert('Plant care reminders enabled!');
+// --- UI Update Functions ---
+function updatePlants() {
+	if (plants.length === 0) {
+		plantsContent.innerHTML = '<em>No plants logged yet.</em>';
+		return;
+	}
+	let html = '';
+	plants.forEach((p, idx) => {
+		html += `<div class="plant-card">
+			<h3>${p.name}</h3>
+			<div><small>${p.species ? p.species : 'Unknown species'}</small></div>
+			<div>Added: ${p.added}</div>
+			<div>Last watered: ${p.lastWatered ? p.lastWatered : 'Never'}</div>
+			<div>Last fertilized: ${p.lastFertilized ? p.lastFertilized : 'Never'}</div>
+			<button class="water-btn" data-idx="${idx}">Water</button>
+			<button class="fertilize-btn" data-idx="${idx}">Fertilize</button>
+			<button class="delete-btn" data-idx="${idx}">Delete</button>
+		</div>`;
+	});
+	plantsContent.innerHTML = html;
+	// Attach event listeners
+	document.querySelectorAll('.water-btn').forEach(btn => {
+		btn.addEventListener('click', function() {
+			const idx = parseInt(this.getAttribute('data-idx'));
+			plants[idx].lastWatered = new Date().toISOString().slice(0,10);
+			savePlants();
+			updatePlants();
+			updateReminders();
+		});
+	});
+	document.querySelectorAll('.fertilize-btn').forEach(btn => {
+		btn.addEventListener('click', function() {
+			const idx = parseInt(this.getAttribute('data-idx'));
+			plants[idx].lastFertilized = new Date().toISOString().slice(0,10);
+			savePlants();
+			updatePlants();
+			updateReminders();
+		});
+	});
+	document.querySelectorAll('.delete-btn').forEach(btn => {
+		btn.addEventListener('click', function() {
+			const idx = parseInt(this.getAttribute('data-idx'));
+			plants.splice(idx, 1);
+			savePlants();
+			updatePlants();
+			updateReminders();
+		});
+	});
 }
 
-function renderBotanyInfo() {
-    if (plants.length === 0) {
-        botanyInfoDiv.innerHTML = '<p>Add a plant to see facts and tips!</p>';
-        return;
-    }
-    let html = '';
-    plants.forEach(plant => {
-        const info = plantCareInfo[plant.type];
-        html += `<b>${plant.name} (${plant.type}):</b> ${info.tip}<br>`;
-    });
-    botanyInfoDiv.innerHTML = html;
+function updateReminders() {
+	if (plants.length === 0) {
+		remindersContent.innerHTML = '<em>No plants to remind you about yet.</em>';
+		return;
+	}
+	let html = '<ul>';
+	const today = new Date().toISOString().slice(0,10);
+	plants.forEach(p => {
+		// Watering reminder: every 7 days
+		let waterMsg = '';
+		if (!p.lastWatered) {
+			waterMsg = 'Needs watering!';
+		} else {
+			const days = Math.floor((new Date(today) - new Date(p.lastWatered))/(1000*60*60*24));
+			if (days >= 7) waterMsg = `Needs watering! (${days} days since last)`;
+			else waterMsg = `Water in ${7-days} days`;
+		}
+		// Fertilizing reminder: every 30 days
+		let fertMsg = '';
+		if (!p.lastFertilized) {
+			fertMsg = 'Needs fertilizing!';
+		} else {
+			const days = Math.floor((new Date(today) - new Date(p.lastFertilized))/(1000*60*60*24));
+			if (days >= 30) fertMsg = `Needs fertilizing! (${days} days since last)`;
+			else fertMsg = `Fertilize in ${30-days} days`;
+		}
+		html += `<li><b>${p.name}</b>: ${waterMsg} | ${fertMsg}</li>`;
+	});
+	html += '</ul>';
+	remindersContent.innerHTML = html;
 }
 
-// Initial render
-renderGarden();
-renderBotanyInfo();
+// --- Event Listeners ---
+if (plantForm) {
+	plantForm.addEventListener('submit', function(e) {
+		e.preventDefault();
+		const name = document.getElementById('plant-name').value.trim();
+		const species = document.getElementById('plant-species').value.trim();
+		const added = document.getElementById('plant-added').value;
+		if (!name || !added) {
+			alert('Please enter plant name and date added.');
+			return;
+		}
+		addPlant(name, species, added);
+		plantForm.reset();
+	});
+}
+
+// --- Initial Render ---
+updatePlants();
+updateReminders();

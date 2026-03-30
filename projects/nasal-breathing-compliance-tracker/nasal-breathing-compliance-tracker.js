@@ -1,327 +1,281 @@
 // nasal-breathing-compliance-tracker.js
 
-let breathingSessions = JSON.parse(localStorage.getItem('nasalBreathingSessions')) || [];
-let chart = null;
+let sessions = JSON.parse(localStorage.getItem('nasalBreathingSessions')) || [];
+let currentSession = null;
+let timerInterval = null;
+let startTime = null;
+let mouthBreathingIncidents = 0;
+let currentSessionType = 'workout';
 
-const sessionTypes = {
-    workout: { name: 'Workout/Exercise', icon: '🏋️' },
-    sleep: { name: 'Sleep', icon: '😴' },
-    daily: { name: 'Daily Activities', icon: '🚶' },
-    practice: { name: 'Breathing Practice', icon: '🧘' }
-};
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Set default date to today
-    document.getElementById('sessionDate').valueAsDate = new Date();
-
-    // Initialize time input listeners for compliance preview
-    document.getElementById('totalTime').addEventListener('input', updateCompliancePreview);
-    document.getElementById('nasalTime').addEventListener('input', updateCompliancePreview);
-
-    // Initialize chart period change handler
-    document.getElementById('chartPeriod').addEventListener('change', renderChart);
-
-    // Load and display data
-    updateDisplay();
-    renderChart();
-});
-
-function updateCompliancePreview() {
-    const totalTime = parseFloat(document.getElementById('totalTime').value) || 0;
-    const nasalTime = parseFloat(document.getElementById('nasalTime').value) || 0;
-
-    let compliance = 0;
-    if (totalTime > 0) {
-        compliance = Math.min((nasalTime / totalTime) * 100, 100);
-    }
-
-    document.getElementById('previewCompliance').textContent = compliance.toFixed(1) + '%';
+function setSessionType(type) {
+    currentSessionType = type;
+    document.querySelectorAll('.session-type-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-type="${type}"]`).classList.add('active');
 }
 
-function logSession() {
-    const date = document.getElementById('sessionDate').value;
-    const sessionType = document.getElementById('sessionType').value;
-    const totalTime = parseFloat(document.getElementById('totalTime').value);
-    const nasalTime = parseFloat(document.getElementById('nasalTime').value);
-    const notes = document.getElementById('sessionNotes').value.trim();
+function startSession() {
+    if (currentSession) return;
 
-    if (!date) {
-        alert('Please select a date for the session.');
+    startTime = new Date();
+    mouthBreathingIncidents = 0;
+    currentSession = {
+        id: Date.now(),
+        type: currentSessionType,
+        startTime: startTime.toISOString(),
+        mouthBreathingIncidents: 0,
+        endTime: null,
+        duration: 0,
+        notes: '',
+        compliance: 100
+    };
+
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('mouthBreathBtn').disabled = false;
+    document.getElementById('endBtn').disabled = false;
+    document.getElementById('mouthBreathCount').textContent = '0';
+    document.getElementById('currentCompliance').textContent = '100%';
+
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+function updateTimer() {
+    if (!startTime) return;
+
+    const now = new Date();
+    const elapsed = Math.floor((now - startTime) / 1000);
+    const hours = Math.floor(elapsed / 3600);
+    const minutes = Math.floor((elapsed % 3600) / 60);
+    const seconds = elapsed % 60;
+
+    document.getElementById('timerDisplay').textContent =
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    document.getElementById('currentDuration').textContent =
+        `${Math.floor(elapsed / 60)}:${(elapsed % 60).toString().padStart(2, '0')}`;
+}
+
+function logMouthBreathing() {
+    if (!currentSession) return;
+
+    mouthBreathingIncidents++;
+    currentSession.mouthBreathingIncidents = mouthBreathingIncidents;
+
+    // Calculate compliance (assuming 1 incident per 5 minutes reduces compliance)
+    const elapsedMinutes = Math.floor((new Date() - startTime) / 60000);
+    const expectedIncidents = Math.max(0, elapsedMinutes / 5); // Allow 1 incident per 5 minutes
+    const compliance = Math.max(0, Math.min(100, 100 - (mouthBreathingIncidents - expectedIncidents) * 10));
+
+    currentSession.compliance = Math.round(compliance);
+
+    document.getElementById('mouthBreathCount').textContent = mouthBreathingIncidents;
+    document.getElementById('currentCompliance').textContent = `${currentSession.compliance}%`;
+}
+
+function endSession() {
+    if (!currentSession) return;
+
+    clearInterval(timerInterval);
+    const endTime = new Date();
+    const duration = Math.floor((endTime - startTime) / 1000); // duration in seconds
+
+    currentSession.endTime = endTime.toISOString();
+    currentSession.duration = duration;
+
+    // Final compliance calculation
+    const elapsedMinutes = duration / 60;
+    const expectedIncidents = Math.max(0, elapsedMinutes / 5);
+    const compliance = Math.max(0, Math.min(100, 100 - (mouthBreathingIncidents - expectedIncidents) * 10));
+    currentSession.compliance = Math.round(compliance);
+
+    sessions.push(currentSession);
+    saveSessions();
+
+    // Reset UI
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('mouthBreathBtn').disabled = true;
+    document.getElementById('endBtn').disabled = true;
+    document.getElementById('timerDisplay').textContent = '00:00:00';
+    document.getElementById('currentDuration').textContent = '0:00';
+    document.getElementById('mouthBreathCount').textContent = '0';
+    document.getElementById('currentCompliance').textContent = '100%';
+
+    currentSession = null;
+    mouthBreathingIncidents = 0;
+
+    updateStats();
+    updateChart();
+    displayHistory();
+}
+
+function logManualSession() {
+    const type = document.getElementById('sessionType').value;
+    const duration = parseInt(document.getElementById('sessionDuration').value);
+    const incidents = parseInt(document.getElementById('mouthBreathIncidents').value) || 0;
+    const notes = document.getElementById('notes').value;
+
+    if (!duration || duration <= 0) {
+        alert('Please enter a valid duration');
         return;
     }
 
-    if (!totalTime || totalTime <= 0) {
-        alert('Please enter a valid total session time.');
-        return;
-    }
-
-    if (nasalTime < 0 || nasalTime > totalTime) {
-        alert('Nasal breathing time cannot be negative or greater than total time.');
-        return;
-    }
-
-    const compliance = (nasalTime / totalTime) * 100;
+    // Calculate compliance
+    const expectedIncidents = Math.max(0, duration / 5); // 1 per 5 minutes
+    const compliance = Math.max(0, Math.min(100, 100 - (incidents - expectedIncidents) * 10));
 
     const session = {
         id: Date.now(),
-        date: date,
-        sessionType: sessionType,
-        totalTime: totalTime,
-        nasalTime: nasalTime,
-        compliance: compliance,
+        type: type,
+        startTime: new Date(Date.now() - duration * 60000).toISOString(),
+        endTime: new Date().toISOString(),
+        mouthBreathingIncidents: incidents,
+        duration: duration * 60, // convert to seconds
         notes: notes,
-        timestamp: new Date().toISOString()
+        compliance: Math.round(compliance),
+        manual: true
     };
 
-    breathingSessions.push(session);
-    breathingSessions.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    // Save to localStorage
-    localStorage.setItem('nasalBreathingSessions', JSON.stringify(breathingSessions));
+    sessions.push(session);
+    saveSessions();
 
     // Clear form
-    document.getElementById('sessionNotes').value = '';
+    document.getElementById('sessionDuration').value = '';
+    document.getElementById('mouthBreathIncidents').value = '';
+    document.getElementById('notes').value = '';
 
-    // Update display
-    updateDisplay();
-    renderChart();
-
-    // Show success message
-    alert('Session logged successfully!');
+    updateStats();
+    updateChart();
+    displayHistory();
 }
 
-function updateDisplay() {
-    const today = new Date().toISOString().split('T')[0];
-    const todaySessions = breathingSessions.filter(s => s.date === today);
+function saveSessions() {
+    localStorage.setItem('nasalBreathingSessions', JSON.stringify(sessions));
+}
 
-    // Update today's status
-    if (todaySessions.length > 0) {
-        const totalTime = todaySessions.reduce((sum, s) => sum + s.totalTime, 0);
-        const nasalTime = todaySessions.reduce((sum, s) => sum + s.nasalTime, 0);
-        const avgCompliance = todaySessions.reduce((sum, s) => sum + s.compliance, 0) / todaySessions.length;
-
-        document.getElementById('todayCompliance').textContent = avgCompliance.toFixed(1) + '%';
-        document.getElementById('todaySessions').textContent = todaySessions.length;
-        document.getElementById('todayTime').textContent = totalTime + ' min';
-        document.getElementById('todayNasalTime').textContent = nasalTime + ' min';
-    } else {
-        document.getElementById('todayCompliance').textContent = '0%';
-        document.getElementById('todaySessions').textContent = '0';
-        document.getElementById('todayTime').textContent = '0 min';
-        document.getElementById('todayNasalTime').textContent = '0 min';
-    }
-
-    // Update overall stats
-    if (breathingSessions.length > 0) {
-        const overallCompliance = breathingSessions.reduce((sum, s) => sum + s.compliance, 0) / breathingSessions.length;
-        const totalTime = breathingSessions.reduce((sum, s) => sum + s.totalTime, 0);
-        const avgSessionTime = totalTime / breathingSessions.length;
-        const currentStreak = calculateStreak();
-
-        document.getElementById('overallCompliance').textContent = overallCompliance.toFixed(1) + '%';
-        document.getElementById('totalSessions').textContent = breathingSessions.length;
-        document.getElementById('avgSessionTime').textContent = avgSessionTime.toFixed(1) + ' min';
-        document.getElementById('streakDays').textContent = currentStreak + ' days';
-    } else {
+function updateStats() {
+    if (sessions.length === 0) {
         document.getElementById('overallCompliance').textContent = '0%';
+        document.getElementById('workoutCompliance').textContent = '0%';
+        document.getElementById('sleepCompliance').textContent = '0%';
         document.getElementById('totalSessions').textContent = '0';
-        document.getElementById('avgSessionTime').textContent = '0 min';
-        document.getElementById('streakDays').textContent = '0 days';
-    }
-
-    // Update history
-    renderHistory();
-}
-
-function calculateStreak() {
-    if (breathingSessions.length === 0) return 0;
-
-    const dates = [...new Set(breathingSessions.map(s => s.date))].sort();
-    let streak = 0;
-    let currentStreak = 0;
-    let lastDate = null;
-
-    for (const date of dates) {
-        const currentDate = new Date(date);
-        if (lastDate) {
-            const diffTime = currentDate - lastDate;
-            const diffDays = diffTime / (1000 * 60 * 60 * 24);
-
-            if (diffDays === 1) {
-                currentStreak++;
-            } else {
-                currentStreak = 1;
-            }
-        } else {
-            currentStreak = 1;
-        }
-
-        streak = Math.max(streak, currentStreak);
-        lastDate = currentDate;
-    }
-
-    return streak;
-}
-
-function renderHistory() {
-    const historyList = document.getElementById('historyList');
-    historyList.innerHTML = '';
-
-    if (breathingSessions.length === 0) {
-        historyList.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">No sessions logged yet. Start tracking your nasal breathing!</p>';
         return;
     }
 
-    breathingSessions.slice().reverse().slice(0, 10).forEach(session => { // Show last 10 sessions
-        const item = document.createElement('div');
-        item.className = 'history-item';
+    const overallCompliance = sessions.reduce((sum, s) => sum + s.compliance, 0) / sessions.length;
+    const workoutSessions = sessions.filter(s => s.type === 'workout');
+    const sleepSessions = sessions.filter(s => s.type === 'sleep');
 
-        const date = new Date(session.date).toLocaleDateString();
-        const sessionTypeInfo = sessionTypes[session.sessionType];
+    const workoutCompliance = workoutSessions.length > 0 ?
+        workoutSessions.reduce((sum, s) => sum + s.compliance, 0) / workoutSessions.length : 0;
+    const sleepCompliance = sleepSessions.length > 0 ?
+        sleepSessions.reduce((sum, s) => sum + s.compliance, 0) / sleepSessions.length : 0;
 
-        item.innerHTML = `
-            <div class="session-info">
-                <div class="session-type">${sessionTypeInfo.icon} ${sessionTypeInfo.name}</div>
-                <div class="session-details">${date} • ${session.totalTime} min total • ${session.nasalTime} min nasal</div>
-                <div class="session-compliance">${session.compliance.toFixed(1)}% compliance</div>
-                ${session.notes ? `<div class="session-notes">${session.notes}</div>` : ''}
-            </div>
-            <button class="delete-btn" onclick="deleteSession(${session.id})">Delete</button>
-        `;
-
-        historyList.appendChild(item);
-    });
+    document.getElementById('overallCompliance').textContent = `${Math.round(overallCompliance)}%`;
+    document.getElementById('workoutCompliance').textContent = `${Math.round(workoutCompliance)}%`;
+    document.getElementById('sleepCompliance').textContent = `${Math.round(sleepCompliance)}%`;
+    document.getElementById('totalSessions').textContent = sessions.length;
 }
 
-function deleteSession(id) {
-    if (confirm('Are you sure you want to delete this session?')) {
-        breathingSessions = breathingSessions.filter(s => s.id !== id);
-        localStorage.setItem('nasalBreathingSessions', JSON.stringify(breathingSessions));
-        updateDisplay();
-        renderChart();
-    }
-}
-
-function renderChart() {
+function updateChart() {
     const ctx = document.getElementById('complianceChart').getContext('2d');
-    const period = parseInt(document.getElementById('chartPeriod').value);
 
-    if (chart) {
-        chart.destroy();
+    // Sort sessions by date
+    const sortedSessions = sessions.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+    const labels = sortedSessions.map(s => new Date(s.startTime).toLocaleDateString());
+    const complianceData = sortedSessions.map(s => s.compliance);
+
+    if (window.complianceChart) {
+        window.complianceChart.destroy();
     }
 
-    if (breathingSessions.length === 0) {
-        return;
-    }
-
-    // Filter sessions by selected period
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - period);
-
-    const filteredSessions = breathingSessions.filter(s => new Date(s.date) >= cutoffDate);
-
-    if (filteredSessions.length === 0) {
-        return;
-    }
-
-    // Group by date and calculate daily average compliance
-    const dailyData = {};
-    filteredSessions.forEach(session => {
-        if (!dailyData[session.date]) {
-            dailyData[session.date] = { compliances: [], totalTime: 0, nasalTime: 0 };
-        }
-        dailyData[session.date].compliances.push(session.compliance);
-        dailyData[session.date].totalTime += session.totalTime;
-        dailyData[session.date].nasalTime += session.nasalTime;
-    });
-
-    const labels = [];
-    const data = [];
-
-    Object.keys(dailyData).sort().forEach(date => {
-        const dayData = dailyData[date];
-        const avgCompliance = dayData.compliances.reduce((sum, c) => sum + c, 0) / dayData.compliances.length;
-
-        labels.push(new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-        data.push(avgCompliance.toFixed(1));
-    });
-
-    chart = new Chart(ctx, {
+    window.complianceChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Daily Compliance (%)',
-                data: data,
+                label: 'Compliance %',
+                data: complianceData,
                 borderColor: '#4fd1ff',
                 backgroundColor: 'rgba(79, 209, 255, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#4fd1ff',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 6,
-                pointHoverRadius: 8
+                tension: 0.1
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: {
-                        color: '#fff'
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `Compliance: ${context.parsed.y}%`;
-                        }
-                    }
-                }
-            },
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                        color: '#fff',
-                        callback: function(value) {
-                            return value + '%';
-                        }
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                },
-                x: {
-                    ticks: {
-                        color: '#fff'
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
+                    max: 100
                 }
             }
         }
     });
 }
 
-// Export data functionality
-function exportData() {
-    const dataStr = JSON.stringify(breathingSessions, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+function displayHistory(filter = 'all') {
+    const historyDiv = document.getElementById('sessionHistory');
+    let filteredSessions = sessions;
 
-    const exportFileDefaultName = 'nasal-breathing-data.json';
+    if (filter !== 'all') {
+        filteredSessions = sessions.filter(s => s.type === filter);
+    }
 
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    // Sort by most recent first
+    filteredSessions.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+    historyDiv.innerHTML = '';
+
+    if (filteredSessions.length === 0) {
+        historyDiv.innerHTML = '<p style="text-align: center; color: #666;">No sessions found</p>';
+        return;
+    }
+
+    filteredSessions.forEach(session => {
+        const entry = document.createElement('div');
+        entry.className = 'session-entry';
+
+        const date = new Date(session.startTime).toLocaleDateString();
+        const time = new Date(session.startTime).toLocaleTimeString();
+        const duration = Math.floor(session.duration / 60);
+        const complianceClass = session.compliance >= 80 ? '' : 'low';
+
+        entry.innerHTML = `
+            <button class="delete-btn" onclick="deleteSession(${session.id})">×</button>
+            <h4>${session.type.charAt(0).toUpperCase() + session.type.slice(1)} - ${date} ${time}</h4>
+            <p><strong>Duration:</strong> ${duration} minutes</p>
+            <p><strong>Mouth Breathing Incidents:</strong> ${session.mouthBreathingIncidents}</p>
+            <p><strong>Compliance:</strong> <span class="compliance-score ${complianceClass}">${session.compliance}%</span></p>
+            ${session.notes ? `<p><strong>Notes:</strong> ${session.notes}</p>` : ''}
+            ${session.manual ? '<p><em>Manual entry</em></p>' : ''}
+        `;
+
+        historyDiv.appendChild(entry);
+    });
 }
 
-// Make export function available globally if needed
-window.exportData = exportData;
+function filterHistory(filter) {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+    displayHistory(filter);
+}
+
+function deleteSession(id) {
+    if (confirm('Are you sure you want to delete this session?')) {
+        sessions = sessions.filter(s => s.id !== id);
+        saveSessions();
+        updateStats();
+        updateChart();
+        displayHistory();
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateStats();
+    updateChart();
+    displayHistory();
+});
